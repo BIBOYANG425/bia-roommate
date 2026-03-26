@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { RoommateProfile, GENDER_OPTIONS, YEAR_OPTIONS } from '@/lib/types'
+import { RoommateProfile, GENDER_OPTIONS, YEAR_OPTIONS, SCHOOL_OPTIONS } from '@/lib/types'
 import ProfileCard from '@/components/ProfileCard'
 import ProfileModal from '@/components/ProfileModal'
 import SkeletonCard from '@/components/SkeletonCard'
@@ -20,6 +20,7 @@ function HomeContent() {
 
   const [selectedProfile, setSelectedProfile] = useState<RoommateProfile | null>(null)
   const [search, setSearch] = useState('')
+  const [schoolFilter, setSchoolFilter] = useState('')
   const [genderFilter, setGenderFilter] = useState('')
   const [yearFilter, setYearFilter] = useState('')
 
@@ -52,6 +53,7 @@ function HomeContent() {
   }, [fetchProfiles])
 
   const filtered = profiles.filter((p) => {
+    if (schoolFilter && p.school !== schoolFilter) return false
     if (genderFilter && p.gender !== genderFilter) return false
     if (yearFilter && p.year !== yearFilter) return false
     if (search) {
@@ -93,6 +95,16 @@ function HomeContent() {
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 px-4 py-2.5 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
+          <select
+            value={schoolFilter}
+            onChange={(e) => setSchoolFilter(e.target.value)}
+            className="px-4 py-2.5 border border-stone-200 rounded-xl text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+          >
+            <option value="">全部学校</option>
+            {SCHOOL_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
           <select
             value={genderFilter}
             onChange={(e) => setGenderFilter(e.target.value)}

@@ -85,6 +85,7 @@ export default function ProfileModal({
               <h2 className="text-xl font-bold">{profile.name}</h2>
               <p className="text-green-100 text-sm">
                 {[
+                  profile.school,
                   profile.year === '新生' && profile.enrollment_term
                     ? `新生 (${profile.enrollment_term})`
                     : profile.year,

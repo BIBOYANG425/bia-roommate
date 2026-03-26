@@ -14,6 +14,7 @@ import {
   GENDER_OPTIONS,
   YEAR_OPTIONS,
   ENROLLMENT_OPTIONS,
+  SCHOOL_OPTIONS,
 } from '@/lib/types'
 
 function RadioGroup({
@@ -87,6 +88,7 @@ export default function SubmitPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [name, setName] = useState('')
+  const [school, setSchool] = useState('')
   const [gender, setGender] = useState('')
   const [major, setMajor] = useState('')
   const [year, setYear] = useState('')
@@ -119,6 +121,7 @@ export default function SubmitPage() {
 
     const formData = {
       name: name.trim(),
+      school: school || null,
       gender: gender || null,
       major: major.trim() || null,
       year: year || null,
@@ -186,6 +189,26 @@ export default function SubmitPage() {
                 className="w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 required
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-2">学校</label>
+              <div className="flex flex-wrap gap-2">
+                {SCHOOL_OPTIONS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setSchool(school === s ? '' : s)}
+                    className={`px-5 py-2 rounded-xl text-sm border transition-colors ${
+                      school === s
+                        ? 'bg-green-600 text-white border-green-600'
+                        : 'bg-white text-stone-700 border-stone-200 hover:border-green-400'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
