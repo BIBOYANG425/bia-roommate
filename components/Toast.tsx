@@ -15,9 +15,10 @@ export default function Toast({ message, onClose }: { message: string; onClose: 
 
   return (
     <div
-      className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-green-600 text-white rounded-xl shadow-lg text-sm font-medium transition-all duration-300 ${
-        visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
+      className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] px-6 py-3 border-[3px] border-[var(--black)] font-display text-sm tracking-wider transition-all duration-300 ${
+        visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
       }`}
+      style={{ background: 'var(--gold)', color: 'var(--black)', boxShadow: '4px 4px 0 var(--black)' }}
     >
       {message}
     </div>

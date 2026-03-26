@@ -1,5 +1,20 @@
 import type { Metadata } from "next";
+import { Bebas_Neue, Space_Mono } from "next/font/google";
 import "./globals.css";
+
+const bebasNeue = Bebas_Neue({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const spaceMono = Space_Mono({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "BIA 新生找室友",
@@ -12,9 +27,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-stone-50 text-stone-900 font-sans">
+    <html lang="zh-CN" className={`${bebasNeue.variable} ${spaceMono.variable}`}>
+      <body>
         {children}
+        {/* Film grain overlay */}
+        <div className="grain" aria-hidden="true" />
       </body>
     </html>
   );

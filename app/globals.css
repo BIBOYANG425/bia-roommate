@@ -1,19 +1,277 @@
 @import "tailwindcss";
 
+:root {
+  --beige: #F2EBD9;
+  --cream: #FAF6EC;
+  --black: #1A1410;
+  --cardinal: #990000;
+  --gold: #FFCC00;
+  --mid: #8C7E6A;
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--beige);
+  color: var(--black);
+  font-family: var(--font-body), 'PingFang SC', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Film grain overlay */
+.grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.045;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px;
+}
+
+/* Display font */
+.font-display {
+  font-family: var(--font-display), Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 0.9;
+}
+
+/* Brutalist borders */
+.brutal-border {
+  border: 3px solid var(--black);
+}
+
+/* Hard shadow cards */
+.brutal-card {
+  background: var(--cream);
+  border: 3px solid var(--black);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.brutal-card:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 8px 8px 0 var(--gold);
+}
+
+/* Cardinal variant */
+.brutal-card-cardinal:hover {
+  box-shadow: 8px 8px 0 var(--cardinal);
+}
+
+/* Main container shadow */
+.brutal-container {
+  box-shadow: 12px 12px 0 var(--cardinal);
+  border: 3px solid var(--black);
+  background: var(--cream);
+}
+
+/* Buttons */
+.brutal-btn {
+  border: 3px solid var(--black);
+  font-family: var(--font-display), Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 32px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.brutal-btn:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 6px 6px 0 var(--gold);
+}
+.brutal-btn-primary {
+  background: var(--cardinal);
+  color: white;
+}
+.brutal-btn-ghost {
+  background: transparent;
+  color: var(--black);
+}
+.brutal-btn-gold {
+  background: var(--gold);
+  color: var(--black);
+}
+
+/* Tags — rectangles not pills */
+.brutal-tag {
+  border: 2px solid var(--black);
+  padding: 2px 8px;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-family: var(--font-body), monospace;
+  letter-spacing: 0.05em;
+  display: inline-block;
+}
+.brutal-tag-filled {
+  background: var(--cardinal);
+  color: white;
+  border-color: var(--cardinal);
+}
+.brutal-tag-gold {
+  background: var(--gold);
+  color: var(--black);
+  border-color: var(--black);
+}
+
+/* Inputs */
+.brutal-input {
+  border: 3px solid var(--black);
+  background: var(--cream);
+  padding: 10px 14px;
+  font-family: var(--font-body), monospace;
+  font-size: 13px;
+  color: var(--black);
+  outline: none;
+  width: 100%;
+  transition: box-shadow 0.15s ease;
+}
+.brutal-input:focus {
+  box-shadow: 4px 4px 0 var(--gold);
+}
+.brutal-input::placeholder {
+  color: var(--mid);
+}
+
+.brutal-select {
+  border: 3px solid var(--black);
+  background: var(--cream);
+  padding: 10px 14px;
+  font-family: var(--font-body), monospace;
+  font-size: 13px;
+  color: var(--black);
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%231A1410' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+.brutal-select:focus {
+  box-shadow: 4px 4px 0 var(--gold);
+}
+
+/* Marquee ticker */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 20s linear infinite;
+}
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Glitch flicker */
+@keyframes glitch {
+  0%, 90%, 100% { text-shadow: none; opacity: 1; }
+  92% { text-shadow: -4px 0 var(--cardinal), 4px 0 var(--gold); opacity: 0.9; }
+  94% { text-shadow: 4px 0 var(--gold), -4px 0 var(--cardinal); opacity: 1; }
+  96% { text-shadow: -2px 0 var(--cardinal); opacity: 0.95; }
+}
+.glitch-text {
+  animation: glitch 4s ease-in-out infinite;
+}
+
+/* NEW DROP badge */
+@keyframes pulse-scale {
+  0%, 100% { transform: rotate(3deg) scale(1); }
+  50% { transform: rotate(3deg) scale(1.05); }
+}
+.new-drop-badge {
+  background: var(--gold);
+  color: var(--black);
+  font-family: var(--font-display), Impact, sans-serif;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 3px 10px;
+  transform: rotate(3deg);
+  box-shadow: 2px 2px 0 var(--black);
+  animation: pulse-scale 2s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* Staggered reveal */
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.reveal {
+  animation: reveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Ghost watermark */
+.ghost-text {
+  position: absolute;
+  font-family: var(--font-display), Impact, sans-serif;
+  text-transform: uppercase;
+  font-size: 200px;
+  line-height: 1;
+  color: var(--black);
+  opacity: 0.04;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* Section number */
+.section-number {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: 120px;
+  line-height: 1;
+  color: var(--mid);
+  opacity: 0.15;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Habit bar brutalist */
+.habit-bar-bg {
+  height: 8px;
+  background: var(--beige);
+  border: 2px solid var(--black);
+}
+.habit-bar-fill {
+  height: 100%;
+  background: var(--cardinal);
+}
+
+/* Modal animations */
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(24px) scale(0.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.2s ease-out; }
+.animate-slide-up { animation: slide-up 0.25s ease-out; }
+
+/* Vertical side label */
+.side-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: var(--font-display), Impact, sans-serif;
+  text-transform: uppercase;
+  color: var(--cardinal);
+  opacity: 0.2;
+  font-size: 14px;
+  letter-spacing: 0.2em;
 }
 
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.25s ease-out;
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--beige); }
+::-webkit-scrollbar-thumb { background: var(--black); }

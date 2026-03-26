@@ -39,18 +39,15 @@ function RadioGroup({
   const isCustom = value === '__custom__'
   return (
     <div>
-      <label className="block text-sm font-medium text-stone-700 mb-2">{label}</label>
+      <label className="font-display text-sm tracking-wider block mb-2" style={{ color: 'var(--mid)' }}>{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map((opt) => (
           <button
             key={opt}
             type="button"
             onClick={() => onChange(value === opt ? '' : opt)}
-            className={`px-4 py-2 rounded-xl text-sm border transition-colors ${
-              value === opt
-                ? 'bg-green-600 text-white border-green-600'
-                : 'bg-white text-stone-700 border-stone-200 hover:border-green-400'
-            }`}
+            className="brutal-tag cursor-pointer text-xs px-3 py-1.5 transition-colors"
+            style={value === opt ? { background: 'var(--cardinal)', color: 'white', borderColor: 'var(--cardinal)' } : {}}
           >
             {opt}
           </button>
@@ -59,13 +56,10 @@ function RadioGroup({
           <button
             type="button"
             onClick={() => onChange(isCustom ? '' : '__custom__')}
-            className={`px-4 py-2 rounded-xl text-sm border transition-colors ${
-              isCustom
-                ? 'bg-green-600 text-white border-green-600'
-                : 'bg-white text-stone-700 border-stone-200 hover:border-green-400'
-            }`}
+            className="brutal-tag cursor-pointer text-xs px-3 py-1.5 transition-colors"
+            style={isCustom ? { background: 'var(--gold)', color: 'var(--black)', borderColor: 'var(--black)' } : { borderStyle: 'dashed' }}
           >
-            自定义
+            CUSTOM
           </button>
         )}
       </div>
@@ -74,8 +68,8 @@ function RadioGroup({
           type="text"
           value={customValue || ''}
           onChange={(e) => onCustomChange?.(e.target.value)}
-          placeholder={customPlaceholder || '输入自定义内容'}
-          className="mt-2 w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder={customPlaceholder || ''}
+          className="brutal-input mt-2"
         />
       )}
     </div>
@@ -142,7 +136,7 @@ export default function SubmitPage() {
       .insert([formData])
 
     if (err) {
-      setError('提交失败，请稍后再试')
+      setError('SUBMISSION FAILED — TRY AGAIN')
       setSubmitting(false)
       return
     }
@@ -153,239 +147,172 @@ export default function SubmitPage() {
   const canSubmit = name.trim() && contact.trim() && !submitting
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen" style={{ background: 'var(--beige)' }}>
       {/* Header */}
-      <div className="bg-gradient-to-br from-green-700 to-emerald-600 text-white">
-        <div className="max-w-2xl mx-auto px-4 py-10">
-          <Link href="/" className="text-green-200 hover:text-white text-sm mb-4 inline-block">
-            ← 返回首页
+      <div className="border-b-[3px] border-[var(--black)]" style={{ background: 'var(--cardinal)' }}>
+        <div className="max-w-2xl mx-auto px-6 py-10 relative">
+          <div className="ghost-text right-0 top-0 text-[140px]" style={{ color: 'white', opacity: 0.06 }}>DROP</div>
+          <Link href="/" className="font-display text-xs tracking-[0.2em] text-white/60 hover:text-white mb-4 inline-block">
+            ← BACK
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold">填写我的资料</h1>
-          <p className="text-green-100 mt-2">填写你的生活习惯，让同学更了解你</p>
+          <h1 className="font-display text-[48px] sm:text-[64px] text-white leading-[0.85]">
+            DROP YOUR<br />PROFILE
+          </h1>
+          <p className="text-xs text-white/60 mt-3">Fill in your habits. Find your match.</p>
         </div>
       </div>
 
       {/* Form */}
-      <div className="max-w-2xl mx-auto px-4 -mt-4 pb-12">
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 sm:p-8 space-y-6"
-        >
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-stone-800 pb-2 border-b border-stone-100">
-              基本信息
+      <div className="max-w-2xl mx-auto px-6 py-8">
+        <form onSubmit={handleSubmit} className="brutal-container p-6 sm:p-8 space-y-8">
+
+          {/* Section 01: Basic Info */}
+          <div className="relative">
+            <span className="section-number text-[80px]">01</span>
+            <h2 className="font-display text-[32px] mb-6 border-b-[3px] border-[var(--black)] pb-2" style={{ color: 'var(--black)' }}>
+              BASIC INFO
             </h2>
 
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">
-                姓名 / 昵称 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="输入你的姓名或昵称"
-                className="w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">学校</label>
-              <div className="flex flex-wrap gap-2">
-                {SCHOOL_OPTIONS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setSchool(school === s ? '' : s)}
-                    className={`px-5 py-2 rounded-xl text-sm border transition-colors ${
-                      school === s
-                        ? 'bg-green-600 text-white border-green-600'
-                        : 'bg-white text-stone-700 border-stone-200 hover:border-green-400'
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1">性别</label>
-                <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-                >
-                  <option value="">不填</option>
-                  {GENDER_OPTIONS.map((g) => (
-                    <option key={g} value={g}>{g}</option>
-                  ))}
-                </select>
+                <label className="font-display text-sm tracking-wider block mb-1" style={{ color: 'var(--mid)' }}>
+                  NAME / NICKNAME <span style={{ color: 'var(--cardinal)' }}>*</span>
+                </label>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                  placeholder="你的姓名或昵称" className="brutal-input" required />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1">年级</label>
-                <select
-                  value={year}
-                  onChange={(e) => { setYear(e.target.value); if (e.target.value !== '新生') setEnrollmentTerm('') }}
-                  className="w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-                >
-                  <option value="">不填</option>
-                  {YEAR_OPTIONS.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
 
-            {/* Enrollment term — only for 新生 */}
-            {year === '新生' && (
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">入学时间</label>
-                <div className="flex gap-2">
-                  {ENROLLMENT_OPTIONS.map((term) => (
-                    <button
-                      key={term}
-                      type="button"
-                      onClick={() => setEnrollmentTerm(enrollmentTerm === term ? '' : term)}
-                      className={`px-5 py-2 rounded-xl text-sm border transition-colors ${
-                        enrollmentTerm === term
-                          ? 'bg-green-600 text-white border-green-600'
-                          : 'bg-white text-stone-700 border-stone-200 hover:border-green-400'
-                      }`}
-                    >
-                      {term}
+                <label className="font-display text-sm tracking-wider block mb-2" style={{ color: 'var(--mid)' }}>SCHOOL</label>
+                <div className="flex flex-wrap gap-2">
+                  {SCHOOL_OPTIONS.map((s) => (
+                    <button key={s} type="button" onClick={() => setSchool(school === s ? '' : s)}
+                      className="brutal-tag cursor-pointer text-xs px-3 py-1.5 transition-colors"
+                      style={school === s ? { background: 'var(--cardinal)', color: 'white', borderColor: 'var(--cardinal)' } : {}}>
+                      {s}
                     </button>
                   ))}
                 </div>
               </div>
-            )}
 
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">专业</label>
-              <input
-                type="text"
-                value={major}
-                onChange={(e) => setMajor(e.target.value)}
-                placeholder="如：计算机科学、商务管理"
-                className="w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-display text-sm tracking-wider block mb-1" style={{ color: 'var(--mid)' }}>GENDER</label>
+                  <select value={gender} onChange={(e) => setGender(e.target.value)} className="brutal-select w-full">
+                    <option value="">—</option>
+                    {GENDER_OPTIONS.map((g) => (<option key={g} value={g}>{g}</option>))}
+                  </select>
+                </div>
+                <div>
+                  <label className="font-display text-sm tracking-wider block mb-1" style={{ color: 'var(--mid)' }}>YEAR</label>
+                  <select value={year} onChange={(e) => { setYear(e.target.value); if (e.target.value !== '新生') setEnrollmentTerm('') }}
+                    className="brutal-select w-full">
+                    <option value="">—</option>
+                    {YEAR_OPTIONS.map((y) => (<option key={y} value={y}>{y}</option>))}
+                  </select>
+                </div>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">
-                联系方式（微信/手机）<span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
-                placeholder="输入微信号或手机号"
-                className="w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                required
-              />
+              {year === '新生' && (
+                <div>
+                  <label className="font-display text-sm tracking-wider block mb-2" style={{ color: 'var(--mid)' }}>ENROLLMENT TERM</label>
+                  <div className="flex gap-2">
+                    {ENROLLMENT_OPTIONS.map((term) => (
+                      <button key={term} type="button" onClick={() => setEnrollmentTerm(enrollmentTerm === term ? '' : term)}
+                        className="brutal-tag cursor-pointer text-xs px-4 py-1.5 transition-colors"
+                        style={enrollmentTerm === term ? { background: 'var(--gold)', color: 'var(--black)', borderColor: 'var(--black)' } : {}}>
+                        {term}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="font-display text-sm tracking-wider block mb-1" style={{ color: 'var(--mid)' }}>MAJOR</label>
+                <input type="text" value={major} onChange={(e) => setMajor(e.target.value)}
+                  placeholder="如：Computer Science, Business" className="brutal-input" />
+              </div>
+
+              <div>
+                <label className="font-display text-sm tracking-wider block mb-1" style={{ color: 'var(--mid)' }}>
+                  CONTACT (WECHAT / PHONE) <span style={{ color: 'var(--cardinal)' }}>*</span>
+                </label>
+                <input type="text" value={contact} onChange={(e) => setContact(e.target.value)}
+                  placeholder="微信号或手机号" className="brutal-input" required />
+              </div>
             </div>
           </div>
 
-          {/* Living Habits */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-stone-800 pb-2 border-b border-stone-100">
-              生活习惯
+          {/* Section 02: Habits */}
+          <div className="relative">
+            <span className="section-number text-[80px]">02</span>
+            <h2 className="font-display text-[32px] mb-6 border-b-[3px] border-[var(--black)] pb-2" style={{ color: 'var(--black)' }}>
+              HABITS
             </h2>
-            <RadioGroup
-              label="睡眠时间"
-              options={SLEEP_OPTIONS}
-              value={sleepHabit}
-              onChange={setSleepHabit}
-              customizable
-              customValue={customSleep}
-              onCustomChange={setCustomSleep}
-              customPlaceholder="如：看情况、不固定、1点左右"
-            />
-            <RadioGroup label="整洁程度" options={CLEAN_OPTIONS} value={cleanLevel} onChange={setCleanLevel} />
-            <RadioGroup label="噪音接受度" options={NOISE_OPTIONS} value={noiseLevel} onChange={setNoiseLevel} />
-            <RadioGroup label="听歌/外放习惯" options={MUSIC_OPTIONS} value={musicHabit} onChange={setMusicHabit} />
-            <RadioGroup label="学习地点" options={STUDY_OPTIONS} value={studyStyle} onChange={setStudyStyle} />
-          </div>
-
-          {/* Hobbies */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-stone-800 pb-2 border-b border-stone-100">
-              兴趣爱好
-            </h2>
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">
-                你的兴趣爱好
-              </label>
-              <input
-                type="text"
-                value={hobbies}
-                onChange={(e) => setHobbies(e.target.value)}
-                placeholder="如：篮球、摄影、弹吉他、看动漫"
-                className="w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
+            <div className="space-y-5">
+              <RadioGroup label="SLEEP TIME" options={SLEEP_OPTIONS} value={sleepHabit} onChange={setSleepHabit}
+                customizable customValue={customSleep} onCustomChange={setCustomSleep} customPlaceholder="如：看情况、不固定、1点左右" />
+              <RadioGroup label="CLEANLINESS" options={CLEAN_OPTIONS} value={cleanLevel} onChange={setCleanLevel} />
+              <RadioGroup label="NOISE TOLERANCE" options={NOISE_OPTIONS} value={noiseLevel} onChange={setNoiseLevel} />
+              <RadioGroup label="MUSIC / SPEAKERS" options={MUSIC_OPTIONS} value={musicHabit} onChange={setMusicHabit} />
+              <RadioGroup label="STUDY SPOT" options={STUDY_OPTIONS} value={studyStyle} onChange={setStudyStyle} />
             </div>
           </div>
 
-          {/* Tags */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-stone-800 pb-2 border-b border-stone-100">
-              个性标签
+          {/* Section 03: Hobbies */}
+          <div className="relative">
+            <span className="section-number text-[80px]">03</span>
+            <h2 className="font-display text-[32px] mb-6 border-b-[3px] border-[var(--black)] pb-2" style={{ color: 'var(--black)' }}>
+              HOBBIES
+            </h2>
+            <input type="text" value={hobbies} onChange={(e) => setHobbies(e.target.value)}
+              placeholder="如：篮球、摄影、弹吉他、看动漫" className="brutal-input" />
+          </div>
+
+          {/* Section 04: Tags */}
+          <div className="relative">
+            <span className="section-number text-[80px]">04</span>
+            <h2 className="font-display text-[32px] mb-6 border-b-[3px] border-[var(--black)] pb-2" style={{ color: 'var(--black)' }}>
+              TAGS
             </h2>
             <div className="flex flex-wrap gap-2">
               {VALID_TAGS.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleTag(tag)}
-                  className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                    tags.includes(tag)
-                      ? 'bg-green-600 text-white border-green-600'
-                      : 'bg-white text-stone-600 border-stone-200 hover:border-green-400'
-                  }`}
-                >
+                <button key={tag} type="button" onClick={() => toggleTag(tag)}
+                  className="brutal-tag cursor-pointer text-xs px-3 py-1.5 transition-colors"
+                  style={tags.includes(tag) ? { background: 'var(--cardinal)', color: 'white', borderColor: 'var(--cardinal)' } : {}}>
                   {tag}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Bio */}
-          <div>
-            <h2 className="text-lg font-semibold text-stone-800 pb-2 border-b border-stone-100 mb-4">
-              自我介绍
+          {/* Section 05: Bio */}
+          <div className="relative">
+            <span className="section-number text-[80px]">05</span>
+            <h2 className="font-display text-[32px] mb-6 border-b-[3px] border-[var(--black)] pb-2" style={{ color: 'var(--black)' }}>
+              BIO
             </h2>
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="简单介绍一下自己，让室友更了解你（最多200字）"
-              maxLength={200}
-              rows={3}
-              className="w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
-            />
-            <p className="text-xs text-stone-400 mt-1 text-right">{bio.length}/200</p>
+            <textarea value={bio} onChange={(e) => setBio(e.target.value)}
+              placeholder="简单介绍一下自己（最多200字）" maxLength={200} rows={3}
+              className="brutal-input resize-none" />
+            <p className="text-[10px] mt-1 text-right uppercase tracking-wider" style={{ color: 'var(--mid)' }}>
+              {bio.length}/200
+            </p>
           </div>
 
           {/* Error */}
           {error && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-200">
-              {error}
+            <div className="p-4 border-[3px]" style={{ borderColor: 'var(--cardinal)', background: 'var(--cardinal)', color: 'white' }}>
+              <span className="font-display text-sm tracking-wider">{error}</span>
             </div>
           )}
 
           {/* Submit */}
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${
-              canSubmit
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-stone-200 text-stone-400 cursor-not-allowed'
-            }`}
-          >
-            {submitting ? '提交中...' : '发布我的资料'}
+          <button type="submit" disabled={!canSubmit}
+            className={`brutal-btn w-full text-center ${canSubmit ? 'brutal-btn-primary' : ''}`}
+            style={!canSubmit ? { background: 'var(--beige)', color: 'var(--mid)', cursor: 'not-allowed' } : {}}>
+            {submitting ? 'DROPPING...' : 'DROP MY PROFILE'}
           </button>
         </form>
       </div>
