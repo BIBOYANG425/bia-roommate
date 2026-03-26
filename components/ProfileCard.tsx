@@ -26,7 +26,13 @@ export default function ProfileCard({
         <div className="min-w-0">
           <h3 className="font-semibold text-stone-900 truncate">{profile.name}</h3>
           <p className="text-xs text-stone-500 truncate">
-            {[profile.year, profile.major, profile.gender].filter(Boolean).join(' · ')}
+            {[
+              profile.year === '新生' && profile.enrollment_term
+                ? `新生 (${profile.enrollment_term})`
+                : profile.year,
+              profile.major,
+              profile.gender,
+            ].filter(Boolean).join(' · ')}
           </p>
         </div>
       </div>

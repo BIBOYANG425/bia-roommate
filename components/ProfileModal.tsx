@@ -1,22 +1,29 @@
 'use client'
 
 import { useEffect } from 'react'
-import { RoommateProfile, SLEEP_OPTIONS, CLEAN_OPTIONS, NOISE_OPTIONS, STUDY_OPTIONS } from '@/lib/types'
+import { RoommateProfile, SLEEP_OPTIONS, CLEAN_OPTIONS, NOISE_OPTIONS, MUSIC_OPTIONS, STUDY_OPTIONS } from '@/lib/types'
 import { getAvatarColor, getLastChar, relativeTime, habitLevel } from '@/lib/utils'
 
 function HabitBar({ label, value, options }: { label: string; value: string | null; options: readonly string[] }) {
-  const level = habitLevel(value, options)
   if (!value) return null
+  const level = habitLevel(value, options)
+  const isCustom = level === 0
   return (
     <div className="flex items-center gap-2 text-sm">
       <span className="w-14 text-stone-500 shrink-0">{label}</span>
-      <div className="flex-1 h-2 bg-stone-100 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-green-500 rounded-full transition-all"
-          style={{ width: `${level}%` }}
-        />
-      </div>
-      <span className="w-20 text-stone-600 text-right shrink-0">{value}</span>
+      {isCustom ? (
+        <span className="flex-1 text-stone-600">{value}</span>
+      ) : (
+        <>
+          <div className="flex-1 h-2 bg-stone-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-green-500 rounded-full transition-all"
+              style={{ width: `${level}%` }}
+            />
+          </div>
+          <span className="w-20 text-stone-600 text-right shrink-0">{value}</span>
+        </>
+      )}
     </div>
   )
 }
@@ -43,7 +50,7 @@ export default function ProfileModal({
     }
   }, [onClose])
 
-  const hasHabits = profile.sleep_habit || profile.clean_level || profile.noise_level || profile.study_style
+  const hasHabits = profile.sleep_habit || profile.clean_level || profile.noise_level || profile.music_habit || profile.study_style
 
   return (
     <div
@@ -77,7 +84,13 @@ export default function ProfileModal({
             <div>
               <h2 className="text-xl font-bold">{profile.name}</h2>
               <p className="text-green-100 text-sm">
-                {[profile.year, profile.major, profile.gender].filter(Boolean).join(' · ')}
+                {[
+                  profile.year === '新生' && profile.enrollment_term
+                    ? `新生 (${profile.enrollment_term})`
+                    : profile.year,
+                  profile.major,
+                  profile.gender,
+                ].filter(Boolean).join(' · ')}
               </p>
               <p className="text-green-200 text-xs mt-1">{relativeTime(profile.created_at)} 发布</p>
             </div>
@@ -119,6 +132,7 @@ export default function ProfileModal({
                 <HabitBar label="睡眠" value={profile.sleep_habit} options={SLEEP_OPTIONS} />
                 <HabitBar label="整洁" value={profile.clean_level} options={CLEAN_OPTIONS} />
                 <HabitBar label="噪音" value={profile.noise_level} options={NOISE_OPTIONS} />
+                <HabitBar label="外放" value={profile.music_habit} options={MUSIC_OPTIONS} />
                 <HabitBar label="学习" value={profile.study_style} options={STUDY_OPTIONS} />
               </div>
             </div>
