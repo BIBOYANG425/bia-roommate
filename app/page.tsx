@@ -226,6 +226,32 @@ function HomeContent() {
         items={['CLASS OF 2030', 'FIGHT ON', 'GO BEARS', 'BIA', 'ROOMMATE MATCH', 'DROP YOUR PROFILE']}
       />
 
+      {/* Social Links */}
+      <section className="border-t-[3px] border-[var(--black)] py-8 px-6" style={{ background: 'var(--cream)' }}>
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <a
+            href="https://www.instagram.com/bia_usc/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="brutal-btn brutal-btn-ghost text-sm flex items-center gap-2"
+          >
+            <span>INSTAGRAM</span>
+            <span style={{ color: 'var(--cardinal)' }}>@BIA_USC</span>
+            <span style={{ color: 'var(--mid)', fontSize: '10px' }}>→</span>
+          </a>
+          <a
+            href="https://xhslink.com/m/2t4EzpZAKAc"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="brutal-btn brutal-btn-ghost text-sm flex items-center gap-2"
+          >
+            <span style={{ color: 'var(--cardinal)' }}>小红书</span>
+            <span className="new-drop-badge" style={{ fontSize: '9px', padding: '1px 6px' }}>4138 LIKES</span>
+            <span style={{ color: 'var(--mid)', fontSize: '10px' }}>→</span>
+          </a>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="py-6 px-6 text-center border-t-[3px] border-[var(--black)]">
         <p className="font-display text-xs tracking-[0.2em]" style={{ color: 'var(--mid)' }}>
