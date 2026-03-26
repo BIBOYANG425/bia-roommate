@@ -26,12 +26,20 @@ export default function ProfileCard({
     <div className="brutal-card p-5 cursor-pointer flex flex-col gap-3 relative" onClick={onClick}>
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div
-          className="w-12 h-12 flex items-center justify-center text-white font-display text-xl border-[3px] border-[var(--black)]"
-          style={{ background: avatarColor.replace('bg-', ''), backgroundColor: `var(--cardinal)` }}
-        >
-          {lastChar}
-        </div>
+        {profile.avatar_url ? (
+          <img
+            src={profile.avatar_url}
+            alt={profile.name}
+            className="w-12 h-12 object-cover border-[3px] border-[var(--black)] shrink-0"
+          />
+        ) : (
+          <div
+            className="w-12 h-12 flex items-center justify-center text-white font-display text-xl border-[3px] border-[var(--black)] shrink-0"
+            style={{ backgroundColor: 'var(--cardinal)' }}
+          >
+            {lastChar}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <h3 className="font-display text-xl truncate" style={{ color: 'var(--black)' }}>{profile.name}</h3>
           <p className="text-[11px] truncate" style={{ color: 'var(--mid)' }}>

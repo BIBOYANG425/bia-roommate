@@ -82,6 +82,8 @@ export default function SubmitPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [name, setName] = useState('')
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [school, setSchool] = useState('')
   const [gender, setGender] = useState('')
   const [major, setMajor] = useState('')
@@ -104,6 +106,17 @@ export default function SubmitPage() {
     )
   }
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) {
+      setError('IMAGE TOO LARGE — MAX 2MB')
+      return
+    }
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim() || !contact.trim()) return
@@ -111,10 +124,27 @@ export default function SubmitPage() {
     setSubmitting(true)
     setError(null)
 
+    let avatarUrl: string | null = null
+    if (avatarFile) {
+      const ext = avatarFile.name.split('.').pop()
+      const filePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { data: uploadData, error: uploadErr } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, avatarFile, { cacheControl: '3600', upsert: true })
+      if (uploadErr) {
+        setError('AVATAR UPLOAD FAILED — TRY AGAIN')
+        setSubmitting(false)
+        return
+      }
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(uploadData.path)
+      avatarUrl = publicUrl
+    }
+
     const finalSleep = sleepHabit === '__custom__' ? (customSleep.trim() || null) : (sleepHabit || null)
 
     const formData = {
       name: name.trim(),
+      avatar_url: avatarUrl,
       school: school || null,
       gender: gender || null,
       major: major.trim() || null,
@@ -180,6 +210,42 @@ export default function SubmitPage() {
                 </label>
                 <input type="text" value={name} onChange={(e) => setName(e.target.value)}
                   placeholder="你的姓名或昵称" className="brutal-input" required />
+              </div>
+
+              {/* Avatar upload */}
+              <div>
+                <label className="font-display text-sm tracking-wider block mb-2" style={{ color: 'var(--mid)' }}>
+                  PROFILE PHOTO
+                </label>
+                <div className="flex items-center gap-4">
+                  <label className="cursor-pointer">
+                    <div
+                      className="w-20 h-20 border-[3px] border-[var(--black)] flex items-center justify-center overflow-hidden transition-all hover:shadow-[4px_4px_0_var(--gold)]"
+                      style={{ background: 'var(--beige)' }}
+                    >
+                      {avatarPreview ? (
+                        <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="font-display text-2xl" style={{ color: 'var(--mid)' }}>+</span>
+                      )}
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+                  </label>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--mid)' }}>
+                      CLICK TO UPLOAD
+                    </p>
+                    <p className="text-[10px]" style={{ color: 'var(--mid)' }}>
+                      JPG / PNG — MAX 2MB
+                    </p>
+                    {avatarFile && (
+                      <button type="button" onClick={() => { setAvatarFile(null); setAvatarPreview(null) }}
+                        className="text-[10px] uppercase tracking-wider mt-1" style={{ color: 'var(--cardinal)' }}>
+                        REMOVE
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div>

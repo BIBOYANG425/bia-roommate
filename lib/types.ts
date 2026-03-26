@@ -14,6 +14,7 @@ export interface RoommateProfile {
   study_style: '图书馆' | '自习室' | '宿舍' | '随心' | null
   hobbies: string | null
   tags: string[] | null
+  avatar_url: string | null
   bio: string | null
   created_at: string
 }

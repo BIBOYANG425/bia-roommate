@@ -83,11 +83,19 @@ export default function ProfileModal({
         <div className="p-6 border-b-[3px] border-[var(--black)] relative" style={{ background: 'var(--cardinal)' }}>
           <div className="ghost-text right-0 top-0 text-[100px]" style={{ color: 'white', opacity: 0.08 }}>BIA</div>
           <div className="flex items-center gap-4 relative">
-            <div
-              className="w-16 h-16 flex items-center justify-center text-white font-display text-3xl border-[3px] border-white shrink-0"
-            >
-              {lastChar}
-            </div>
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.name}
+                className="w-16 h-16 object-cover border-[3px] border-white shrink-0"
+              />
+            ) : (
+              <div
+                className="w-16 h-16 flex items-center justify-center text-white font-display text-3xl border-[3px] border-white shrink-0"
+              >
+                {lastChar}
+              </div>
+            )}
             <div>
               <h2 className="font-display text-3xl text-white">{profile.name}</h2>
               <p className="text-xs text-white/70">
