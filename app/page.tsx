@@ -10,6 +10,7 @@ import ProfileCard from '@/components/ProfileCard'
 import ProfileModal from '@/components/ProfileModal'
 import SkeletonCard from '@/components/SkeletonCard'
 import Toast from '@/components/Toast'
+import NavTabs from '@/components/NavTabs'
 
 function Marquee({ bg, text, items }: { bg: string; text: string; items: string[] }) {
   const content = items.join('  //  ') + '  //  '
@@ -83,6 +84,9 @@ function HomeContent() {
   return (
     <main className="min-h-screen">
       {showToast && <Toast message="PROFILE DROPPED SUCCESSFULLY" onClose={() => setShowToast(false)} />}
+
+      {/* Nav */}
+      <NavTabs />
 
       {/* Top Marquee */}
       <Marquee
