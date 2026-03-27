@@ -175,7 +175,7 @@ export default function SubmitPage() {
   }
 
   const canSubmit = name.trim() && contact.trim() && school && !submitting
-  const headerBg = school === 'UC Berkeley' ? 'var(--berkeley-blue)' : 'var(--cardinal)'
+  const headerBg = school === 'UC Berkeley' ? 'var(--berkeley-blue)' : school === 'Stanford' ? 'var(--stanford-cardinal)' : 'var(--cardinal)'
 
   return (
     <main className="min-h-screen" style={{ background: 'var(--beige)' }}>
@@ -255,7 +255,7 @@ export default function SubmitPage() {
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {SCHOOL_OPTIONS.map((s) => {
-                    const color = s === 'UC Berkeley' ? 'var(--berkeley-blue)' : 'var(--cardinal)'
+                    const color = s === 'UC Berkeley' ? 'var(--berkeley-blue)' : s === 'Stanford' ? 'var(--stanford-cardinal)' : 'var(--cardinal)'
                     return (
                       <button key={s} type="button" onClick={() => setSchool(school === s ? '' : s)}
                         className="brutal-tag cursor-pointer text-xs px-3 py-1.5 transition-colors"

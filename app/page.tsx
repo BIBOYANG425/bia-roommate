@@ -81,6 +81,14 @@ function HomeContent() {
     return true
   })
 
+  // School-specific theme colors
+  const themeAccent = schoolFilter === 'UC Berkeley' ? 'var(--berkeley-blue)'
+    : schoolFilter === 'Stanford' ? 'var(--stanford-cardinal)'
+    : 'var(--cardinal)'
+  const themeGold = schoolFilter === 'UC Berkeley' ? 'var(--berkeley-gold)'
+    : schoolFilter === 'Stanford' ? 'var(--stanford-gold)'
+    : 'var(--gold)'
+
   return (
     <main className="min-h-screen">
       {showToast && <Toast message="PROFILE DROPPED SUCCESSFULLY" onClose={() => setShowToast(false)} />}
@@ -90,9 +98,9 @@ function HomeContent() {
 
       {/* Top Marquee */}
       <Marquee
-        bg="var(--cardinal)"
-        text="var(--gold)"
-        items={['BIA 新生找室友', 'FIND YOUR ROOMMATE', 'CLASS OF 2030', 'NEW DROP', 'USC ✕ UC BERKELEY', 'ROOMMATE MATCH']}
+        bg={themeAccent}
+        text={themeGold}
+        items={['BIA 新生找室友', 'FIND YOUR ROOMMATE', 'CLASS OF 2030', 'NEW DROP', 'USC ✕ BERKELEY ✕ STANFORD', 'ROOMMATE MATCH']}
       />
 
       {/* Hero */}
@@ -106,7 +114,7 @@ function HomeContent() {
               width={100}
               height={100}
               className="border-[3px] border-[var(--black)]"
-              style={{ boxShadow: '6px 6px 0 var(--cardinal)' }}
+              style={{ boxShadow: `6px 6px 0 ${themeAccent}` }}
             />
             <div>
               <div className="new-drop-badge mb-2">NEW DROP 2030</div>
@@ -116,7 +124,7 @@ function HomeContent() {
 
           <h1 className="font-display text-[60px] sm:text-[96px] leading-[0.85] mb-6" style={{ color: 'var(--black)' }}>
             BIA 新生<br />
-            <span className="glitch-text" style={{ color: 'var(--cardinal)' }}>找室友</span>
+            <span className="glitch-text" style={{ color: themeAccent }}>找室友</span>
           </h1>
 
           <p className="text-sm sm:text-base max-w-md mb-10" style={{ color: 'var(--mid)' }}>
@@ -136,14 +144,15 @@ function HomeContent() {
         <h2 className="font-display text-[40px] sm:text-[60px] mb-6" style={{ color: 'var(--black)' }}>BROWSE</h2>
 
         {/* Campus Tabs */}
-        <div className="flex gap-0 mb-6">
-          {['', 'USC', 'UC Berkeley'].map((s) => {
+        <div className="flex gap-0 mb-6 flex-wrap">
+          {['', 'USC', 'UC Berkeley', 'Stanford'].map((s) => {
             const active = schoolFilter === s
             const label = s || 'ALL'
             let bg = 'var(--cream)'
             let fg = 'var(--mid)'
             if (active) {
               if (s === 'UC Berkeley') { bg = 'var(--berkeley-blue)'; fg = 'white' }
+              else if (s === 'Stanford') { bg = 'var(--stanford-cardinal)'; fg = 'white' }
               else if (s === 'USC') { bg = 'var(--cardinal)'; fg = 'white' }
               else { bg = 'var(--black)'; fg = 'white' }
             }
@@ -236,9 +245,9 @@ function HomeContent() {
 
       {/* Bottom Marquee */}
       <Marquee
-        bg="var(--gold)"
-        text="var(--cardinal)"
-        items={['CLASS OF 2030', 'FIGHT ON', 'GO BEARS', 'BIA', 'ROOMMATE MATCH', 'DROP YOUR PROFILE']}
+        bg={themeGold}
+        text={themeAccent}
+        items={['CLASS OF 2030', 'FIGHT ON', 'GO BEARS', 'GO CARDINAL', 'BIA', 'ROOMMATE MATCH', 'DROP YOUR PROFILE']}
       />
 
       {/* Social Links */}
@@ -251,7 +260,7 @@ function HomeContent() {
             className="brutal-btn brutal-btn-ghost text-sm flex items-center gap-2"
           >
             <span>INSTAGRAM</span>
-            <span style={{ color: 'var(--cardinal)' }}>@BIA_USC</span>
+            <span style={{ color: themeAccent }}>@BIA_USC</span>
             <span style={{ color: 'var(--mid)', fontSize: '10px' }}>→</span>
           </a>
           <a
@@ -260,7 +269,7 @@ function HomeContent() {
             rel="noopener noreferrer"
             className="brutal-btn brutal-btn-ghost text-sm flex items-center gap-2"
           >
-            <span style={{ color: 'var(--cardinal)' }}>小红书</span>
+            <span style={{ color: themeAccent }}>小红书</span>
             <span className="new-drop-badge" style={{ fontSize: '9px', padding: '1px 6px' }}>4138 LIKES</span>
             <span style={{ color: 'var(--mid)', fontSize: '10px' }}>→</span>
           </a>

@@ -41,10 +41,42 @@ export function habitLevel(
   return idx === -1 ? 0 : ((idx + 1) / options.length) * 100
 }
 
+export function schoolKey(school: string | null): 'usc' | 'berkeley' | 'stanford' {
+  if (school === 'UC Berkeley') return 'berkeley'
+  if (school === 'Stanford') return 'stanford'
+  return 'usc'
+}
+
 export function isBerkeley(school: string | null): boolean {
   return school === 'UC Berkeley'
 }
 
 export function schoolAccent(school: string | null): string {
-  return isBerkeley(school) ? 'var(--berkeley-blue)' : 'var(--cardinal)'
+  if (school === 'UC Berkeley') return 'var(--berkeley-blue)'
+  if (school === 'Stanford') return 'var(--stanford-cardinal)'
+  return 'var(--cardinal)'
+}
+
+export function schoolGold(school: string | null): string {
+  if (school === 'UC Berkeley') return 'var(--berkeley-gold)'
+  if (school === 'Stanford') return 'var(--stanford-gold)'
+  return 'var(--gold)'
+}
+
+export function schoolCardClass(school: string | null): string {
+  if (school === 'UC Berkeley') return 'brutal-card-berkeley'
+  if (school === 'Stanford') return 'brutal-card-stanford'
+  return ''
+}
+
+export function schoolTagClass(school: string | null): string {
+  if (school === 'UC Berkeley') return 'brutal-tag-berkeley'
+  if (school === 'Stanford') return 'brutal-tag-stanford'
+  return 'brutal-tag-filled'
+}
+
+export function schoolHabitClass(school: string | null): string {
+  if (school === 'UC Berkeley') return 'habit-bar-fill-berkeley'
+  if (school === 'Stanford') return 'habit-bar-fill-stanford'
+  return 'habit-bar-fill'
 }

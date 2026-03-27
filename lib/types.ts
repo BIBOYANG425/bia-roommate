@@ -33,4 +33,4 @@ export const STUDY_OPTIONS = ['图书馆', '自习室', '宿舍', '随心'] as c
 export const GENDER_OPTIONS = ['男', '女', '非二元', '其他', '不愿透露'] as const
 export const YEAR_OPTIONS = ['新生', '大一', '大二', '大三', '大四', '研究生'] as const
 export const ENROLLMENT_OPTIONS = ['Spring', 'Fall'] as const
-export const SCHOOL_OPTIONS = ['USC', 'UC Berkeley'] as const
+export const SCHOOL_OPTIONS = ['USC', 'UC Berkeley', 'Stanford'] as const

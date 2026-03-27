@@ -1,7 +1,7 @@
 'use client'
 
 import { RoommateProfile } from '@/lib/types'
-import { getAvatarColor, getLastChar, relativeTime, isBerkeley, schoolAccent } from '@/lib/utils'
+import { getAvatarColor, getLastChar, relativeTime, schoolAccent, schoolCardClass } from '@/lib/utils'
 
 export default function ProfileCard({
   profile,
@@ -12,8 +12,8 @@ export default function ProfileCard({
 }) {
   const avatarColor = getAvatarColor(profile.name)
   const lastChar = getLastChar(profile.name)
-  const berkeley = isBerkeley(profile.school)
   const accent = schoolAccent(profile.school)
+  const cardClass = schoolCardClass(profile.school)
 
   const subtitleParts = [
     profile.school,
@@ -25,7 +25,7 @@ export default function ProfileCard({
   ].filter(Boolean)
 
   return (
-    <div className={`brutal-card ${berkeley ? 'brutal-card-berkeley' : ''} p-5 cursor-pointer flex flex-col gap-3 relative`} onClick={onClick}>
+    <div className={`brutal-card ${cardClass} p-5 cursor-pointer flex flex-col gap-3 relative`} onClick={onClick}>
       {/* Header */}
       <div className="flex items-center gap-3">
         {profile.avatar_url ? (

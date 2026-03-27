@@ -9,6 +9,8 @@
   --mid: #8C7E6A;
   --berkeley-blue: #014B83;
   --berkeley-gold: #FEDD76;
+  --stanford-cardinal: #8C1515;
+  --stanford-gold: #EAAB00;
   --font-display: var(--font-display);
   --font-body: var(--font-body);
 }
@@ -78,6 +80,19 @@ body {
 }
 .habit-bar-fill-berkeley {
   background: var(--berkeley-blue);
+}
+
+/* Stanford variant */
+.brutal-card-stanford:hover {
+  box-shadow: 8px 8px 0 var(--stanford-cardinal);
+}
+.brutal-tag-stanford {
+  background: var(--stanford-cardinal);
+  color: white;
+  border-color: var(--stanford-cardinal);
+}
+.habit-bar-fill-stanford {
+  background: var(--stanford-cardinal);
 }
 
 /* Main container shadow */
