@@ -7,6 +7,8 @@
   --cardinal: #990000;
   --gold: #FFCC00;
   --mid: #8C7E6A;
+  --berkeley-blue: #014B83;
+  --berkeley-gold: #FEDD76;
   --font-display: var(--font-display);
   --font-body: var(--font-body);
 }
@@ -63,6 +65,19 @@ body {
 /* Cardinal variant */
 .brutal-card-cardinal:hover {
   box-shadow: 8px 8px 0 var(--cardinal);
+}
+
+/* Berkeley variant */
+.brutal-card-berkeley:hover {
+  box-shadow: 8px 8px 0 var(--berkeley-blue);
+}
+.brutal-tag-berkeley {
+  background: var(--berkeley-blue);
+  color: white;
+  border-color: var(--berkeley-blue);
+}
+.habit-bar-fill-berkeley {
+  background: var(--berkeley-blue);
 }
 
 /* Main container shadow */

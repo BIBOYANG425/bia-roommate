@@ -40,3 +40,11 @@ export function habitLevel(
   const idx = options.indexOf(value)
   return idx === -1 ? 0 : ((idx + 1) / options.length) * 100
 }
+
+export function isBerkeley(school: string | null): boolean {
+  return school === 'UC Berkeley'
+}
+
+export function schoolAccent(school: string | null): string {
+  return isBerkeley(school) ? 'var(--berkeley-blue)' : 'var(--cardinal)'
+}

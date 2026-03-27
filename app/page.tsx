@@ -92,7 +92,7 @@ function HomeContent() {
       <Marquee
         bg="var(--cardinal)"
         text="var(--gold)"
-        items={['BIA 新生找室友', 'FIND YOUR ROOMMATE', 'CLASS OF 2030', 'NEW DROP', 'USC & BERKELEY', 'ROOMMATE MATCH']}
+        items={['BIA 新生找室友', 'FIND YOUR ROOMMATE', 'CLASS OF 2030', 'NEW DROP', 'USC ✕ UC BERKELEY', 'ROOMMATE MATCH']}
       />
 
       {/* Hero */}
@@ -135,6 +135,31 @@ function HomeContent() {
         <span className="section-number">01</span>
         <h2 className="font-display text-[40px] sm:text-[60px] mb-6" style={{ color: 'var(--black)' }}>BROWSE</h2>
 
+        {/* Campus Tabs */}
+        <div className="flex gap-0 mb-6">
+          {['', 'USC', 'UC Berkeley'].map((s) => {
+            const active = schoolFilter === s
+            const label = s || 'ALL'
+            let bg = 'var(--cream)'
+            let fg = 'var(--mid)'
+            if (active) {
+              if (s === 'UC Berkeley') { bg = 'var(--berkeley-blue)'; fg = 'white' }
+              else if (s === 'USC') { bg = 'var(--cardinal)'; fg = 'white' }
+              else { bg = 'var(--black)'; fg = 'white' }
+            }
+            return (
+              <button
+                key={label}
+                onClick={() => setSchoolFilter(s)}
+                className="font-display text-sm sm:text-base tracking-[0.1em] px-5 sm:px-8 py-3 border-[3px] border-[var(--black)] -mr-[3px] first:mr-0 transition-colors"
+                style={{ background: bg, color: fg }}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <input
             type="text"
@@ -143,16 +168,6 @@ function HomeContent() {
             onChange={(e) => setSearch(e.target.value)}
             className="brutal-input flex-1"
           />
-          <select
-            value={schoolFilter}
-            onChange={(e) => setSchoolFilter(e.target.value)}
-            className="brutal-select"
-          >
-            <option value="">ALL SCHOOLS</option>
-            {SCHOOL_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
           <select
             value={genderFilter}
             onChange={(e) => setGenderFilter(e.target.value)}

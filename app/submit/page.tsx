@@ -174,12 +174,13 @@ export default function SubmitPage() {
     router.push('/?submitted=true')
   }
 
-  const canSubmit = name.trim() && contact.trim() && !submitting
+  const canSubmit = name.trim() && contact.trim() && school && !submitting
+  const headerBg = school === 'UC Berkeley' ? 'var(--berkeley-blue)' : 'var(--cardinal)'
 
   return (
     <main className="min-h-screen" style={{ background: 'var(--beige)' }}>
       {/* Header */}
-      <div className="border-b-[3px] border-[var(--black)]" style={{ background: 'var(--cardinal)' }}>
+      <div className="border-b-[3px] border-[var(--black)] transition-colors duration-300" style={{ background: headerBg }}>
         <div className="max-w-2xl mx-auto px-6 py-10 relative">
           <div className="ghost-text right-0 top-0 text-[140px]" style={{ color: 'white', opacity: 0.06 }}>DROP</div>
           <Link href="/" className="font-display text-xs tracking-[0.2em] text-white/60 hover:text-white mb-4 inline-block">
@@ -249,15 +250,20 @@ export default function SubmitPage() {
               </div>
 
               <div>
-                <label className="font-display text-sm tracking-wider block mb-2" style={{ color: 'var(--mid)' }}>SCHOOL</label>
+                <label className="font-display text-sm tracking-wider block mb-2" style={{ color: 'var(--mid)' }}>
+                  SCHOOL <span style={{ color: 'var(--cardinal)' }}>*</span>
+                </label>
                 <div className="flex flex-wrap gap-2">
-                  {SCHOOL_OPTIONS.map((s) => (
-                    <button key={s} type="button" onClick={() => setSchool(school === s ? '' : s)}
-                      className="brutal-tag cursor-pointer text-xs px-3 py-1.5 transition-colors"
-                      style={school === s ? { background: 'var(--cardinal)', color: 'white', borderColor: 'var(--cardinal)' } : {}}>
-                      {s}
-                    </button>
-                  ))}
+                  {SCHOOL_OPTIONS.map((s) => {
+                    const color = s === 'UC Berkeley' ? 'var(--berkeley-blue)' : 'var(--cardinal)'
+                    return (
+                      <button key={s} type="button" onClick={() => setSchool(school === s ? '' : s)}
+                        className="brutal-tag cursor-pointer text-xs px-3 py-1.5 transition-colors"
+                        style={school === s ? { background: color, color: 'white', borderColor: color } : {}}>
+                        {s}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 

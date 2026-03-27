@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react'
 import { RoommateProfile, SLEEP_OPTIONS, CLEAN_OPTIONS, NOISE_OPTIONS, MUSIC_OPTIONS, STUDY_OPTIONS } from '@/lib/types'
-import { getLastChar, relativeTime, habitLevel } from '@/lib/utils'
+import { getLastChar, relativeTime, habitLevel, isBerkeley, schoolAccent } from '@/lib/utils'
 
-function HabitBar({ label, value, options }: { label: string; value: string | null; options: readonly string[] }) {
+function HabitBar({ label, value, options, berkeley }: { label: string; value: string | null; options: readonly string[]; berkeley?: boolean }) {
   if (!value) return null
   const level = habitLevel(value, options)
   const isCustom = level === 0
@@ -16,7 +16,7 @@ function HabitBar({ label, value, options }: { label: string; value: string | nu
       ) : (
         <>
           <div className="flex-1 habit-bar-bg">
-            <div className="habit-bar-fill" style={{ width: `${level}%` }} />
+            <div className={`habit-bar-fill${berkeley ? '-berkeley' : ''}`} style={{ width: `${level}%` }} />
           </div>
           <span className="w-20 text-right" style={{ color: 'var(--black)' }}>{value}</span>
         </>
@@ -33,6 +33,8 @@ export default function ProfileModal({
   onClose: () => void
 }) {
   const lastChar = getLastChar(profile.name)
+  const berkeley = isBerkeley(profile.school)
+  const accent = schoolAccent(profile.school)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -80,7 +82,7 @@ export default function ProfileModal({
         </button>
 
         {/* Header */}
-        <div className="p-6 border-b-[3px] border-[var(--black)] relative" style={{ background: 'var(--cardinal)' }}>
+        <div className="p-6 border-b-[3px] border-[var(--black)] relative" style={{ background: accent }}>
           <div className="ghost-text right-0 top-0 text-[100px]" style={{ color: 'white', opacity: 0.08 }}>BIA</div>
           <div className="flex items-center gap-4 relative">
             {profile.avatar_url ? (
@@ -110,7 +112,7 @@ export default function ProfileModal({
 
         <div className="p-6 space-y-5">
           {/* Contact — prominent */}
-          <div className="p-4 border-[3px] border-[var(--black)]" style={{ background: 'var(--gold)' }}>
+          <div className="p-4 border-[3px] border-[var(--black)]" style={{ background: berkeley ? 'var(--berkeley-gold)' : 'var(--gold)' }}>
             <p className="text-[10px] uppercase tracking-wider font-display mb-1" style={{ color: 'var(--black)' }}>CONTACT</p>
             <p className="font-display text-2xl" style={{ color: 'var(--black)' }}>{profile.contact}</p>
           </div>
@@ -121,7 +123,7 @@ export default function ProfileModal({
               <h3 className="font-display text-sm tracking-wider mb-2" style={{ color: 'var(--mid)' }}>TAGS</h3>
               <div className="flex flex-wrap gap-1.5">
                 {profile.tags.map((tag, i) => (
-                  <span key={tag} className={i === 0 ? 'brutal-tag brutal-tag-filled' : 'brutal-tag'}>
+                  <span key={tag} className={i === 0 ? `brutal-tag ${berkeley ? 'brutal-tag-berkeley' : 'brutal-tag-filled'}` : 'brutal-tag'}>
                     {tag}
                   </span>
                 ))}
@@ -134,11 +136,11 @@ export default function ProfileModal({
             <div>
               <h3 className="font-display text-sm tracking-wider mb-3" style={{ color: 'var(--mid)' }}>HABITS</h3>
               <div className="flex flex-col gap-3">
-                <HabitBar label="SLEEP" value={profile.sleep_habit} options={SLEEP_OPTIONS} />
-                <HabitBar label="CLEAN" value={profile.clean_level} options={CLEAN_OPTIONS} />
-                <HabitBar label="NOISE" value={profile.noise_level} options={NOISE_OPTIONS} />
-                <HabitBar label="MUSIC" value={profile.music_habit} options={MUSIC_OPTIONS} />
-                <HabitBar label="STUDY" value={profile.study_style} options={STUDY_OPTIONS} />
+                <HabitBar label="SLEEP" value={profile.sleep_habit} options={SLEEP_OPTIONS} berkeley={berkeley} />
+                <HabitBar label="CLEAN" value={profile.clean_level} options={CLEAN_OPTIONS} berkeley={berkeley} />
+                <HabitBar label="NOISE" value={profile.noise_level} options={NOISE_OPTIONS} berkeley={berkeley} />
+                <HabitBar label="MUSIC" value={profile.music_habit} options={MUSIC_OPTIONS} berkeley={berkeley} />
+                <HabitBar label="STUDY" value={profile.study_style} options={STUDY_OPTIONS} berkeley={berkeley} />
               </div>
             </div>
           )}

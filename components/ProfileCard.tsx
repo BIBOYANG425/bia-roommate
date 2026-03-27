@@ -1,7 +1,7 @@
 'use client'
 
 import { RoommateProfile } from '@/lib/types'
-import { getAvatarColor, getLastChar, relativeTime } from '@/lib/utils'
+import { getAvatarColor, getLastChar, relativeTime, isBerkeley, schoolAccent } from '@/lib/utils'
 
 export default function ProfileCard({
   profile,
@@ -12,6 +12,8 @@ export default function ProfileCard({
 }) {
   const avatarColor = getAvatarColor(profile.name)
   const lastChar = getLastChar(profile.name)
+  const berkeley = isBerkeley(profile.school)
+  const accent = schoolAccent(profile.school)
 
   const subtitleParts = [
     profile.school,
@@ -23,7 +25,7 @@ export default function ProfileCard({
   ].filter(Boolean)
 
   return (
-    <div className="brutal-card p-5 cursor-pointer flex flex-col gap-3 relative" onClick={onClick}>
+    <div className={`brutal-card ${berkeley ? 'brutal-card-berkeley' : ''} p-5 cursor-pointer flex flex-col gap-3 relative`} onClick={onClick}>
       {/* Header */}
       <div className="flex items-center gap-3">
         {profile.avatar_url ? (
@@ -35,7 +37,7 @@ export default function ProfileCard({
         ) : (
           <div
             className="w-12 h-12 flex items-center justify-center text-white font-display text-xl border-[3px] border-[var(--black)] shrink-0"
-            style={{ backgroundColor: 'var(--cardinal)' }}
+            style={{ backgroundColor: accent }}
           >
             {lastChar}
           </div>
@@ -72,7 +74,7 @@ export default function ProfileCard({
         <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--mid)' }}>
           {relativeTime(profile.created_at)}
         </span>
-        <span className="font-display text-xs tracking-wider" style={{ color: 'var(--cardinal)' }}>
+        <span className="font-display text-xs tracking-wider" style={{ color: accent }}>
           VIEW DETAILS →
         </span>
       </div>
