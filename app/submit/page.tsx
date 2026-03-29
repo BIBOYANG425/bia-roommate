@@ -166,7 +166,7 @@ export default function SubmitPage() {
       .insert([formData])
 
     if (err) {
-      setError('SUBMISSION FAILED — TRY AGAIN')
+      setError(`SUBMISSION FAILED: ${err.message}`)
       setSubmitting(false)
       return
     }

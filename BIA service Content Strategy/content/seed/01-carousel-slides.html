@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIA 室友类型测试 — Xiaohongshu Carousel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    padding: 40px 20px;
+  }
+
+  .slide-label {
+    font-size: 14px;
+    color: #999;
+    margin-bottom: -30px;
+    font-family: monospace;
+  }
+
+  .slide {
+    width: 1080px;
+    height: 1440px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  /* ====== SLIDE 1: COVER ====== */
+  .slide-1 {
+    background: linear-gradient(135deg, #E8D5F5 0%, #D5F5E8 50%, #F5E0D5 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .slide-1 .icons-row {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 60px;
+  }
+
+  .slide-1 .icon-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  }
+
+  .slide-1 .ic-1 { background: #D5E8F5; }
+  .slide-1 .ic-2 { background: #F5E0D5; }
+  .slide-1 .ic-3 { background: #FFF5D5; }
+  .slide-1 .ic-4 { background: #E8D5F5; }
+
+  .slide-1 .title {
+    font-size: 72px;
+    font-weight: 900;
+    color: #2D2D3A;
+    line-height: 1.3;
+    margin-bottom: 30px;
+  }
+
+  .slide-1 .subtitle {
+    font-size: 42px;
+    font-weight: 400;
+    color: #555;
+    margin-bottom: 60px;
+    line-height: 1.5;
+  }
+
+  .slide-1 .badge {
+    background: #FF6B8A;
+    color: white;
+    font-size: 32px;
+    font-weight: 700;
+    padding: 16px 48px;
+    border-radius: 50px;
+    box-shadow: 0 6px 24px rgba(255,107,138,0.3);
+  }
+
+  /* ====== QUESTION SLIDES (2-6) ====== */
+  .slide-q {
+    display: flex;
+    flex-direction: column;
+    padding: 80px 70px;
+  }
+
+  .slide-q .q-number {
+    font-size: 28px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .slide-q .q-title {
+    font-size: 56px;
+    font-weight: 900;
+    color: #2D2D3A;
+    margin-bottom: 60px;
+    line-height: 1.3;
+  }
+
+  .slide-q .options {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .slide-q .option-card {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 32px;
+    padding: 48px 52px;
+    display: flex;
+    align-items: flex-start;
+    gap: 36px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+    transition: transform 0.2s;
+  }
+
+  .slide-q .option-emoji {
+    font-size: 64px;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .slide-q .option-content { flex: 1; }
+
+  .slide-q .option-label {
+    font-size: 40px;
+    font-weight: 700;
+    color: #2D2D3A;
+    margin-bottom: 16px;
+  }
+
+  .slide-q .option-desc {
+    font-size: 30px;
+    color: #666;
+    line-height: 1.6;
+  }
+
+  .slide-2 { background: linear-gradient(180deg, #D5E8F5 0%, #C5D8F0 100%); }
+  .slide-3 { background: linear-gradient(180deg, #D5F5E8 0%, #C0E8D8 100%); }
+  .slide-4 { background: linear-gradient(180deg, #F5E0D5 0%, #EDCFC0 100%); }
+  .slide-5 { background: linear-gradient(180deg, #E8D5F5 0%, #D8C5E8 100%); }
+  .slide-6 { background: linear-gradient(180deg, #D5E8F5 0%, #C5D8F0 100%); }
+
+  /* ====== SLIDE 7: RESULTS ====== */
+  .slide-7 {
+    background: #FAFAFA;
+    display: flex;
+    flex-direction: column;
+    padding: 70px;
+  }
+
+  .slide-7 .results-title {
+    font-size: 52px;
+    font-weight: 900;
+    color: #2D2D3A;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .slide-7 .results-sub {
+    font-size: 28px;
+    color: #999;
+    text-align: center;
+    margin-bottom: 50px;
+  }
+
+  .slide-7 .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    flex: 1;
+  }
+
+  .slide-7 .result-card {
+    border-radius: 28px;
+    padding: 40px 36px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .rc-1 { background: #D5F5E8; }
+  .rc-2 { background: #F5E0D5; }
+  .rc-3 { background: #FFF5D5; }
+  .rc-4 { background: #E8D5F5; }
+
+  .slide-7 .result-emoji {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  .slide-7 .result-name {
+    font-size: 36px;
+    font-weight: 700;
+    color: #2D2D3A;
+    margin-bottom: 8px;
+  }
+
+  .slide-7 .result-rule {
+    font-size: 24px;
+    color: #888;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .slide-7 .result-traits {
+    font-size: 26px;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  .slide-7 .result-match {
+    font-size: 24px;
+    color: #FF6B8A;
+    font-weight: 600;
+    margin-top: auto;
+  }
+
+  /* ====== SLIDE 8: CTA ====== */
+  .slide-8 {
+    background: linear-gradient(135deg, #E8D5F5 0%, #D5E8F5 30%, #D5F5E8 60%, #F5E0D5 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 70px;
+  }
+
+  .slide-8 .cta-hook {
+    font-size: 52px;
+    font-weight: 900;
+    color: #2D2D3A;
+    margin-bottom: 40px;
+    line-height: 1.3;
+  }
+
+  .slide-8 .phone-mock {
+    width: 340px;
+    height: 580px;
+    background: white;
+    border-radius: 40px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 50px;
+    border: 3px solid #eee;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .phone-mock .phone-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .phone-mock .phone-body {
+    margin-top: 40px;
+    font-size: 22px;
+    color: #666;
+    padding: 20px;
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  .phone-mock .phone-btn {
+    background: #FF6B8A;
+    color: white;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 30px;
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 16px;
+  }
+
+  .slide-8 .cta-desc {
+    font-size: 34px;
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 40px;
+    max-width: 800px;
+  }
+
+  .slide-8 .cta-button {
+    background: #FF6B8A;
+    color: white;
+    font-size: 38px;
+    font-weight: 700;
+    padding: 24px 64px;
+    border-radius: 60px;
+    box-shadow: 0 8px 32px rgba(255,107,138,0.35);
+    margin-bottom: 30px;
+  }
+
+  .slide-8 .cta-features {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 50px;
+  }
+
+  .slide-8 .cta-feat {
+    font-size: 28px;
+    color: #666;
+    font-weight: 500;
+  }
+
+  .slide-8 .cta-tagline {
+    font-size: 40px;
+    font-weight: 700;
+    color: #2D2D3A;
+  }
+
+  /* ====== WATERMARK ====== */
+  .watermark {
+    position: absolute;
+    bottom: 36px;
+    right: 40px;
+    font-size: 24px;
+    font-weight: 700;
+    color: rgba(45,45,58,0.15);
+    letter-spacing: 2px;
+  }
+
+  /* ====== SLIDE COUNTER ====== */
+  .slide-counter {
+    position: absolute;
+    top: 40px;
+    right: 44px;
+    font-size: 26px;
+    font-weight: 600;
+    color: rgba(45,45,58,0.25);
+  }
+
+  /* ====== PRINT / SCREENSHOT HELPER ====== */
+  @media print {
+    body { gap: 0; padding: 0; background: white; }
+    .slide-label { display: none; }
+    .slide { page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== SLIDE 1: COVER ==================== -->
+<p class="slide-label">Slide 1 / 8 — Cover</p>
+<div class="slide slide-1">
+  <div class="icons-row">
+    <div class="icon-circle ic-1">🌅</div>
+    <div class="icon-circle ic-2">🌙</div>
+    <div class="icon-circle ic-3">🎉</div>
+    <div class="icon-circle ic-4">📚</div>
+  </div>
+  <div class="title">你是哪种<br>室友类型？</div>
+  <div class="subtitle">5个问题测出你的室友人格 🏠</div>
+  <div class="badge">USC 2026 新生必测！</div>
+  <div class="watermark">BIA</div>
+</div>
+
+<!-- ==================== SLIDE 2: Q1 ==================== -->
+<p class="slide-label">Slide 2 / 8 — Q1 作息</p>
+<div class="slide slide-q slide-2">
+  <div class="slide-counter">1/5</div>
+  <div class="q-number">QUESTION 01</div>
+  <div class="q-title">你的理想作息是？</div>
+  <div class="options">
+    <div class="option-card">
+      <div class="option-emoji">🌅</div>
+      <div class="option-content">
+        <div class="option-label">A. 早睡早起型</div>
+        <div class="option-desc">
+          晚上11点前必须关灯<br>
+          早上7点自然醒<br>
+          周末也不睡懒觉
+        </div>
+      </div>
+    </div>
+    <div class="option-card">
+      <div class="option-emoji">🌙</div>
+      <div class="option-content">
+        <div class="option-label">B. 夜猫子型</div>
+        <div class="option-desc">
+          凌晨2点才是创作高峰<br>
+          中午才是早晨<br>
+          熬夜是生活方式
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="watermark">BIA</div>
+</div>
+
+<!-- ==================== SLIDE 3: Q2 ==================== -->
+<p class="slide-label">Slide 3 / 8 — Q2 整洁</p>
+<div class="slide slide-q slide-3">
+  <div class="slide-counter">2/5</div>
+  <div class="q-number">QUESTION 02</div>
+  <div class="q-title">对房间整洁度的要求？</div>
+  <div class="options">
+    <div class="option-card">
+      <div class="option-emoji">✨</div>
+      <div class="option-content">
+        <div class="option-label">A. 强迫症型</div>
+        <div class="option-desc">
+          物品必须归位<br>
+          桌面不能有杂物<br>
+          用完立刻收拾
+        </div>
+      </div>
+    </div>
+    <div class="option-card">
+      <div class="option-emoji">🎨</div>
+      <div class="option-content">
+        <div class="option-label">B. 随性型</div>
+        <div class="option-desc">
+          创意需要混乱<br>
+          乱中有序就好<br>
+          周末统一打扫
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="watermark">BIA</div>
+</div>
+
+<!-- ==================== SLIDE 4: Q3 ==================== -->
+<p class="slide-label">Slide 4 / 8 — Q3 社交</p>
+<div class="slide slide-q slide-4">
+  <div class="slide-counter">3/5</div>
+  <div class="q-number">QUESTION 03</div>
+  <div class="q-title">社交方面你更倾向？</div>
+  <div class="options">
+    <div class="option-card">
+      <div class="option-emoji">🎉</div>
+      <div class="option-content">
+        <div class="option-label">A. 热闹型</div>
+        <div class="option-desc">
+          朋友来家里聚会是最开心的事<br>
+          周末喜欢约人<br>
+          家就是 social hub
+        </div>
+      </div>
+    </div>
+    <div class="option-card">
+      <div class="option-emoji">📚</div>
+      <div class="option-content">
+        <div class="option-label">B. 安静型</div>
+        <div class="option-desc">
+          家是充电的地方<br>
+          需要安静独处<br>
+          social 请约在外面
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="watermark">BIA</div>
+</div>
+
+<!-- ==================== SLIDE 5: Q4 ==================== -->
+<p class="slide-label">Slide 5 / 8 — Q4 共享空间</p>
+<div class="slide slide-q slide-5">
+  <div class="slide-counter">4/5</div>
+  <div class="q-number">QUESTION 04</div>
+  <div class="q-title">关于共享空间<br>（厨房/客厅）？</div>
+  <div class="options">
+    <div class="option-card">
+      <div class="option-emoji">📋</div>
+      <div class="option-content">
+        <div class="option-label">A. 严格AA型</div>
+        <div class="option-desc">
+          费用平摊，食物分开<br>
+          规则要提前说清楚<br>
+          公共物品有清单
+        </div>
+      </div>
+    </div>
+    <div class="option-card">
+      <div class="option-emoji">🤝</div>
+      <div class="option-content">
+        <div class="option-label">B. 随缘型</div>
+        <div class="option-desc">
+          你吃我的零食<br>
+          我用你的调料<br>
+          不计较，开心就好
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="watermark">BIA</div>
+</div>
+
+<!-- ==================== SLIDE 6: Q5 ==================== -->
+<p class="slide-label">Slide 6 / 8 — Q5 噪音</p>
+<div class="slide slide-q slide-6">
+  <div class="slide-counter">5/5</div>
+  <div class="q-number">QUESTION 05</div>
+  <div class="q-title">对噪音的容忍度？</div>
+  <div class="options">
+    <div class="option-card">
+      <div class="option-emoji">🎧</div>
+      <div class="option-content">
+        <div class="option-label">A. 降噪模式</div>
+        <div class="option-desc">
+          任何声音都可能打断思路<br>
+          学习和睡觉需要绝对安静<br>
+          戴耳塞是日常
+        </div>
+      </div>
+    </div>
+    <div class="option-card">
+      <div class="option-emoji">🎵</div>
+      <div class="option-content">
+        <div class="option-label">B. BGM模式</div>
+        <div class="option-desc">
+          有点声音反而更有安全感<br>
+          开着视频当背景音<br>
+          完全安静反而不习惯
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="watermark">BIA</div>
+</div>
+
+<!-- ==================== SLIDE 7: RESULTS ==================== -->
+<p class="slide-label">Slide 7 / 8 — Results</p>
+<div class="slide slide-7">
+  <div class="results-title">你的室友人格是？</div>
+  <div class="results-sub">数数你选了几个 A / B 👇</div>
+  <div class="results-grid">
+    <div class="result-card rc-1">
+      <div class="result-emoji">🌅✨</div>
+      <div class="result-name">学霸管家型</div>
+      <div class="result-rule">多数选 A</div>
+      <div class="result-traits">自律 · 规律 · 注重效率<br>早睡早起，房间一尘不染</div>
+      <div class="result-match">💕 最佳搭配：同类型 or 安静随和型</div>
+    </div>
+    <div class="result-card rc-2">
+      <div class="result-emoji">🌙🎨</div>
+      <div class="result-name">自由创作者型</div>
+      <div class="result-rule">多数选 B</div>
+      <div class="result-traits">灵活 · 随性 · 享受当下<br>晚睡晚起，自在最重要</div>
+      <div class="result-match">💕 最佳搭配：同类型 or 包容开放型</div>
+    </div>
+    <div class="result-card rc-3">
+      <div class="result-emoji">🌅🎉</div>
+      <div class="result-name">社交阳光型</div>
+      <div class="result-rule">A和B差不多，偏A</div>
+      <div class="result-traits">有规律但爱热闹<br>喜欢在家招待朋友</div>
+      <div class="result-match">💕 最佳搭配：作息相近的活力型</div>
+    </div>
+    <div class="result-card rc-4">
+      <div class="result-emoji">🌙📚</div>
+      <div class="result-name">安静夜猫型</div>
+      <div class="result-rule">A和B差不多，偏B</div>
+      <div class="result-traits">晚睡但需要安静空间<br>独处是最好的充电方式</div>
+      <div class="result-match">💕 最佳搭配：同样晚睡的安静型</div>
+    </div>
+  </div>
+  <div class="watermark">BIA</div>
+</div>
+
+<!-- ==================== SLIDE 8: CTA ==================== -->
+<p class="slide-label">Slide 8 / 8 — CTA</p>
+<div class="slide slide-8">
+  <div class="cta-hook">5个问题还不够！</div>
+
+  <div class="phone-mock">
+    <div class="phone-header">BIA 室友匹配</div>
+    <div class="phone-body">
+      <div style="font-size:18px;color:#999;margin-bottom:12px;">生活习惯问卷</div>
+      <div style="font-size:24px;color:#333;font-weight:600;margin-bottom:8px;">6个核心维度</div>
+      <div style="font-size:24px;color:#333;font-weight:600;margin-bottom:8px;">20+生活场景</div>
+      <div style="font-size:24px;color:#333;font-weight:600;margin-bottom:20px;">科学匹配算法</div>
+      <div class="phone-btn">开始匹配 →</div>
+    </div>
+  </div>
+
+  <div class="cta-desc">
+    BIA 用科学算法分析你的生活习惯<br>
+    从6个核心维度为你匹配最合适的 USC 室友
+  </div>
+
+  <div class="cta-button">👉 点击主页链接，3分钟完成匹配</div>
+
+  <div class="cta-features">
+    <span class="cta-feat">免费</span>
+    <span class="cta-feat">·</span>
+    <span class="cta-feat">专为USC中国学生</span>
+    <span class="cta-feat">·</span>
+    <span class="cta-feat">已有100+人参与</span>
+  </div>
+
+  <div class="cta-tagline">别让室友变室敌 💪</div>
+
+  <div style="position:absolute;bottom:40px;font-size:28px;color:rgba(45,45,58,0.3);font-weight:500;">www.uscbia.com</div>
+  <div class="watermark">BIA</div>
+</div>
+
+</body>
+</html>
