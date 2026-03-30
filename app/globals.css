@@ -305,3 +305,150 @@ body {
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--beige); }
 ::-webkit-scrollbar-thumb { background: var(--black); }
+
+/* ─── Course Planner ─── */
+
+.calendar-header-cell {
+  font-family: var(--font-display), Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 14px;
+  padding: 8px 4px;
+  text-align: center;
+  border-bottom: 3px solid var(--black);
+  border-right: 1px solid var(--mid);
+  background: var(--cream);
+  color: var(--black);
+}
+
+.calendar-time-label {
+  font-family: var(--font-body), monospace;
+  font-size: 10px;
+  color: var(--mid);
+  padding: 2px 6px;
+  text-align: right;
+}
+
+.calendar-day-column {
+  position: relative;
+  border-right: 1px solid color-mix(in srgb, var(--mid) 30%, transparent);
+}
+
+.calendar-row-line {
+  border-bottom: 1px solid color-mix(in srgb, var(--mid) 15%, transparent);
+}
+
+.calendar-row-line-hour {
+  border-bottom: 1px solid color-mix(in srgb, var(--mid) 35%, transparent);
+}
+
+.course-block {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  border: 2px solid var(--black);
+  padding: 2px 4px;
+  font-family: var(--font-body), monospace;
+  font-size: 10px;
+  line-height: 1.3;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  z-index: 1;
+}
+
+.course-block:hover {
+  transform: scale(1.02);
+  z-index: 10;
+  box-shadow: 3px 3px 0 var(--black);
+}
+
+.course-block-title {
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-panel {
+  border-right: 3px solid var(--black);
+  min-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 20;
+  border: 3px solid var(--black);
+  border-top: 0;
+  background: var(--cream);
+  max-height: 240px;
+  overflow-y: auto;
+  box-shadow: 6px 6px 0 var(--black);
+}
+
+.autocomplete-item {
+  padding: 8px 14px;
+  font-family: var(--font-body), monospace;
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid color-mix(in srgb, var(--mid) 30%, transparent);
+}
+
+.autocomplete-item:hover {
+  background: var(--gold);
+  color: var(--black);
+}
+
+.rmp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  font-family: var(--font-body), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  border: 2px solid var(--black);
+}
+
+.rmp-good { background: #2D6A4F; color: white; }
+.rmp-ok { background: var(--gold); color: var(--black); }
+.rmp-bad { background: var(--cardinal); color: white; }
+.rmp-na { background: var(--beige); color: var(--mid); }
+
+.schedule-tab {
+  font-family: var(--font-display), Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 13px;
+  padding: 6px 16px;
+  border: 3px solid var(--black);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  margin-right: -3px;
+}
+
+.schedule-tab-active {
+  background: var(--cardinal);
+  color: white;
+}
+
+.conflict-border {
+  border-color: var(--cardinal) !important;
+  box-shadow: inset 0 0 0 2px var(--cardinal);
+}
+
+@media (max-width: 1023px) {
+  .search-panel {
+    border-right: none;
+    border-bottom: 3px solid var(--black);
+    min-height: auto;
+    max-height: 50vh;
+  }
+}
