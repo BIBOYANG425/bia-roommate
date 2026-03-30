@@ -32,8 +32,10 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
     setError(null)
     setProgress(20)
 
+    let progressInterval: ReturnType<typeof setInterval> | undefined
+
     try {
-      const progressInterval = setInterval(() => {
+      progressInterval = setInterval(() => {
         setProgress((p) => Math.min(p + 8, 85))
       }, 400)
 
@@ -44,6 +46,7 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
       })
 
       clearInterval(progressInterval)
+      progressInterval = undefined
       setProgress(95)
 
       if (!res.ok) {
@@ -65,6 +68,7 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
     } catch {
       setError('NETWORK ERROR — PLEASE TRY AGAIN')
     } finally {
+      if (progressInterval) clearInterval(progressInterval)
       setLoading(false)
       setProgress(0)
     }
@@ -73,7 +77,8 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
   function addTag(tag: string) {
     setInput((prev) => {
       const trimmed = prev.trim()
-      if (trimmed.toLowerCase().includes(tag.toLowerCase())) return prev
+      const tokens = trimmed.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean)
+      if (tokens.some((t) => t === tag.toLowerCase())) return prev
       return trimmed ? `${trimmed}, ${tag.toLowerCase()}` : tag.toLowerCase()
     })
     setError(null)
@@ -108,7 +113,7 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
             className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all hover:translate-y-[-1px]"
             style={{
               borderColor: 'var(--beige)',
-              background: input.toLowerCase().includes(tag.toLowerCase()) ? 'var(--gold)' : 'white',
+              background: input.split(',').map((t) => t.trim().toLowerCase()).includes(tag.toLowerCase()) ? 'var(--gold)' : 'white',
               color: 'var(--black)',
               borderRadius: '20px',
               opacity: loading ? 0.5 : 1,

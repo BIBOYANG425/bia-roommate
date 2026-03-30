@@ -1,18 +1,7 @@
 import { NextRequest } from 'next/server'
+import { GE_MAP } from '@/lib/course-planner/ge-map'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-// Map our GE codes to USC API params
-const GE_MAP: Record<string, { requirementPrefix: string; categoryPrefix: string }> = {
-  'GE-A': { requirementPrefix: 'ACORELIT', categoryPrefix: 'ARTS' },
-  'GE-B': { requirementPrefix: 'ACORELIT', categoryPrefix: 'HINQ' },
-  'GE-C': { requirementPrefix: 'ACORELIT', categoryPrefix: 'SANA' },
-  'GE-D': { requirementPrefix: 'ACORELIT', categoryPrefix: 'LIFE' },
-  'GE-E': { requirementPrefix: 'ACORELIT', categoryPrefix: 'PSC' },
-  'GE-F': { requirementPrefix: 'ACORELIT', categoryPrefix: 'QREA' },
-  'GE-G': { requirementPrefix: 'AGLOPERS', categoryPrefix: 'GPG' },
-  'GE-H': { requirementPrefix: 'AGLOPERS', categoryPrefix: 'GPH' },
-}
 
 function transformSection(sec: any): any {
   const schedule = sec.schedule || []

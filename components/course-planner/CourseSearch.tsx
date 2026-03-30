@@ -29,11 +29,11 @@ export default function CourseSearch({ onSelect, semester }: CourseSearchProps) 
   }, [])
 
   const fetchSuggestions = useCallback(async (q: string) => {
+    abortRef.current?.abort()
     if (q.length < 2) {
       setSuggestions([])
       return
     }
-    abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
 
@@ -58,9 +58,10 @@ export default function CourseSearch({ onSelect, semester }: CourseSearchProps) 
             if (!text) return null
             const match = text.match(/^([A-Z]+-\d+[A-Z]?)\s+(.+)$/i)
             if (match) return { id: match[1], label: text }
-            const deptMatch = text.match(/^([A-Z]+)\s*[-—]\s*(.+)$/i)
-            if (deptMatch) return { id: deptMatch[1], label: text }
-            return { id: text, label: text }
+            // Only accept GE-style IDs (e.g. "GE-A"), skip department-only entries
+            const geMatch = text.match(/^(GE-[A-H])\b/i)
+            if (geMatch) return { id: geMatch[1].toUpperCase(), label: text }
+            return null
           })
           .filter(Boolean) as { id: string; label: string }[]
       }
@@ -123,6 +124,7 @@ export default function CourseSearch({ onSelect, semester }: CourseSearchProps) 
 
       {showDropdown && suggestions.length > 0 && (
         <div
+          role="listbox"
           className="absolute left-0 right-0 top-full z-20 max-h-64 overflow-y-auto border-[2px] border-t-0"
           style={{
             borderColor: 'var(--beige)',
@@ -134,9 +136,12 @@ export default function CourseSearch({ onSelect, semester }: CourseSearchProps) 
           {suggestions.map((item, i) => (
             <div
               key={`${item.id}-${i}`}
-              className="px-4 py-3 text-sm cursor-pointer transition-colors hover:bg-[var(--cream)]"
+              role="option"
+              tabIndex={0}
+              className="px-4 py-3 text-sm cursor-pointer transition-colors hover:bg-[var(--cream)] focus:bg-[var(--cream)] outline-none"
               style={{ borderBottom: '1px solid var(--beige)', color: 'var(--black)' }}
               onClick={() => handleSelect(item)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelect(item) } }}
             >
               {item.label}
             </div>

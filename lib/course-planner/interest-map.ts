@@ -21,7 +21,6 @@ export function simpleStem(word: string): string {
   if (word.endsWith('ness')) return word.slice(0, -4)
   if (word.endsWith('ity')) return word.slice(0, -3)
   if (word.endsWith('ical')) return word.slice(0, -4)
-  if (word.endsWith('ical')) return word.slice(0, -4)
   if (word.endsWith('ing') && word.length > 4) return word.slice(0, -3)
   if (word.endsWith('ous') && word.length > 4) return word.slice(0, -3)
   if (word.endsWith('ive') && word.length > 4) return word.slice(0, -3)

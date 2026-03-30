@@ -3,8 +3,9 @@ import { getCurrentSemesterCode } from '@/lib/course-planner/semester'
 
 // Share cache with autocomplete route is tricky across files,
 // so we maintain our own cache here too
-const cache: Record<string, { data: CourseEntry[]; ts: number }> = {}
+const cache = new Map<string, { data: CourseEntry[]; ts: number }>()
 const CACHE_TTL = 3600_000
+const SEMESTER_RE = /^\d{5}$/
 
 interface CourseEntry {
   fullCourseName: string
@@ -21,7 +22,8 @@ interface CourseEntry {
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get('q')
-  const semester = request.nextUrl.searchParams.get('semester') || getCurrentSemesterCode()
+  const semesterParam = request.nextUrl.searchParams.get('semester')
+  const semester = semesterParam && SEMESTER_RE.test(semesterParam) ? semesterParam : getCurrentSemesterCode()
 
   if (!q) {
     return Response.json([])
@@ -30,7 +32,7 @@ export async function GET(request: NextRequest) {
   try {
     // Get or fetch the full course list
     let courses: CourseEntry[]
-    const cached = cache[semester]
+    const cached = cache.get(semester)
     if (cached && Date.now() - cached.ts < CACHE_TTL) {
       courses = cached.data
     } else {
@@ -43,7 +45,7 @@ export async function GET(request: NextRequest) {
       }
       const data = await res.json()
       courses = data.courses || []
-      cache[semester] = { data: courses, ts: Date.now() }
+      cache.set(semester, { data: courses, ts: Date.now() })
     }
 
     // Filter and transform to SearchResult format

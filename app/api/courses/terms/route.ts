@@ -2,6 +2,7 @@ export async function GET() {
   try {
     const res = await fetch('https://classes.usc.edu/api/Terms/Active', {
       next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(5000),
     })
 
     if (!res.ok) {

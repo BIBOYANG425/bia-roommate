@@ -33,11 +33,13 @@ function PlannerContent() {
   const [recommendations, setRecommendations] = useState<RecommendedCourse[]>([])
 
   const addCourse = useCallback((id: string, label: string) => {
-    if (selectedCourses.length >= 6) return
-    if (selectedCourses.some((c) => c.id === id)) return
-    setSelectedCourses((prev) => [...prev, { id, label }])
+    setSelectedCourses((prev) => {
+      if (prev.length >= 6) return prev
+      if (prev.some((c) => c.id === id)) return prev
+      return [...prev, { id, label }]
+    })
     if (mode === 'results') setMode('manual')
-  }, [selectedCourses, mode])
+  }, [mode])
 
   const removeCourse = useCallback((id: string) => {
     setSelectedCourses((prev) => prev.filter((c) => c.id !== id))

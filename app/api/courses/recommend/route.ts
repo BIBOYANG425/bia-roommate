@@ -10,10 +10,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Please describe your interests' }, { status: 400 })
     }
 
-    // Build the base URL for internal API calls
-    const proto = request.headers.get('x-forwarded-proto') || 'http'
-    const host = request.headers.get('host') || 'localhost:3000'
-    const baseUrl = `${proto}://${host}`
+    const baseUrl = request.nextUrl.origin
 
     const recommendations = await getRecommendations(
       interests,
@@ -22,9 +19,7 @@ export async function POST(request: NextRequest) {
       units || undefined
     )
 
-    return Response.json(recommendations, {
-      headers: { 'Cache-Control': 'public, s-maxage=60' },
-    })
+    return Response.json(recommendations)
   } catch {
     return Response.json({ error: 'Failed to generate recommendations' }, { status: 500 })
   }
