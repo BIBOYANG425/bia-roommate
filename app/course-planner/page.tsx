@@ -1,92 +1,156 @@
 'use client'
 
-import { usePlanner, getActiveSchedule } from '@/lib/course-planner/store'
-import { ScheduleProvider } from '@/lib/course-planner/store'
+import { useState, useCallback } from 'react'
 import NavTabs from '@/components/NavTabs'
 import SemesterSelector from '@/components/course-planner/SemesterSelector'
 import CourseSearch from '@/components/course-planner/CourseSearch'
-import SearchResults from '@/components/course-planner/SearchResults'
-import CourseDetail from '@/components/course-planner/CourseDetail'
-import WeeklyCalendar from '@/components/course-planner/WeeklyCalendar'
-import SelectedCourses from '@/components/course-planner/SelectedCourses'
-import ScheduleTabs from '@/components/course-planner/ScheduleTabs'
-import OptimizeButton from '@/components/course-planner/OptimizeButton'
+import GEGrid from '@/components/course-planner/GEGrid'
+import SelectedList from '@/components/course-planner/SelectedList'
+import SchedulePreferences from '@/components/course-planner/SchedulePreferences'
+import ResultsView from '@/components/course-planner/ResultsView'
+import { ScheduleProvider, usePlanner } from '@/lib/course-planner/store'
 import Toast from '@/components/Toast'
+
+export interface SchedulePrefs {
+  earliestClass: string
+  doneBy: string
+  preferBackToBack: boolean
+}
 
 function PlannerContent() {
   const { state, dispatch } = usePlanner()
+  const [selectedCourses, setSelectedCourses] = useState<{ id: string; label: string }[]>([])
+  const [prefs, setPrefs] = useState<SchedulePrefs>({
+    earliestClass: '',
+    doneBy: '',
+    preferBackToBack: false,
+  })
+  const [showResults, setShowResults] = useState(false)
+  const [isBuilding, setIsBuilding] = useState(false)
+
+  const addCourse = useCallback((id: string, label: string) => {
+    if (selectedCourses.length >= 6) return
+    if (selectedCourses.some((c) => c.id === id)) return
+    setSelectedCourses((prev) => [...prev, { id, label }])
+    setShowResults(false)
+  }, [selectedCourses])
+
+  const removeCourse = useCallback((id: string) => {
+    setSelectedCourses((prev) => prev.filter((c) => c.id !== id))
+    setShowResults(false)
+  }, [])
+
+  const handleBuild = useCallback(async () => {
+    if (selectedCourses.length === 0) return
+    setIsBuilding(true)
+    setShowResults(true)
+    setIsBuilding(false)
+  }, [selectedCourses])
 
   return (
-    <main className="min-h-screen" style={{ background: 'var(--cream)' }}>
+    <main className="min-h-screen" style={{ background: '#F5F3EE' }}>
       <NavTabs />
 
       {/* Header */}
-      <div className="border-b-[3px] border-[var(--black)] px-6 py-4" style={{ background: 'var(--cardinal)' }}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="font-display text-3xl sm:text-4xl text-white">BIA 选课</h1>
-            <p className="text-xs text-white/60">USC COURSE PLANNER</p>
-          </div>
-          <div className="w-48">
-            <SemesterSelector />
-          </div>
+      <div className="border-b-[3px] border-[var(--black)] px-6 py-5" style={{ background: 'var(--cardinal)' }}>
+        <div className="max-w-3xl mx-auto text-center">
+          <h1 className="font-display text-4xl sm:text-5xl text-white mb-1">BIA 选课</h1>
+          <p className="text-sm text-white/60">USC COURSE PLANNER — FIND YOUR BEST SCHEDULE</p>
         </div>
       </div>
 
-      {/* Error toast */}
       {state.error && (
-        <Toast
-          message={state.error}
-          onClose={() => dispatch({ type: 'SET_ERROR', error: null })}
-        />
+        <Toast message={state.error} onClose={() => dispatch({ type: 'SET_ERROR', error: null })} />
       )}
 
-      {/* Main layout */}
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row">
-        {/* Left panel — Search */}
-        <aside className="w-full lg:w-[380px] shrink-0 search-panel p-4 flex flex-col gap-4">
-          <CourseSearch />
-
-          {state.isLoadingCourse ? (
-            <div className="flex flex-col gap-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="brutal-card p-4 animate-pulse">
-                  <div className="h-5 w-3/4 mb-2" style={{ background: 'var(--beige)' }} />
-                  <div className="h-3 w-1/2" style={{ background: 'var(--beige)' }} />
-                </div>
-              ))}
+      <div className="max-w-3xl mx-auto px-6 py-8">
+        {!showResults ? (
+          <>
+            {/* Semester */}
+            <div className="mb-6">
+              <label className="font-display text-sm tracking-wider mb-2 block" style={{ color: 'var(--cardinal)' }}>
+                SEMESTER
+              </label>
+              <div className="w-52">
+                <SemesterSelector />
+              </div>
             </div>
-          ) : state.expandedCourse ? (
-            <CourseDetail />
-          ) : (
-            <SearchResults />
-          )}
-        </aside>
 
-        {/* Right panel — Calendar + Selected */}
-        <div className="flex-1 p-4 flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <ScheduleTabs />
-            <div className="w-48">
-              <OptimizeButton />
+            {/* Course Search */}
+            <div className="mb-6">
+              <label className="font-display text-sm tracking-wider mb-2 block" style={{ color: 'var(--cardinal)' }}>
+                ADD COURSES OR GE REQUIREMENTS
+              </label>
+              <CourseSearch onSelect={addCourse} semester={state.semester} />
             </div>
-          </div>
 
-          <div className="relative">
-            <WeeklyCalendar />
-          </div>
+            {/* Selected courses */}
+            {selectedCourses.length > 0 && (
+              <SelectedList
+                courses={selectedCourses}
+                maxCourses={6}
+                onRemove={removeCourse}
+              />
+            )}
 
-          <div>
-            <h3 className="font-display text-sm tracking-wider mb-2" style={{ color: 'var(--mid)' }}>
-              SELECTED COURSES
-            </h3>
-            <SelectedCourses />
-          </div>
-        </div>
+            {/* Schedule Preferences */}
+            {selectedCourses.length > 0 && (
+              <SchedulePreferences prefs={prefs} onChange={setPrefs} />
+            )}
+
+            {/* Build button */}
+            {selectedCourses.length > 0 && (
+              <button
+                onClick={handleBuild}
+                disabled={isBuilding}
+                className="w-full py-4 font-display text-xl tracking-wider text-white border-[3px] border-[var(--black)] mt-6 transition-all hover:translate-y-[-2px]"
+                style={{
+                  background: 'var(--cardinal)',
+                  boxShadow: '4px 4px 0 var(--black)',
+                  opacity: isBuilding ? 0.7 : 1,
+                }}
+              >
+                {isBuilding ? 'BUILDING...' : 'BUILD BEST SCHEDULE →'}
+              </button>
+            )}
+
+            {/* GE Categories */}
+            <GEGrid onSelect={addCourse} selectedIds={selectedCourses.map((c) => c.id)} />
+
+            {/* Disclaimer */}
+            <div
+              className="mt-8 p-4 border-[2px] text-xs leading-relaxed"
+              style={{
+                borderColor: 'var(--gold)',
+                background: 'color-mix(in srgb, var(--gold) 10%, white)',
+                color: 'var(--mid)',
+              }}
+            >
+              Results are ranked by Rate My Professors ratings, so sections without a rated professor or with no professor yet assigned may not appear.
+              Use this tool as a starting point and always verify your schedule on the{' '}
+              <a
+                href="https://classes.usc.edu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+                style={{ color: 'var(--cardinal)' }}
+              >
+                USC Schedule of Classes
+              </a>.
+            </div>
+          </>
+        ) : (
+          <ResultsView
+            courses={selectedCourses}
+            semester={state.semester}
+            prefs={prefs}
+            onBack={() => setShowResults(false)}
+          />
+        )}
       </div>
 
       {/* Footer */}
-      <footer className="py-4 px-6 text-center border-t-[3px] border-[var(--black)]">
+      <footer className="py-6 px-6 text-center border-t-[3px] border-[var(--black)]">
         <p className="font-display text-xs tracking-[0.2em]" style={{ color: 'var(--mid)' }}>
           BIA 选课 — USC COURSE PLANNER
         </p>
