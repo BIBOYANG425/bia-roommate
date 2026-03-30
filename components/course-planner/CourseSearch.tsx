@@ -36,7 +36,7 @@ export default function CourseSearch({ onSelect, semester }: CourseSearchProps) 
 
     try {
       // First try autocomplete
-      const res = await fetch(`/api/courses/autocomplete?q=${encodeURIComponent(q)}`, {
+      const res = await fetch(`/api/courses/autocomplete?q=${encodeURIComponent(q)}&termCode=${semester}`, {
         signal: controller.signal,
       })
       if (!res.ok) return

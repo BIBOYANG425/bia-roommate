@@ -3,12 +3,26 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { SchedulePrefs } from '@/app/course-planner/page'
 import type { Course, Section, RmpRating } from '@/lib/course-planner/types'
-import { parseSectionTimes, slotsConflict } from '@/lib/course-planner/conflicts'
+import { parseSectionTimes, formatTime } from '@/lib/course-planner/conflicts'
 import { COURSE_COLORS } from '@/lib/course-planner/colors'
 import ResultCalendar from './ResultCalendar'
 
+// Convert USC dayCode (e.g. "TH", "MWF") to display format ("TTh", "MWF")
+function formatDaysShort(dayCode: string): string {
+  if (!dayCode || dayCode.toUpperCase() === 'TBA') return 'TBA'
+  const map: Record<string, string> = { M: 'M', T: 'T', W: 'W', H: 'Th', F: 'F' }
+  return dayCode.split('').map((c) => map[c] || c).join('')
+}
+
+interface ScheduleSection {
+  course: Course
+  section: Section
+  colorIndex: number
+  geTag?: string // e.g. "GE-A" if this course fulfills a GE
+}
+
 interface GeneratedSchedule {
-  sections: { course: Course; section: Section; colorIndex: number }[]
+  sections: ScheduleSection[]
   avgRating: number
 }
 
@@ -25,6 +39,7 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
+  const [rmpData, setRmpData] = useState<Record<string, RmpRating | null>>({})
 
   const buildSchedules = useCallback(async () => {
     setLoading(true)
@@ -34,38 +49,40 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
     try {
       // 1. Fetch all courses from USC API
       const courseData: Course[] = []
+      // Track which courses belong to which selection (for GE grouping)
+      const selectionMap: Record<string, Course[]> = {}
+
       for (const c of courses) {
         const isGE = c.id.startsWith('GE-')
-        let url: string
-        if (isGE) {
-          // Search for GE courses
-          url = `/api/courses/search?q=${encodeURIComponent(c.id)}&semester=${semester}`
-        } else {
-          const parts = c.id.split('-')
-          url = `/api/courses/${encodeURIComponent(parts[0])}/${encodeURIComponent(parts[1])}?semester=${semester}`
-        }
+        selectionMap[c.id] = []
 
         try {
-          const res = await fetch(url)
-          if (res.ok) {
-            const data = await res.json()
-            if (isGE && Array.isArray(data)) {
-              // For GE searches, take top courses that have sections
-              for (const item of data.slice(0, 10)) {
-                try {
-                  const detailRes = await fetch(
-                    `/api/courses/${encodeURIComponent(item.department)}/${encodeURIComponent(item.number)}?semester=${semester}`
-                  )
-                  if (detailRes.ok) {
-                    const detail = await detailRes.json()
-                    if (detail.sections?.length > 0) {
-                      courseData.push(detail)
-                    }
+          if (isGE) {
+            // Fetch GE courses with sections from dedicated endpoint
+            const res = await fetch(`/api/courses/ge?category=${encodeURIComponent(c.id)}&semester=${semester}`)
+            if (res.ok) {
+              const data = await res.json()
+              if (Array.isArray(data)) {
+                for (const course of data) {
+                  if (course.sections?.length > 0) {
+                    courseData.push(course)
+                    selectionMap[c.id].push(course)
                   }
-                } catch { /* skip */ }
+                }
               }
-            } else if (!isGE && data.sections) {
-              courseData.push(data)
+            }
+          } else {
+            // Regular course: split "CSCI-201" → dept=CSCI, num=201
+            const parts = c.id.split('-')
+            const res = await fetch(
+              `/api/courses/${encodeURIComponent(parts[0])}/${encodeURIComponent(parts[1])}?semester=${semester}`
+            )
+            if (res.ok) {
+              const data = await res.json()
+              if (data.sections?.length > 0) {
+                courseData.push(data)
+                selectionMap[c.id].push(data)
+              }
             }
           }
         } catch { /* skip failed fetch */ }
@@ -105,6 +122,7 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
         })
       )
 
+      setRmpData({ ...rmpCache })
       setProgress(70)
 
       // 3. Generate schedule combinations using backtracking
@@ -121,35 +139,45 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
         ? parseInt(prefs.doneBy.split(':')[0]) * 60
         : 24 * 60
 
-      // For GE searches, we need to pick ONE course per GE category
-      // For specific courses, we pick one section
-      const isGESearch = courses.some((c) => c.id.startsWith('GE-'))
-
       // Group courses by the original selection
-      const courseGroups: { label: string; options: { course: Course; sections: Section[] }[] }[] = []
+      const courseGroups: { label: string; isGE: boolean; geTag?: string; options: { course: Course; sections: Section[] }[] }[] = []
 
-      if (isGESearch) {
-        // For GE: each original selection maps to multiple possible courses
-        for (const sel of courses) {
-          const matching = courseData.filter((cd) => {
-            // Simple heuristic: match if we fetched this course for this GE
-            return true // We'll rely on the order of courseData matching selections
-          })
-          if (matching.length > 0) {
-            courseGroups.push({
-              label: sel.label,
-              options: matching.map((c) => ({
-                course: c,
-                sections: (c.sections || []).filter((s) => !s.isCancelled),
-              })),
-            })
-          }
-        }
-      } else {
-        for (const cd of courseData) {
+      for (const sel of courses) {
+        const matching = selectionMap[sel.id] || []
+        if (matching.length > 0) {
+          const isGE = sel.id.startsWith('GE-')
           courseGroups.push({
-            label: `${cd.department} ${cd.number}`,
-            options: [{ course: cd, sections: (cd.sections || []).filter((s) => !s.isCancelled) }],
+            label: sel.label,
+            isGE,
+            geTag: isGE ? sel.id : undefined,
+            options: matching
+              .map((c) => {
+                // Keep lecture-type sections (Lecture, Lecture/Discussion, Lecture-Lab, etc.)
+                // Fall back to all sections if no lecture types found
+                const allActive = (c.sections || []).filter(
+                  (s) => !s.isCancelled && s.times.some((t) => t.start_time && t.day !== 'TBA')
+                )
+                const lectureTypes = allActive.filter((s) =>
+                  s.type.toLowerCase().includes('lecture')
+                )
+                return {
+                  course: c,
+                  sections: lectureTypes.length > 0 ? lectureTypes : allActive,
+                }
+              })
+              .filter((opt) => opt.sections.length > 0),
+          })
+        }
+      }
+
+      // Pre-sort GE options: for each GE group, sort courses by best section rating
+      // so the backtracking tries the most promising courses first
+      for (const group of courseGroups) {
+        if (group.isGE && group.options.length > 1) {
+          group.options.sort((a, b) => {
+            const bestA = Math.max(...a.sections.map((s) => getRating(s)), 0)
+            const bestB = Math.max(...b.sections.map((s) => getRating(s)), 0)
+            return bestB - bestA
           })
         }
       }
@@ -161,7 +189,7 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
 
       function backtrack(
         groupIdx: number,
-        selected: { course: Course; section: Section; colorIndex: number }[],
+        selected: ScheduleSection[],
         totalRating: number,
         usedSlots: { day: string; startMin: number; endMin: number }[]
       ) {
@@ -175,12 +203,17 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
         }
 
         const group = courseGroups[groupIdx]
-        for (const opt of group.options) {
+        // For GE groups: try top 10 courses. For regular courses: try all (usually 1).
+        const optionsToTry = group.isGE ? group.options.slice(0, 10) : group.options
+
+        for (const opt of optionsToTry) {
           // Sort sections by rating
           const sorted = [...opt.sections].sort((a, b) => getRating(b) - getRating(a))
 
-          for (const sec of sorted.slice(0, 8)) {
+          for (const sec of sorted.slice(0, 6)) {
             const slots = parseSectionTimes(sec.times)
+            // Skip sections with no actual time slots (TBA/online)
+            if (slots.length === 0) continue
 
             // Check time preferences
             const meetsPrefs = slots.every((s) => s.startMin >= earliestMin && s.endMin <= doneByMin)
@@ -201,16 +234,17 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
               course: opt.course,
               section: sec,
               colorIndex: groupIdx % COURSE_COLORS.length,
+              geTag: group.geTag,
             })
             const newSlots = [...usedSlots, ...slots]
 
             backtrack(groupIdx + 1, selected, totalRating + getRating(sec), newSlots)
 
             selected.pop()
-          }
 
-          // Only try first matching course option for GE to limit search space
-          if (isGESearch) break
+            // If we already have enough results, stop exploring this group
+            if (results.length >= maxResults * 10) return
+          }
         }
       }
 
@@ -309,16 +343,112 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
 
       {/* Active schedule */}
       {active && (
-        <div
-          className="p-4 border-[2px]"
-          style={{ borderColor: 'var(--beige)', background: 'white', borderRadius: '4px' }}
-        >
-          <p className="text-sm mb-4" style={{ color: 'var(--mid)' }}>
-            Avg RMP: <strong style={{ color: 'var(--black)' }}>{active.avgRating.toFixed(2)}</strong>
-          </p>
+        <>
+          <div
+            className="p-4 border-[2px]"
+            style={{ borderColor: 'var(--beige)', background: 'white', borderRadius: '4px' }}
+          >
+            <p className="text-sm mb-4" style={{ color: 'var(--mid)' }}>
+              Avg RMP: <strong style={{ color: 'var(--black)' }}>{active.avgRating.toFixed(2)}</strong>
+            </p>
 
-          <ResultCalendar sections={active.sections} />
-        </div>
+            <ResultCalendar sections={active.sections} />
+          </div>
+
+          {/* Section detail cards */}
+          <div className="mt-4 flex flex-col gap-3">
+            {active.sections.map((s, i) => {
+              const color = COURSE_COLORS[s.colorIndex % COURSE_COLORS.length]
+              const rmpKey = `${s.section.instructor?.lastName}, ${s.section.instructor?.firstName}`
+              const rmp = rmpData[rmpKey]
+              const time = s.section.times[0]
+              const dayDisplay = time ? formatDaysShort(time.day) : 'TBA'
+              const timeDisplay = time?.start_time
+                ? `${dayDisplay} ${formatTime(time.start_time)} - ${formatTime(time.end_time)}`
+                : 'TBA'
+              const instructorName = s.section.instructor?.lastName
+                ? `${s.section.instructor.firstName} ${s.section.instructor.lastName}`
+                : ''
+
+              return (
+                <div
+                  key={`${s.course.department}${s.course.number}-${s.section.id}-${i}`}
+                  className="p-4 border-[2px]"
+                  style={{ borderColor: 'var(--beige)', background: 'white', borderRadius: '4px' }}
+                >
+                  {/* Course header */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ background: color.bg }}
+                    />
+                    <span className="font-display text-base tracking-wider" style={{ color: 'var(--cardinal)' }}>
+                      {s.course.department} {s.course.number}
+                    </span>
+                  </div>
+
+                  {/* Tags row */}
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    {s.geTag && (
+                      <span
+                        className="px-3 py-0.5 text-xs font-display tracking-wider"
+                        style={{
+                          background: 'var(--gold)',
+                          color: 'var(--black)',
+                          borderRadius: '3px',
+                        }}
+                      >
+                        {s.geTag}
+                      </span>
+                    )}
+                    <span
+                      className="text-xs font-display tracking-wider"
+                      style={{ color: '#1565C0' }}
+                    >
+                      {s.section.type}
+                    </span>
+                  </div>
+
+                  {/* Course title */}
+                  <p className="text-sm mb-1" style={{ color: 'var(--black)' }}>
+                    {s.course.title}
+                  </p>
+
+                  {/* Schedule */}
+                  <p className="text-sm mb-2" style={{ color: 'var(--mid)' }}>
+                    {timeDisplay} | {s.section.isClosed ? 'CLOSED' : `${s.section.registered}/${s.section.capacity} seats`}
+                  </p>
+
+                  {/* Instructor + RMP */}
+                  {instructorName && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-bold" style={{ color: 'var(--black)' }}>
+                        {instructorName}
+                      </span>
+                      {rmp && rmp.avgRating > 0 ? (
+                        <a
+                          href={`https://www.ratemyprofessors.com/professor/${rmp.legacyId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 hover:underline"
+                        >
+                          <span style={{ color: rmp.avgRating >= 4 ? '#2E7D32' : rmp.avgRating >= 3 ? '#F9A825' : '#C62828', fontWeight: 'bold', fontSize: '13px' }}>
+                            ★ {rmp.avgRating.toFixed(1)}
+                          </span>
+                          <span className="text-xs" style={{ color: 'var(--mid)' }}>
+                            Diff: {rmp.avgDifficulty.toFixed(1)}
+                          </span>
+                        </a>
+                      ) : (
+                        <span className="text-xs" style={{ color: 'var(--mid)' }}>N/A</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </>
       )}
     </div>
   )

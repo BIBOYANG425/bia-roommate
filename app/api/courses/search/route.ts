@@ -1,25 +1,68 @@
 import { NextRequest } from 'next/server'
 
+// Share cache with autocomplete route is tricky across files,
+// so we maintain our own cache here too
+const cache: Record<string, { data: CourseEntry[]; ts: number }> = {}
+const CACHE_TTL = 3600_000
+
+interface CourseEntry {
+  fullCourseName: string
+  name: string
+  scheduledCourseCode: {
+    prefix: string
+    number: string
+    suffix: string
+    courseHyphen: string
+    courseSmashed: string
+  }
+  courseUnits: number[] | null
+}
+
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get('q')
-  const semester = request.nextUrl.searchParams.get('semester') || '20261'
+  const semester = request.nextUrl.searchParams.get('semester') || '20263'
 
   if (!q) {
     return Response.json([])
   }
 
   try {
-    const res = await fetch(
-      `https://classes.usc.edu/api/classes/basic?q=${encodeURIComponent(q)}&semester=${semester}`,
-      { next: { revalidate: 600 } }
-    )
-
-    if (!res.ok) {
-      return Response.json({ error: 'USC API error' }, { status: res.status })
+    // Get or fetch the full course list
+    let courses: CourseEntry[]
+    const cached = cache[semester]
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      courses = cached.data
+    } else {
+      const res = await fetch(
+        `https://classes.usc.edu/api/Search/Autocomplete?termCode=${semester}`,
+        { next: { revalidate: 3600 } }
+      )
+      if (!res.ok) {
+        return Response.json({ error: 'USC API error' }, { status: res.status })
+      }
+      const data = await res.json()
+      courses = data.courses || []
+      cache[semester] = { data: courses, ts: Date.now() }
     }
 
-    const data = await res.json()
-    return Response.json(data, {
+    // Filter and transform to SearchResult format
+    const query = q.toUpperCase()
+    const matches = courses
+      .filter((c) => {
+        const courseName = c.fullCourseName?.toUpperCase() || ''
+        const title = c.name?.toUpperCase() || ''
+        return courseName.includes(query) || title.includes(query)
+      })
+      .slice(0, 20)
+      .map((c) => ({
+        department: c.scheduledCourseCode?.prefix || '',
+        number: (c.scheduledCourseCode?.number || '') + (c.scheduledCourseCode?.suffix || ''),
+        title: c.name || c.fullCourseName || '',
+        units: c.courseUnits?.[0]?.toString() || '',
+        sectionCount: 0,
+      }))
+
+    return Response.json(matches, {
       headers: { 'Cache-Control': 'public, s-maxage=600' },
     })
   } catch {

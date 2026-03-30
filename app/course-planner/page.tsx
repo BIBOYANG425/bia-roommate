@@ -8,14 +8,18 @@ import GEGrid from '@/components/course-planner/GEGrid'
 import SelectedList from '@/components/course-planner/SelectedList'
 import SchedulePreferences from '@/components/course-planner/SchedulePreferences'
 import ResultsView from '@/components/course-planner/ResultsView'
+import InterestInput from '@/components/course-planner/InterestInput'
 import { ScheduleProvider, usePlanner } from '@/lib/course-planner/store'
 import Toast from '@/components/Toast'
+import type { RecommendedCourse } from '@/lib/course-planner/recommender'
 
 export interface SchedulePrefs {
   earliestClass: string
   doneBy: string
   preferBackToBack: boolean
 }
+
+type Mode = 'manual' | 'interest' | 'recommendations' | 'results'
 
 function PlannerContent() {
   const { state, dispatch } = usePlanner()
@@ -25,27 +29,35 @@ function PlannerContent() {
     doneBy: '',
     preferBackToBack: false,
   })
-  const [showResults, setShowResults] = useState(false)
+  const [mode, setMode] = useState<Mode>('manual')
   const [isBuilding, setIsBuilding] = useState(false)
+  const [recommendations, setRecommendations] = useState<RecommendedCourse[]>([])
 
   const addCourse = useCallback((id: string, label: string) => {
     if (selectedCourses.length >= 6) return
     if (selectedCourses.some((c) => c.id === id)) return
     setSelectedCourses((prev) => [...prev, { id, label }])
-    setShowResults(false)
-  }, [selectedCourses])
+    if (mode === 'results') setMode('manual')
+  }, [selectedCourses, mode])
 
   const removeCourse = useCallback((id: string) => {
     setSelectedCourses((prev) => prev.filter((c) => c.id !== id))
-    setShowResults(false)
-  }, [])
+    if (mode === 'results') setMode('manual')
+  }, [mode])
 
   const handleBuild = useCallback(async () => {
     if (selectedCourses.length === 0) return
     setIsBuilding(true)
-    setShowResults(true)
+    setMode('results')
     setIsBuilding(false)
   }, [selectedCourses])
+
+  const handleRecommendations = useCallback((results: RecommendedCourse[]) => {
+    setRecommendations(results)
+    setMode('recommendations')
+  }, [])
+
+  const isManualOrInterest = mode === 'manual' || mode === 'interest'
 
   return (
     <main className="min-h-screen" style={{ background: '#F5F3EE' }}>
@@ -64,7 +76,142 @@ function PlannerContent() {
       )}
 
       <div className="max-w-3xl mx-auto px-6 py-8">
-        {!showResults ? (
+        {mode === 'results' ? (
+          <ResultsView
+            courses={selectedCourses}
+            semester={state.semester}
+            prefs={prefs}
+            onBack={() => setMode('manual')}
+          />
+        ) : mode === 'recommendations' ? (
+          /* ── Recommendation Results ── */
+          <div>
+            <button
+              onClick={() => setMode('interest')}
+              className="font-display text-sm tracking-wider mb-4 hover:underline"
+              style={{ color: 'var(--cardinal)' }}
+            >
+              ← BACK TO INTERESTS
+            </button>
+
+            <h2 className="font-display text-xl tracking-wider mb-1" style={{ color: 'var(--black)' }}>
+              WE FOUND {recommendations.length} COURSES FOR YOU
+            </h2>
+            <p className="text-xs mb-4" style={{ color: 'var(--mid)' }}>
+              Ranked by relevance to your interests. Click + to add courses to your schedule.
+            </p>
+
+            <div className="flex flex-col gap-3 mb-6">
+              {recommendations.map((rec, i) => {
+                const courseId = `${rec.department}-${rec.number}`
+                const courseLabel = `${rec.department} ${rec.number} — ${rec.title}`
+                const isAdded = selectedCourses.some((c) => c.id === courseId)
+
+                return (
+                  <div
+                    key={`${courseId}-${i}`}
+                    className="p-4 border-[2px] flex gap-4"
+                    style={{
+                      borderColor: isAdded ? 'var(--cardinal)' : 'var(--beige)',
+                      background: isAdded ? 'color-mix(in srgb, var(--cardinal) 4%, white)' : 'white',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      {/* Course code */}
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="font-display text-base tracking-wider" style={{ color: 'var(--cardinal)' }}>
+                          {rec.department} {rec.number}
+                        </span>
+                        {rec.geTag && (
+                          <span
+                            className="px-2 py-0.5 text-[10px] font-display tracking-wider"
+                            style={{ background: 'var(--gold)', color: 'var(--black)', borderRadius: '3px' }}
+                          >
+                            {rec.geTag}
+                          </span>
+                        )}
+                        {rec.units && (
+                          <span className="text-[10px]" style={{ color: 'var(--mid)' }}>
+                            {rec.units} units
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Title */}
+                      <p className="text-sm mb-1" style={{ color: 'var(--black)' }}>
+                        {rec.title}
+                      </p>
+
+                      {/* Description */}
+                      {rec.description && (
+                        <p
+                          className="text-xs mb-2 line-clamp-2"
+                          style={{ color: 'var(--mid)' }}
+                        >
+                          {rec.description}
+                        </p>
+                      )}
+
+                      {/* Match reasons */}
+                      {rec.matchReasons.length > 0 && (
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="text-[10px]" style={{ color: 'var(--mid)' }}>Matches:</span>
+                          {rec.matchReasons.slice(0, 4).map((reason) => (
+                            <span
+                              key={reason}
+                              className="px-2 py-0.5 text-[10px]"
+                              style={{
+                                background: 'color-mix(in srgb, var(--gold) 30%, white)',
+                                color: 'var(--black)',
+                                borderRadius: '10px',
+                              }}
+                            >
+                              {reason}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Add button */}
+                    <div className="flex-shrink-0 flex items-start">
+                      <button
+                        onClick={() => addCourse(courseId, courseLabel)}
+                        disabled={isAdded || selectedCourses.length >= 6}
+                        className="px-3 py-2 text-xs font-display tracking-wider border-[2px] transition-all"
+                        style={{
+                          borderColor: isAdded ? 'var(--cardinal)' : 'var(--black)',
+                          background: isAdded ? 'var(--cardinal)' : 'white',
+                          color: isAdded ? 'white' : 'var(--black)',
+                          borderRadius: '4px',
+                          opacity: isAdded || selectedCourses.length >= 6 ? 0.6 : 1,
+                        }}
+                      >
+                        {isAdded ? 'ADDED' : '+ ADD'}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Selected count + continue */}
+            {selectedCourses.length > 0 && (
+              <button
+                onClick={() => setMode('manual')}
+                className="w-full py-4 font-display text-lg tracking-wider text-white border-[3px] border-[var(--black)] transition-all hover:translate-y-[-2px]"
+                style={{
+                  background: 'var(--cardinal)',
+                  boxShadow: '4px 4px 0 var(--black)',
+                }}
+              >
+                CONTINUE WITH {selectedCourses.length} SELECTED →
+              </button>
+            )}
+          </div>
+        ) : (
+          /* ── Manual / Interest Mode ── */
           <>
             {/* Semester */}
             <div className="mb-6">
@@ -76,13 +223,53 @@ function PlannerContent() {
               </div>
             </div>
 
-            {/* Course Search */}
-            <div className="mb-6">
-              <label className="font-display text-sm tracking-wider mb-2 block" style={{ color: 'var(--cardinal)' }}>
-                ADD COURSES OR GE REQUIREMENTS
-              </label>
-              <CourseSearch onSelect={addCourse} semester={state.semester} />
+            {/* Mode toggle */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setMode('manual')}
+                className="px-4 py-2 text-sm font-display tracking-wider border-[2px] transition-all"
+                style={{
+                  borderColor: 'var(--black)',
+                  background: mode === 'manual' ? 'var(--cardinal)' : 'white',
+                  color: mode === 'manual' ? 'white' : 'var(--black)',
+                  borderRadius: '20px',
+                }}
+              >
+                SEARCH COURSES
+              </button>
+              <button
+                onClick={() => setMode('interest')}
+                className="px-4 py-2 text-sm font-display tracking-wider border-[2px] transition-all"
+                style={{
+                  borderColor: 'var(--black)',
+                  background: mode === 'interest' ? 'var(--cardinal)' : 'white',
+                  color: mode === 'interest' ? 'white' : 'var(--black)',
+                  borderRadius: '20px',
+                }}
+              >
+                DISCOVER BY INTEREST
+              </button>
             </div>
+
+            {mode === 'manual' ? (
+              <>
+                {/* Course Search */}
+                <div className="mb-6">
+                  <label className="font-display text-sm tracking-wider mb-2 block" style={{ color: 'var(--cardinal)' }}>
+                    ADD COURSES OR GE REQUIREMENTS
+                  </label>
+                  <CourseSearch onSelect={addCourse} semester={state.semester} />
+                </div>
+              </>
+            ) : (
+              /* Interest Input */
+              <div className="mb-6">
+                <label className="font-display text-sm tracking-wider mb-2 block" style={{ color: 'var(--cardinal)' }}>
+                  DESCRIBE YOUR INTERESTS
+                </label>
+                <InterestInput semester={state.semester} onResults={handleRecommendations} />
+              </div>
+            )}
 
             {/* Selected courses */}
             {selectedCourses.length > 0 && (
@@ -114,8 +301,10 @@ function PlannerContent() {
               </button>
             )}
 
-            {/* GE Categories */}
-            <GEGrid onSelect={addCourse} selectedIds={selectedCourses.map((c) => c.id)} />
+            {/* GE Categories (manual mode only) */}
+            {mode === 'manual' && (
+              <GEGrid onSelect={addCourse} selectedIds={selectedCourses.map((c) => c.id)} />
+            )}
 
             {/* Disclaimer */}
             <div
@@ -139,13 +328,6 @@ function PlannerContent() {
               </a>.
             </div>
           </>
-        ) : (
-          <ResultsView
-            courses={selectedCourses}
-            semester={state.semester}
-            prefs={prefs}
-            onBack={() => setShowResults(false)}
-          />
         )}
       </div>
 
