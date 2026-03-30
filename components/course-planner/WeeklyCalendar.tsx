@@ -57,7 +57,7 @@ export default function WeeklyCalendar() {
   }, [])
 
   return (
-    <div className="overflow-x-auto border-[3px] border-[var(--black)]" style={{ background: 'var(--cream)' }}>
+    <div className="overflow-x-auto border-[3px] border-[var(--black)] relative" style={{ background: 'var(--cream)' }}>
       <div style={{ minWidth: '600px' }}>
         {/* Header row */}
         <div className="grid" style={{ gridTemplateColumns: '60px repeat(5, 1fr)' }}>

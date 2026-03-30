@@ -44,6 +44,7 @@ export function optimizeSchedule({
   let bestScore = -1
   let bestSections: SelectedSection[] = []
   let explored = 0
+  let iterations = 0
 
   // Pre-compute: for each course, get viable sections sorted by RMP rating
   const courseSections = courses.map((course) => {
@@ -94,6 +95,12 @@ export function optimizeSchedule({
 
     // Try each section for this course
     for (const candidate of cs.sections) {
+      iterations++
+      // Report progress based on iterations
+      if (onProgress && iterations % 50 === 0) {
+        onProgress(Math.min(95, Math.round((iterations / (totalCombinations * 2)) * 100)))
+      }
+
       // Conflict check
       if (hasConflictWithSelected(candidate.slots, currentSlots)) continue
 
@@ -121,10 +128,6 @@ export function optimizeSchedule({
     // Also try skipping TBA / no-time sections (they never conflict)
     // Already handled: sections with empty timeSlots pass the conflict check
 
-    // Report progress
-    if (onProgress && explored % 10 === 0) {
-      onProgress(Math.min(95, Math.round((explored / totalCombinations) * 100)))
-    }
   }
 
   backtrack(0, 0)

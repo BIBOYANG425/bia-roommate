@@ -40,10 +40,11 @@ export default function SchedulePreferences({ prefs, onChange }: SchedulePrefere
       </h4>
       <div className="flex flex-wrap items-center gap-4">
         <div>
-          <label className="font-display text-[11px] tracking-wider block mb-1" style={{ color: 'var(--black)' }}>
+          <label htmlFor="earliest-class-select" className="font-display text-[11px] tracking-wider block mb-1" style={{ color: 'var(--black)' }}>
             EARLIEST CLASS
           </label>
           <select
+            id="earliest-class-select"
             value={prefs.earliestClass}
             onChange={(e) => onChange({ ...prefs, earliestClass: e.target.value })}
             className="brutal-select text-sm"
@@ -55,10 +56,11 @@ export default function SchedulePreferences({ prefs, onChange }: SchedulePrefere
         </div>
 
         <div>
-          <label className="font-display text-[11px] tracking-wider block mb-1" style={{ color: 'var(--black)' }}>
+          <label htmlFor="done-by-select" className="font-display text-[11px] tracking-wider block mb-1" style={{ color: 'var(--black)' }}>
             DONE BY
           </label>
           <select
+            id="done-by-select"
             value={prefs.doneBy}
             onChange={(e) => onChange({ ...prefs, doneBy: e.target.value })}
             className="brutal-select text-sm"
@@ -74,7 +76,7 @@ export default function SchedulePreferences({ prefs, onChange }: SchedulePrefere
             type="checkbox"
             checked={prefs.preferBackToBack}
             onChange={(e) => onChange({ ...prefs, preferBackToBack: e.target.checked })}
-            className="w-4 h-4 accent-[var(--cardinal)]"
+            className="w-4 h-4 accent-(--cardinal)"
           />
           <span className="text-sm" style={{ color: 'var(--black)' }}>
             Prefer back-to-back classes

@@ -112,7 +112,8 @@ const GE_MAP: Record<string, { requirementPrefix: string; categoryPrefix: string
 export async function getRecommendations(
   interestText: string,
   semester: string,
-  baseUrl: string
+  baseUrl: string,
+  unitsFilter?: string
 ): Promise<RecommendedCourse[]> {
   const tokens = tokenize(interestText)
   if (tokens.length === 0) return []
@@ -259,7 +260,10 @@ export async function getRecommendations(
     }
   }
 
-  // Sort by relevance and return top 15
+  // Sort by relevance, filter by units if specified, return top 15
   scored.sort((a, b) => b.relevanceScore - a.relevanceScore)
-  return scored.slice(0, 15)
+  const filtered = unitsFilter
+    ? scored.filter((c) => c.units === unitsFilter)
+    : scored
+  return filtered.slice(0, 15)
 }

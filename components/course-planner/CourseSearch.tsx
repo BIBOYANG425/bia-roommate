@@ -22,7 +22,10 @@ export default function CourseSearch({ onSelect, semester }: CourseSearchProps) 
       }
     }
     document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
   }, [])
 
   const fetchSuggestions = useCallback(async (q: string) => {
@@ -35,61 +38,53 @@ export default function CourseSearch({ onSelect, semester }: CourseSearchProps) 
     abortRef.current = controller
 
     try {
-      // First try autocomplete
-      const res = await fetch(`/api/courses/autocomplete?q=${encodeURIComponent(q)}&termCode=${semester}`, {
+      // Fetch autocomplete and search in parallel
+      const autoPromise = fetch(`/api/courses/autocomplete?q=${encodeURIComponent(q)}&termCode=${semester}`, {
         signal: controller.signal,
       })
+      const searchPromise = q.length >= 3
+        ? fetch(`/api/courses/search?q=${encodeURIComponent(q)}&semester=${semester}`, { signal: controller.signal })
+        : null
+
+      const res = await autoPromise
       if (!res.ok) return
       const data = await res.json()
 
+      let items: { id: string; label: string }[] = []
       if (Array.isArray(data)) {
-        const items = data
+        items = data
           .map((d: { text?: string } | string) => {
             const text = typeof d === 'string' ? d : d.text || ''
             if (!text) return null
-            // Try to parse "DEPT-NUM Title" format
             const match = text.match(/^([A-Z]+-\d+[A-Z]?)\s+(.+)$/i)
-            if (match) {
-              return { id: match[1], label: text }
-            }
-            // Department match
+            if (match) return { id: match[1], label: text }
             const deptMatch = text.match(/^([A-Z]+)\s*[-—]\s*(.+)$/i)
-            if (deptMatch) {
-              return { id: deptMatch[1], label: text }
-            }
+            if (deptMatch) return { id: deptMatch[1], label: text }
             return { id: text, label: text }
           })
           .filter(Boolean) as { id: string; label: string }[]
-
-        setSuggestions(items.slice(0, 8))
-        setShowDropdown(true)
       }
 
-      // Also try search if it looks like a course
-      if (q.length >= 3) {
-        const searchRes = await fetch(
-          `/api/courses/search?q=${encodeURIComponent(q)}&semester=${semester}`,
-          { signal: controller.signal }
-        )
+      // Merge search results
+      if (searchPromise) {
+        const searchRes = await searchPromise
         if (searchRes.ok) {
           const searchData = await searchRes.json()
           if (Array.isArray(searchData) && searchData.length > 0) {
-            const searchItems = searchData.slice(0, 5).map((r: { department: string; number: string; title: string }) => ({
-              id: `${r.department}-${r.number}`,
-              label: `${r.department} ${r.number} — ${r.title}`,
-            }))
-            setSuggestions((prev) => {
-              const ids = new Set(prev.map((p) => p.id))
-              const merged = [...prev]
-              for (const item of searchItems) {
-                if (!ids.has(item.id)) merged.push(item)
+            const ids = new Set(items.map((p) => p.id))
+            for (const r of searchData.slice(0, 5) as { department: string; number: string; title: string }[]) {
+              const id = `${r.department}-${r.number}`
+              if (!ids.has(id)) {
+                items.push({ id, label: `${r.department} ${r.number} — ${r.title}` })
+                ids.add(id)
               }
-              return merged.slice(0, 8)
-            })
-            setShowDropdown(true)
+            }
           }
         }
       }
+
+      setSuggestions(items.slice(0, 8))
+      setShowDropdown(items.length > 0)
     } catch {
       // aborted or network error
     }

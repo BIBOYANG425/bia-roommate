@@ -19,7 +19,7 @@ export default function GEGrid({ onSelect, selectedIds }: GEGridProps) {
           return (
             <button
               key={ge.id}
-              onClick={() => !isSelected && onSelect(ge.id, `${ge.id}: ${ge.name}`)}
+              onClick={() => onSelect(ge.id, `${ge.id}: ${ge.name}`)}
               disabled={isSelected}
               className="text-left p-4 border-[2px] transition-all hover:translate-y-[-1px]"
               style={{

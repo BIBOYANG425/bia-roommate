@@ -54,14 +54,20 @@ export default function SelectedCourses() {
             <p className="text-[10px] truncate mb-1" style={{ color: 'var(--mid)' }}>
               {sections[0].courseTitle}
             </p>
-            {sections.map((sel) => {
-              const t = sel.section.times[0]
-              return (
-                <div key={sel.section.id} className="text-[10px] font-mono" style={{ color: 'var(--mid)' }}>
-                  {sel.section.type.slice(0, 3)} — {t ? `${formatDays(t.day)} ${formatTime(t.start_time)}-${formatTime(t.end_time)}` : 'TBA'} — {sel.section.instructor?.lastName || 'Staff'}
-                </div>
-              )
-            })}
+            {sections.map((sel) => (
+              <div key={sel.section.id} className="text-[10px] font-mono" style={{ color: 'var(--mid)' }}>
+                {(sel.section.type ?? '').slice(0, 3)} —{' '}
+                {sel.section.times.length > 0
+                  ? sel.section.times.map((t, i) => (
+                      <span key={i}>
+                        {i > 0 && ', '}
+                        {t.start_time ? `${formatDays(t.day)} ${formatTime(t.start_time)}-${formatTime(t.end_time)}` : 'TBA'}
+                      </span>
+                    ))
+                  : 'TBA'}{' '}
+                — {sel.section.instructor?.lastName || 'Staff'}
+              </div>
+            ))}
           </div>
         )
       })}

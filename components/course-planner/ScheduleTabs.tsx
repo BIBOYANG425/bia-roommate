@@ -27,6 +27,8 @@ export default function ScheduleTabs() {
 
       {state.schedules.length < 5 && (
         <button
+          type="button"
+          aria-label="Add schedule"
           onClick={() =>
             dispatch({ type: 'ADD_SCHEDULE', name: `Schedule ${state.schedules.length + 1}` })
           }

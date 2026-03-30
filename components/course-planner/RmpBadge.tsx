@@ -1,24 +1,40 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { usePlanner } from '@/lib/course-planner/store'
+
+// Track in-flight fetches to prevent duplicates without dispatching null
+const inFlight = new Set<string>()
 
 export default function RmpBadge({ firstName, lastName }: { firstName: string; lastName: string }) {
   const { state, dispatch } = usePlanner()
   const key = `${lastName}, ${firstName}`
   const cached = state.rmpCache[key]
+  const mountedRef = useRef(true)
 
   useEffect(() => {
-    if (cached !== undefined || !lastName) return
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
 
-    dispatch({ type: 'CACHE_RMP', key, rating: null })
+  useEffect(() => {
+    if (cached !== undefined || !lastName || inFlight.has(key)) return
+
+    inFlight.add(key)
 
     fetch(`/api/rmp/search?name=${encodeURIComponent(`${firstName} ${lastName}`)}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data) dispatch({ type: 'CACHE_RMP', key, rating: data })
+        if (mountedRef.current) {
+          dispatch({ type: 'CACHE_RMP', key, rating: data ?? null })
+        }
       })
-      .catch(() => {})
+      .catch(() => {
+        if (mountedRef.current) {
+          dispatch({ type: 'CACHE_RMP', key, rating: null })
+        }
+      })
+      .finally(() => inFlight.delete(key))
   }, [key, cached, firstName, lastName, dispatch])
 
   if (!lastName) return null

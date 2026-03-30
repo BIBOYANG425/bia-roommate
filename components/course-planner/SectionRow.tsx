@@ -39,7 +39,7 @@ export default function SectionRow({
         className="font-display text-[10px] tracking-wider px-2 py-0.5 border-[2px] border-[var(--black)] shrink-0"
         style={{ background: isSelected ? 'var(--black)' : 'var(--cream)', color: isSelected ? 'var(--gold)' : 'var(--mid)' }}
       >
-        {section.type.toUpperCase().slice(0, 3)}
+        {(section.type ?? '').toUpperCase().slice(0, 3) || 'N/A'}
       </span>
 
       {/* Time & location */}

@@ -59,7 +59,13 @@ function updateActiveSchedule(state: PlannerState, updater: (s: Schedule) => Sch
 function plannerReducer(state: PlannerState, action: PlannerAction): PlannerState {
   switch (action.type) {
     case 'SET_SEMESTER':
-      return { ...state, semester: action.semester, searchResults: [], expandedCourse: null }
+      return {
+        ...state,
+        semester: action.semester,
+        searchResults: [],
+        expandedCourse: null,
+        schedules: state.schedules.map((s) => ({ ...s, selectedSections: [], totalUnits: 0 })),
+      }
 
     case 'SET_SEARCH_QUERY':
       return { ...state, searchQuery: action.query }

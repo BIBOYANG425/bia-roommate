@@ -45,7 +45,7 @@ export async function GET(
   try {
     const res = await fetch(
       `https://classes.usc.edu/api/Courses/Course?termCode=${semester}&courseCode=${encodeURIComponent(courseCode)}`,
-      { next: { revalidate: 300 } }
+      { next: { revalidate: 300 }, signal: AbortSignal.timeout(5000) }
     )
 
     if (!res.ok) {

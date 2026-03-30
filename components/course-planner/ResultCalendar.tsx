@@ -26,16 +26,22 @@ export default function ResultCalendar({ sections }: ResultCalendarProps) {
       endMin: number
     }[] = []
 
+    // Helper to convert minutes to time string
+    function minToTime(min: number): string {
+      const h = Math.floor(min / 60)
+      const m = min % 60
+      return `${h}:${m.toString().padStart(2, '0')}`
+    }
+
     for (const { course, section, colorIndex } of sections) {
       const slots = parseSectionTimes(section.times)
       for (const slot of slots) {
-        const time = section.times[0]
         result.push({
           day: slot.day,
           courseLabel: `${course.department} ${course.number}`,
           sectionType: section.type || 'Lecture',
-          timeLabel: time
-            ? `${formatTime(time.start_time)} - ${formatTime(time.end_time)}`
+          timeLabel: slot.startMin && slot.endMin
+            ? `${formatTime(minToTime(slot.startMin))} - ${formatTime(minToTime(slot.endMin))}`
             : 'TBA',
           colorIndex,
           startMin: slot.startMin,

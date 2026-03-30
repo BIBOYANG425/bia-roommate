@@ -25,6 +25,7 @@ export default function OptimizeButton() {
     try {
       // Fetch full course data for each
       const courses: Course[] = []
+      const failedCourses: string[] = []
       for (const id of courseIds) {
         const [dept, num] = id.split('-')
         const res = await fetch(
@@ -32,7 +33,12 @@ export default function OptimizeButton() {
         )
         if (res.ok) {
           courses.push(await res.json())
+        } else {
+          failedCourses.push(id)
         }
+      }
+      if (failedCourses.length > 0) {
+        dispatch({ type: 'SET_ERROR', error: `FAILED TO LOAD: ${failedCourses.join(', ')}` })
       }
 
       if (courses.length === 0) {
@@ -42,25 +48,29 @@ export default function OptimizeButton() {
       }
 
       // Fetch RMP ratings for all instructors
-      const instructors = new Set<string>()
+      const instructorsToFetch: { firstName: string; lastName: string; key: string }[] = []
+      const seenKeys = new Set<string>()
       for (const course of courses) {
         for (const sec of course.sections || []) {
           if (sec.instructor?.lastName) {
             const key = `${sec.instructor.lastName}, ${sec.instructor.firstName}`
-            if (state.rmpCache[key] === undefined) {
-              instructors.add(`${sec.instructor.firstName} ${sec.instructor.lastName}`)
+            if (state.rmpCache[key] === undefined && !seenKeys.has(key)) {
+              seenKeys.add(key)
+              instructorsToFetch.push({ firstName: sec.instructor.firstName, lastName: sec.instructor.lastName, key })
             }
           }
         }
       }
 
       // Fetch missing RMP data
-      const rmpPromises = [...instructors].map(async (name) => {
+      const rmpPromises = instructorsToFetch.map(async ({ firstName, lastName, key }) => {
         try {
-          const res = await fetch(`/api/rmp/search?name=${encodeURIComponent(name)}`)
+          const res = await fetch(`/api/rmp/search?name=${encodeURIComponent(`${firstName} ${lastName}`)}`)
+          if (!res.ok) {
+            dispatch({ type: 'SET_ERROR', error: `FAILED TO LOAD RATING FOR ${lastName}` })
+            return
+          }
           const data = await res.json()
-          const parts = name.split(' ')
-          const key = `${parts.slice(1).join(' ')}, ${parts[0]}`
           dispatch({ type: 'CACHE_RMP', key, rating: data })
         } catch { /* ignore */ }
       })

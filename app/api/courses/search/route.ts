@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { getCurrentSemesterCode } from '@/lib/course-planner/semester'
 
 // Share cache with autocomplete route is tricky across files,
 // so we maintain our own cache here too
@@ -20,7 +21,7 @@ interface CourseEntry {
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get('q')
-  const semester = request.nextUrl.searchParams.get('semester') || '20263'
+  const semester = request.nextUrl.searchParams.get('semester') || getCurrentSemesterCode()
 
   if (!q) {
     return Response.json([])
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
     } else {
       const res = await fetch(
         `https://classes.usc.edu/api/Search/Autocomplete?termCode=${semester}`,
-        { next: { revalidate: 3600 } }
+        { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) }
       )
       if (!res.ok) {
         return Response.json({ error: 'USC API error' }, { status: res.status })

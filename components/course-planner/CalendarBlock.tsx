@@ -25,7 +25,7 @@ export default function CalendarBlock({
   endMin,
 }: CalendarBlockProps) {
   const color = COURSE_COLORS[colorIndex % COURSE_COLORS.length]
-  const topOffset = ((startMin - CALENDAR_START_HOUR * 60) / 30) * ROW_HEIGHT
+  const topOffset = Math.max(0, ((startMin - CALENDAR_START_HOUR * 60) / 30) * ROW_HEIGHT)
   const height = Math.max(((endMin - startMin) / 30) * ROW_HEIGHT, ROW_HEIGHT)
 
   return (

@@ -19,6 +19,9 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [unitsFilter, setUnitsFilter] = useState<string | null>(null)
+
+  const UNIT_OPTIONS = ['1', '2', '3', '4']
 
   async function handleSearch() {
     if (input.trim().length < 2) {
@@ -37,7 +40,7 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
       const res = await fetch('/api/courses/recommend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ interests: input, semester }),
+        body: JSON.stringify({ interests: input, semester, units: unitsFilter }),
       })
 
       clearInterval(progressInterval)
@@ -114,6 +117,46 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
             {tag}
           </button>
         ))}
+      </div>
+
+      {/* Units filter */}
+      <div className="mb-4">
+        <span className="text-xs font-display tracking-wider mr-2" style={{ color: 'var(--mid)' }}>
+          UNITS:
+        </span>
+        <div className="inline-flex gap-2 flex-wrap">
+          <button
+            onClick={() => setUnitsFilter(null)}
+            disabled={loading}
+            className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
+            style={{
+              borderColor: 'var(--beige)',
+              background: unitsFilter === null ? 'var(--cardinal)' : 'white',
+              color: unitsFilter === null ? 'white' : 'var(--black)',
+              borderRadius: '20px',
+              opacity: loading ? 0.5 : 1,
+            }}
+          >
+            ANY
+          </button>
+          {UNIT_OPTIONS.map((u) => (
+            <button
+              key={u}
+              onClick={() => setUnitsFilter(unitsFilter === u ? null : u)}
+              disabled={loading}
+              className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
+              style={{
+                borderColor: 'var(--beige)',
+                background: unitsFilter === u ? 'var(--cardinal)' : 'white',
+                color: unitsFilter === u ? 'white' : 'var(--black)',
+                borderRadius: '20px',
+                opacity: loading ? 0.5 : 1,
+              }}
+            >
+              {u}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Error */}

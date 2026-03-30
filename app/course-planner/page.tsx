@@ -30,7 +30,6 @@ function PlannerContent() {
     preferBackToBack: false,
   })
   const [mode, setMode] = useState<Mode>('manual')
-  const [isBuilding, setIsBuilding] = useState(false)
   const [recommendations, setRecommendations] = useState<RecommendedCourse[]>([])
 
   const addCourse = useCallback((id: string, label: string) => {
@@ -45,19 +44,15 @@ function PlannerContent() {
     if (mode === 'results') setMode('manual')
   }, [mode])
 
-  const handleBuild = useCallback(async () => {
+  const handleBuild = useCallback(() => {
     if (selectedCourses.length === 0) return
-    setIsBuilding(true)
     setMode('results')
-    setIsBuilding(false)
   }, [selectedCourses])
 
   const handleRecommendations = useCallback((results: RecommendedCourse[]) => {
     setRecommendations(results)
     setMode('recommendations')
   }, [])
-
-  const isManualOrInterest = mode === 'manual' || mode === 'interest'
 
   return (
     <main className="min-h-screen" style={{ background: '#F5F3EE' }}>
@@ -289,15 +284,13 @@ function PlannerContent() {
             {selectedCourses.length > 0 && (
               <button
                 onClick={handleBuild}
-                disabled={isBuilding}
                 className="w-full py-4 font-display text-xl tracking-wider text-white border-[3px] border-[var(--black)] mt-6 transition-all hover:translate-y-[-2px]"
                 style={{
                   background: 'var(--cardinal)',
                   boxShadow: '4px 4px 0 var(--black)',
-                  opacity: isBuilding ? 0.7 : 1,
                 }}
               >
-                {isBuilding ? 'BUILDING...' : 'BUILD BEST SCHEDULE →'}
+                BUILD BEST SCHEDULE →
               </button>
             )}
 

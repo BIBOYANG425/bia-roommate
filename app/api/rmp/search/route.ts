@@ -34,23 +34,33 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const res = await fetch('https://www.ratemyprofessors.com/graphql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Basic dGVzdDp0ZXN0',
-      },
-      body: JSON.stringify({
-        query: TEACHER_SEARCH_QUERY,
-        variables: {
-          query: {
-            text: name,
-            schoolID: USC_SCHOOL_ID,
-          },
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 5000)
+    let res: Response
+    try {
+      res = await fetch('https://www.ratemyprofessors.com/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Basic dGVzdDp0ZXN0',
         },
-      }),
-      next: { revalidate: 86400 },
-    })
+        body: JSON.stringify({
+          query: TEACHER_SEARCH_QUERY,
+          variables: {
+            query: {
+              text: name,
+              schoolID: USC_SCHOOL_ID,
+            },
+          },
+        }),
+        next: { revalidate: 86400 },
+        signal: controller.signal,
+      })
+    } catch {
+      return Response.json(null)
+    } finally {
+      clearTimeout(timer)
+    }
 
     if (!res.ok) {
       return Response.json(null)
@@ -62,7 +72,18 @@ export async function GET(request: NextRequest) {
       return Response.json(null)
     }
 
-    const teacher = edges[0].node
+    // Prefer exact name match over fuzzy first result
+    const nameParts = name.trim().toLowerCase().split(/\s+/)
+    let teacher = edges[0].node
+    for (const edge of edges) {
+      const fn = (edge.node.firstName || '').trim().toLowerCase()
+      const ln = (edge.node.lastName || '').trim().toLowerCase()
+      if (nameParts.includes(fn) && nameParts.includes(ln)) {
+        teacher = edge.node
+        break
+      }
+    }
+
     return Response.json(
       {
         avgRating: teacher.avgRating,

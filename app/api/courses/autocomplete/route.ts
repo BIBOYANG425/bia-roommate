@@ -21,10 +21,19 @@ async function getCourses(termCode: string): Promise<CourseEntry[]> {
   if (cached && Date.now() - cached.ts < CACHE_TTL) {
     return cached.data
   }
-  const res = await fetch(
-    `https://classes.usc.edu/api/Search/Autocomplete?termCode=${termCode}`,
-    { next: { revalidate: 3600 } }
-  )
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 3000)
+  let res: Response
+  try {
+    res = await fetch(
+      `https://classes.usc.edu/api/Search/Autocomplete?termCode=${termCode}`,
+      { next: { revalidate: 3600 }, signal: controller.signal }
+    )
+  } catch {
+    return []
+  } finally {
+    clearTimeout(timer)
+  }
   if (!res.ok) return []
   const data = await res.json()
   const courses = data.courses || []

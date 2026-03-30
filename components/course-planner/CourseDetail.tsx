@@ -48,10 +48,13 @@ export default function CourseDetail() {
     const usedColors = active.selectedSections.map((s) => s.colorIndex)
     const colorIndex = getNextColorIndex(usedColors)
 
+    const courseData = course
+    if (!courseData) return
+
     const selected: SelectedSection = {
       courseId,
-      courseTitle: course!.title,
-      units: course!.units,
+      courseTitle: courseData.title,
+      units: courseData.units,
       section,
       colorIndex,
       timeSlots: slots,
