@@ -10,11 +10,16 @@ export async function GET() {
     }
 
     const data = await res.json()
+    if (!Array.isArray(data)) {
+      return Response.json({ error: 'Unexpected response format' }, { status: 502 })
+    }
     // Transform to simpler format
-    const terms = (data as { termCode: number; season: string; year: number }[]).map((t) => ({
-      code: t.termCode.toString(),
-      label: `${t.season} ${t.year}`,
-    }))
+    const terms = data
+      .filter((t) => typeof t.termCode === 'number' && typeof t.season === 'string' && typeof t.year === 'number')
+      .map((t) => ({
+        code: t.termCode.toString(),
+        label: `${t.season} ${t.year}`,
+      }))
 
     return Response.json(terms, {
       headers: { 'Cache-Control': 'public, s-maxage=3600' },

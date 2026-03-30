@@ -4,9 +4,9 @@ import { getRecommendations } from '@/lib/course-planner/recommender'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { interests, semester, units } = body as { interests: string; semester: string; units?: string | null }
+    const { interests, semester, units } = body ?? {}
 
-    if (!interests || interests.trim().length < 2) {
+    if (typeof interests !== 'string' || interests.trim().length < 2) {
       return Response.json({ error: 'Please describe your interests' }, { status: 400 })
     }
 
@@ -14,9 +14,9 @@ export async function POST(request: NextRequest) {
 
     const recommendations = await getRecommendations(
       interests,
-      semester || '20263',
+      typeof semester === 'string' && semester ? semester : '20263',
       baseUrl,
-      units || undefined
+      typeof units === 'string' ? units : undefined
     )
 
     return Response.json(recommendations)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { RecommendedCourse } from '@/lib/course-planner/recommender'
 
 const QUICK_TAGS = [
@@ -20,6 +20,11 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [unitsFilter, setUnitsFilter] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    return () => { abortRef.current?.abort() }
+  }, [])
 
   const UNIT_OPTIONS = ['1', '2', '3', '4']
 
@@ -32,6 +37,10 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
     setError(null)
     setProgress(20)
 
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     let progressInterval: ReturnType<typeof setInterval> | undefined
 
     try {
@@ -43,6 +52,7 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ interests: input, semester, units: unitsFilter }),
+        signal: controller.signal,
       })
 
       clearInterval(progressInterval)
@@ -65,7 +75,8 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
       }
 
       onResults(data)
-    } catch {
+    } catch (err) {
+      if ((err as Error)?.name === 'AbortError') return
       setError('NETWORK ERROR — PLEASE TRY AGAIN')
     } finally {
       if (progressInterval) clearInterval(progressInterval)
@@ -90,6 +101,7 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
       <textarea
         value={input}
         onChange={(e) => { setInput(e.target.value); setError(null) }}
+        aria-label="Describe your interests to find matching courses"
         placeholder="Describe your interests, hobbies, or topics you'd like to explore... (e.g., Japanese animation, social justice, and coding)"
         rows={3}
         className="w-full px-4 py-3 text-sm border-[2px] outline-none transition-colors resize-none"
@@ -105,15 +117,18 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
 
       {/* Quick tags */}
       <div className="flex flex-wrap gap-2 mt-3 mb-4">
-        {QUICK_TAGS.map((tag) => (
+        {QUICK_TAGS.map((tag) => {
+          const isSelected = input.split(',').map((t) => t.trim().toLowerCase()).includes(tag.toLowerCase())
+          return (
           <button
             key={tag}
             onClick={() => addTag(tag)}
             disabled={loading}
+            aria-pressed={isSelected}
             className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all hover:translate-y-[-1px]"
             style={{
               borderColor: 'var(--beige)',
-              background: input.split(',').map((t) => t.trim().toLowerCase()).includes(tag.toLowerCase()) ? 'var(--gold)' : 'white',
+              background: isSelected ? 'var(--gold)' : 'white',
               color: 'var(--black)',
               borderRadius: '20px',
               opacity: loading ? 0.5 : 1,
@@ -121,7 +136,8 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
           >
             {tag}
           </button>
-        ))}
+          )
+        })}
       </div>
 
       {/* Units filter */}
@@ -133,6 +149,7 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
           <button
             onClick={() => setUnitsFilter(null)}
             disabled={loading}
+            aria-pressed={unitsFilter === null}
             className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
             style={{
               borderColor: 'var(--beige)',
@@ -149,6 +166,7 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
               key={u}
               onClick={() => setUnitsFilter(unitsFilter === u ? null : u)}
               disabled={loading}
+              aria-pressed={unitsFilter === u}
               className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
               style={{
                 borderColor: 'var(--beige)',

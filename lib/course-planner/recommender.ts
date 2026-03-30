@@ -133,10 +133,19 @@ export async function getRecommendations(
     const code = item.course.scheduledCourseCode
     try {
       const res = await fetch(
-        `https://classes.usc.edu/api/Courses/Course?termCode=${semester}&courseCode=${code.courseSmashed}`
+        `https://classes.usc.edu/api/Courses/Course?termCode=${semester}&courseCode=${code.courseSmashed}`,
+        { signal: AbortSignal.timeout(5000) }
       )
       if (!res.ok) return null
       const data = await res.json()
+
+      // Skip courses with no active scheduled sections
+      const sections: any[] = data.sections || []
+      const hasActive = sections.some(
+        (s: any) => !s.isCancelled && s.schedule?.some((sch: any) => sch.startTime)
+      )
+      if (!hasActive) return null
+
       return {
         department: code.prefix,
         number: code.number + (code.suffix || ''),
@@ -153,7 +162,8 @@ export async function getRecommendations(
   const gePromises = Object.entries(GE_MAP).map(async ([geCode, { requirementPrefix, categoryPrefix }]) => {
     try {
       const res = await fetch(
-        `https://classes.usc.edu/api/Courses/GeCoursesByTerm?termCode=${semester}&geRequirementPrefix=${requirementPrefix}&categoryPrefix=${categoryPrefix}`
+        `https://classes.usc.edu/api/Courses/GeCoursesByTerm?termCode=${semester}&geRequirementPrefix=${requirementPrefix}&categoryPrefix=${categoryPrefix}`,
+        { signal: AbortSignal.timeout(5000) }
       )
       if (!res.ok) return []
       const data = await res.json()
@@ -182,16 +192,14 @@ export async function getRecommendations(
     ...gePromises,
   ])
 
-  // ── Score all Tier 2 candidates ──
-  const scored: RecommendedCourse[] = []
-  const seen = new Set<string>()
+  // ── Score all Tier 2 candidates (Map-based dedupe to merge GE tags) ──
+  const scoreMap = new Map<string, RecommendedCourse>()
 
   // Score top-30 detail-fetched courses
   for (const detail of detailResults) {
     if (!detail) continue
     const key = `${detail.department}-${detail.number}`
-    if (seen.has(key)) continue
-    seen.add(key)
+    if (scoreMap.has(key)) continue
 
     const { score, matched } = scoreTier2(
       detail.title,
@@ -203,9 +211,8 @@ export async function getRecommendations(
     )
 
     if (score > 0) {
-      // Reconstruct original user-facing match reasons from stemmed tokens
       const reasons = [...new Set([...matched, ...detail.tier1Matched])]
-      scored.push({
+      scoreMap.set(key, {
         department: detail.department,
         number: detail.number,
         title: detail.title,
@@ -217,12 +224,28 @@ export async function getRecommendations(
     }
   }
 
-  // Score GE courses
+  // Score GE courses — merge geTag into existing entries or add new ones
   for (const geCourses of geResults) {
     for (const gc of geCourses as any[]) {
       const key = `${gc.department}-${gc.number}`
-      if (seen.has(key)) continue
-      seen.add(key)
+      const existing = scoreMap.get(key)
+
+      if (existing) {
+        // Course already scored from detail fetch — re-score with GE bonus and attach tag
+        const { score, matched } = scoreTier2(
+          existing.title,
+          existing.description,
+          existing.department,
+          existing.number,
+          tokens,
+          matchedDepts,
+          gc.geTag
+        )
+        existing.geTag = gc.geTag
+        existing.relevanceScore = Math.round(score * 100) / 100
+        existing.matchReasons = [...new Set([...existing.matchReasons, ...matched])]
+        continue
+      }
 
       const { score, matched } = scoreTier2(
         gc.title,
@@ -235,7 +258,7 @@ export async function getRecommendations(
       )
 
       if (score > 0) {
-        scored.push({
+        scoreMap.set(key, {
           department: gc.department,
           number: gc.number,
           title: gc.title,
@@ -248,6 +271,8 @@ export async function getRecommendations(
       }
     }
   }
+
+  const scored = [...scoreMap.values()]
 
   // Sort by relevance, filter by units if specified, return top 15
   scored.sort((a, b) => b.relevanceScore - a.relevanceScore)

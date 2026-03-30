@@ -49,7 +49,6 @@ export interface SearchResult {
   number: string
   title: string
   units: string
-  sectionCount: number
 }
 
 // ─── RateMyProfessors ───

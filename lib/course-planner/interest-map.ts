@@ -50,7 +50,6 @@ export function tokenMatchScore(tokens: string[], targetText: string): { score: 
     .split(/\s+/)
     .map(simpleStem)
   const targetSet = new Set(targetTokens)
-  const targetJoined = targetTokens.join(' ')
 
   const matched: string[] = []
   for (const token of tokens) {
@@ -59,8 +58,8 @@ export function tokenMatchScore(tokens: string[], targetText: string): { score: 
       matched.push(token)
       continue
     }
-    // Substring match (e.g., "anim" matches "animation")
-    if (targetJoined.includes(token) && token.length >= 3) {
+    // Prefix match (e.g., "anim" matches "animation" but not "earth" containing "art")
+    if (token.length >= 3 && targetTokens.some((t) => t.startsWith(token))) {
       matched.push(token)
     }
   }
@@ -207,7 +206,13 @@ export function getDepartmentMatches(tokens: string[]): Set<string> {
   const depts = new Set<string>()
   for (const token of tokens) {
     for (const [keyword, departments] of Object.entries(INTEREST_DEPARTMENT_MAP)) {
-      if (token.includes(keyword) || keyword.includes(token)) {
+      // Multi-word keys (e.g., "public health") require exact match — don't let
+      // a lone token like "public" trigger phrase-key departments
+      if (keyword.includes(' ')) {
+        if (token === keyword) {
+          for (const dept of departments) depts.add(dept)
+        }
+      } else if (token.includes(keyword) || keyword.includes(token)) {
         for (const dept of departments) depts.add(dept)
       }
     }

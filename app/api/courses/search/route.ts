@@ -5,7 +5,8 @@ import { getCurrentSemesterCode } from '@/lib/course-planner/semester'
 // so we maintain our own cache here too
 const cache = new Map<string, { data: CourseEntry[]; ts: number }>()
 const CACHE_TTL = 3600_000
-const SEMESTER_RE = /^\d{5}$/
+const MAX_CACHE_ENTRIES = 10
+const SEMESTER_RE = /^20\d{2}[1-3]$/
 
 interface CourseEntry {
   fullCourseName: string
@@ -45,6 +46,15 @@ export async function GET(request: NextRequest) {
       }
       const data = await res.json()
       courses = data.courses || []
+      if (cache.size >= MAX_CACHE_ENTRIES) {
+        // Evict oldest entry
+        let oldestKey = ''
+        let oldestTs = Infinity
+        for (const [k, v] of cache) {
+          if (v.ts < oldestTs) { oldestTs = v.ts; oldestKey = k }
+        }
+        if (oldestKey) cache.delete(oldestKey)
+      }
       cache.set(semester, { data: courses, ts: Date.now() })
     }
 
@@ -62,7 +72,6 @@ export async function GET(request: NextRequest) {
         number: (c.scheduledCourseCode?.number || '') + (c.scheduledCourseCode?.suffix || ''),
         title: c.name || c.fullCourseName || '',
         units: c.courseUnits?.[0]?.toString() || '',
-        sectionCount: 0,
       }))
 
     return Response.json(matches, {
