@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 
 const TABS = [
   { href: '/', label: '找室友' },
+  { href: '/course-planner', label: '选课' },
   { href: '/usc-group', label: 'USC 新生群' },
 ]
 
