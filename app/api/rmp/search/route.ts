@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
         avgRating: teacher.avgRating,
         avgDifficulty: teacher.avgDifficulty,
         numRatings: teacher.numRatings,
-        wouldTakeAgainPercent: teacher.wouldTakeAgainPercent,
+        wouldTakeAgainPercent: teacher.wouldTakeAgainPercent ?? -1,
         legacyId: teacher.legacyId,
       },
       { headers: { 'Cache-Control': 'public, s-maxage=86400' } }

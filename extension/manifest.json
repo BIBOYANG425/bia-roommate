@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "BIA Course Helper",
+  "version": "1.0.0",
+  "description": "RMP ratings, schedule optimization, and course discovery for USC students — by BIA",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://webreg.usc.edu/*",
+    "https://classes.usc.edu/*",
+    "https://bia-roommate.vercel.app/*"
+  ],
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://webreg.usc.edu/*", "https://classes.usc.edu/*"],
+      "js": ["src/content/index.ts"],
+      "css": ["src/content/styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "public/icon-16.png",
+      "48": "public/icon-48.png",
+      "128": "public/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "public/icon-16.png",
+    "48": "public/icon-48.png",
+    "128": "public/icon-128.png"
+  }
+}
