@@ -9,7 +9,7 @@ export async function fetchRmpSingle(name: string): Promise<RmpRating | null> {
   )
   if (!res.ok) return null
   const data = await res.json()
-  if (!data.avgRating && data.avgRating !== 0) return null
+  if (!data || (!data.avgRating && data.avgRating !== 0)) return null
   return {
     avgRating: data.avgRating,
     avgDifficulty: data.avgDifficulty,

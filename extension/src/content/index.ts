@@ -60,30 +60,46 @@ async function processPage(site: Site) {
     const settings = await getSettings()
 
     // Both sites: RMP badges
-    if (settings.showRmpRatings) {
-      await injectRmpBadges(site)
-    } else {
-      removeRmpBadges()
+    try {
+      if (settings.showRmpRatings) {
+        await injectRmpBadges(site)
+      } else {
+        removeRmpBadges()
+      }
+    } catch (err) {
+      console.warn('[BIA] RMP badge error:', err)
     }
 
     // Both sites: seat count badges
-    if (settings.showSeatCounts) {
-      injectSeatBadges(site)
-    } else {
-      removeSeatBadges()
+    try {
+      if (settings.showSeatCounts) {
+        injectSeatBadges(site)
+      } else {
+        removeSeatBadges()
+      }
+    } catch (err) {
+      console.warn('[BIA] Seat badge error:', err)
     }
 
     // WebReg only: schedule reader + conflict highlighter
     if (site === 'webreg') {
-      readScheduleData()
-      if (settings.highlightConflicts) {
-        highlightConflicts()
-      } else {
-        clearConflictHighlights()
+      try {
+        readScheduleData()
+      } catch (err) {
+        console.warn('[BIA] Schedule reader error:', err)
+      }
+      try {
+        if (settings.highlightConflicts) {
+          highlightConflicts()
+        } else {
+          clearConflictHighlights()
+        }
+      } catch (err) {
+        console.warn('[BIA] Conflict highlighter error:', err)
       }
     }
   } catch (err) {
-    console.warn('[BIA] Error processing page:', err)
+    console.warn('[BIA] Error loading settings:', err)
   } finally {
     isProcessing = false
     if (pendingProcess) {
@@ -124,7 +140,31 @@ function init() {
     processPage(site)
 
     // Watch for DOM changes (Angular route navigation, expanding sections, etc.)
-    const observer = new MutationObserver(() => {
+    const observer = new MutationObserver((mutations) => {
+      // Ignore mutations caused by our own badge injections
+      const isOwnMutation = mutations.every((m) => {
+        for (const node of m.addedNodes) {
+          if (node instanceof HTMLElement && (
+            node.classList.contains('bia-rmp-badge') ||
+            node.classList.contains('bia-rmp-badge-loading') ||
+            node.classList.contains('bia-seat-badge') ||
+            node.classList.contains('bia-seat-summary') ||
+            node.classList.contains('bia-conflict-highlight')
+          )) continue
+          return false
+        }
+        for (const node of m.removedNodes) {
+          if (node instanceof HTMLElement && (
+            node.classList.contains('bia-rmp-badge') ||
+            node.classList.contains('bia-rmp-badge-loading') ||
+            node.classList.contains('bia-seat-badge') ||
+            node.classList.contains('bia-seat-summary')
+          )) continue
+          return false
+        }
+        return true
+      })
+      if (isOwnMutation) return
       debounce(() => processPage(site), 300)
     })
 
