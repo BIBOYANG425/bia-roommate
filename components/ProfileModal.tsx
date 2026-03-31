@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { RoommateProfile, SLEEP_OPTIONS, CLEAN_OPTIONS, NOISE_OPTIONS, MUSIC_OPTIONS, STUDY_OPTIONS } from '@/lib/types'
 import { getLastChar, relativeTime, habitLevel, schoolAccent, schoolGold, schoolTagClass, schoolHabitClass } from '@/lib/utils'
+import { useAuth } from './AuthProvider'
 
 function HabitBar({ label, value, options, habitClass }: { label: string; value: string | null; options: readonly string[]; habitClass?: string }) {
   if (!value) return null
@@ -50,6 +51,46 @@ export default function ProfileModal({
     }
   }, [onClose])
 
+  const { user } = useAuth()
+  const [liked, setLiked] = useState(false)
+  const [likeCount, setLikeCount] = useState(0)
+  const [likeLoading, setLikeLoading] = useState(false)
+
+  useEffect(() => {
+    async function fetchLikeData() {
+      const res = await fetch(`/api/likes/count?ids=${profile.id}`)
+      const counts = await res.json()
+      setLikeCount(counts[profile.id] || 0)
+
+      if (user) {
+        const { createBrowserSupabaseClient } = await import('@/lib/supabase/client')
+        const supabase = createBrowserSupabaseClient()
+        const { data } = await supabase
+          .from('profile_likes')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('profile_id', profile.id)
+          .maybeSingle()
+        setLiked(!!data)
+      }
+    }
+    fetchLikeData()
+  }, [profile.id, user])
+
+  const handleLike = useCallback(async () => {
+    if (!user || likeLoading) return
+    setLikeLoading(true)
+    const res = await fetch('/api/likes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile_id: profile.id }),
+    })
+    const data = await res.json()
+    setLiked(data.liked)
+    setLikeCount((prev) => data.liked ? prev + 1 : Math.max(0, prev - 1))
+    setLikeLoading(false)
+  }, [user, profile.id, likeLoading])
+
   const hasHabits = profile.sleep_habit || profile.clean_level || profile.noise_level || profile.music_habit || profile.study_style
 
   const subtitleParts = [
@@ -74,6 +115,21 @@ export default function ProfileModal({
         className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto animate-slide-up brutal-container"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Like button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); handleLike() }}
+          disabled={!user || likeLoading}
+          className="absolute top-4 right-16 w-10 h-10 flex items-center justify-center border-[3px] border-[var(--black)] z-10 text-lg transition-colors"
+          style={{
+            background: liked ? 'var(--cardinal)' : 'var(--cream)',
+            color: liked ? 'white' : 'var(--black)',
+            cursor: user ? 'pointer' : 'not-allowed',
+          }}
+          title={user ? (liked ? 'Unlike' : 'Like') : 'Sign in to like'}
+        >
+          {liked ? '\u2665' : '\u2661'}
+        </button>
+
         {/* Close button */}
         <button
           onClick={onClose}
@@ -108,6 +164,11 @@ export default function ProfileModal({
               <p className="text-[10px] text-white/50 mt-1 uppercase tracking-wider">
                 {relativeTime(profile.created_at)}
               </p>
+              {likeCount > 0 && (
+                <span className="text-[10px] text-white/60 uppercase tracking-wider">
+                  {likeCount} {likeCount === 1 ? 'like' : 'likes'}
+                </span>
+              )}
             </div>
           </div>
         </div>

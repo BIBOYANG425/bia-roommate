@@ -13,9 +13,11 @@ const SCHOOL_LOGOS: Record<string, string> = {
 export default function ProfileCard({
   profile,
   onClick,
+  likeCount,
 }: {
   profile: RoommateProfile
   onClick: () => void
+  likeCount?: number
 }) {
   const avatarColor = getAvatarColor(profile.name)
   const lastChar = getLastChar(profile.name)
@@ -91,6 +93,11 @@ export default function ProfileCard({
 
       {/* Footer */}
       <div className="mt-auto pt-3 border-t-[2px] border-[var(--black)] flex items-center justify-between">
+        {(likeCount ?? 0) > 0 && (
+          <span className="text-[10px] flex items-center gap-1" style={{ color: 'var(--cardinal)' }}>
+            ♥ {likeCount}
+          </span>
+        )}
         <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--mid)' }}>
           {relativeTime(profile.created_at)}
         </span>
