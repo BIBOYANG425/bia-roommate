@@ -52,6 +52,7 @@ function HomeContent() {
     const { data, error: err } = await supabase
       .from('roommate_profiles')
       .select('*')
+      .eq('visible', true)
       .order('created_at', { ascending: false })
 
     if (err) {

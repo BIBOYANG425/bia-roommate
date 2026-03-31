@@ -165,6 +165,7 @@ export default function OnboardingFlow() {
       noise_level: form.noise_level || null,
       music_habit: form.music_habit || null,
       study_style: form.study_style || null,
+      visible: form.year === '新生',
     }
 
     if (existingId) {

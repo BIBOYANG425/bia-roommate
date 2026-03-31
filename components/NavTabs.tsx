@@ -1,7 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useAuth } from './AuthProvider'
+import AuthModal from './AuthModal'
 
 const TABS = [
   { href: '/', label: '找室友' },
@@ -11,25 +14,67 @@ const TABS = [
 
 export default function NavTabs() {
   const pathname = usePathname()
+  const { user, loading, signOut } = useAuth()
+  const [showAuth, setShowAuth] = useState(false)
 
   return (
-    <nav className="border-b-[3px] border-[var(--black)] flex" style={{ background: 'var(--cream)' }}>
-      {TABS.map((tab) => {
-        const active = pathname === tab.href
-        return (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className="font-display text-sm sm:text-base tracking-[0.1em] px-5 sm:px-8 py-3 border-r-[3px] border-[var(--black)] transition-colors"
-            style={active
-              ? { background: 'var(--cardinal)', color: 'white' }
-              : { background: 'var(--cream)', color: 'var(--mid)' }
-            }
-          >
-            {tab.label}
-          </Link>
-        )
-      })}
-    </nav>
+    <>
+      <nav className="border-b-[3px] border-[var(--black)] flex items-center" style={{ background: 'var(--cream)' }}>
+        {TABS.map((tab) => {
+          const active = pathname === tab.href
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className="font-display text-sm sm:text-base tracking-[0.1em] px-5 sm:px-8 py-3 border-r-[3px] border-[var(--black)] transition-colors"
+              style={active
+                ? { background: 'var(--cardinal)', color: 'white' }
+                : { background: 'var(--cream)', color: 'var(--mid)' }
+              }
+            >
+              {tab.label}
+            </Link>
+          )
+        })}
+
+        {/* Auth indicator — right side */}
+        <div className="ml-auto px-4 flex items-center gap-2 sm:gap-3">
+          {!loading && (
+            user ? (
+              <>
+                <Link
+                  href="/account"
+                  className="font-display text-[11px] tracking-wider px-3 py-1 border-[2px] border-[var(--black)] transition-colors hover:bg-[var(--gold)]"
+                  style={
+                    pathname === '/account'
+                      ? { background: 'var(--gold)', color: 'var(--black)' }
+                      : { color: 'var(--black)' }
+                  }
+                >
+                  ACCOUNT
+                </Link>
+                <button
+                  onClick={signOut}
+                  className="font-display text-[11px] tracking-wider px-3 py-1 border-[2px] border-[var(--black)] transition-colors hover:bg-[var(--cardinal)] hover:text-white"
+                  style={{ color: 'var(--black)' }}
+                >
+                  SIGN OUT
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setShowAuth(true)}
+                className="font-display text-[11px] tracking-wider px-3 py-1 border-[2px] border-[var(--black)] transition-colors hover:bg-[var(--cardinal)] hover:text-white"
+                style={{ color: 'var(--black)' }}
+              >
+                SIGN IN
+              </button>
+            )
+          )}
+        </div>
+      </nav>
+
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+    </>
   )
 }

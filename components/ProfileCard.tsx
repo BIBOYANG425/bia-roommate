@@ -80,9 +80,9 @@ export default function ProfileCard({
 
   return (
     <div className={`brutal-card ${cardClass} p-5 cursor-pointer flex flex-col gap-3 relative`} onClick={onClick}>
-      {/* School logo */}
-      {profile.school && SCHOOL_LOGOS[profile.school] && (
-        <div className="absolute top-3 right-3">
+      {/* School logo + timestamp */}
+      <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+        {profile.school && SCHOOL_LOGOS[profile.school] && (
           <Image
             src={SCHOOL_LOGOS[profile.school]}
             alt={profile.school}
@@ -90,8 +90,11 @@ export default function ProfileCard({
             height={28}
             className="drop-shadow-sm"
           />
-        </div>
-      )}
+        )}
+        <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--mid)' }}>
+          {relativeTime(profile.created_at)}
+        </span>
+      </div>
 
       {/* Header */}
       <div className="flex items-center gap-3 pr-8">
@@ -157,9 +160,6 @@ export default function ProfileCard({
             </span>
           )}
         </div>
-        <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--mid)' }}>
-          {relativeTime(profile.created_at)}
-        </span>
         <span className="font-display text-xs tracking-wider" style={{ color: accent }}>
           VIEW DETAILS →
         </span>
