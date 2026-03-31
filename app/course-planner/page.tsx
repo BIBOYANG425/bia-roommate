@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import NavTabs from '@/components/NavTabs'
 import SemesterSelector from '@/components/course-planner/SemesterSelector'
 import CourseSearch from '@/components/course-planner/CourseSearch'
@@ -9,6 +9,7 @@ import SelectedList from '@/components/course-planner/SelectedList'
 import SchedulePreferences from '@/components/course-planner/SchedulePreferences'
 import ResultsView from '@/components/course-planner/ResultsView'
 import InterestInput from '@/components/course-planner/InterestInput'
+import OnboardingTour from '@/components/course-planner/OnboardingTour'
 import { ScheduleProvider, usePlanner } from '@/lib/course-planner/store'
 import Toast from '@/components/Toast'
 import type { RecommendedCourse } from '@/lib/course-planner/recommender'
@@ -31,6 +32,12 @@ function PlannerContent() {
   })
   const [mode, setMode] = useState<Mode>('manual')
   const [recommendations, setRecommendations] = useState<RecommendedCourse[]>([])
+  const [showTour, setShowTour] = useState(false)
+
+  useEffect(() => {
+    const seen = localStorage.getItem('bia-tour-seen')
+    if (!seen) setShowTour(true)
+  }, [])
 
   const addCourse = useCallback((id: string, label: string) => {
     setSelectedCourses((prev) => {
@@ -60,11 +67,27 @@ function PlannerContent() {
     <main className="min-h-screen" style={{ background: '#F5F3EE' }}>
       <NavTabs />
 
+      {showTour && (
+        <OnboardingTour
+          onComplete={() => {
+            setShowTour(false)
+            localStorage.setItem('bia-tour-seen', '1')
+          }}
+        />
+      )}
+
       {/* Header */}
       <div className="border-b-[3px] border-[var(--black)] px-6 py-5" style={{ background: 'var(--cardinal)' }}>
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-3xl mx-auto text-center relative">
           <h1 className="font-display text-4xl sm:text-5xl text-white mb-1">BIA 选课</h1>
           <p className="text-sm text-white/60">USC COURSE PLANNER — FIND YOUR BEST SCHEDULE</p>
+          <button
+            onClick={() => setShowTour(true)}
+            className="absolute right-0 top-1/2 -translate-y-1/2 px-3 py-1 font-display text-[11px] tracking-wider border-[2px] border-white/40 text-white/70 hover:text-white hover:border-white transition-all"
+            style={{ borderRadius: 4 }}
+          >
+            TOUR
+          </button>
         </div>
       </div>
 
