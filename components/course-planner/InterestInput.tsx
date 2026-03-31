@@ -1,98 +1,124 @@
-'use client'
+"use client";
 
-import { useState, useRef, useEffect } from 'react'
-import type { RecommendedCourse } from '@/lib/course-planner/recommender'
+import { useState, useRef, useEffect } from "react";
+import type { RecommendedCourse } from "@/lib/course-planner/recommender";
 
 const QUICK_TAGS = [
-  'Animation', 'Film', 'Coding', 'AI', 'Music', 'Psychology',
-  'Business', 'Writing', 'Art', 'History', 'Social Justice',
-  'Biology', 'Data Science', 'Philosophy', 'Theater',
-]
+  "Animation",
+  "Film",
+  "Coding",
+  "AI",
+  "Music",
+  "Psychology",
+  "Business",
+  "Writing",
+  "Art",
+  "History",
+  "Social Justice",
+  "Biology",
+  "Data Science",
+  "Philosophy",
+  "Theater",
+];
 
 interface InterestInputProps {
-  semester: string
-  onResults: (results: RecommendedCourse[]) => void
+  semester: string;
+  onResults: (results: RecommendedCourse[]) => void;
 }
 
-export default function InterestInput({ semester, onResults }: InterestInputProps) {
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [error, setError] = useState<string | null>(null)
-  const [unitsFilter, setUnitsFilter] = useState<string | null>(null)
-  const abortRef = useRef<AbortController | null>(null)
+export default function InterestInput({
+  semester,
+  onResults,
+}: InterestInputProps) {
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [unitsFilter, setUnitsFilter] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    return () => { abortRef.current?.abort() }
-  }, [])
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
-  const UNIT_OPTIONS = ['1', '2', '3', '4']
+  const UNIT_OPTIONS = ["1", "2", "3", "4"];
 
   async function handleSearch() {
     if (input.trim().length < 2) {
-      setError('TRY DESCRIBING SPECIFIC TOPICS LIKE "PSYCHOLOGY, FILM, CODING"')
-      return
+      setError(
+        'TRY DESCRIBING SPECIFIC TOPICS LIKE "PSYCHOLOGY, FILM, CODING"',
+      );
+      return;
     }
-    setLoading(true)
-    setError(null)
-    setProgress(20)
+    setLoading(true);
+    setError(null);
+    setProgress(20);
 
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-    let progressInterval: ReturnType<typeof setInterval> | undefined
+    let progressInterval: ReturnType<typeof setInterval> | undefined;
 
     try {
       progressInterval = setInterval(() => {
-        setProgress((p) => Math.min(p + 8, 85))
-      }, 400)
+        setProgress((p) => Math.min(p + 8, 85));
+      }, 400);
 
-      const res = await fetch('/api/courses/recommend', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ interests: input, semester, units: unitsFilter }),
+      const res = await fetch("/api/courses/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          interests: input,
+          semester,
+          units: unitsFilter,
+        }),
         signal: controller.signal,
-      })
+      });
 
-      clearInterval(progressInterval)
-      progressInterval = undefined
-      setProgress(95)
+      clearInterval(progressInterval);
+      progressInterval = undefined;
+      setProgress(95);
 
       if (!res.ok) {
-        setError('FAILED TO FIND COURSES — TRY DIFFERENT KEYWORDS')
-        setLoading(false)
-        return
+        setError("FAILED TO FIND COURSES — TRY DIFFERENT KEYWORDS");
+        setLoading(false);
+        return;
       }
 
-      const data: RecommendedCourse[] = await res.json()
-      setProgress(100)
+      const data: RecommendedCourse[] = await res.json();
+      setProgress(100);
 
       if (data.length === 0) {
-        setError('NO MATCHING COURSES FOUND — TRY BROADER TOPICS')
-        setLoading(false)
-        return
+        setError("NO MATCHING COURSES FOUND — TRY BROADER TOPICS");
+        setLoading(false);
+        return;
       }
 
-      onResults(data)
+      onResults(data);
     } catch (err) {
-      if ((err as Error)?.name === 'AbortError') return
-      setError('NETWORK ERROR — PLEASE TRY AGAIN')
+      if ((err as Error)?.name === "AbortError") return;
+      setError("NETWORK ERROR — PLEASE TRY AGAIN");
     } finally {
-      if (progressInterval) clearInterval(progressInterval)
-      setLoading(false)
-      setProgress(0)
+      if (progressInterval) clearInterval(progressInterval);
+      setLoading(false);
+      setProgress(0);
     }
   }
 
   function addTag(tag: string) {
     setInput((prev) => {
-      const trimmed = prev.trim()
-      const tokens = trimmed.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean)
-      if (tokens.some((t) => t === tag.toLowerCase())) return prev
-      return trimmed ? `${trimmed}, ${tag.toLowerCase()}` : tag.toLowerCase()
-    })
-    setError(null)
+      const trimmed = prev.trim();
+      const tokens = trimmed
+        .split(",")
+        .map((t) => t.trim().toLowerCase())
+        .filter(Boolean);
+      if (tokens.some((t) => t === tag.toLowerCase())) return prev;
+      return trimmed ? `${trimmed}, ${tag.toLowerCase()}` : tag.toLowerCase();
+    });
+    setError(null);
   }
 
   return (
@@ -100,17 +126,20 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
       {/* Text input */}
       <textarea
         value={input}
-        onChange={(e) => { setInput(e.target.value); setError(null) }}
+        onChange={(e) => {
+          setInput(e.target.value);
+          setError(null);
+        }}
         aria-label="Describe your interests to find matching courses"
         placeholder="Describe your interests, hobbies, or topics you'd like to explore... (e.g., Japanese animation, social justice, and coding)"
         rows={3}
         className="w-full px-4 py-3 text-sm border-[2px] outline-none transition-colors resize-none"
         style={{
-          borderColor: 'var(--beige)',
-          background: 'white',
-          color: 'var(--black)',
-          borderRadius: '4px',
-          fontFamily: 'var(--font-body), monospace',
+          borderColor: "var(--beige)",
+          background: "white",
+          color: "var(--black)",
+          borderRadius: "4px",
+          fontFamily: "var(--font-body), monospace",
         }}
         disabled={loading}
       />
@@ -118,31 +147,37 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
       {/* Quick tags */}
       <div className="flex flex-wrap gap-2 mt-3 mb-4">
         {QUICK_TAGS.map((tag) => {
-          const isSelected = input.split(',').map((t) => t.trim().toLowerCase()).includes(tag.toLowerCase())
+          const isSelected = input
+            .split(",")
+            .map((t) => t.trim().toLowerCase())
+            .includes(tag.toLowerCase());
           return (
-          <button
-            key={tag}
-            onClick={() => addTag(tag)}
-            disabled={loading}
-            aria-pressed={isSelected}
-            className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all hover:translate-y-[-1px]"
-            style={{
-              borderColor: 'var(--beige)',
-              background: isSelected ? 'var(--gold)' : 'white',
-              color: 'var(--black)',
-              borderRadius: '20px',
-              opacity: loading ? 0.5 : 1,
-            }}
-          >
-            {tag}
-          </button>
-          )
+            <button
+              key={tag}
+              onClick={() => addTag(tag)}
+              disabled={loading}
+              aria-pressed={isSelected}
+              className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all hover:translate-y-[-1px]"
+              style={{
+                borderColor: "var(--beige)",
+                background: isSelected ? "var(--gold)" : "white",
+                color: "var(--black)",
+                borderRadius: "20px",
+                opacity: loading ? 0.5 : 1,
+              }}
+            >
+              {tag}
+            </button>
+          );
         })}
       </div>
 
       {/* Units filter */}
       <div className="mb-4">
-        <span className="text-xs font-display tracking-wider mr-2" style={{ color: 'var(--mid)' }}>
+        <span
+          className="text-xs font-display tracking-wider mr-2"
+          style={{ color: "var(--mid)" }}
+        >
           UNITS:
         </span>
         <div className="inline-flex gap-2 flex-wrap">
@@ -152,10 +187,10 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
             aria-pressed={unitsFilter === null}
             className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
             style={{
-              borderColor: 'var(--beige)',
-              background: unitsFilter === null ? 'var(--cardinal)' : 'white',
-              color: unitsFilter === null ? 'white' : 'var(--black)',
-              borderRadius: '20px',
+              borderColor: "var(--beige)",
+              background: unitsFilter === null ? "var(--cardinal)" : "white",
+              color: unitsFilter === null ? "white" : "var(--black)",
+              borderRadius: "20px",
               opacity: loading ? 0.5 : 1,
             }}
           >
@@ -169,10 +204,10 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
               aria-pressed={unitsFilter === u}
               className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
               style={{
-                borderColor: 'var(--beige)',
-                background: unitsFilter === u ? 'var(--cardinal)' : 'white',
-                color: unitsFilter === u ? 'white' : 'var(--black)',
-                borderRadius: '20px',
+                borderColor: "var(--beige)",
+                background: unitsFilter === u ? "var(--cardinal)" : "white",
+                color: unitsFilter === u ? "white" : "var(--black)",
+                borderRadius: "20px",
                 opacity: loading ? 0.5 : 1,
               }}
             >
@@ -184,7 +219,10 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
 
       {/* Error */}
       {error && (
-        <p className="text-xs mb-3 font-display tracking-wider" style={{ color: 'var(--cardinal)' }}>
+        <p
+          className="text-xs mb-3 font-display tracking-wider"
+          style={{ color: "var(--cardinal)" }}
+        >
           {error}
         </p>
       )}
@@ -194,14 +232,18 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
         <div className="mb-4">
           <div
             className="w-full h-2 border-[1.5px] border-[var(--black)]"
-            style={{ background: 'var(--cream)', borderRadius: '2px' }}
+            style={{ background: "var(--cream)", borderRadius: "2px" }}
           >
             <div
               className="h-full transition-all duration-300"
-              style={{ width: `${progress}%`, background: 'var(--cardinal)', borderRadius: '1px' }}
+              style={{
+                width: `${progress}%`,
+                background: "var(--cardinal)",
+                borderRadius: "1px",
+              }}
             />
           </div>
-          <p className="text-xs mt-2" style={{ color: 'var(--mid)' }}>
+          <p className="text-xs mt-2" style={{ color: "var(--mid)" }}>
             Searching 5000+ courses for your interests...
           </p>
         </div>
@@ -213,14 +255,14 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
         disabled={loading || input.trim().length < 2}
         className="w-full py-3 font-display text-base tracking-wider text-white border-[3px] border-[var(--black)] transition-all hover:translate-y-[-2px]"
         style={{
-          background: 'var(--cardinal)',
-          boxShadow: '3px 3px 0 var(--black)',
+          background: "var(--cardinal)",
+          boxShadow: "3px 3px 0 var(--black)",
           opacity: loading || input.trim().length < 2 ? 0.6 : 1,
-          borderRadius: '4px',
+          borderRadius: "4px",
         }}
       >
-        {loading ? 'SEARCHING...' : 'FIND MATCHING COURSES →'}
+        {loading ? "SEARCHING..." : "FIND MATCHING COURSES →"}
       </button>
     </div>
-  )
+  );
 }

@@ -8,7 +8,8 @@
   border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #fff;
   cursor: pointer;
   text-decoration: none;
@@ -23,13 +24,18 @@
 }
 
 .bia-rmp-badge-loading {
-  background: #9E9E9E;
+  background: #9e9e9e;
   animation: bia-pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes bia-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .bia-seat-badge {
@@ -39,19 +45,20 @@
   border-radius: 3px;
   font-size: 10px;
   font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   margin-left: 4px;
   vertical-align: middle;
 }
 
 .bia-seat-badge-open {
-  background: #E8F5E9;
-  color: #2E7D32;
+  background: #e8f5e9;
+  color: #2e7d32;
 }
 
 .bia-seat-badge-full {
-  background: #FFEBEE;
-  color: #C62828;
+  background: #ffebee;
+  color: #c62828;
 }
 
 .bia-seat-summary {
@@ -61,19 +68,20 @@
   border-radius: 10px;
   font-size: 11px;
   font-weight: 700;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   margin-left: 8px;
   vertical-align: middle;
 }
 
 .bia-conflict-highlight {
   background: rgba(255, 152, 0, 0.15) !important;
-  border-left: 3px solid #FF9800 !important;
+  border-left: 3px solid #ff9800 !important;
 }
 
 .bia-conflict-tooltip {
   position: absolute;
-  background: #FF9800;
+  background: #ff9800;
   color: #fff;
   padding: 4px 8px;
   border-radius: 4px;

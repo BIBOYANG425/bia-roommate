@@ -14,10 +14,11 @@
 
 ### Task 1: Set Up WeChat Official Account (公众号)
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** April 1
 
 **Steps:**
+
 1. Register a WeChat Official Account (subscription type) under the org name "BIA新生找室友"
 2. Set up profile: logo, bio using core message ("别让室友变室敌"), link to uscbia.com
 3. Configure auto-reply for new followers: welcome message + questionnaire link
@@ -29,10 +30,11 @@
 
 ### Task 2: Set Up Xiaohongshu Account
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** April 1
 
 **Steps:**
+
 1. Create Xiaohongshu account: "BIA找室友 | USC"
 2. Profile bio: core message + "点击主页链接开始匹配"
 3. Add uscbia.com link to profile
@@ -44,10 +46,11 @@
 
 ### Task 3: Create Brand Asset Kit
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** April 5
 
 **Deliverables:**
+
 1. **Brand color palette + typography guide** — consistent across WeChat, Xiaohongshu, and web
 2. **Xiaohongshu carousel template** (Canva) — pastel aesthetic, BIA branding, 6-10 slide format
 3. **WeChat article header template** — banner image with BIA branding
@@ -60,10 +63,11 @@
 
 ### Task 4: Build Partnership Outreach List
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** April 5
 
 **Steps:**
+
 1. Identify and list contact info for:
    - USC CSSA current board members (WeChat or email)
    - 3-5 留学中介 that send students to USC (e.g., 新东方前途, 启德, 金吉列, local boutique agencies)
@@ -78,7 +82,7 @@
 
 ### Task 5: Draft First 4 Content Pieces
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** April 10
 
 **Pieces to draft (1 per pillar):**
@@ -106,10 +110,11 @@
 
 ### Task 6: Recruit Student Ambassadors (Round 1)
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** April 15
 
 **Steps:**
+
 1. Post ambassador recruitment in existing USC Chinese student groups: "BIA校园大使招募 — 帮新生找到完美室友"
 2. Target: recruit 5 ambassadors from current USC Chinese students
 3. Each ambassador commits to:
@@ -127,10 +132,11 @@
 
 ### Task 7: Launch Partnership Outreach
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** April 20
 
 **Steps:**
+
 1. Send outreach messages to all contacts from Task 4
 2. For CSSA: propose co-branded "新生找室友" post on their official account + mention in orientation packet
 3. For 留学中介: offer a one-pager they can share with USC-bound clients, branded with their logo + BIA
@@ -144,16 +150,18 @@
 
 ### Task 8: Publish Seed Content (Week 1-2)
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** April 30
 
 **Publishing schedule:**
+
 - **April 16:** Xiaohongshu — "你是哪种室友类型？" carousel (Task 5, Piece 1)
 - **April 18:** WeChat 公众号 — "2026 USC住房全攻略" article (Task 5, Piece 2)
 - **April 22:** Xiaohongshu — "来USC第一年我踩过的5个坑" (Task 5, Piece 3)
 - **April 25:** WeChat groups — share success story text (Task 5, Piece 4)
 
 **For each post:**
+
 1. Publish on platform
 2. Share in ambassador group for resharing
 3. Track engagement: views, likes, saves, comments, click-throughs to uscbia.com
@@ -169,6 +177,7 @@
 **Deadline:** May 1
 
 **Steps:**
+
 1. Identify USC 2026 admitted student WeChat groups — sources:
    - CSSA new student group
    - 留学中介 client groups
@@ -185,21 +194,21 @@
 
 ### Task 10: Produce May Content Batch
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** May 10
 
 **Produce 8 pieces for May publishing (2 per week):**
 
-| # | Platform | Pillar | Topic |
-|---|----------|--------|-------|
-| 1 | Xiaohongshu | Matching | "室友红旗🚩 这5种人千万别合租" carousel |
-| 2 | WeChat 公众号 | Living Guide | "USC周边租房地图：University Park vs Koreatown vs DTLA" |
-| 3 | Xiaohongshu | Matching | "BIA匹配算法大揭秘 — 我们怎么帮你找到最合拍的室友" infographic |
-| 4 | WeChat 公众号 | Student Life | Interview: "我的USC第一年" with a real current student |
-| 5 | Xiaohongshu | Living Guide | "签lease前必看！美国租房避坑指南" |
-| 6 | WeChat group text | Social Proof | First real BIA match testimonial (if available) |
-| 7 | Xiaohongshu | Student Life | "USC留学必备App清单" carousel |
-| 8 | WeChat 公众号 | Matching | "为什么随机分配室友是个坏主意 — 数据告诉你" |
+| #   | Platform          | Pillar       | Topic                                                          |
+| --- | ----------------- | ------------ | -------------------------------------------------------------- |
+| 1   | Xiaohongshu       | Matching     | "室友红旗🚩 这5种人千万别合租" carousel                        |
+| 2   | WeChat 公众号     | Living Guide | "USC周边租房地图：University Park vs Koreatown vs DTLA"        |
+| 3   | Xiaohongshu       | Matching     | "BIA匹配算法大揭秘 — 我们怎么帮你找到最合拍的室友" infographic |
+| 4   | WeChat 公众号     | Student Life | Interview: "我的USC第一年" with a real current student         |
+| 5   | Xiaohongshu       | Living Guide | "签lease前必看！美国租房避坑指南"                              |
+| 6   | WeChat group text | Social Proof | First real BIA match testimonial (if available)                |
+| 7   | Xiaohongshu       | Student Life | "USC留学必备App清单" carousel                                  |
+| 8   | WeChat 公众号     | Matching     | "为什么随机分配室友是个坏主意 — 数据告诉你"                    |
 
 **Done when:** All 8 pieces drafted, designed, and scheduled.
 
@@ -209,15 +218,17 @@
 
 ### Task 11: Execute May–June Content Calendar
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** Ongoing, May 15 – June 30
 
 **Weekly cadence:**
+
 - **Monday:** Publish Xiaohongshu post
 - **Wednesday:** Publish WeChat 公众号 article
 - **Friday:** Share in WeChat groups (link to article or standalone text)
 
 **Weekly ops:**
+
 1. Publish per schedule
 2. Share each post in ambassador group for amplification
 3. Respond to all comments/DMs within 24 hours
@@ -229,10 +240,11 @@
 
 ### Task 12: Launch Share-to-Unlock Growth Mechanic
 
-**Owner:** ___ (requires dev work)
+**Owner:** \_\_\_ (requires dev work)
 **Deadline:** May 20
 
 **Steps:**
+
 1. On uscbia.com, after questionnaire completion, show partial compatibility report
 2. Prompt: "分享给3位好友，解锁完整匹配报告" with WeChat share button
 3. Track shares → completions conversion rate
@@ -244,10 +256,11 @@
 
 ### Task 13: Launch Pair Reveal Notifications
 
-**Owner:** ___ (requires dev work)
+**Owner:** \_\_\_ (requires dev work)
 **Deadline:** May 25
 
 **Steps:**
+
 1. When two users are matched, send both a notification (WeChat template message or email)
 2. Include: match name, top 3 compatibility highlights, link to connect
 3. Add a "screenshot and share" prompt in the match reveal page — make it visually attractive for sharing
@@ -258,11 +271,12 @@
 
 ### Task 14: Optional — Xiaohongshu KOC Seeding
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** June 1
 **Budget:** ¥2,000–5,000
 
 **Steps:**
+
 1. Identify 10-20 Xiaohongshu creators in 留学 niche (1K–50K followers)
 2. DM with pitch: "We'll give you early access to BIA + ¥100-200, you post an honest review"
 3. Provide each creator with: their compatibility type result, talking points, BIA link
@@ -274,11 +288,12 @@
 
 ### Task 15: Optional — WeChat Moments Ads
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** June 15
 **Budget:** ¥3,000–5,000
 
 **Steps:**
+
 1. Create ad creative: lead with "你是哪种室友类型？" quiz hook
 2. Target: 18-22 year olds in Beijing, Shanghai, Shenzhen, Guangzhou with 留学 interest tags
 3. Run for 2 weeks (June 15–30) during peak housing-hunting season
@@ -291,19 +306,19 @@
 
 ### Task 16: Produce July Content Batch + Urgency Push
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** July 5
 
 **July content shifts to urgency messaging:**
 
-| # | Platform | Topic |
-|---|----------|-------|
-| 1 | Xiaohongshu | "还没找到室友？离开学只剩6周了" urgency carousel |
-| 2 | WeChat 公众号 | "BIA已经匹配了X对室友 — 你的完美室友还在等你" stats article |
-| 3 | Xiaohongshu | "8月租房checklist：搬去LA前必须做完这10件事" |
-| 4 | WeChat group text | "最后一波匹配！8月15日前完成问卷" |
-| 5 | Xiaohongshu | User story: real matched pair, photo + quote |
-| 6 | WeChat 公众号 | "室友合租协议模板 — 住在一起前先谈好这些" |
+| #   | Platform          | Topic                                                       |
+| --- | ----------------- | ----------------------------------------------------------- |
+| 1   | Xiaohongshu       | "还没找到室友？离开学只剩6周了" urgency carousel            |
+| 2   | WeChat 公众号     | "BIA已经匹配了X对室友 — 你的完美室友还在等你" stats article |
+| 3   | Xiaohongshu       | "8月租房checklist：搬去LA前必须做完这10件事"                |
+| 4   | WeChat group text | "最后一波匹配！8月15日前完成问卷"                           |
+| 5   | Xiaohongshu       | User story: real matched pair, photo + quote                |
+| 6   | WeChat 公众号     | "室友合租协议模板 — 住在一起前先谈好这些"                   |
 
 **Done when:** All 6 pieces published by July 31.
 
@@ -313,10 +328,11 @@
 
 ### Task 17: Collect Testimonials & Success Stories
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** September 15
 
 **Steps:**
+
 1. DM all successfully matched pairs: "你们住在一起了吗？分享你们的故事！"
 2. Collect: photo together (if willing), 2-3 sentence quote, rating of BIA experience
 3. Target: 10+ testimonials with photos
@@ -329,10 +345,11 @@
 
 ### Task 18: End-of-Cycle Metrics Report
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** September 30
 
 **Compile final metrics:**
+
 1. Questionnaire completions (target: 500+)
 2. Successful matches — both parties connected (target: 200+)
 3. WeChat 公众号 followers (target: 1,000+)
@@ -351,10 +368,11 @@
 
 ### Task 19: Set Up Next Cycle Flywheel
 
-**Owner:** ___
+**Owner:** \_\_\_
 **Deadline:** October 15
 
 **Steps:**
+
 1. Publish "BIA 2026年度报告" on WeChat 公众号 — X matches, X% compatibility satisfaction, best stories
 2. Identify top 3 ambassadors → invite to return as leads next cycle
 3. Archive all content templates, outreach templates, and tracking spreadsheets for reuse
@@ -367,24 +385,24 @@
 
 ## Execution Tracker
 
-| Task | Phase | Deadline | Owner | Status |
-|------|-------|----------|-------|--------|
-| 1. WeChat Official Account | Foundation | Apr 1 | ___ | ⬜ |
-| 2. Xiaohongshu Account | Foundation | Apr 1 | ___ | ⬜ |
-| 3. Brand Asset Kit | Foundation | Apr 5 | ___ | ⬜ |
-| 4. Partnership Outreach List | Foundation | Apr 5 | ___ | ⬜ |
-| 5. First 4 Content Pieces | Foundation | Apr 10 | ___ | ⬜ |
-| 6. Recruit Ambassadors | Foundation | Apr 15 | ___ | ⬜ |
-| 7. Launch Outreach | Seed | Apr 20 | ___ | ⬜ |
-| 8. Publish Seed Content | Seed | Apr 30 | ___ | ⬜ |
-| 9. Infiltrate 新生 Groups | Seed | May 1 | ___ | ⬜ |
-| 10. May Content Batch | Seed | May 10 | ___ | ⬜ |
-| 11. May–June Content Calendar | Peak | Jun 30 | ___ | ⬜ |
-| 12. Share-to-Unlock (dev) | Peak | May 20 | ___ | ⬜ |
-| 13. Pair Reveal Notifs (dev) | Peak | May 25 | ___ | ⬜ |
-| 14. KOC Seeding (optional) | Peak | Jun 1 | ___ | ⬜ |
-| 15. WeChat Ads (optional) | Peak | Jun 15 | ___ | ⬜ |
-| 16. July Urgency Content | Peak | Jul 5 | ___ | ⬜ |
-| 17. Collect Testimonials | Harvest | Sep 15 | ___ | ⬜ |
-| 18. Metrics Report | Harvest | Sep 30 | ___ | ⬜ |
-| 19. Next Cycle Flywheel | Harvest | Oct 15 | ___ | ⬜ |
+| Task                          | Phase      | Deadline | Owner  | Status |
+| ----------------------------- | ---------- | -------- | ------ | ------ |
+| 1. WeChat Official Account    | Foundation | Apr 1    | \_\_\_ | ⬜     |
+| 2. Xiaohongshu Account        | Foundation | Apr 1    | \_\_\_ | ⬜     |
+| 3. Brand Asset Kit            | Foundation | Apr 5    | \_\_\_ | ⬜     |
+| 4. Partnership Outreach List  | Foundation | Apr 5    | \_\_\_ | ⬜     |
+| 5. First 4 Content Pieces     | Foundation | Apr 10   | \_\_\_ | ⬜     |
+| 6. Recruit Ambassadors        | Foundation | Apr 15   | \_\_\_ | ⬜     |
+| 7. Launch Outreach            | Seed       | Apr 20   | \_\_\_ | ⬜     |
+| 8. Publish Seed Content       | Seed       | Apr 30   | \_\_\_ | ⬜     |
+| 9. Infiltrate 新生 Groups     | Seed       | May 1    | \_\_\_ | ⬜     |
+| 10. May Content Batch         | Seed       | May 10   | \_\_\_ | ⬜     |
+| 11. May–June Content Calendar | Peak       | Jun 30   | \_\_\_ | ⬜     |
+| 12. Share-to-Unlock (dev)     | Peak       | May 20   | \_\_\_ | ⬜     |
+| 13. Pair Reveal Notifs (dev)  | Peak       | May 25   | \_\_\_ | ⬜     |
+| 14. KOC Seeding (optional)    | Peak       | Jun 1    | \_\_\_ | ⬜     |
+| 15. WeChat Ads (optional)     | Peak       | Jun 15   | \_\_\_ | ⬜     |
+| 16. July Urgency Content      | Peak       | Jul 5    | \_\_\_ | ⬜     |
+| 17. Collect Testimonials      | Harvest    | Sep 15   | \_\_\_ | ⬜     |
+| 18. Metrics Report            | Harvest    | Sep 30   | \_\_\_ | ⬜     |
+| 19. Next Cycle Flywheel       | Harvest    | Oct 15   | \_\_\_ | ⬜     |

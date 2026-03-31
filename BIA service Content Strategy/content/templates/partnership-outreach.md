@@ -132,10 +132,10 @@ hi！关注你的留学内容很久了，超喜欢！
 
 ## Tracking Spreadsheet Structure
 
-| Partner | Type | Contact | Date Reached | Response | Status | Follow-up Date | Notes |
-|---------|------|---------|-------------|----------|--------|---------------|-------|
-| USC CSSA | Student Org | [WeChat] | | | Pending | | |
-| 新东方前途 | 留学中介 | [Email] | | | Pending | | |
-| 启德教育 | 留学中介 | [Email] | | | Pending | | |
-| USC Housing | University | [Email] | | | Pending | | |
-| ... | ... | ... | ... | ... | ... | ... | ... |
+| Partner     | Type        | Contact  | Date Reached | Response | Status  | Follow-up Date | Notes |
+| ----------- | ----------- | -------- | ------------ | -------- | ------- | -------------- | ----- |
+| USC CSSA    | Student Org | [WeChat] |              |          | Pending |                |       |
+| 新东方前途  | 留学中介    | [Email]  |              |          | Pending |                |       |
+| 启德教育    | 留学中介    | [Email]  |              |          | Pending |                |       |
+| USC Housing | University  | [Email]  |              |          | Pending |                |       |
+| ...         | ...         | ...      | ...          | ...      | ...     | ...            | ...   |

@@ -12,6 +12,7 @@
 **Visual:** Calendar with August circled, alarm clock, urgent color scheme (still on-brand)
 
 **Text:**
+
 ```
 还没找到室友？⏰
 
@@ -24,6 +25,7 @@
 ## Slide 2 — Reality Check
 
 **Text:**
+
 ```
 现在是7月。来看看时间线：
 
@@ -42,6 +44,7 @@
 ## Slide 3 — What Happens If You Wait
 
 **Text:**
+
 ```
 等到8月再找室友会怎样？
 
@@ -59,6 +62,7 @@
 ## Slide 4 — BIA Stats
 
 **Text:**
+
 ```
 BIA上已经有XXX人完成匹配 ✅
 
@@ -76,6 +80,7 @@ BIA上已经有XXX人完成匹配 ✅
 ## Slide 5 — 3 Minutes
 
 **Text:**
+
 ```
 只需要3分钟：
 
@@ -96,6 +101,7 @@ BIA上已经有XXX人完成匹配 ✅
 **Visual:** Big bold CTA, BIA logo
 
 **Text:**
+
 ```
 别再拖了！
 

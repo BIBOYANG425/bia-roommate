@@ -12,6 +12,7 @@
 **Visual:** Red flag emoji pattern on pastel background
 
 **Text:**
+
 ```
 室友红旗 🚩
 这5种人千万别合租！
@@ -26,6 +27,7 @@
 **Visual:** Clock icon, night vs day split
 
 **Text:**
+
 ```
 🚩 Red Flag #1
 "我作息很规律的"（规律地凌晨3点睡）
@@ -44,6 +46,7 @@
 **Visual:** Messy vs clean room split illustration
 
 **Text:**
+
 ```
 🚩 Red Flag #2
 "我不算特别整洁但也不邋遢"
@@ -63,6 +66,7 @@
 **Visual:** Party vs studying illustration
 
 **Text:**
+
 ```
 🚩 Red Flag #3
 "我偶尔会叫朋友来玩"
@@ -82,6 +86,7 @@
 **Visual:** Money/wallet icon
 
 **Text:**
+
 ```
 🚩 Red Flag #4
 "费用到时候再说吧"
@@ -101,6 +106,7 @@ Netflix谁付？客厅家具谁出钱？
 **Visual:** Passive aggressive note illustration
 
 **Text:**
+
 ```
 🚩 Red Flag #5
 "有问题我会直说的"（然后从来不说）
@@ -119,6 +125,7 @@ Netflix谁付？客厅家具谁出钱？
 **Visual:** Checklist graphic
 
 **Text:**
+
 ```
 怎么避免踩坑？
 
@@ -138,6 +145,7 @@ BIA通过生活习惯问卷
 **Visual:** BIA logo + questionnaire preview mockup
 
 **Text:**
+
 ```
 别等住进去了才后悔
 

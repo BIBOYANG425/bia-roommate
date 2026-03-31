@@ -12,6 +12,7 @@
 **Visual:** Lease document with magnifying glass, warning symbols
 
 **Text:**
+
 ```
 签Lease前必看！
 美国租房7个坑 ⚠️
@@ -25,6 +26,7 @@
 ## Slide 2 — Pit 1
 
 **Text:**
+
 ```
 坑1: 没看清lease期限
 
@@ -42,6 +44,7 @@
 ## Slide 3 — Pit 2
 
 **Text:**
+
 ```
 坑2: 押金不知道怎么退
 
@@ -59,6 +62,7 @@
 ## Slide 4 — Pit 3
 
 **Text:**
+
 ```
 坑3: 不知道哪些费用包含
 
@@ -75,6 +79,7 @@
 ## Slide 5 — Pit 4
 
 **Text:**
+
 ```
 坑4: 室友中途跑了
 
@@ -92,6 +97,7 @@
 ## Slide 6 — Pit 5
 
 **Text:**
+
 ```
 坑5: 没检查周边环境
 
@@ -110,6 +116,7 @@
 ## Slide 7 — Pit 6 & 7
 
 **Text:**
+
 ```
 坑6: 口头承诺不算数
 
@@ -131,6 +138,7 @@
 **Visual:** Checklist graphic + BIA branding
 
 **Text:**
+
 ```
 签Lease前的终极checklist：
 

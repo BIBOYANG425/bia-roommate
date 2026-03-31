@@ -27,7 +27,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className={`${bebasNeue.variable} ${spaceMono.variable}`}>
+    <html
+      lang="zh-CN"
+      className={`${bebasNeue.variable} ${spaceMono.variable}`}
+    >
       <body>
         {children}
         {/* Film grain overlay */}

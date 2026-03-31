@@ -1,82 +1,85 @@
-import { NextRequest } from 'next/server'
+import { NextRequest } from "next/server";
 
 // In-memory cache for autocomplete data per term
-const cache: Record<string, { data: CourseEntry[]; ts: number }> = {}
-const CACHE_TTL = 3600_000 // 1 hour
+const cache: Record<string, { data: CourseEntry[]; ts: number }> = {};
+const CACHE_TTL = 3600_000; // 1 hour
 
 interface CourseEntry {
-  fullCourseName: string
-  name: string
+  fullCourseName: string;
+  name: string;
   scheduledCourseCode: {
-    prefix: string
-    number: string
-    suffix: string
-    courseHyphen: string
-    courseSmashed: string
-  }
+    prefix: string;
+    number: string;
+    suffix: string;
+    courseHyphen: string;
+    courseSmashed: string;
+  };
 }
 
 async function getCourses(termCode: string): Promise<CourseEntry[]> {
-  const cached = cache[termCode]
+  const cached = cache[termCode];
   if (cached && Date.now() - cached.ts < CACHE_TTL) {
-    return cached.data
+    return cached.data;
   }
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 3000)
-  let res: Response
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3000);
+  let res: Response;
   try {
     res = await fetch(
       `https://classes.usc.edu/api/Search/Autocomplete?termCode=${termCode}`,
-      { next: { revalidate: 3600 }, signal: controller.signal }
-    )
+      { next: { revalidate: 3600 }, signal: controller.signal },
+    );
   } catch {
-    return []
+    return [];
   } finally {
-    clearTimeout(timer)
+    clearTimeout(timer);
   }
-  if (!res.ok) return []
-  const data = await res.json()
-  const courses = data.courses || []
-  cache[termCode] = { data: courses, ts: Date.now() }
-  return courses
+  if (!res.ok) return [];
+  const data = await res.json();
+  const courses = data.courses || [];
+  cache[termCode] = { data: courses, ts: Date.now() };
+  return courses;
 }
 
 export async function GET(request: NextRequest) {
-  const q = request.nextUrl.searchParams.get('q')
-  const termCode = request.nextUrl.searchParams.get('termCode') || '20263'
-  const all = request.nextUrl.searchParams.get('all')
+  const q = request.nextUrl.searchParams.get("q");
+  const termCode = request.nextUrl.searchParams.get("termCode") || "20263";
+  const all = request.nextUrl.searchParams.get("all");
 
   try {
-    const courses = await getCourses(termCode)
+    const courses = await getCourses(termCode);
 
     // If all=true, return the full course list (used by recommender)
     if (all) {
-      return Response.json({ courses }, {
-        headers: { 'Cache-Control': 'public, s-maxage=3600' },
-      })
+      return Response.json(
+        { courses },
+        {
+          headers: { "Cache-Control": "public, s-maxage=3600" },
+        },
+      );
     }
 
     if (!q || q.length < 2) {
-      return Response.json([])
+      return Response.json([]);
     }
 
     // Filter by query (case-insensitive)
-    const query = q.toUpperCase()
+    const query = q.toUpperCase();
     const matches = courses
       .filter((c) => {
-        const courseName = c.fullCourseName?.toUpperCase() || ''
-        const title = c.name?.toUpperCase() || ''
-        return courseName.includes(query) || title.includes(query)
+        const courseName = c.fullCourseName?.toUpperCase() || "";
+        const title = c.name?.toUpperCase() || "";
+        return courseName.includes(query) || title.includes(query);
       })
       .slice(0, 10)
       .map((c) => ({
-        text: `${c.scheduledCourseCode?.courseHyphen || c.fullCourseName} ${c.name || ''}`.trim(),
-      }))
+        text: `${c.scheduledCourseCode?.courseHyphen || c.fullCourseName} ${c.name || ""}`.trim(),
+      }));
 
     return Response.json(matches, {
-      headers: { 'Cache-Control': 'public, s-maxage=3600' },
-    })
+      headers: { "Cache-Control": "public, s-maxage=3600" },
+    });
   } catch {
-    return Response.json({ error: 'Network error' }, { status: 502 })
+    return Response.json({ error: "Network error" }, { status: 502 });
   }
 }

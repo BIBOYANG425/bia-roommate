@@ -12,6 +12,7 @@
 **Visual:** Clean tech-style design with algorithm/data visualization aesthetic, pastel colors
 
 **Text:**
+
 ```
 BIA匹配算法大揭秘 🔬
 
@@ -28,6 +29,7 @@ BIA匹配算法大揭秘 🔬
 **Visual:** Two mismatched puzzle pieces
 
 **Text:**
+
 ```
 传统找室友方式 ❌
 
@@ -49,6 +51,7 @@ BIA匹配算法大揭秘 🔬
 **Visual:** Flowchart style: questionnaire → data → algorithm → match
 
 **Text:**
+
 ```
 BIA的方法 ✅
 
@@ -67,6 +70,7 @@ BIA的方法 ✅
 **Visual:** Hexagonal radar chart with 6 axes, each labeled
 
 **Text:**
+
 ```
 我们分析的6个核心维度：
 
@@ -96,6 +100,7 @@ BIA的方法 ✅
 **Visual:** Two user profiles with connecting lines showing high-match dimensions
 
 **Text:**
+
 ```
 匹配逻辑：
 
@@ -118,6 +123,7 @@ BIA的方法 ✅
 **Visual:** Phone mockup showing BIA questionnaire, match result preview
 
 **Text:**
+
 ```
 想知道你的匹配结果？
 
