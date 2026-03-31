@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BIA Roommate + Course Helper
+
+A platform for USC, UC Berkeley, and Stanford students to find roommates and plan course schedules. Built by **BIA at USC**.
+
+**Live:** [bia-roommate.vercel.app](https://bia-roommate.vercel.app)
+
+## Features
+
+### Roommate Matching
+- Browse and filter roommate profiles by school, year, gender, and tags
+- Submit your own profile with living habits, hobbies, and preferences
+- School-branded cards with USC / Cal / Stanford logo badges
+- Bilingual support (English + Chinese)
+
+### Course Planner
+- Search USC courses by department, number, or keyword
+- Filter by GE category and semester
+- Schedule optimizer: reads your course bin and builds conflict-free schedules
+- Interest-based course discovery: describe what you like and get matching courses
+- Visual weekly calendar view
+
+### Chrome Extension (`/extension`)
+A Manifest V3 Chrome extension that enhances USC's WebReg and Schedule of Classes:
+- **RateMyProfessors ratings** inline next to instructor names
+- **Seat count badges** showing enrollment / capacity per section
+- **Time conflict highlighting** on WebReg
+- **Schedule optimizer** and **interest-based discovery** in the popup
+- All data cached locally via `chrome.storage`
+
+## Tech Stack
+
+- **Frontend:** Next.js 16, React 19, Tailwind CSS
+- **Backend:** Next.js API routes, Supabase (profiles)
+- **Extension:** Vite, TypeScript, Chrome Manifest V3
+- **Deployment:** Vercel
 
 ## Getting Started
 
-First, run the development server:
+### Web App
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Chrome Extension
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cd extension
+npm install
+npx vite build
+```
 
-## Learn More
+Then load `extension/dist/` as an unpacked extension in `chrome://extensions`.
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+app/
+  page.tsx              # Roommate feed (home)
+  submit/               # Profile submission form
+  course-planner/       # Course planner page
+  usc-group/            # USC group page
+  api/
+    courses/            # Course search, GE, autocomplete, coursebin, recommendations
+    rmp/                # RateMyProfessors batch + search proxy
+components/             # ProfileCard, ProfileModal, NavTabs, course-planner components
+extension/
+  src/
+    content/            # Content scripts (RMP badges, seat counts, conflicts)
+    background/         # Service worker (API client, cache)
+    popup/              # React popup (optimizer, discover, settings)
+    shared/             # Shared types and constants
+lib/                    # Utils, types, Supabase client, CORS helpers
+public/schools/         # School logo SVGs
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Environment Variables
 
-## Deploy on Vercel
+Create `.env.local` with:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+Built by BIA at USC.
