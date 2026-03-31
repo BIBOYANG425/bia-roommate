@@ -1,7 +1,14 @@
 'use client'
 
+import Image from 'next/image'
 import { RoommateProfile } from '@/lib/types'
 import { getAvatarColor, getLastChar, relativeTime, schoolAccent, schoolCardClass } from '@/lib/utils'
+
+const SCHOOL_LOGOS: Record<string, string> = {
+  'USC': '/schools/usc.svg',
+  'UC Berkeley': '/schools/ucberkeley.svg',
+  'Stanford': '/schools/stanford.svg',
+}
 
 export default function ProfileCard({
   profile,
@@ -26,8 +33,21 @@ export default function ProfileCard({
 
   return (
     <div className={`brutal-card ${cardClass} p-5 cursor-pointer flex flex-col gap-3 relative`} onClick={onClick}>
+      {/* School logo */}
+      {profile.school && SCHOOL_LOGOS[profile.school] && (
+        <div className="absolute top-3 right-3">
+          <Image
+            src={SCHOOL_LOGOS[profile.school]}
+            alt={profile.school}
+            width={28}
+            height={28}
+            className="drop-shadow-sm"
+          />
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 pr-8">
         {profile.avatar_url ? (
           <img
             src={profile.avatar_url}

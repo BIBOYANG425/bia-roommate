@@ -55,6 +55,17 @@ function buildNonModuleEntries(): Plugin {
         },
       })
 
+      // Copy icons to dist
+      const iconsDir = resolve(__dirname, 'icons')
+      const distIconsDir = resolve(distDir, 'icons')
+      mkdirSync(distIconsDir, { recursive: true })
+      for (const size of ['16', '48', '128']) {
+        const iconSrc = resolve(iconsDir, `icon-${size}.png`)
+        if (existsSync(iconSrc)) {
+          copyFileSync(iconSrc, resolve(distIconsDir, `icon-${size}.png`))
+        }
+      }
+
       // Generate production manifest.json
       const manifest = {
         manifest_version: 3,
@@ -80,8 +91,17 @@ function buildNonModuleEntries(): Plugin {
         ],
         action: {
           default_popup: 'popup.html',
+          default_icon: {
+            '16': 'icons/icon-16.png',
+            '48': 'icons/icon-48.png',
+            '128': 'icons/icon-128.png',
+          },
         },
-        icons: {},
+        icons: {
+          '16': 'icons/icon-16.png',
+          '48': 'icons/icon-48.png',
+          '128': 'icons/icon-128.png',
+        },
       }
 
       writeFileSync(resolve(distDir, 'manifest.json'), JSON.stringify(manifest, null, 2))
