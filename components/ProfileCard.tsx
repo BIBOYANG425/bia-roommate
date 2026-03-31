@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { RoommateProfile } from '@/lib/types'
 import { getAvatarColor, getLastChar, relativeTime, schoolAccent, schoolCardClass } from '@/lib/utils'
@@ -29,7 +29,7 @@ export default function ProfileCard({
   const [checkedLike, setCheckedLike] = useState(false)
 
   // Check if user has liked this profile
-  useState(() => {
+  useEffect(() => {
     if (user) {
       import('@/lib/supabase/client').then(({ createBrowserSupabaseClient }) => {
         const supabase = createBrowserSupabaseClient()
@@ -47,21 +47,26 @@ export default function ProfileCard({
     } else {
       setCheckedLike(true)
     }
-  })
+  }, [user?.id, profile.id])
 
   const handleLike = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation()
     if (!user || likeLoading) return
     setLikeLoading(true)
-    const res = await fetch('/api/likes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profile_id: profile.id }),
-    })
-    const data = await res.json()
-    setLocalLiked(data.liked)
-    onLikeChange?.(profile.id, data.liked)
-    setLikeLoading(false)
+    try {
+      const res = await fetch('/api/likes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile_id: profile.id }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setLocalLiked(data.liked)
+        onLikeChange?.(profile.id, data.liked)
+      }
+    } finally {
+      setLikeLoading(false)
+    }
   }, [user, profile.id, likeLoading, onLikeChange])
 
   const avatarColor = getAvatarColor(profile.name)

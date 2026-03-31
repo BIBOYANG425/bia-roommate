@@ -15,11 +15,12 @@ export async function POST(request: Request) {
 
   if (error?.code === '23505') {
     // Already liked — unlike
-    await supabase
+    const { error: deleteError } = await supabase
       .from('profile_likes')
       .delete()
       .eq('user_id', user.id)
       .eq('profile_id', profile_id)
+    if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })
     return NextResponse.json({ liked: false })
   }
 

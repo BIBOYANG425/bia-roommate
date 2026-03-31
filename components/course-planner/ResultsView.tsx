@@ -333,7 +333,7 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
         {schedules.map((sched, i) => (
           <button
             key={i}
-            onClick={() => setActiveIdx(i)}
+            onClick={() => { setActiveIdx(i); setSaveStatus('idle'); setScheduleName('') }}
             className="px-4 py-2 text-sm font-display tracking-wider border-[2px] transition-all"
             style={{
               borderColor: 'var(--black)',

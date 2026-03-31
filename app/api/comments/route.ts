@@ -27,6 +27,10 @@ export async function DELETE(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await request.json()
+  if (!id || typeof id !== 'string') {
+    return NextResponse.json({ error: 'Missing or invalid id' }, { status: 400 })
+  }
+
   const { error } = await supabase
     .from('profile_comments')
     .delete()

@@ -182,6 +182,7 @@ export default function SubmitPage() {
       hobbies: hobbies.trim() || null,
       tags: tags.length > 0 ? tags : null,
       bio: bio.trim() || null,
+      visible: year === '新生',
     }
 
     const { data: inserted, error: err } = await supabase

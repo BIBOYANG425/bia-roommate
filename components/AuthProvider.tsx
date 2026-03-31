@@ -58,6 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signIn = useCallback(async (email: string, password: string) => {
+    if (!isSchoolEmail(email)) {
+      return { error: 'Please sign in with your school email (.usc.edu, .berkeley.edu, or .stanford.edu)' }
+    }
     const supabase = createBrowserSupabaseClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error: error?.message ?? null }

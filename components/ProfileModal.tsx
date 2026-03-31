@@ -80,15 +80,20 @@ export default function ProfileModal({
   const handleLike = useCallback(async () => {
     if (!user || likeLoading) return
     setLikeLoading(true)
-    const res = await fetch('/api/likes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profile_id: profile.id }),
-    })
-    const data = await res.json()
-    setLiked(data.liked)
-    setLikeCount((prev) => data.liked ? prev + 1 : Math.max(0, prev - 1))
-    setLikeLoading(false)
+    try {
+      const res = await fetch('/api/likes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile_id: profile.id }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setLiked(data.liked)
+        setLikeCount((prev) => data.liked ? prev + 1 : Math.max(0, prev - 1))
+      }
+    } finally {
+      setLikeLoading(false)
+    }
   }, [user, profile.id, likeLoading])
 
   const hasHabits = profile.sleep_habit || profile.clean_level || profile.noise_level || profile.music_habit || profile.study_style

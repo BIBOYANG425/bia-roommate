@@ -168,15 +168,13 @@ export default function OnboardingFlow() {
       visible: form.year === '新生',
     }
 
-    if (existingId) {
-      await supabase
-        .from('roommate_profiles')
-        .update(payload)
-        .eq('id', existingId)
-    } else {
-      await supabase
-        .from('roommate_profiles')
-        .insert({ ...payload, user_id: user!.id })
+    const { error } = existingId
+      ? await supabase.from('roommate_profiles').update(payload).eq('id', existingId)
+      : await supabase.from('roommate_profiles').insert({ ...payload, user_id: user!.id })
+
+    if (error) {
+      setSubmitting(false)
+      return
     }
 
     router.push('/account')

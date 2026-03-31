@@ -184,28 +184,34 @@ export default function AccountPage() {
   }, [user, authLoading, router])
 
   async function handleDeleteComment(id: string) {
+    const prev = comments
+    setComments((c) => c.filter((x) => x.id !== id))
     const supabase = createBrowserSupabaseClient()
-    await supabase.from('profile_comments').delete().eq('id', id)
-    setComments((prev) => prev.filter((c) => c.id !== id))
+    const { error } = await supabase.from('profile_comments').delete().eq('id', id)
+    if (error) setComments(prev)
   }
 
   async function handleUnlike(profileId: string) {
+    const prev = likedProfiles
+    setLikedProfiles((p) => p.filter((x) => x.id !== profileId))
     const supabase = createBrowserSupabaseClient()
-    await supabase
+    const { error } = await supabase
       .from('profile_likes')
       .delete()
       .eq('user_id', user!.id)
       .eq('profile_id', profileId)
-    setLikedProfiles((prev) => prev.filter((p) => p.id !== profileId))
+    if (error) setLikedProfiles(prev)
   }
 
   async function handleDeleteSchedule(id: string) {
+    const prev = schedules
+    setSchedules((s) => s.filter((x) => x.id !== id))
     const supabase = createBrowserSupabaseClient()
-    await supabase.from('saved_schedules').delete().eq('id', id)
-    setSchedules((prev) => prev.filter((s) => s.id !== id))
+    const { error } = await supabase.from('saved_schedules').delete().eq('id', id)
+    if (error) setSchedules(prev)
   }
 
-  if (authLoading || (!user && !authLoading)) {
+  if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="font-display text-xl tracking-wider" style={{ color: 'var(--mid)' }}>

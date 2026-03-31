@@ -12,8 +12,8 @@ export async function POST(request: Request) {
   const body = await request.json()
   const { name, semester, courses, preferences, schedule_data } = body
 
-  if (!semester || !courses || !schedule_data) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+  if (!semester || typeof semester !== 'string' || !Array.isArray(courses) || courses.length === 0 || typeof schedule_data !== 'object' || schedule_data === null) {
+    return NextResponse.json({ error: 'Missing or invalid fields' }, { status: 400 })
   }
 
   const { data, error } = await supabase
@@ -56,7 +56,9 @@ export async function GET(request: Request) {
       .single()
 
     if (error) {
-      return NextResponse.json({ error: 'Schedule not found' }, { status: 404 })
+      const status = error.code === 'PGRST116' ? 404 : 500
+      const msg = status === 404 ? 'Schedule not found' : error.message
+      return NextResponse.json({ error: msg }, { status })
     }
 
     return NextResponse.json(data)
