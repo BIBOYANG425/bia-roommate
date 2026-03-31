@@ -42,10 +42,13 @@ function parseTimeRange(timeStr: string): { startMin: number; endMin: number } |
   return { startMin: startH * 60 + startM, endMin: endH * 60 + endM }
 }
 
+const DAY_MAP: Record<string, string> = { M: 'Mon', T: 'Tue', W: 'Wed', H: 'Thu', F: 'Fri' }
+
 function parseDays(dayStr: string): string[] {
   const days: string[] = []
   for (const char of dayStr.toUpperCase()) {
-    if ('MTWHF'.includes(char)) days.push(char)
+    const mapped = DAY_MAP[char]
+    if (mapped) days.push(mapped)
   }
   return days
 }
@@ -162,13 +165,19 @@ export function highlightConflicts() {
       )
 
       if (hasConflict) {
-        sections[i].element.classList.add('bia-conflict-highlight')
-        sections[i].element.setAttribute(CONFLICT_ATTR, 'true')
-        sections[i].element.title = `Time conflict with ${sections[j].courseId}`
-
-        sections[j].element.classList.add('bia-conflict-highlight')
-        sections[j].element.setAttribute(CONFLICT_ATTR, 'true')
-        sections[j].element.title = `Time conflict with ${sections[i].courseId}`
+        for (const [el, conflictId] of [
+          [sections[i].element, sections[j].courseId],
+          [sections[j].element, sections[i].courseId],
+        ] as [HTMLElement, string][]) {
+          el.classList.add('bia-conflict-highlight')
+          el.setAttribute(CONFLICT_ATTR, 'true')
+          const existing = el.title
+          if (!existing) {
+            el.title = `Time conflict with ${conflictId}`
+          } else if (!existing.includes(conflictId)) {
+            el.title = `${existing}, ${conflictId}`
+          }
+        }
       }
     }
   }

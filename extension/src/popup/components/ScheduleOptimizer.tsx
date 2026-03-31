@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Fragment } from 'react'
 import type { Course, SelectedSection, TimeSlot, DayOfWeek } from '../../shared/types'
 import { COURSE_COLORS, getNextColorIndex } from '../../shared/constants'
 
@@ -226,8 +226,8 @@ function MiniCalendar({ sections }: { sections: SelectedSection[] }) {
         <div key={d} className="mini-calendar-header">{d}</div>
       ))}
       {HOURS.map((h, ri) => (
-        <>
-          <div key={`t-${h}`} className="mini-calendar-time">
+        <Fragment key={`row-${h}`}>
+          <div className="mini-calendar-time">
             {h > 12 ? h - 12 : h}{h >= 12 ? 'p' : 'a'}
           </div>
           {DAYS.map((_, ci) => {
@@ -242,7 +242,7 @@ function MiniCalendar({ sections }: { sections: SelectedSection[] }) {
               />
             )
           })}
-        </>
+        </Fragment>
       ))}
     </div>
   )
