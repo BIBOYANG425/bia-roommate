@@ -58,20 +58,26 @@ export default function ProfileModal({
 
   useEffect(() => {
     async function fetchLikeData() {
-      const res = await fetch(`/api/likes/count?ids=${profile.id}`)
-      const counts = await res.json()
-      setLikeCount(counts[profile.id] || 0)
+      try {
+        const res = await fetch(`/api/likes/count?ids=${profile.id}`)
+        if (res.ok) {
+          const counts = await res.json()
+          setLikeCount(counts[profile.id] || 0)
+        }
 
-      if (user) {
-        const { createBrowserSupabaseClient } = await import('@/lib/supabase/client')
-        const supabase = createBrowserSupabaseClient()
-        const { data } = await supabase
-          .from('profile_likes')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('profile_id', profile.id)
-          .maybeSingle()
-        setLiked(!!data)
+        if (user) {
+          const { createBrowserSupabaseClient } = await import('@/lib/supabase/client')
+          const supabase = createBrowserSupabaseClient()
+          const { data } = await supabase
+            .from('profile_likes')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('profile_id', profile.id)
+            .maybeSingle()
+          setLiked(!!data)
+        }
+      } catch {
+        // Leave default state
       }
     }
     fetchLikeData()

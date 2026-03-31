@@ -108,76 +108,51 @@ export default function AccountPage() {
 
     async function fetchAll() {
       setLoading(true)
-      const [profileRes, schedulesRes, likesRes, commentsRes] = await Promise.all([
-        // user profile
-        supabase
-          .from('roommate_profiles')
-          .select('*')
-          .eq('user_id', user!.id)
-          .maybeSingle(),
+      try {
+        const [profileRes, schedulesRes, likesRes, commentsRes] = await Promise.all([
+          supabase.from('roommate_profiles').select('*').eq('user_id', user!.id).maybeSingle(),
+          supabase.from('saved_schedules').select('id, name, semester, courses, created_at').eq('user_id', user!.id).order('created_at', { ascending: false }),
+          supabase.from('profile_likes').select('profile_id, created_at').eq('user_id', user!.id).order('created_at', { ascending: false }),
+          supabase.from('profile_comments').select('id, content, created_at, profile_id').eq('user_id', user!.id).order('created_at', { ascending: false }),
+        ])
 
-        // saved schedules
-        supabase
-          .from('saved_schedules')
-          .select('id, name, semester, courses, created_at')
-          .eq('user_id', user!.id)
-          .order('created_at', { ascending: false }),
+        setProfile((profileRes.data as RoommateProfile | null) || null)
+        setSchedules((schedulesRes.data as SavedSchedule[]) || [])
 
-        // liked profile IDs, then fetch those profiles
-        supabase
-          .from('profile_likes')
-          .select('profile_id, created_at')
-          .eq('user_id', user!.id)
-          .order('created_at', { ascending: false }),
+        // Fetch liked profiles
+        if (likesRes.data && likesRes.data.length > 0) {
+          const profileIds = likesRes.data.map((l: { profile_id: string }) => l.profile_id)
+          const { data: likedData } = await supabase.from('roommate_profiles').select('*').in('id', profileIds)
+          setLikedProfiles((likedData as RoommateProfile[]) || [])
+        } else {
+          setLikedProfiles([])
+        }
 
-        // comments
-        supabase
-          .from('profile_comments')
-          .select('id, content, created_at, profile_id')
-          .eq('user_id', user!.id)
-          .order('created_at', { ascending: false }),
-      ])
+        // Fetch comment profile names
+        if (commentsRes.data && commentsRes.data.length > 0) {
+          const profileIds = [...new Set(commentsRes.data.map((c: { profile_id: string }) => c.profile_id))]
+          const { data: profileNames } = await supabase.from('roommate_profiles').select('id, name, school').in('id', profileIds)
 
-      setProfile((profileRes.data as RoommateProfile | null) || null)
-      setSchedules((schedulesRes.data as SavedSchedule[]) || [])
+          const profileMap = new Map(
+            (profileNames || []).map((p: { id: string; name: string; school: string | null }) => [p.id, p])
+          )
 
-      // Fetch liked profiles
-      if (likesRes.data && likesRes.data.length > 0) {
-        const profileIds = likesRes.data.map((l: { profile_id: string }) => l.profile_id)
-        const { data: likedData } = await supabase
-          .from('roommate_profiles')
-          .select('*')
-          .in('id', profileIds)
-        setLikedProfiles((likedData as RoommateProfile[]) || [])
-      } else {
-        setLikedProfiles([])
+          setComments(
+            commentsRes.data.map((c: { id: string; content: string; created_at: string; profile_id: string }) => ({
+              id: c.id,
+              content: c.content,
+              created_at: c.created_at,
+              profile: profileMap.get(c.profile_id) || null,
+            }))
+          )
+        } else {
+          setComments([])
+        }
+      } catch {
+        // Silently handle — empty state shown
+      } finally {
+        setLoading(false)
       }
-
-      // Fetch comment profile names
-      if (commentsRes.data && commentsRes.data.length > 0) {
-        const profileIds = [...new Set(commentsRes.data.map((c: { profile_id: string }) => c.profile_id))]
-        const { data: profileNames } = await supabase
-          .from('roommate_profiles')
-          .select('id, name, school')
-          .in('id', profileIds)
-
-        const profileMap = new Map(
-          (profileNames || []).map((p: { id: string; name: string; school: string | null }) => [p.id, p])
-        )
-
-        setComments(
-          commentsRes.data.map((c: { id: string; content: string; created_at: string; profile_id: string }) => ({
-            id: c.id,
-            content: c.content,
-            created_at: c.created_at,
-            profile: profileMap.get(c.profile_id) || null,
-          }))
-        )
-      } else {
-        setComments([])
-      }
-
-      setLoading(false)
     }
 
     fetchAll()

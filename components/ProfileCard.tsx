@@ -26,10 +26,10 @@ export default function ProfileCard({
   const { user } = useAuth()
   const [likeLoading, setLikeLoading] = useState(false)
   const [localLiked, setLocalLiked] = useState(false)
-  const [checkedLike, setCheckedLike] = useState(false)
 
   // Check if user has liked this profile
   useEffect(() => {
+    let mounted = true
     if (user) {
       import('@/lib/supabase/client').then(({ createBrowserSupabaseClient }) => {
         const supabase = createBrowserSupabaseClient()
@@ -40,13 +40,12 @@ export default function ProfileCard({
           .eq('profile_id', profile.id)
           .maybeSingle()
           .then(({ data }: { data: { id: string } | null }) => {
-            setLocalLiked(!!data)
-            setCheckedLike(true)
+            if (mounted) setLocalLiked(!!data)
           })
+          .catch(() => {})
       })
-    } else {
-      setCheckedLike(true)
     }
+    return () => { mounted = false }
   }, [user?.id, profile.id])
 
   const handleLike = useCallback(async (e: React.MouseEvent) => {

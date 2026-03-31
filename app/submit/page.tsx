@@ -215,15 +215,18 @@ export default function SubmitPage() {
   if (submittedProfileId) {
     // After sign-up succeeds, link the profile to the new user
     const handleAuthSuccess = async () => {
-      // Small delay to let auth state propagate
       await new Promise((r) => setTimeout(r, 500))
-      // Link profile to user
-      await supabase
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) {
+        router.push('/?submitted=true')
+        return
+      }
+      const { error } = await supabase
         .from('roommate_profiles')
-        .update({ user_id: (await supabase.auth.getUser()).data.user?.id })
+        .update({ user_id: authUser.id })
         .eq('id', submittedProfileId)
         .is('user_id', null)
-      router.push('/?submitted=true&linked=true')
+      router.push(error ? '/?submitted=true' : '/?submitted=true&linked=true')
     }
 
     return (
