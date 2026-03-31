@@ -247,6 +247,12 @@ function HomeContent() {
                     profile={profile}
                     onClick={() => setSelectedProfile(profile)}
                     likeCount={likeCounts[profile.id]}
+                    onLikeChange={(id, liked) => {
+                      setLikeCounts((prev) => ({
+                        ...prev,
+                        [id]: Math.max(0, (prev[id] || 0) + (liked ? 1 : -1)),
+                      }))
+                    }}
                   />
                 </div>
               ))}

@@ -1,8 +1,10 @@
 'use client'
 
+import { useState, useCallback } from 'react'
 import Image from 'next/image'
 import { RoommateProfile } from '@/lib/types'
 import { getAvatarColor, getLastChar, relativeTime, schoolAccent, schoolCardClass } from '@/lib/utils'
+import { useAuth } from './AuthProvider'
 
 const SCHOOL_LOGOS: Record<string, string> = {
   'USC': '/schools/usc.svg',
@@ -14,11 +16,54 @@ export default function ProfileCard({
   profile,
   onClick,
   likeCount,
+  onLikeChange,
 }: {
   profile: RoommateProfile
   onClick: () => void
   likeCount?: number
+  onLikeChange?: (profileId: string, liked: boolean) => void
 }) {
+  const { user } = useAuth()
+  const [likeLoading, setLikeLoading] = useState(false)
+  const [localLiked, setLocalLiked] = useState(false)
+  const [checkedLike, setCheckedLike] = useState(false)
+
+  // Check if user has liked this profile
+  useState(() => {
+    if (user) {
+      import('@/lib/supabase/client').then(({ createBrowserSupabaseClient }) => {
+        const supabase = createBrowserSupabaseClient()
+        supabase
+          .from('profile_likes')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('profile_id', profile.id)
+          .maybeSingle()
+          .then(({ data }: { data: { id: string } | null }) => {
+            setLocalLiked(!!data)
+            setCheckedLike(true)
+          })
+      })
+    } else {
+      setCheckedLike(true)
+    }
+  })
+
+  const handleLike = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!user || likeLoading) return
+    setLikeLoading(true)
+    const res = await fetch('/api/likes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile_id: profile.id }),
+    })
+    const data = await res.json()
+    setLocalLiked(data.liked)
+    onLikeChange?.(profile.id, data.liked)
+    setLikeLoading(false)
+  }, [user, profile.id, likeLoading, onLikeChange])
+
   const avatarColor = getAvatarColor(profile.name)
   const lastChar = getLastChar(profile.name)
   const accent = schoolAccent(profile.school)
@@ -93,11 +138,25 @@ export default function ProfileCard({
 
       {/* Footer */}
       <div className="mt-auto pt-3 border-t-[2px] border-[var(--black)] flex items-center justify-between">
-        {(likeCount ?? 0) > 0 && (
-          <span className="text-[10px] flex items-center gap-1" style={{ color: 'var(--cardinal)' }}>
-            ♥ {likeCount}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleLike}
+            disabled={!user || likeLoading}
+            className="text-sm transition-transform hover:scale-110"
+            style={{
+              color: localLiked ? 'var(--cardinal)' : 'var(--mid)',
+              cursor: user ? 'pointer' : 'default',
+            }}
+            title={user ? (localLiked ? 'Unlike' : 'Like') : 'Sign in to like'}
+          >
+            {localLiked ? '♥' : '♡'}
+          </button>
+          {(likeCount ?? 0) > 0 && (
+            <span className="text-[10px]" style={{ color: 'var(--mid)' }}>
+              {likeCount}
+            </span>
+          )}
+        </div>
         <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--mid)' }}>
           {relativeTime(profile.created_at)}
         </span>

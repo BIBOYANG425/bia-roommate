@@ -393,12 +393,20 @@ export default function AccountPage() {
                         {relativeTime(s.created_at)}
                       </p>
                     </div>
-                    <button
-                      onClick={() => handleDeleteSchedule(s.id)}
-                      className="font-display text-[10px] tracking-wider px-3 py-1 border-[2px] border-[var(--black)] hover:bg-[var(--cardinal)] hover:text-white transition-colors shrink-0 ml-3"
-                    >
-                      DELETE
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0 ml-3">
+                      <a
+                        href={`/course-planner?schedule=${s.id}`}
+                        className="font-display text-[10px] tracking-wider px-3 py-1 border-[2px] border-[var(--black)] hover:bg-[var(--gold)] transition-colors"
+                      >
+                        VIEW
+                      </a>
+                      <button
+                        onClick={() => handleDeleteSchedule(s.id)}
+                        className="font-display text-[10px] tracking-wider px-3 py-1 border-[2px] border-[var(--black)] hover:bg-[var(--cardinal)] hover:text-white transition-colors"
+                      >
+                        DELETE
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
