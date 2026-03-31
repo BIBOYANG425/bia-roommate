@@ -15,13 +15,7 @@ const GE_CATEGORIES = [
   { code: 'GE-H', name: 'Global Perspectives II' },
 ] as const
 
-// ─── Optimizer algorithm (same as web app) ───
-
-interface SectionCandidate {
-  section: Course['sections'][number]
-  slots: TimeSlot[]
-  score: number
-}
+// ─── Optimizer algorithm ───
 
 const DAY_MAP: Record<string, DayOfWeek> = { M: 'Mon', T: 'Tue', W: 'Wed', H: 'Thu', F: 'Fri' }
 
@@ -49,8 +43,89 @@ function slotsConflict(a: TimeSlot, b: TimeSlot): boolean {
   return a.day === b.day && a.startMin < b.endMin && b.startMin < a.endMin
 }
 
-// For GE categories, each "course group" can have multiple course options.
-// The optimizer picks the best option + section from each group.
+// A "combo" is a valid combination of sections for one course:
+// e.g., Lecture + Discussion, or Lecture + Lab, or just Lecture if no linked sections
+interface SectionCombo {
+  course: Course
+  sections: { section: Course['sections'][number]; slots: TimeSlot[] }[]
+  allSlots: TimeSlot[]
+  score: number
+}
+
+// Build all valid section combos for a course (lecture + discussion/lab pairs)
+function buildCombos(course: Course): SectionCombo[] {
+  const byType: Record<string, { section: Course['sections'][number]; slots: TimeSlot[] }[]> = {}
+
+  for (const s of course.sections || []) {
+    if (s.isCancelled || s.isClosed) continue
+    const slots = parseSectionTimes(s.times)
+    // Keep sections even if TBA — they may be quizzes
+    const type = (s.type || 'Lecture').toLowerCase()
+    if (!byType[type]) byType[type] = []
+    byType[type].push({ section: s, slots })
+  }
+
+  const types = Object.keys(byType)
+  if (types.length === 0) return []
+
+  // Sort types so Lecture comes first (primary), then others
+  types.sort((a, b) => {
+    if (a === 'lecture') return -1
+    if (b === 'lecture') return 1
+    return a.localeCompare(b)
+  })
+
+  // Filter out types where ALL sections have no time data (TBA-only types like Quiz)
+  const requiredTypes = types.filter((t) =>
+    byType[t].some((s) => s.slots.length > 0)
+  )
+
+  // If no required types, return empty
+  if (requiredTypes.length === 0) return []
+
+  const combos: SectionCombo[] = []
+
+  function generate(
+    typeIdx: number,
+    current: { section: Course['sections'][number]; slots: TimeSlot[] }[],
+    currentSlots: TimeSlot[]
+  ) {
+    // Limit total combos for performance
+    if (combos.length >= 50) return
+
+    if (typeIdx >= requiredTypes.length) {
+      if (current.length > 0) {
+        combos.push({
+          course,
+          sections: [...current],
+          allSlots: [...currentSlots],
+          score: 2.5 * current.length,
+        })
+      }
+      return
+    }
+
+    for (const entry of byType[requiredTypes[typeIdx]]) {
+      if (entry.slots.length === 0) continue
+
+      // Check for conflicts within this combo
+      const hasInternalConflict = entry.slots.some((a) =>
+        currentSlots.some((b) => slotsConflict(a, b))
+      )
+      if (hasInternalConflict) continue
+
+      current.push(entry)
+      currentSlots.push(...entry.slots)
+      generate(typeIdx + 1, current, currentSlots)
+      current.pop()
+      currentSlots.splice(currentSlots.length - entry.slots.length, entry.slots.length)
+    }
+  }
+
+  generate(0, [], [])
+  return combos
+}
+
 interface CourseGroup {
   label: string
   isGE: boolean
@@ -62,26 +137,15 @@ function optimizeSchedule(groups: CourseGroup[]): SelectedSection[] {
   let bestSections: SelectedSection[] = []
   const startTime = Date.now()
 
-  // Pre-compute candidates for each group
+  // Pre-compute combo candidates for each group
   const groupCandidates = groups.map((g) => {
-    const candidates: { course: Course; section: SectionCandidate }[] = []
-    // For GE groups, consider top 10 courses; for regular, just the one course
+    const combos: SectionCombo[] = []
     const options = g.isGE ? g.options.slice(0, 10) : g.options
     for (const course of options) {
-      for (const s of course.sections || []) {
-        if (s.isCancelled || s.isClosed) continue
-        const slots = parseSectionTimes(s.times)
-        if (slots.length === 0) continue
-        candidates.push({
-          course,
-          section: { section: s, slots, score: 2.5 },
-        })
-      }
+      combos.push(...buildCombos(course))
     }
-    // Sort by score descending
-    candidates.sort((a, b) => b.section.score - a.section.score)
-    // Limit to top sections for performance
-    return { label: g.label, candidates: candidates.slice(0, 30) }
+    combos.sort((a, b) => b.score - a.score)
+    return { label: g.label, combos: combos.slice(0, 40) }
   })
 
   const current: SelectedSection[] = []
@@ -99,30 +163,34 @@ function optimizeSchedule(groups: CourseGroup[]): SelectedSection[] {
 
     const gc = groupCandidates[idx]
     const remaining = groupCandidates.length - idx
-    if (score + remaining * 5.0 <= bestScore) return
+    if (score + remaining * 5.0 * 3 <= bestScore) return
 
-    for (const cand of gc.candidates) {
-      const hasConflict = cand.section.slots.some((a) =>
+    for (const combo of gc.combos) {
+      // Check for conflicts with already-selected sections
+      const hasConflict = combo.allSlots.some((a) =>
         currentSlots.some((b) => slotsConflict(a, b))
       )
       if (hasConflict) continue
 
       const usedColors = current.map((s) => s.colorIndex)
-      const courseId = `${cand.course.department}-${cand.course.number}`
-      const sel: SelectedSection = {
-        courseId,
-        courseTitle: cand.course.title,
-        units: cand.course.units,
-        section: cand.section.section,
-        colorIndex: getNextColorIndex(usedColors),
-        timeSlots: cand.section.slots,
-      }
+      const courseId = `${combo.course.department}-${combo.course.number}`
+      const colorIndex = getNextColorIndex(usedColors)
 
-      current.push(sel)
-      currentSlots.push(...cand.section.slots)
-      backtrack(idx + 1, score + cand.section.score)
-      current.pop()
-      currentSlots.splice(currentSlots.length - cand.section.slots.length, cand.section.slots.length)
+      // Add all sections in the combo (lecture + discussion + lab)
+      const newEntries: SelectedSection[] = combo.sections.map((entry) => ({
+        courseId,
+        courseTitle: combo.course.title,
+        units: combo.course.units,
+        section: entry.section,
+        colorIndex,
+        timeSlots: entry.slots,
+      }))
+
+      current.push(...newEntries)
+      currentSlots.push(...combo.allSlots)
+      backtrack(idx + 1, score + combo.score)
+      current.splice(current.length - newEntries.length, newEntries.length)
+      currentSlots.splice(currentSlots.length - combo.allSlots.length, combo.allSlots.length)
     }
   }
 
