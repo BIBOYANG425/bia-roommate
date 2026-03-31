@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
     )
 
     return Response.json(recommendations, { headers: cors })
-  } catch {
+  } catch (err) {
+    console.error('[recommend] Failed to generate recommendations:', err)
     return Response.json({ error: 'Failed to generate recommendations' }, { status: 500, headers: cors })
   }
 }

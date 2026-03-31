@@ -1,7 +1,7 @@
 import { injectRmpBadges } from './rmp-injector'
 import { injectSeatBadges } from './seat-counter'
 import { readScheduleData } from './schedule-reader'
-import { highlightConflicts } from './conflict-highlighter'
+import { highlightConflicts, clearConflictHighlights } from './conflict-highlighter'
 import type { ExtensionSettings } from '../shared/types'
 import { DEFAULT_SETTINGS } from '../shared/types'
 
@@ -17,14 +17,32 @@ function detectSite(): Site {
 async function getSettings(): Promise<ExtensionSettings> {
   try {
     const result = await chrome.storage.local.get('settings')
-    return result.settings ?? DEFAULT_SETTINGS
+    return { ...DEFAULT_SETTINGS, ...(result.settings ?? {}) }
   } catch {
     return DEFAULT_SETTINGS
   }
 }
 
+// Cleanup functions for removing injected decorations
+function removeRmpBadges() {
+  const badges = document.querySelectorAll('.bia-rmp-badge, .bia-rmp-badge-loading')
+  for (const b of badges) b.remove()
+  const processed = document.querySelectorAll('[data-bia-rmp]')
+  for (const el of processed) el.removeAttribute('data-bia-rmp')
+}
+
+function removeSeatBadges() {
+  const badges = document.querySelectorAll('.bia-seat-badge, .bia-seat-summary')
+  for (const b of badges) b.remove()
+  const processed = document.querySelectorAll('[data-bia-seats]')
+  for (const el of processed) el.removeAttribute('data-bia-seats')
+  const headerProcessed = document.querySelectorAll('[data-bia-seats-summary]')
+  for (const el of headerProcessed) el.removeAttribute('data-bia-seats-summary')
+}
+
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let isProcessing = false
+let pendingProcess = false
 
 function debounce(fn: () => void, ms: number) {
   if (debounceTimer) clearTimeout(debounceTimer)
@@ -32,7 +50,10 @@ function debounce(fn: () => void, ms: number) {
 }
 
 async function processPage(site: Site) {
-  if (isProcessing) return
+  if (isProcessing) {
+    pendingProcess = true
+    return
+  }
   isProcessing = true
 
   try {
@@ -41,11 +62,15 @@ async function processPage(site: Site) {
     // Both sites: RMP badges
     if (settings.showRmpRatings) {
       await injectRmpBadges(site)
+    } else {
+      removeRmpBadges()
     }
 
     // Both sites: seat count badges
     if (settings.showSeatCounts) {
       injectSeatBadges(site)
+    } else {
+      removeSeatBadges()
     }
 
     // WebReg only: schedule reader + conflict highlighter
@@ -53,12 +78,18 @@ async function processPage(site: Site) {
       readScheduleData()
       if (settings.highlightConflicts) {
         highlightConflicts()
+      } else {
+        clearConflictHighlights()
       }
     }
   } catch (err) {
     console.warn('[BIA] Error processing page:', err)
   } finally {
     isProcessing = false
+    if (pendingProcess) {
+      pendingProcess = false
+      debounce(() => processPage(site), 100)
+    }
   }
 }
 

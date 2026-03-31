@@ -72,6 +72,7 @@ export interface RecommendedCourse {
 export type BackgroundMessage =
   | { type: 'RMP_BATCH'; names: string[] }
   | { type: 'COURSEBIN_DETAILS'; courses: string[]; semester: string }
+  | { type: 'GE_COURSES'; category: string; semester: string }
   | { type: 'RECOMMEND'; interests: string; semester: string; units?: string }
   | { type: 'GET_SETTINGS' }
   | { type: 'SAVE_SETTINGS'; settings: ExtensionSettings }
@@ -79,6 +80,7 @@ export type BackgroundMessage =
 export type BackgroundResponse =
   | { type: 'RMP_BATCH_RESULT'; ratings: Record<string, RmpRating | null> }
   | { type: 'COURSEBIN_RESULT'; courses: Course[] }
+  | { type: 'GE_RESULT'; courses: Course[] }
   | { type: 'RECOMMEND_RESULT'; recommendations: RecommendedCourse[] }
   | { type: 'SETTINGS_RESULT'; settings: ExtensionSettings }
   | { type: 'ERROR'; error: string }

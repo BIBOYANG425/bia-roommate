@@ -80,7 +80,7 @@ async function lookupProfessor(name: string): Promise<RmpRating | null> {
       avgRating: teacher.avgRating,
       avgDifficulty: teacher.avgDifficulty,
       numRatings: teacher.numRatings,
-      wouldTakeAgainPercent: teacher.wouldTakeAgainPercent,
+      wouldTakeAgainPercent: teacher.wouldTakeAgainPercent ?? -1,
       legacyId: teacher.legacyId,
     }
 

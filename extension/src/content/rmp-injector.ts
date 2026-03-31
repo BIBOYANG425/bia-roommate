@@ -218,14 +218,10 @@ export async function injectRmpBadges(_site: string) {
       for (const name of batch) {
         const els = nameToElements.get(name) || []
         for (const el of els) {
+          // Remove loading badges and clear processed attr so retries work
           const loadingBadges = el.querySelectorAll('.bia-rmp-badge-loading')
-          for (const lb of loadingBadges) {
-            const badge = lb as HTMLElement
-            badge.className = 'bia-rmp-badge'
-            badge.style.backgroundColor = '#9E9E9E'
-            badge.textContent = '?'
-            badge.title = 'Ratings unavailable'
-          }
+          for (const lb of loadingBadges) lb.remove()
+          el.removeAttribute(PROCESSED_ATTR)
         }
       }
     }

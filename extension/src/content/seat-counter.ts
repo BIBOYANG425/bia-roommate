@@ -5,19 +5,36 @@ const SEAT_PATTERN = /(\d+)\s*(?:of|\/)\s*(\d+)/
 
 function createSeatBadge(registered: number, capacity: number): HTMLElement {
   const badge = document.createElement('span')
-  const isFull = registered >= capacity
-  badge.className = `bia-seat-badge ${isFull ? 'bia-seat-badge-full' : 'bia-seat-badge-open'}`
-  badge.textContent = isFull ? 'FULL' : `${capacity - registered} open`
-  badge.title = `${registered}/${capacity} registered${isFull ? ' — section is full' : ''}`
+  const open = Math.max(0, capacity - registered)
+  const overCapacity = Math.max(0, registered - capacity)
+  if (overCapacity > 0) {
+    badge.className = 'bia-seat-badge bia-seat-badge-full'
+    badge.textContent = `OVER +${overCapacity}`
+    badge.title = `${registered}/${capacity} registered — over capacity by ${overCapacity}`
+  } else if (open === 0) {
+    badge.className = 'bia-seat-badge bia-seat-badge-full'
+    badge.textContent = 'FULL'
+    badge.title = `${registered}/${capacity} registered — section is full`
+  } else {
+    badge.className = 'bia-seat-badge bia-seat-badge-open'
+    badge.textContent = `${open} open`
+    badge.title = `${registered}/${capacity} registered`
+  }
   return badge
 }
 
 function createCourseSummaryBadge(totalOpen: number, totalCapacity: number, sectionCount: number): HTMLElement {
   const badge = document.createElement('span')
-  const allFull = totalOpen === 0
-  badge.className = `bia-seat-summary ${allFull ? 'bia-seat-badge-full' : 'bia-seat-badge-open'}`
-  badge.textContent = allFull ? 'ALL FULL' : `${totalOpen} open`
-  badge.title = `${totalCapacity - totalOpen}/${totalCapacity} total across ${sectionCount} section${sectionCount !== 1 ? 's' : ''}`
+  const visibleOpen = Math.max(0, totalOpen)
+  const totalRegistered = totalCapacity - totalOpen
+  if (visibleOpen === 0) {
+    badge.className = `bia-seat-summary bia-seat-badge-full`
+    badge.textContent = 'ALL FULL'
+  } else {
+    badge.className = `bia-seat-summary bia-seat-badge-open`
+    badge.textContent = `${visibleOpen} open`
+  }
+  badge.title = `${totalRegistered}/${totalCapacity} total across ${sectionCount} section${sectionCount !== 1 ? 's' : ''}`
   return badge
 }
 

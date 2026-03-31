@@ -13,7 +13,14 @@ export function InterestSearch() {
   const [recommendations, setRecommendations] = useState<RecommendedCourse[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [semester, setSemester] = useState('20263')
   const abortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    chrome.storage.local.get('settings').then((stored) => {
+      if (stored.settings?.semester) setSemester(stored.settings.semester)
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     return () => { abortRef.current?.abort() }
@@ -51,10 +58,6 @@ export function InterestSearch() {
     setError(null)
 
     try {
-      // Get semester from settings
-      const stored = await chrome.storage.local.get('settings')
-      const semester = stored.settings?.semester || '20263'
-
       const response = await chrome.runtime.sendMessage({
         type: 'RECOMMEND',
         interests: text,
@@ -146,7 +149,7 @@ export function InterestSearch() {
                 </span>
                 <a
                   className="link-button"
-                  href={`https://classes.usc.edu/term-20253/course/${rec.department.toLowerCase()}-${rec.number}/`}
+                  href={`https://classes.usc.edu/term-${semester}/course/${rec.department.toLowerCase()}-${rec.number}/`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

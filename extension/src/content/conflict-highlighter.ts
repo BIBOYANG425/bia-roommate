@@ -119,7 +119,19 @@ function slotsConflict(a: TimeSlot, b: TimeSlot): boolean {
   return a.day === b.day && a.startMin < b.endMin && b.startMin < a.endMin
 }
 
+export function clearConflictHighlights() {
+  const highlighted = document.querySelectorAll<HTMLElement>('.bia-conflict-highlight')
+  for (const el of highlighted) {
+    el.classList.remove('bia-conflict-highlight')
+    el.removeAttribute(CONFLICT_ATTR)
+    el.title = ''
+  }
+}
+
 export function highlightConflicts() {
+  // Clear stale highlights before re-evaluating
+  clearConflictHighlights()
+
   const courseMap = buildCourseMap()
   if (courseMap.size === 0) return
 
@@ -129,8 +141,6 @@ export function highlightConflicts() {
   const sectionEls = document.querySelectorAll<HTMLElement>('.section_crsbin')
 
   for (const sectionEl of sectionEls) {
-    if (sectionEl.hasAttribute(CONFLICT_ATTR)) continue
-
     const courseId = findCourseId(sectionEl, courseMap)
     if (!courseId) continue
 

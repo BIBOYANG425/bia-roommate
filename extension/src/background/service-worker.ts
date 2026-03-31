@@ -43,7 +43,7 @@ async function handleMessage(msg: BackgroundMessage): Promise<BackgroundResponse
       return handleCoursebinDetails(msg.courses, msg.semester)
 
     case 'GE_COURSES':
-      return handleGECourses((msg as any).category, (msg as any).semester)
+      return handleGECourses(msg.category, msg.semester)
 
     case 'RECOMMEND':
       return handleRecommend(msg.interests, msg.semester, msg.units)
@@ -113,7 +113,7 @@ async function handleGECourses(
 ): Promise<BackgroundResponse> {
   try {
     const courses = await fetchGECourses(category, semester)
-    return { type: 'GE_RESULT', courses } as any
+    return { type: 'GE_RESULT', courses }
   } catch (err) {
     return { type: 'ERROR', error: (err as Error).message }
   }
@@ -136,13 +136,14 @@ async function handleGetSettings(): Promise<BackgroundResponse> {
   const result = await chrome.storage.local.get('settings')
   return {
     type: 'SETTINGS_RESULT',
-    settings: result.settings ?? DEFAULT_SETTINGS,
+    settings: { ...DEFAULT_SETTINGS, ...(result.settings ?? {}) },
   }
 }
 
 async function handleSaveSettings(settings: ExtensionSettings): Promise<BackgroundResponse> {
-  await chrome.storage.local.set({ settings })
-  return { type: 'SETTINGS_RESULT', settings }
+  const merged = { ...DEFAULT_SETTINGS, ...settings }
+  await chrome.storage.local.set({ settings: merged })
+  return { type: 'SETTINGS_RESULT', settings: merged }
 }
 
 // ─── Check storage quota periodically ───

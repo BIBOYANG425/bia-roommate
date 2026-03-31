@@ -18,6 +18,7 @@ export function Settings() {
     key: K,
     value: ExtensionSettings[K]
   ) {
+    const previous = settings
     const updated = { ...settings, [key]: value }
     setSettings(updated)
 
@@ -26,7 +27,7 @@ export function Settings() {
       setSaved(true)
       setTimeout(() => setSaved(false), 1500)
     } catch {
-      // Settings will be saved next time
+      setSettings(previous)
     }
   }
 

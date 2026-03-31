@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
 
   const codes = coursesParam.split(',').map((c) => c.trim()).filter(Boolean).slice(0, MAX_COURSES)
   if (codes.length === 0) {
-    return Response.json({ courses: [] })
+    return Response.json({ courses: [] }, { headers: cors })
   }
 
   // Fetch all courses in parallel

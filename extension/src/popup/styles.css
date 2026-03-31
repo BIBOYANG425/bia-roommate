@@ -179,6 +179,10 @@
   50% { opacity: 1; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .loading-text { animation: none; }
+}
+
 /* ─── Cards ─── */
 .course-card {
   background: var(--cream);

@@ -19,17 +19,39 @@ export async function fetchRmpSingle(name: string): Promise<RmpRating | null> {
   }
 }
 
-// Batch lookup using parallel individual requests
+// Batch lookup using the server-side batch endpoint
 export async function fetchRmpBatch(
   names: string[]
 ): Promise<Record<string, RmpRating | null>> {
-  const results = await Promise.allSettled(
-    names.map((name) => fetchRmpSingle(name))
+  // Dedupe names to avoid redundant lookups
+  const uniqueNames = [...new Set(names)]
+
+  const encodedNames = uniqueNames.map(encodeURIComponent).join(',')
+  const res = await fetch(
+    `${BIA_API_BASE}/api/rmp/batch?names=${encodedNames}`,
+    { signal: AbortSignal.timeout(15000) }
   )
+
+  if (!res.ok) {
+    // Fall back to individual lookups
+    const results = await Promise.allSettled(
+      uniqueNames.map((name) => fetchRmpSingle(name))
+    )
+    const ratings: Record<string, RmpRating | null> = {}
+    for (let i = 0; i < uniqueNames.length; i++) {
+      const r = results[i]
+      ratings[uniqueNames[i]] = r.status === 'fulfilled' ? r.value : null
+    }
+    return ratings
+  }
+
+  const data = await res.json()
+  const batchRatings: Record<string, RmpRating | null> = data.ratings ?? {}
+
+  // Map back to all original names (including duplicates)
   const ratings: Record<string, RmpRating | null> = {}
-  for (let i = 0; i < names.length; i++) {
-    const r = results[i]
-    ratings[names[i]] = r.status === 'fulfilled' ? r.value : null
+  for (const name of names) {
+    ratings[name] = batchRatings[name] ?? null
   }
   return ratings
 }

@@ -212,8 +212,8 @@ function MiniCalendar({ sections }: { sections: SelectedSection[] }) {
       const colIdx = DAYS.indexOf(slot.day)
       if (colIdx === -1) continue
       const startRow = Math.max(0, Math.floor((slot.startMin - 480) / 60))
-      const endRow = Math.min(HOURS.length - 1, Math.ceil((slot.endMin - 480) / 60))
-      for (let r = startRow; r <= endRow; r++) {
+      const endRow = Math.min(HOURS.length, Math.ceil((slot.endMin - 480) / 60))
+      for (let r = startRow; r < endRow; r++) {
         grid[r][colIdx] = sec
       }
     }
@@ -320,6 +320,10 @@ export function ScheduleOptimizer() {
           courses: courseCodes,
           semester,
         })
+        if (response?.type === 'ERROR') {
+          setError(`Failed to fetch courses: ${response.error}`)
+          return
+        }
         if (response?.type === 'COURSEBIN_RESULT' && response.courses) {
           for (const course of response.courses) {
             groups.push({
@@ -339,6 +343,10 @@ export function ScheduleOptimizer() {
           category: geCode,
           semester,
         })
+        if (response?.type === 'ERROR') {
+          setError(`Failed to fetch ${geCode}: ${response.error}`)
+          return
+        }
         if (response?.type === 'GE_RESULT' && response.courses?.length > 0) {
           groups.push({
             label: geCode,
@@ -381,15 +389,16 @@ export function ScheduleOptimizer() {
       {courseCodes.length > 0 ? (
         <div style={{ marginBottom: 12, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           {courseCodes.map((code) => (
-            <span
+            <button
               key={code}
+              type="button"
               className="match-tag"
               style={{ fontSize: 11, cursor: 'pointer' }}
-              title="Click to remove"
+              aria-label={`Remove ${code}`}
               onClick={() => removeCourse(code)}
             >
               {code} ✕
-            </span>
+            </button>
           ))}
         </div>
       ) : (
