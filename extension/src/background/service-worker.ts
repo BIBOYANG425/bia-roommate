@@ -1,6 +1,6 @@
 import { fetchRmpBatch, fetchCoursebinDetails, fetchGECourses, fetchRecommendations } from './api-client'
 import { StorageCache } from './cache'
-import type { BackgroundMessage, BackgroundResponse, RmpRating, ExtensionSettings } from '../shared/types'
+import type { BackgroundMessage, BackgroundResponse, RmpRating, Course, ExtensionSettings } from '../shared/types'
 import { DEFAULT_SETTINGS } from '../shared/types'
 
 // ─── Set up chrome.storage.session access for content scripts ───
@@ -100,7 +100,37 @@ async function handleCoursebinDetails(
   semester: string
 ): Promise<BackgroundResponse> {
   try {
-    const result = await fetchCoursebinDetails(courses, semester)
+    // Check cache first
+    const cacheKeys = courses.map((c) => `${c}:${semester}`)
+    const cached = await courseCache.getMany(cacheKeys)
+    const uncachedCodes = courses.filter((c) => !cached.has(`${c}:${semester}`))
+
+    let fetchedCourses: Course[] = []
+    if (uncachedCodes.length > 0) {
+      fetchedCourses = await fetchCoursebinDetails(uncachedCodes, semester)
+
+      // Cache fetched results
+      const toCache = new Map<string, unknown>()
+      for (const course of fetchedCourses) {
+        toCache.set(`${course.department}-${course.number}:${semester}`, course)
+      }
+      await courseCache.setMany(toCache)
+    }
+
+    // Merge cached + fetched
+    const result: Course[] = []
+    for (const code of courses) {
+      const cachedCourse = cached.get(`${code}:${semester}`)
+      if (cachedCourse) {
+        result.push(cachedCourse as Course)
+      } else {
+        const fetched = fetchedCourses.find(
+          (c) => `${c.department}-${c.number}` === code
+        )
+        if (fetched) result.push(fetched)
+      }
+    }
+
     return { type: 'COURSEBIN_RESULT', courses: result }
   } catch (err) {
     return { type: 'ERROR', error: (err as Error).message }

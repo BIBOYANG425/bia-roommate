@@ -27,7 +27,14 @@ export function Settings() {
       setSaved(true)
       setTimeout(() => setSaved(false), 1500)
     } catch {
-      setSettings(previous)
+      // Re-fetch current settings from storage instead of using stale snapshot
+      chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }).then((response) => {
+        if (response?.type === 'SETTINGS_RESULT') {
+          setSettings(response.settings)
+        } else {
+          setSettings(previous)
+        }
+      }).catch(() => setSettings(previous))
     }
   }
 

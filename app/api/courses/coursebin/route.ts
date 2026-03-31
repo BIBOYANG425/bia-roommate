@@ -68,7 +68,7 @@ export async function OPTIONS(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const cors = corsHeaders(request)
   const coursesParam = request.nextUrl.searchParams.get('courses')
-  const semester = request.nextUrl.searchParams.get('semester') || '20253'
+  const semester = request.nextUrl.searchParams.get('semester') || '20263'
 
   if (!coursesParam) {
     return Response.json({ error: 'Missing courses parameter' }, { status: 400, headers: cors })
