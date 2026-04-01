@@ -5,6 +5,8 @@ import type { SchedulePrefs } from "@/app/course-planner/page";
 import type { Course, Section, RmpRating } from "@/lib/course-planner/types";
 import { parseSectionTimes, formatTime } from "@/lib/course-planner/conflicts";
 import { COURSE_COLORS } from "@/lib/course-planner/colors";
+import { useAuth } from "@/components/AuthProvider";
+import AuthModal from "@/components/AuthModal";
 import ResultCalendar from "./ResultCalendar";
 
 // Convert USC dayCode (e.g. "TH", "MWF") to display format ("TTh", "MWF")
@@ -48,12 +50,18 @@ export default function ResultsView({
   prefs,
   onBack,
 }: ResultsViewProps) {
+  const { user } = useAuth();
   const [schedules, setSchedules] = useState<GeneratedSchedule[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [rmpData, setRmpData] = useState<Record<string, RmpRating | null>>({});
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "naming" | "saving" | "saved" | "error"
+  >("idle");
+  const [scheduleName, setScheduleName] = useState("");
 
   const buildSchedules = useCallback(async () => {
     setLoading(true);
@@ -385,7 +393,11 @@ export default function ResultsView({
         {schedules.map((sched, i) => (
           <button
             key={i}
-            onClick={() => setActiveIdx(i)}
+            onClick={() => {
+              setActiveIdx(i);
+              setSaveStatus("idle");
+              setScheduleName("");
+            }}
             className="px-4 py-2 text-sm font-display tracking-wider border-[2px] transition-all"
             style={{
               borderColor: "var(--black)",
@@ -545,8 +557,120 @@ export default function ResultsView({
               );
             })}
           </div>
+
+          {/* Save Schedule */}
+          <div className="mt-6 pt-4 border-t-[2px] border-[var(--beige)]">
+            {saveStatus === "saved" ? (
+              <div
+                className="w-full py-3 text-center font-display text-sm tracking-wider border-[3px] border-[var(--black)]"
+                style={{ background: "var(--gold)", color: "var(--black)" }}
+              >
+                SCHEDULE SAVED &#10003;
+              </div>
+            ) : saveStatus === "naming" ||
+              saveStatus === "saving" ||
+              saveStatus === "error" ? (
+              <div
+                className="p-4 border-[3px] border-[var(--black)]"
+                style={{ background: "var(--cream)" }}
+              >
+                <p
+                  className="font-display text-sm tracking-wider mb-3"
+                  style={{ color: "var(--black)" }}
+                >
+                  NAME YOUR SCHEDULE
+                </p>
+                <input
+                  type="text"
+                  placeholder="e.g. Fall Plan A"
+                  value={scheduleName}
+                  onChange={(e) => setScheduleName(e.target.value)}
+                  maxLength={50}
+                  autoFocus
+                  className="w-full px-4 py-2 text-sm font-display tracking-wider border-[2px] border-[var(--black)] outline-none mb-3"
+                  style={{ background: "white", color: "var(--black)" }}
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setSaveStatus("idle");
+                      setScheduleName("");
+                    }}
+                    className="flex-1 py-2 font-display text-xs tracking-wider border-[2px] border-[var(--black)] transition-colors hover:bg-[var(--beige)]"
+                    style={{ background: "white", color: "var(--black)" }}
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setSaveStatus("saving");
+                      try {
+                        const res = await fetch("/api/schedules", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            name: scheduleName.trim() || undefined,
+                            semester,
+                            courses,
+                            preferences: prefs,
+                            schedule_data: active,
+                          }),
+                        });
+                        if (!res.ok) throw new Error("Save failed");
+                        setSaveStatus("saved");
+                      } catch {
+                        setSaveStatus("error");
+                        setTimeout(() => setSaveStatus("naming"), 2000);
+                      }
+                    }}
+                    disabled={saveStatus === "saving"}
+                    className="flex-1 py-2 font-display text-xs tracking-wider border-[2px] border-[var(--black)] transition-all hover:translate-y-[-1px]"
+                    style={{
+                      background:
+                        saveStatus === "error"
+                          ? "var(--cardinal)"
+                          : "var(--gold)",
+                      color: saveStatus === "error" ? "white" : "var(--black)",
+                      boxShadow: "3px 3px 0 var(--black)",
+                    }}
+                  >
+                    {saveStatus === "saving"
+                      ? "SAVING..."
+                      : saveStatus === "error"
+                        ? "RETRY"
+                        : "SAVE"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  if (!user) {
+                    setShowAuthModal(true);
+                    return;
+                  }
+                  setSaveStatus("naming");
+                }}
+                className="w-full py-3 font-display text-sm tracking-wider border-[3px] border-[var(--black)] transition-all hover:translate-y-[-2px]"
+                style={{
+                  background: "var(--gold)",
+                  color: "var(--black)",
+                  boxShadow: "4px 4px 0 var(--black)",
+                }}
+              >
+                SAVE THIS SCHEDULE
+              </button>
+            )}
+          </div>
         </>
       )}
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        title="SIGN IN TO SAVE"
+        subtitle="Create an account with your school email to save schedules"
+      />
     </div>
   );
 }

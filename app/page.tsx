@@ -53,6 +53,7 @@ function HomeContent() {
   const [showToast, setShowToast] = useState(false);
   const [selectedProfile, setSelectedProfile] =
     useState<RoommateProfile | null>(null);
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
   const [search, setSearch] = useState("");
   const [schoolFilter, setSchoolFilter] = useState("");
@@ -72,6 +73,7 @@ function HomeContent() {
     const { data, error: err } = await supabase
       .from("roommate_profiles")
       .select("*")
+      .eq("visible", true)
       .order("created_at", { ascending: false });
 
     if (err) {
@@ -80,6 +82,13 @@ function HomeContent() {
       return;
     }
     setProfiles(data || []);
+    if (data && data.length > 0) {
+      const ids = data.map((p: RoommateProfile) => p.id).join(",");
+      fetch(`/api/likes/count?ids=${ids}`)
+        .then((r) => r.json())
+        .then(setLikeCounts)
+        .catch(() => {});
+    }
     setLoading(false);
   }, []);
 
@@ -347,6 +356,13 @@ function HomeContent() {
                   <ProfileCard
                     profile={profile}
                     onClick={() => setSelectedProfile(profile)}
+                    likeCount={likeCounts[profile.id]}
+                    onLikeChange={(id, liked) => {
+                      setLikeCounts((prev) => ({
+                        ...prev,
+                        [id]: Math.max(0, (prev[id] || 0) + (liked ? 1 : -1)),
+                      }));
+                    }}
                   />
                 </div>
               ))}

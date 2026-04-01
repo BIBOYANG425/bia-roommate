@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Space_Mono } from "next/font/google";
+import { AuthProvider } from "@/components/AuthProvider";
 import "./globals.css";
 
 const bebasNeue = Bebas_Neue({
@@ -32,7 +33,7 @@ export default function RootLayout({
       className={`${bebasNeue.variable} ${spaceMono.variable}`}
     >
       <body>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
         {/* Film grain overlay */}
         <div className="grain" aria-hidden="true" />
       </body>

@@ -16,6 +16,7 @@ export interface RoommateProfile {
   tags: string[] | null;
   avatar_url: string | null;
   bio: string | null;
+  visible: boolean;
   created_at: string;
 }
 
@@ -95,6 +96,7 @@ export interface SubletListing {
   photos: string[] | null;
   contact: string;
   poster_name: string;
+  user_id: string | null;
   created_at: string;
 }
 

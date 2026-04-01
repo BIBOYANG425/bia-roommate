@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/AuthProvider";
+import AuthModal from "@/components/AuthModal";
 import {
   ROOM_TYPE_OPTIONS,
   BATHROOM_OPTIONS,
@@ -14,6 +16,8 @@ import {
 
 export default function SubletSubmitPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,6 +70,10 @@ export default function SubletSubmitPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
     if (
       !title.trim() ||
       !apartmentName.trim() ||
@@ -115,6 +123,7 @@ export default function SubletSubmitPage() {
       photos: photoUrls.length > 0 ? photoUrls : null,
       contact: contact.trim(),
       poster_name: posterName.trim(),
+      user_id: user.id,
     };
 
     const { error: err } = await supabase
@@ -619,13 +628,35 @@ export default function SubletSubmitPage() {
             </div>
           )}
 
+          {/* Auth prompt */}
+          {!authLoading && !user && (
+            <div
+              className="p-4 border-[3px] border-[var(--black)] text-center"
+              style={{ background: "var(--gold)" }}
+            >
+              <p
+                className="font-display text-sm tracking-wider mb-2"
+                style={{ color: "var(--black)" }}
+              >
+                SIGN IN REQUIRED TO POST
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowAuth(true)}
+                className="brutal-btn brutal-btn-primary text-xs"
+              >
+                SIGN IN
+              </button>
+            </div>
+          )}
+
           {/* Submit */}
           <button
             type="submit"
-            disabled={!canSubmit}
-            className={`brutal-btn w-full text-center ${canSubmit ? "brutal-btn-primary" : ""}`}
+            disabled={!canSubmit || !user}
+            className={`brutal-btn w-full text-center ${canSubmit && user ? "brutal-btn-primary" : ""}`}
             style={
-              !canSubmit
+              !canSubmit || !user
                 ? {
                     background: "var(--beige)",
                     color: "var(--mid)",
@@ -638,6 +669,8 @@ export default function SubletSubmitPage() {
           </button>
         </form>
       </div>
+
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </main>
   );
 }

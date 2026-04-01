@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import NavTabs from "@/components/NavTabs";
 import SemesterSelector from "@/components/course-planner/SemesterSelector";
 import CourseSearch from "@/components/course-planner/CourseSearch";
@@ -8,6 +9,7 @@ import GEGrid from "@/components/course-planner/GEGrid";
 import SelectedList from "@/components/course-planner/SelectedList";
 import SchedulePreferences from "@/components/course-planner/SchedulePreferences";
 import ResultsView from "@/components/course-planner/ResultsView";
+import SavedScheduleView from "@/components/course-planner/SavedScheduleView";
 import InterestInput from "@/components/course-planner/InterestInput";
 import OnboardingTour from "@/components/course-planner/OnboardingTour";
 import { ScheduleProvider, usePlanner } from "@/lib/course-planner/store";
@@ -24,6 +26,8 @@ type Mode = "manual" | "interest" | "recommendations" | "results";
 
 function PlannerContent() {
   const { state, dispatch } = usePlanner();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [selectedCourses, setSelectedCourses] = useState<
     { id: string; label: string }[]
   >([]);
@@ -37,6 +41,37 @@ function PlannerContent() {
     [],
   );
   const [showTour, setShowTour] = useState(false);
+
+  // Saved schedule viewing
+  const scheduleId = searchParams.get("schedule");
+  const [savedSchedule, setSavedSchedule] = useState<{
+    name: string;
+    semester: string;
+    schedule_data: { sections: any[]; avgRating: number };
+  } | null>(null);
+  const [savedLoading, setSavedLoading] = useState(false);
+
+  useEffect(() => {
+    if (!scheduleId) {
+      setSavedSchedule(null);
+      return;
+    }
+    setSavedLoading(true);
+    fetch(`/api/schedules?id=${scheduleId}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("Not found");
+        return r.json();
+      })
+      .then((data) => {
+        setSavedSchedule(data);
+        setSavedLoading(false);
+      })
+      .catch(() => {
+        setSavedSchedule(null);
+        setSavedLoading(false);
+        router.replace("/course-planner");
+      });
+  }, [scheduleId, router]);
 
   useEffect(() => {
     const seen = localStorage.getItem("bia-tour-seen");
@@ -116,7 +151,26 @@ function PlannerContent() {
       )}
 
       <div className="max-w-3xl mx-auto px-6 py-8">
-        {mode === "results" ? (
+        {scheduleId ? (
+          savedLoading ? (
+            <div className="text-center py-20">
+              <p
+                className="font-display text-xl"
+                style={{ color: "var(--mid)" }}
+              >
+                LOADING SCHEDULE...
+              </p>
+            </div>
+          ) : savedSchedule ? (
+            <SavedScheduleView
+              name={savedSchedule.name}
+              semester={savedSchedule.semester}
+              sections={savedSchedule.schedule_data.sections}
+              avgRating={savedSchedule.schedule_data.avgRating}
+              onBack={() => router.push("/account")}
+            />
+          ) : null
+        ) : mode === "results" ? (
           <ResultsView
             courses={selectedCourses}
             semester={state.semester}
@@ -433,8 +487,10 @@ function PlannerContent() {
 
 export default function CoursePlannerPage() {
   return (
-    <ScheduleProvider>
-      <PlannerContent />
-    </ScheduleProvider>
+    <Suspense>
+      <ScheduleProvider>
+        <PlannerContent />
+      </ScheduleProvider>
+    </Suspense>
   );
 }

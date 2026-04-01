@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/AuthProvider";
+import AuthModal from "@/components/AuthModal";
 import {
   VALID_TAGS,
   SLEEP_OPTIONS,
@@ -99,8 +101,13 @@ function RadioGroup({
 
 export default function SubmitPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submittedProfileId, setSubmittedProfileId] = useState<string | null>(
+    null,
+  );
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [name, setName] = useState("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -120,6 +127,25 @@ export default function SubmitPage() {
   const [hobbies, setHobbies] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [bio, setBio] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      const checkProfile = async () => {
+        const { createBrowserSupabaseClient } =
+          await import("@/lib/supabase/client");
+        const supabase = createBrowserSupabaseClient();
+        const { data } = await supabase
+          .from("roommate_profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (data) {
+          router.push("/account");
+        }
+      };
+      checkProfile();
+    }
+  }, [user, router]);
 
   const toggleTag = (tag: string) => {
     setTags((prev) =>
@@ -185,11 +211,14 @@ export default function SubmitPage() {
       hobbies: hobbies.trim() || null,
       tags: tags.length > 0 ? tags : null,
       bio: bio.trim() || null,
+      visible: year === "新生",
     };
 
-    const { error: err } = await supabase
+    const { data: inserted, error: err } = await supabase
       .from("roommate_profiles")
-      .insert([formData]);
+      .insert([{ ...formData, user_id: user?.id ?? null }])
+      .select("id")
+      .single();
 
     if (err) {
       setError(`SUBMISSION FAILED: ${err.message}`);
@@ -197,7 +226,15 @@ export default function SubmitPage() {
       return;
     }
 
-    router.push("/?submitted=true");
+    // If already logged in, go straight home
+    if (user) {
+      router.push("/?submitted=true");
+      return;
+    }
+
+    // Show account creation interstitial
+    setSubmittedProfileId(inserted.id);
+    setSubmitting(false);
   };
 
   const canSubmit = name.trim() && contact.trim() && school && !submitting;
@@ -207,6 +244,78 @@ export default function SubmitPage() {
       : school === "Stanford"
         ? "var(--stanford-cardinal)"
         : "var(--cardinal)";
+
+  // Post-submit interstitial — prompt account creation
+  if (submittedProfileId) {
+    // After sign-up succeeds, link the profile to the new user
+    const handleAuthSuccess = async () => {
+      await new Promise((r) => setTimeout(r, 500));
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+      if (!authUser) {
+        router.push("/?submitted=true");
+        return;
+      }
+      const { error } = await supabase
+        .from("roommate_profiles")
+        .update({ user_id: authUser.id })
+        .eq("id", submittedProfileId)
+        .is("user_id", null);
+      router.push(error ? "/?submitted=true" : "/?submitted=true&linked=true");
+    };
+
+    return (
+      <main
+        className="min-h-screen flex items-center justify-center p-6"
+        style={{ background: "var(--beige)" }}
+      >
+        <div
+          className="w-full max-w-md border-[3px] border-[var(--black)] p-8 text-center"
+          style={{ background: "#FAF6EC", boxShadow: "8px 8px 0 var(--black)" }}
+        >
+          <div className="text-5xl mb-4">&#10003;</div>
+          <h2
+            className="font-display text-3xl tracking-wider mb-2"
+            style={{ color: "var(--black)" }}
+          >
+            PROFILE DROPPED
+          </h2>
+          <p className="text-sm mb-6" style={{ color: "var(--mid)" }}>
+            Create an account to edit your profile later and save course
+            schedules.
+          </p>
+
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="w-full py-3 font-display text-sm tracking-wider text-white border-[3px] border-[var(--black)] mb-3 transition-all hover:translate-y-[-2px]"
+            style={{
+              background: "var(--cardinal)",
+              boxShadow: "4px 4px 0 var(--black)",
+            }}
+          >
+            CREATE ACCOUNT
+          </button>
+          <button
+            onClick={() => router.push("/?submitted=true")}
+            className="w-full py-3 font-display text-sm tracking-wider border-[3px] border-[var(--black)] transition-all hover:translate-y-[-2px]"
+            style={{ background: "white", color: "var(--black)" }}
+          >
+            NO THANKS &rarr;
+          </button>
+        </div>
+
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          title="CREATE ACCOUNT"
+          subtitle="Use your school email to create an account"
+          defaultMode="signup"
+          onSuccess={handleAuthSuccess}
+        />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen" style={{ background: "var(--beige)" }}>
