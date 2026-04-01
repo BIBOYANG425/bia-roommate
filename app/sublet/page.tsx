@@ -51,40 +51,78 @@ function SubletContent() {
     null,
   );
 
-  const [search, setSearch] = useState("");
-  const [schoolFilter, setSchoolFilter] = useState("");
-  const [roomTypeFilter, setRoomTypeFilter] = useState("");
+  const [search, setSearch] = useState(searchParams.get("q") ?? "");
+  const [schoolFilter, setSchoolFilter] = useState(
+    searchParams.get("school") ?? "",
+  );
+  const [roomTypeFilter, setRoomTypeFilter] = useState(
+    searchParams.get("type") ?? "",
+  );
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">(
-    "newest",
+    (searchParams.get("sort") as "newest" | "price_asc" | "price_desc") ||
+      "newest",
   );
 
   useEffect(() => {
-    if (searchParams.get("submitted") === "true") {
+    if (
+      searchParams.get("submitted") === "true" ||
+      searchParams.get("updated") === "true"
+    ) {
       setShowToast(true);
       router.replace("/sublet", { scroll: false });
     }
   }, [searchParams, router]);
 
-  const fetchListings = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const { data, error: err } = await supabase
-      .from("sublet_listings")
-      .select("*")
-      .order("created_at", { ascending: false });
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    if (schoolFilter) params.set("school", schoolFilter);
+    if (roomTypeFilter) params.set("type", roomTypeFilter);
+    if (sortBy !== "newest") params.set("sort", sortBy);
+    const qs = params.toString();
+    router.replace(`/sublet${qs ? `?${qs}` : ""}`, { scroll: false });
+  }, [search, schoolFilter, roomTypeFilter, sortBy, router]);
 
-    if (err) {
-      setError("LOAD FAILED — RETRY");
+  const PAGE_SIZE = 20;
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const fetchListings = useCallback(
+    async (append = false) => {
+      if (!append) setLoading(true);
+      else setLoadingMore(true);
+      setError(null);
+
+      const from = append ? listings.length : 0;
+      const to = from + PAGE_SIZE - 1;
+
+      const { data, error: err } = await supabase
+        .from("sublet_listings")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (err) {
+        setError("LOAD FAILED — RETRY");
+      } else {
+        const newData = data || [];
+        if (append) {
+          setListings((prev) => [...prev, ...newData]);
+        } else {
+          setListings(newData);
+        }
+        setHasMore(newData.length === PAGE_SIZE);
+      }
       setLoading(false);
-      return;
-    }
-    setListings(data || []);
-    setLoading(false);
-  }, []);
+      setLoadingMore(false);
+    },
+    [listings.length],
+  );
 
   useEffect(() => {
     fetchListings();
-  }, [fetchListings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered = useMemo(() => {
     let result = listings.filter((l) => {
@@ -287,7 +325,7 @@ function SubletContent() {
               {error}
             </p>
             <button
-              onClick={fetchListings}
+              onClick={() => fetchListings()}
               className="brutal-btn brutal-btn-gold mt-6"
             >
               RETRY
@@ -343,6 +381,17 @@ function SubletContent() {
                 </div>
               ))}
             </div>
+            {hasMore && !search && !schoolFilter && !roomTypeFilter && (
+              <div className="text-center mt-8">
+                <button
+                  onClick={() => fetchListings(true)}
+                  disabled={loadingMore}
+                  className="brutal-btn brutal-btn-gold"
+                >
+                  {loadingMore ? "LOADING..." : "LOAD MORE"}
+                </button>
+              </div>
+            )}
           </>
         )}
       </section>

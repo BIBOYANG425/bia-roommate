@@ -106,15 +106,20 @@ export default function SchedulePreferences({
         </label>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t" style={{ borderColor: 'var(--beige)' }}>
+      <div
+        className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t"
+        style={{ borderColor: "var(--beige)" }}
+      >
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={prefs.hideDClearance}
-            onChange={(e) => onChange({ ...prefs, hideDClearance: e.target.checked })}
+            onChange={(e) =>
+              onChange({ ...prefs, hideDClearance: e.target.checked })
+            }
             className="w-4 h-4 accent-(--cardinal)"
           />
-          <span className="text-sm" style={{ color: 'var(--black)' }}>
+          <span className="text-sm" style={{ color: "var(--black)" }}>
             Hide D-clearance sections
           </span>
         </label>
@@ -123,10 +128,12 @@ export default function SchedulePreferences({
           <input
             type="checkbox"
             checked={prefs.hideGraduate}
-            onChange={(e) => onChange({ ...prefs, hideGraduate: e.target.checked })}
+            onChange={(e) =>
+              onChange({ ...prefs, hideGraduate: e.target.checked })
+            }
             className="w-4 h-4 accent-(--cardinal)"
           />
-          <span className="text-sm" style={{ color: 'var(--black)' }}>
+          <span className="text-sm" style={{ color: "var(--black)" }}>
             Hide graduate-level courses (500+)
           </span>
         </label>
@@ -135,10 +142,12 @@ export default function SchedulePreferences({
           <input
             type="checkbox"
             checked={prefs.hideThematicOption}
-            onChange={(e) => onChange({ ...prefs, hideThematicOption: e.target.checked })}
+            onChange={(e) =>
+              onChange({ ...prefs, hideThematicOption: e.target.checked })
+            }
             className="w-4 h-4 accent-(--cardinal)"
           />
-          <span className="text-sm" style={{ color: 'var(--black)' }}>
+          <span className="text-sm" style={{ color: "var(--black)" }}>
             Hide Thematic Option (CORE)
           </span>
         </label>

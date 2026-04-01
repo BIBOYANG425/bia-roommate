@@ -13,179 +13,197 @@
 // ─── Types ───
 
 interface InterpretedQuery {
-  isValid: boolean
-  rejection?: string
+  isValid: boolean;
+  rejection?: string;
 
   // Instructions for each research agent (natural language from the interpreter)
   catalogInstructions: {
-    departments: string[]
-    geCategories: string[]        // e.g. ["GE-C"] — specific categories, not just boolean
-    courseLevel: string            // e.g. "100-200 level only" or "any"
-    unitsPreference: string       // e.g. "2 units" or "any"
-    searchTerms: string[]         // keywords to search titles/descriptions
-    filterNotes: string           // e.g. "only courses with active sections"
-  }
+    departments: string[];
+    geCategories: string[]; // e.g. ["GE-C"] — specific categories, not just boolean
+    courseLevel: string; // e.g. "100-200 level only" or "any"
+    unitsPreference: string; // e.g. "2 units" or "any"
+    searchTerms: string[]; // keywords to search titles/descriptions
+    filterNotes: string; // e.g. "only courses with active sections"
+  };
   rmpInstructions: {
-    prioritize: string            // e.g. "low difficulty professors" or "highest rated"
-    difficultyTarget: string      // e.g. "below 3.0" or "any"
-    minimumRating: string         // e.g. "above 3.5" or "any"
-    lookFor: string               // e.g. "professors students say are fun and engaging"
-  }
+    prioritize: string; // e.g. "low difficulty professors" or "highest rated"
+    difficultyTarget: string; // e.g. "below 3.0" or "any"
+    minimumRating: string; // e.g. "above 3.5" or "any"
+    lookFor: string; // e.g. "professors students say are fun and engaging"
+  };
   redditInstructions: {
-    searchQueries: string[]       // e.g. ["easy GE-C USC", "no midterm USC class"]
-    lookFor: string               // e.g. "posts about easy classes, no midterms, fun professors"
-    avoid: string                 // e.g. "ignore posts about hard or demanding courses"
-  }
+    searchQueries: string[]; // e.g. ["easy GE-C USC", "no midterm USC class"]
+    lookFor: string; // e.g. "posts about easy classes, no midterms, fun professors"
+    avoid: string; // e.g. "ignore posts about hard or demanding courses"
+  };
 
   // Structured data for the recommender
   studentProfile: {
-    interests: string[]
-    preferences: string[]         // e.g. ["fun", "easy", "no midterms", "chill professor"]
-    dealbreakers: string[]        // e.g. ["no midterms", "no 8am classes"]
-  }
+    interests: string[];
+    preferences: string[]; // e.g. ["fun", "easy", "no midterms", "chill professor"]
+    dealbreakers: string[]; // e.g. ["no midterms", "no 8am classes"]
+  };
 }
 
 interface ResearchedCourse {
-  department: string
-  number: string
-  title: string
-  units: string
-  description: string
-  instructors: { name: string; rating?: number; difficulty?: number; numRatings?: number; wouldTakeAgain?: number }[]
-  communityInsights: string[]
-  geTag?: string
+  department: string;
+  number: string;
+  title: string;
+  units: string;
+  description: string;
+  instructors: {
+    name: string;
+    rating?: number;
+    difficulty?: number;
+    numRatings?: number;
+    wouldTakeAgain?: number;
+  }[];
+  communityInsights: string[];
+  geTag?: string;
 }
 
 export interface AgentRecommendation {
-  department: string
-  number: string
-  title: string
-  units: string
-  description: string
-  relevanceScore: number
-  matchReasons: string[]
-  geTag?: string
-  topInstructor?: { name: string; rating: number }
-  communityHighlights: string[]
-  aiReasoning: string
+  department: string;
+  number: string;
+  title: string;
+  units: string;
+  description: string;
+  relevanceScore: number;
+  matchReasons: string[];
+  geTag?: string;
+  topInstructor?: { name: string; rating: number };
+  communityHighlights: string[];
+  aiReasoning: string;
 }
 
 // ─── LLM Provider Config ───
 
-type LLMProvider = 'anthropic' | 'openai' | 'nvidia'
-type LLMConfig = { provider: LLMProvider; apiKey: string; baseUrl: string; model: string }
+type LLMProvider = "anthropic" | "openai" | "nvidia";
+type LLMConfig = {
+  provider: LLMProvider;
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+};
 
 // Fast model for interpreter (structured JSON parsing)
 function getInterpreterConfig(): LLMConfig | null {
   // Prefer fast NVIDIA model for interpreter
   if (process.env.NVIDIA_FAST_KEY) {
     return {
-      provider: 'nvidia',
+      provider: "nvidia",
       apiKey: process.env.NVIDIA_FAST_KEY,
-      baseUrl: 'https://integrate.api.nvidia.com/v1/chat/completions',
-      model: process.env.NVIDIA_FAST_MODEL || 'google/gemma-3n-e4b-it',
-    }
+      baseUrl: "https://integrate.api.nvidia.com/v1/chat/completions",
+      model: process.env.NVIDIA_FAST_MODEL || "google/gemma-3n-e4b-it",
+    };
   }
-  return getLLMConfig()
+  return getLLMConfig();
 }
 
 // Main model for recommender (reasoning + synthesis)
 function getLLMConfig(): LLMConfig | null {
   if (process.env.ANTHROPIC_API_KEY) {
     return {
-      provider: 'anthropic',
+      provider: "anthropic",
       apiKey: process.env.ANTHROPIC_API_KEY,
-      baseUrl: 'https://api.anthropic.com/v1/messages',
-      model: 'claude-haiku-4-5-20251001',
-    }
+      baseUrl: "https://api.anthropic.com/v1/messages",
+      model: "claude-haiku-4-5-20251001",
+    };
   }
   if (process.env.OPENAI_API_KEY) {
     return {
-      provider: 'openai',
+      provider: "openai",
       apiKey: process.env.OPENAI_API_KEY,
-      baseUrl: 'https://api.openai.com/v1/chat/completions',
-      model: 'gpt-4o-mini',
-    }
+      baseUrl: "https://api.openai.com/v1/chat/completions",
+      model: "gpt-4o-mini",
+    };
   }
   if (process.env.NVIDIA_API_KEY) {
     return {
-      provider: 'nvidia',
+      provider: "nvidia",
       apiKey: process.env.NVIDIA_API_KEY,
-      baseUrl: 'https://integrate.api.nvidia.com/v1/chat/completions',
-      model: process.env.NVIDIA_MODEL || 'nvidia/nemotron-3-super-120b-a12b',
-    }
+      baseUrl: "https://integrate.api.nvidia.com/v1/chat/completions",
+      model: process.env.NVIDIA_MODEL || "nvidia/nemotron-3-super-120b-a12b",
+    };
   }
-  return null
+  return null;
 }
 
 interface LLMResult {
-  content: string
-  reasoning?: string
+  content: string;
+  reasoning?: string;
 }
 
 async function callLLM(
   systemPrompt: string,
   userMessage: string,
-  config: { provider: LLMProvider; apiKey: string; baseUrl: string; model: string },
+  config: {
+    provider: LLMProvider;
+    apiKey: string;
+    baseUrl: string;
+    model: string;
+  },
   maxTokens: number = 500,
   timeoutMs: number = 15000,
-  thinking: boolean = false
+  thinking: boolean = false,
 ): Promise<LLMResult> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  let body: any
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  let body: any;
 
-  if (config.provider === 'anthropic') {
-    headers['x-api-key'] = config.apiKey
-    headers['anthropic-version'] = '2023-06-01'
+  if (config.provider === "anthropic") {
+    headers["x-api-key"] = config.apiKey;
+    headers["anthropic-version"] = "2023-06-01";
     body = {
       model: config.model,
       max_tokens: maxTokens,
       system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
-    }
+      messages: [{ role: "user", content: userMessage }],
+    };
   } else {
-    headers['Authorization'] = `Bearer ${config.apiKey}`
+    headers["Authorization"] = `Bearer ${config.apiKey}`;
     body = {
       model: config.model,
       max_tokens: maxTokens,
       temperature: 0.3,
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
       ],
-    }
+    };
     // NVIDIA reasoning mode control — top-level param (not nested in extra_body)
-    if (config.provider === 'nvidia') {
-      body.chat_template_kwargs = { enable_thinking: thinking }
+    if (config.provider === "nvidia") {
+      body.chat_template_kwargs = { enable_thinking: thinking };
       if (thinking) {
         // Reasoning models need more tokens — budget for thinking + output
-        body.max_tokens = maxTokens * 3
+        body.max_tokens = maxTokens * 3;
       }
     }
   }
 
   const res = await fetch(config.baseUrl, {
-    method: 'POST',
+    method: "POST",
     headers,
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(timeoutMs),
-  })
+  });
 
   if (!res.ok) {
-    const errText = await res.text().catch(() => '')
-    throw new Error(`LLM API error ${res.status}: ${errText.slice(0, 200)}`)
+    const errText = await res.text().catch(() => "");
+    throw new Error(`LLM API error ${res.status}: ${errText.slice(0, 200)}`);
   }
 
-  const data = await res.json()
+  const data = await res.json();
 
-  if (config.provider === 'anthropic') {
-    return { content: data.content?.[0]?.text || '' }
+  if (config.provider === "anthropic") {
+    return { content: data.content?.[0]?.text || "" };
   }
-  const msg = data.choices?.[0]?.message
+  const msg = data.choices?.[0]?.message;
   return {
-    content: msg?.content || msg?.reasoning_content || '',
+    content: msg?.content || msg?.reasoning_content || "",
     reasoning: msg?.reasoning_content || undefined,
-  }
+  };
 }
 
 // ─── Layer 1: Interpreter ───
@@ -287,113 +305,123 @@ Respond with ONLY valid JSON:
     "preferences": [],
     "dealbreakers": []
   }
-}`
+}`;
 
 async function interpret(
   interestText: string,
   config: LLMConfig,
-  thinking: boolean = false
+  thinking: boolean = false,
 ): Promise<{ query: InterpretedQuery; reasoning?: string }> {
-  const interpreterConfig = getInterpreterConfig() || config
+  const interpreterConfig = getInterpreterConfig() || config;
   const result = await callLLM(
     SYSTEM_PROMPT_INTERPRETER,
     `Student says: "${interestText}"`,
     interpreterConfig,
     1500,
     30000,
-    false // interpreter always fast mode — no thinking needed for JSON parsing
-  )
+    false, // interpreter always fast mode — no thinking needed for JSON parsing
+  );
 
-  const jsonMatch = result.content.match(/\{[\s\S]*\}/)
+  const jsonMatch = result.content.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    throw new Error('Failed to parse interpreter response')
+    throw new Error("Failed to parse interpreter response");
   }
 
   return {
     query: JSON.parse(jsonMatch[0]) as InterpretedQuery,
     reasoning: result.reasoning,
-  }
+  };
 }
 
 // ─── Layer 2: Research Agents ───
 
 const GE_API_MAP: Record<string, { req: string; cat: string }> = {
-  'GE-A': { req: 'ACORELIT', cat: 'ARTS' },
-  'GE-B': { req: 'ACORELIT', cat: 'HINQ' },
-  'GE-C': { req: 'ACORELIT', cat: 'SANA' },
-  'GE-D': { req: 'ACORELIT', cat: 'LIFE' },
-  'GE-E': { req: 'ACORELIT', cat: 'PSC' },
-  'GE-F': { req: 'ACORELIT', cat: 'QREA' },
-  'GE-G': { req: 'AGLOPERS', cat: 'GPG' },
-  'GE-H': { req: 'AGLOPERS', cat: 'GPH' },
-}
+  "GE-A": { req: "ACORELIT", cat: "ARTS" },
+  "GE-B": { req: "ACORELIT", cat: "HINQ" },
+  "GE-C": { req: "ACORELIT", cat: "SANA" },
+  "GE-D": { req: "ACORELIT", cat: "LIFE" },
+  "GE-E": { req: "ACORELIT", cat: "PSC" },
+  "GE-F": { req: "ACORELIT", cat: "QREA" },
+  "GE-G": { req: "AGLOPERS", cat: "GPG" },
+  "GE-H": { req: "AGLOPERS", cat: "GPH" },
+};
 
 // Agent 2a: USC Course Catalog — follows catalogInstructions
 async function researchUSCCatalog(
-  instructions: InterpretedQuery['catalogInstructions'],
+  instructions: InterpretedQuery["catalogInstructions"],
   semester: string,
-  baseUrl: string
+  baseUrl: string,
 ): Promise<ResearchedCourse[]> {
-  const courses: ResearchedCourse[] = []
-  const seen = new Set<string>()
+  const courses: ResearchedCourse[] = [];
+  const seen = new Set<string>();
 
   // Parse units preference
-  const wantedUnits = instructions.unitsPreference !== 'any'
-    ? instructions.unitsPreference.replace(/[^0-9.]/g, '')
-    : null
+  const wantedUnits =
+    instructions.unitsPreference !== "any"
+      ? instructions.unitsPreference.replace(/[^0-9.]/g, "")
+      : null;
 
   // Parse level preference
-  const levelStr = instructions.courseLevel.toLowerCase()
-  const maxLevel = levelStr.includes('100') || levelStr.includes('intro') ? 200
-    : levelStr.includes('200') ? 300
-    : levelStr.includes('300') || levelStr.includes('intermediate') ? 400
-    : 999
+  const levelStr = instructions.courseLevel.toLowerCase();
+  const maxLevel =
+    levelStr.includes("100") || levelStr.includes("intro")
+      ? 200
+      : levelStr.includes("200")
+        ? 300
+        : levelStr.includes("300") || levelStr.includes("intermediate")
+          ? 400
+          : 999;
 
   function shouldInclude(num: string, units: string): boolean {
-    const numVal = parseInt(num, 10)
-    if (maxLevel < 999 && numVal >= maxLevel) return false
-    if (wantedUnits && units && units !== wantedUnits) return false
-    return true
+    const numVal = parseInt(num, 10);
+    if (maxLevel < 999 && numVal >= maxLevel) return false;
+    if (wantedUnits && units && units !== wantedUnits) return false;
+    return true;
   }
 
   function addCourse(c: any, geTag?: string) {
-    const dept = c.scheduledCourseCode?.prefix || c.department || ''
-    const num = (c.scheduledCourseCode?.number || c.number || '') + (c.scheduledCourseCode?.suffix || '')
-    const key = `${dept}-${num}`
-    const units = c.courseUnits?.[0]?.toString() || c.units || ''
+    const dept = c.scheduledCourseCode?.prefix || c.department || "";
+    const num =
+      (c.scheduledCourseCode?.number || c.number || "") +
+      (c.scheduledCourseCode?.suffix || "");
+    const key = `${dept}-${num}`;
+    const units = c.courseUnits?.[0]?.toString() || c.units || "";
 
     if (seen.has(key)) {
       if (geTag) {
-        const existing = courses.find((x) => `${x.department}-${x.number}` === key)
-        if (existing && !existing.geTag) existing.geTag = geTag
+        const existing = courses.find(
+          (x) => `${x.department}-${x.number}` === key,
+        );
+        if (existing && !existing.geTag) existing.geTag = geTag;
       }
-      return
+      return;
     }
 
-    if (!shouldInclude(num, units)) return
+    if (!shouldInclude(num, units)) return;
 
-    seen.add(key)
+    seen.add(key);
 
-    const sections = c.sections || []
+    const sections = c.sections || [];
     const instructors = sections
       .filter((s: any) => s.instructors?.[0]?.lastName)
       .map((s: any) => ({
         name: `${s.instructors[0].firstName} ${s.instructors[0].lastName}`,
       }))
-      .filter((inst: any, i: number, arr: any[]) =>
-        arr.findIndex((a: any) => a.name === inst.name) === i
-      )
+      .filter(
+        (inst: any, i: number, arr: any[]) =>
+          arr.findIndex((a: any) => a.name === inst.name) === i,
+      );
 
     courses.push({
       department: dept,
       number: num,
-      title: c.name || c.fullCourseName || c.title || '',
+      title: c.name || c.fullCourseName || c.title || "",
       units,
-      description: c.description || '',
+      description: c.description || "",
       instructors,
       communityInsights: [],
       geTag,
-    })
+    });
   }
 
   // 1. Fetch by department
@@ -401,98 +429,98 @@ async function researchUSCCatalog(
     try {
       const res = await fetch(
         `https://classes.usc.edu/api/Courses/CoursesForDepartment?termCode=${semester}&prefix=${dept}`,
-        { signal: AbortSignal.timeout(8000) }
-      )
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.courses || data || []) as any[]
+        { signal: AbortSignal.timeout(8000) },
+      );
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data.courses || data || []) as any[];
     } catch {
-      return []
+      return [];
     }
-  })
+  });
 
   // 2. Search by terms
   const termFetches = instructions.searchTerms.slice(0, 5).map(async (term) => {
     try {
       const res = await fetch(
-        `${baseUrl}/api/courses/search?q=${encodeURIComponent(term)}&semester=${semester}`
-      )
-      if (!res.ok) return []
-      return await res.json() as any[]
+        `${baseUrl}/api/courses/search?q=${encodeURIComponent(term)}&semester=${semester}`,
+      );
+      if (!res.ok) return [];
+      return (await res.json()) as any[];
     } catch {
-      return []
+      return [];
     }
-  })
+  });
 
   // 3. Fetch specific GE categories
   const geFetches = instructions.geCategories.map(async (geCode) => {
-    const mapping = GE_API_MAP[geCode]
-    if (!mapping) return []
+    const mapping = GE_API_MAP[geCode];
+    if (!mapping) return [];
     try {
       const res = await fetch(
         `https://classes.usc.edu/api/Courses/GeCoursesByTerm?termCode=${semester}&geRequirementPrefix=${mapping.req}&categoryPrefix=${mapping.cat}`,
-        { signal: AbortSignal.timeout(8000) }
-      )
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.courses || []).map((c: any) => ({ ...c, _geTag: geCode }))
+        { signal: AbortSignal.timeout(8000) },
+      );
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data.courses || []).map((c: any) => ({ ...c, _geTag: geCode }));
     } catch {
-      return []
+      return [];
     }
-  })
+  });
 
   const [deptResults, termResults, geResults] = await Promise.all([
     Promise.all(deptFetches),
     Promise.all(termFetches),
     Promise.all(geFetches),
-  ])
+  ]);
 
   for (const deptCourses of deptResults) {
-    for (const c of deptCourses) addCourse(c)
+    for (const c of deptCourses) addCourse(c);
   }
   for (const results of termResults) {
-    for (const c of results) addCourse(c)
+    for (const c of results) addCourse(c);
   }
   for (const geCourses of geResults) {
-    for (const c of geCourses) addCourse(c, c._geTag)
+    for (const c of geCourses) addCourse(c, c._geTag);
   }
 
-  return courses
+  return courses;
 }
 
 // Agent 2b: RateMyProfessors — follows rmpInstructions
 async function researchRMP(
   courses: ResearchedCourse[],
-  instructions: InterpretedQuery['rmpInstructions'],
-  baseUrl: string
+  instructions: InterpretedQuery["rmpInstructions"],
+  baseUrl: string,
 ): Promise<void> {
-  const allInstructors = new Set<string>()
+  const allInstructors = new Set<string>();
   for (const c of courses) {
     for (const inst of c.instructors) {
-      allInstructors.add(inst.name)
+      allInstructors.add(inst.name);
     }
   }
 
-  const names = [...allInstructors].slice(0, 50)
-  if (names.length === 0) return
+  const names = [...allInstructors].slice(0, 50);
+  if (names.length === 0) return;
 
   try {
     const res = await fetch(
-      `${baseUrl}/api/rmp/batch?names=${encodeURIComponent(names.join(','))}`,
-      { signal: AbortSignal.timeout(15000) }
-    )
-    if (!res.ok) return
-    const data = await res.json()
-    const ratings = data.ratings || {}
+      `${baseUrl}/api/rmp/batch?names=${encodeURIComponent(names.join(","))}`,
+      { signal: AbortSignal.timeout(15000) },
+    );
+    if (!res.ok) return;
+    const data = await res.json();
+    const ratings = data.ratings || {};
 
     for (const c of courses) {
       for (const inst of c.instructors) {
-        const rating = ratings[inst.name]
+        const rating = ratings[inst.name];
         if (rating) {
-          inst.rating = rating.avgRating
-          inst.difficulty = rating.avgDifficulty
-          inst.numRatings = rating.numRatings
-          inst.wouldTakeAgain = rating.wouldTakeAgainPercent
+          inst.rating = rating.avgRating;
+          inst.difficulty = rating.avgDifficulty;
+          inst.numRatings = rating.numRatings;
+          inst.wouldTakeAgain = rating.wouldTakeAgainPercent;
         }
       }
     }
@@ -502,36 +530,40 @@ async function researchRMP(
 
   // Apply RMP-based filtering hints from interpreter
   // Parse difficulty target
-  const diffMatch = instructions.difficultyTarget.match(/([\d.]+)/)
-  const maxDifficulty = diffMatch ? parseFloat(diffMatch[1]) : null
+  const diffMatch = instructions.difficultyTarget.match(/([\d.]+)/);
+  const maxDifficulty = diffMatch ? parseFloat(diffMatch[1]) : null;
 
-  const ratingMatch = instructions.minimumRating.match(/([\d.]+)/)
-  const minRating = ratingMatch ? parseFloat(ratingMatch[1]) : null
+  const ratingMatch = instructions.minimumRating.match(/([\d.]+)/);
+  const minRating = ratingMatch ? parseFloat(ratingMatch[1]) : null;
 
   // Tag courses with RMP fitness score based on interpreter's instructions
   for (const c of courses) {
-    let rmpFit = 0
+    let rmpFit = 0;
     for (const inst of c.instructors) {
-      if (!inst.rating) continue
-      let fit = inst.rating // base: higher rating = better
-      if (maxDifficulty && inst.difficulty && inst.difficulty <= maxDifficulty) fit += 1.0
-      if (minRating && inst.rating >= minRating) fit += 0.5
-      if (inst.wouldTakeAgain && inst.wouldTakeAgain > 70) fit += 0.5
-      rmpFit = Math.max(rmpFit, fit)
+      if (!inst.rating) continue;
+      let fit = inst.rating; // base: higher rating = better
+      if (maxDifficulty && inst.difficulty && inst.difficulty <= maxDifficulty)
+        fit += 1.0;
+      if (minRating && inst.rating >= minRating) fit += 0.5;
+      if (inst.wouldTakeAgain && inst.wouldTakeAgain > 70) fit += 0.5;
+      rmpFit = Math.max(rmpFit, fit);
     }
     // Store as a community insight so the recommender can see it
     if (rmpFit > 0) {
       const bestProf = c.instructors
         .filter((i) => i.rating)
-        .sort((a, b) => (b.rating || 0) - (a.rating || 0))[0]
+        .sort((a, b) => (b.rating || 0) - (a.rating || 0))[0];
       if (bestProf) {
-        const diffStr = bestProf.difficulty ? `, difficulty ${bestProf.difficulty}/5` : ''
-        const wtaStr = bestProf.wouldTakeAgain && bestProf.wouldTakeAgain > 0
-          ? `, ${bestProf.wouldTakeAgain}% would take again`
-          : ''
+        const diffStr = bestProf.difficulty
+          ? `, difficulty ${bestProf.difficulty}/5`
+          : "";
+        const wtaStr =
+          bestProf.wouldTakeAgain && bestProf.wouldTakeAgain > 0
+            ? `, ${bestProf.wouldTakeAgain}% would take again`
+            : "";
         c.communityInsights.unshift(
-          `Best prof: ${bestProf.name} — ${bestProf.rating}/5 RMP${diffStr}${wtaStr}`
-        )
+          `Best prof: ${bestProf.name} — ${bestProf.rating}/5 RMP${diffStr}${wtaStr}`,
+        );
       }
     }
   }
@@ -540,49 +572,52 @@ async function researchRMP(
 // Agent 2c: Reddit — follows redditInstructions
 async function researchReddit(
   courses: ResearchedCourse[],
-  instructions: InterpretedQuery['redditInstructions']
+  instructions: InterpretedQuery["redditInstructions"],
 ): Promise<void> {
-  const queries = instructions.searchQueries.slice(0, 6)
-  if (queries.length === 0) return
+  const queries = instructions.searchQueries.slice(0, 6);
+  if (queries.length === 0) return;
 
   const searches = queries.map(async (term) => {
     try {
       const res = await fetch(
         `https://www.reddit.com/r/USC/search.json?q=${encodeURIComponent(term)}&restrict_sr=1&sort=relevance&limit=8`,
         {
-          headers: { 'User-Agent': 'BIA-CourseAdvisor/1.0' },
+          headers: { "User-Agent": "BIA-CourseAdvisor/1.0" },
           signal: AbortSignal.timeout(8000),
-        }
-      )
-      if (!res.ok) return []
-      const data = await res.json()
-      const posts = data?.data?.children || []
+        },
+      );
+      if (!res.ok) return [];
+      const data = await res.json();
+      const posts = data?.data?.children || [];
       return posts.map((p: any) => ({
-        title: p.data?.title || '',
-        selftext: (p.data?.selftext || '').slice(0, 500),
+        title: p.data?.title || "",
+        selftext: (p.data?.selftext || "").slice(0, 500),
         score: p.data?.score || 0,
         numComments: p.data?.num_comments || 0,
-      }))
+      }));
     } catch {
-      return []
+      return [];
     }
-  })
+  });
 
-  const results = await Promise.all(searches)
+  const results = await Promise.all(searches);
 
   // Match insights to courses by course code
   for (const posts of results) {
     for (const post of posts) {
-      if (post.score < 1) continue
-      const text = `${post.title} ${post.selftext}`.toUpperCase()
+      if (post.score < 1) continue;
+      const text = `${post.title} ${post.selftext}`.toUpperCase();
 
       for (const c of courses) {
-        const courseCode = `${c.department} ${c.number}`.toUpperCase()
-        const courseCodeSmashed = `${c.department}${c.number}`.toUpperCase()
+        const courseCode = `${c.department} ${c.number}`.toUpperCase();
+        const courseCodeSmashed = `${c.department}${c.number}`.toUpperCase();
         if (text.includes(courseCode) || text.includes(courseCodeSmashed)) {
-          const insight = post.title.slice(0, 150)
-          if (c.communityInsights.length < 4 && !c.communityInsights.includes(insight)) {
-            c.communityInsights.push(insight)
+          const insight = post.title.slice(0, 150);
+          if (
+            c.communityInsights.length < 4 &&
+            !c.communityInsights.includes(insight)
+          ) {
+            c.communityInsights.push(insight);
           }
         }
       }
@@ -590,16 +625,16 @@ async function researchReddit(
   }
 
   // Also collect general insights (not course-specific) that match the lookFor criteria
-  const generalInsights: string[] = []
-  const lookForUpper = instructions.lookFor.toUpperCase()
-  const lookForWords = lookForUpper.split(/\s+/).filter((w) => w.length > 3)
+  const generalInsights: string[] = [];
+  const lookForUpper = instructions.lookFor.toUpperCase();
+  const lookForWords = lookForUpper.split(/\s+/).filter((w) => w.length > 3);
 
   for (const posts of results) {
     for (const post of posts) {
-      if (post.score < 3) continue
-      const titleUpper = post.title.toUpperCase()
+      if (post.score < 3) continue;
+      const titleUpper = post.title.toUpperCase();
       if (lookForWords.some((w) => titleUpper.includes(w))) {
-        generalInsights.push(post.title.slice(0, 150))
+        generalInsights.push(post.title.slice(0, 150));
       }
     }
   }
@@ -607,7 +642,7 @@ async function researchReddit(
   // Attach general insights to top courses that have no specific insights
   for (const c of courses) {
     if (c.communityInsights.length === 0 && generalInsights.length > 0) {
-      c.communityInsights.push(generalInsights[0])
+      c.communityInsights.push(generalInsights[0]);
     }
   }
 }
@@ -645,86 +680,97 @@ Respond with ONLY a JSON array:
   "matchReasons": ["Sports media focus", "Professor rated 4.5/5", "Students say it's fun and easy"],
   "communityHighlights": ["Reddit: 'Best 2-unit class I took at USC'"],
   "aiReasoning": "This course directly covers sports media with an engaging professor rated 4.5 on RMP. Multiple Reddit posts call it fun and light workload."
-}]`
+}]`;
 
 async function recommend(
   interestText: string,
   query: InterpretedQuery,
   courses: ResearchedCourse[],
   config: LLMConfig,
-  thinking: boolean = false
+  thinking: boolean = false,
 ): Promise<{ recommendations: AgentRecommendation[]; reasoning?: string }> {
   // Build research summary — keep compact for faster LLM processing
   const courseSummaries = courses.slice(0, 40).map((c) => {
-    const parts = [`${c.department} ${c.number}: ${c.title} (${c.units} units)`]
-    if (c.description) parts.push(`  Desc: ${c.description.slice(0, 120)}`)
-    if (c.geTag) parts.push(`  GE: ${c.geTag}`)
+    const parts = [
+      `${c.department} ${c.number}: ${c.title} (${c.units} units)`,
+    ];
+    if (c.description) parts.push(`  Desc: ${c.description.slice(0, 120)}`);
+    if (c.geTag) parts.push(`  GE: ${c.geTag}`);
     for (const inst of c.instructors.slice(0, 2)) {
-      const rmpParts: string[] = []
-      if (inst.rating) rmpParts.push(`${inst.rating}/5`)
-      if (inst.difficulty) rmpParts.push(`diff ${inst.difficulty}/5`)
-      if (inst.wouldTakeAgain && inst.wouldTakeAgain > 0) rmpParts.push(`${inst.wouldTakeAgain}% again`)
-      const rmpStr = rmpParts.length > 0 ? ` (${rmpParts.join(', ')})` : ''
-      parts.push(`  Prof: ${inst.name}${rmpStr}`)
+      const rmpParts: string[] = [];
+      if (inst.rating) rmpParts.push(`${inst.rating}/5`);
+      if (inst.difficulty) rmpParts.push(`diff ${inst.difficulty}/5`);
+      if (inst.wouldTakeAgain && inst.wouldTakeAgain > 0)
+        rmpParts.push(`${inst.wouldTakeAgain}% again`);
+      const rmpStr = rmpParts.length > 0 ? ` (${rmpParts.join(", ")})` : "";
+      parts.push(`  Prof: ${inst.name}${rmpStr}`);
     }
     for (const insight of c.communityInsights.slice(0, 2)) {
-      parts.push(`  Reddit: "${insight.slice(0, 100)}"`)
+      parts.push(`  Reddit: "${insight.slice(0, 100)}"`);
     }
-    return parts.join('\n')
-  })
+    return parts.join("\n");
+  });
 
-  const profile = query.studentProfile
+  const profile = query.studentProfile;
   const userMessage = `STUDENT INPUT: "${interestText}"
 
 INTERPRETER ANALYSIS:
-- Interests: ${profile.interests.join(', ') || 'general'}
-- Preferences: ${profile.preferences.join(', ') || 'none specified'}
-- Dealbreakers: ${profile.dealbreakers.join(', ') || 'none'}
+- Interests: ${profile.interests.join(", ") || "general"}
+- Preferences: ${profile.preferences.join(", ") || "none specified"}
+- Dealbreakers: ${profile.dealbreakers.join(", ") || "none"}
 - RMP focus: ${query.rmpInstructions.prioritize}
 - Wanted units: ${query.catalogInstructions.unitsPreference}
-- Wanted GE: ${query.catalogInstructions.geCategories.join(', ') || 'none'}
+- Wanted GE: ${query.catalogInstructions.geCategories.join(", ") || "none"}
 - Wanted level: ${query.catalogInstructions.courseLevel}
 
 RESEARCH DATA (${courseSummaries.length} courses found):
 
-${courseSummaries.join('\n\n')}`
+${courseSummaries.join("\n\n")}`;
 
-  const result = await callLLM(SYSTEM_PROMPT_RECOMMENDER, userMessage, config, 4000, 60000, thinking)
+  const result = await callLLM(
+    SYSTEM_PROMPT_RECOMMENDER,
+    userMessage,
+    config,
+    4000,
+    60000,
+    thinking,
+  );
 
-  const jsonMatch = result.content.match(/\[[\s\S]*\]/)
+  const jsonMatch = result.content.match(/\[[\s\S]*\]/);
   if (!jsonMatch) {
-    throw new Error('Failed to parse recommender response')
+    throw new Error("Failed to parse recommender response");
   }
 
-  const ranked = JSON.parse(jsonMatch[0]) as any[]
+  const ranked = JSON.parse(jsonMatch[0]) as any[];
 
   const recommendations = ranked.slice(0, 15).map((rec: any) => {
     const courseData = courses.find(
-      (c) => c.department === rec.department && c.number === rec.number
-    )
+      (c) => c.department === rec.department && c.number === rec.number,
+    );
 
     const topInstructor = courseData?.instructors
       .filter((i) => i.rating)
-      .sort((a, b) => (b.rating || 0) - (a.rating || 0))[0]
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))[0];
 
     return {
       department: rec.department,
       number: rec.number,
-      title: courseData?.title || '',
-      units: courseData?.units || '',
-      description: courseData?.description || '',
+      title: courseData?.title || "",
+      units: courseData?.units || "",
+      description: courseData?.description || "",
       relevanceScore: rec.relevanceScore || 0,
       matchReasons: rec.matchReasons || [],
       geTag: courseData?.geTag,
       topInstructor: topInstructor?.rating
         ? { name: topInstructor.name, rating: topInstructor.rating }
         : undefined,
-      communityHighlights: rec.communityHighlights || courseData?.communityInsights || [],
-      aiReasoning: rec.aiReasoning || '',
-    }
-  })
+      communityHighlights:
+        rec.communityHighlights || courseData?.communityInsights || [],
+      aiReasoning: rec.aiReasoning || "",
+    };
+  });
 
-  return { recommendations, reasoning: result.reasoning }
+  return { recommendations, reasoning: result.reasoning };
 }
 
 // ─── Orchestrator ───
@@ -733,62 +779,92 @@ export async function runAgent(
   interestText: string,
   semester: string,
   baseUrl: string,
-  unitsFilter?: string
-): Promise<{ recommendations: AgentRecommendation[]; mode: 'agent' } | { error: string; isRejection?: boolean }> {
-  const config = getLLMConfig()
+  unitsFilter?: string,
+): Promise<
+  | { recommendations: AgentRecommendation[]; mode: "agent" }
+  | { error: string; isRejection?: boolean }
+> {
+  const config = getLLMConfig();
   if (!config) {
-    return { error: 'No LLM API key configured' }
+    return { error: "No LLM API key configured" };
   }
 
   // Layer 1: Interpreter dispatches instructions
-  const { query } = await interpret(interestText, config)
+  const { query } = await interpret(interestText, config);
 
   if (!query.isValid) {
     return {
-      error: query.rejection || 'I can only help with USC course-related questions.',
+      error:
+        query.rejection || "I can only help with USC course-related questions.",
       isRejection: true,
-    }
+    };
   }
 
   // Layer 2: Research agents execute instructions in parallel
-  const catalogCourses = await researchUSCCatalog(query.catalogInstructions, semester, baseUrl)
+  const catalogCourses = await researchUSCCatalog(
+    query.catalogInstructions,
+    semester,
+    baseUrl,
+  );
 
   if (catalogCourses.length === 0) {
-    return { error: 'No courses found matching your criteria.' }
+    return { error: "No courses found matching your criteria." };
   }
 
   await Promise.all([
     researchRMP(catalogCourses, query.rmpInstructions, baseUrl),
     researchReddit(catalogCourses, query.redditInstructions),
-  ])
+  ]);
 
   // Layer 3: Recommender synthesizes everything
-  const { recommendations: recs } = await recommend(interestText, query, catalogCourses, config)
+  const { recommendations: recs } = await recommend(
+    interestText,
+    query,
+    catalogCourses,
+    config,
+  );
 
-  let recommendations = recs
+  let recommendations = recs;
   if (unitsFilter) {
     recommendations = recommendations.filter((r) => {
       const courseData = catalogCourses.find(
-        (c) => c.department === r.department && c.number === r.number
-      )
-      return courseData?.units === unitsFilter
-    })
+        (c) => c.department === r.department && c.number === r.number,
+      );
+      return courseData?.units === unitsFilter;
+    });
   }
 
-  return { recommendations, mode: 'agent' }
+  return { recommendations, mode: "agent" };
 }
 
 // ─── Streaming Orchestrator (emits events as agent works) ───
 
 export type AgentEvent =
-  | { type: 'thinking'; message: string }
-  | { type: 'reasoning'; step: 'interpreter' | 'recommender'; content: string }
-  | { type: 'interpreted'; data: { interests: string[]; preferences: string[]; dealbreakers: string[]; departments: string[]; geCategories: string[] } }
-  | { type: 'researching'; source: 'catalog' | 'rmp' | 'reddit'; message: string }
-  | { type: 'research_done'; source: 'catalog' | 'rmp' | 'reddit'; message: string }
-  | { type: 'recommending'; message: string }
-  | { type: 'results'; data: AgentRecommendation[] }
-  | { type: 'error'; message: string; isRejection?: boolean }
+  | { type: "thinking"; message: string }
+  | { type: "reasoning"; step: "interpreter" | "recommender"; content: string }
+  | {
+      type: "interpreted";
+      data: {
+        interests: string[];
+        preferences: string[];
+        dealbreakers: string[];
+        departments: string[];
+        geCategories: string[];
+      };
+    }
+  | {
+      type: "researching";
+      source: "catalog" | "rmp" | "reddit";
+      message: string;
+    }
+  | {
+      type: "research_done";
+      source: "catalog" | "rmp" | "reddit";
+      message: string;
+    }
+  | { type: "recommending"; message: string }
+  | { type: "results"; data: AgentRecommendation[] }
+  | { type: "error"; message: string; isRejection?: boolean };
 
 export async function runAgentStreaming(
   interestText: string,
@@ -796,37 +872,52 @@ export async function runAgentStreaming(
   baseUrl: string,
   unitsFilter: string | undefined,
   thinking: boolean,
-  emit: (event: AgentEvent) => void
+  emit: (event: AgentEvent) => void,
 ): Promise<void> {
-  const config = getLLMConfig()
+  const config = getLLMConfig();
   if (!config) {
-    emit({ type: 'error', message: 'No LLM API key configured' })
-    return
+    emit({ type: "error", message: "No LLM API key configured" });
+    return;
   }
 
   // Layer 1: Interpreter (always uses fast model)
-  emit({ type: 'thinking', message: `Understanding your request: "${interestText}"` })
+  emit({
+    type: "thinking",
+    message: `Understanding your request: "${interestText}"`,
+  });
 
-  let query: InterpretedQuery
+  let query: InterpretedQuery;
   try {
-    const interpreted = await interpret(interestText, config, thinking)
-    query = interpreted.query
+    const interpreted = await interpret(interestText, config, thinking);
+    query = interpreted.query;
     if (interpreted.reasoning) {
-      emit({ type: 'reasoning', step: 'interpreter', content: interpreted.reasoning })
+      emit({
+        type: "reasoning",
+        step: "interpreter",
+        content: interpreted.reasoning,
+      });
     }
   } catch (err) {
-    emit({ type: 'error', message: `Failed to interpret request: ${(err as Error).message}` })
-    return
+    emit({
+      type: "error",
+      message: `Failed to interpret request: ${(err as Error).message}`,
+    });
+    return;
   }
 
   if (!query.isValid) {
-    emit({ type: 'error', message: query.rejection || 'I can only help with USC course-related questions.', isRejection: true })
-    return
+    emit({
+      type: "error",
+      message:
+        query.rejection || "I can only help with USC course-related questions.",
+      isRejection: true,
+    });
+    return;
   }
 
-  const profile = query.studentProfile
+  const profile = query.studentProfile;
   emit({
-    type: 'interpreted',
+    type: "interpreted",
     data: {
       interests: profile.interests,
       preferences: profile.preferences,
@@ -834,72 +925,134 @@ export async function runAgentStreaming(
       departments: query.catalogInstructions.departments,
       geCategories: query.catalogInstructions.geCategories,
     },
-  })
+  });
 
   // Layer 2a: Catalog
-  const deptStr = query.catalogInstructions.departments.slice(0, 5).join(', ') || 'all'
-  const geStr = query.catalogInstructions.geCategories.length > 0
-    ? ` + ${query.catalogInstructions.geCategories.join(', ')}`
-    : ''
-  emit({ type: 'researching', source: 'catalog', message: `Searching USC catalog: ${deptStr}${geStr} departments...` })
+  const deptStr =
+    query.catalogInstructions.departments.slice(0, 5).join(", ") || "all";
+  const geStr =
+    query.catalogInstructions.geCategories.length > 0
+      ? ` + ${query.catalogInstructions.geCategories.join(", ")}`
+      : "";
+  emit({
+    type: "researching",
+    source: "catalog",
+    message: `Searching USC catalog: ${deptStr}${geStr} departments...`,
+  });
 
-  let catalogCourses: ResearchedCourse[]
+  let catalogCourses: ResearchedCourse[];
   try {
-    catalogCourses = await researchUSCCatalog(query.catalogInstructions, semester, baseUrl)
+    catalogCourses = await researchUSCCatalog(
+      query.catalogInstructions,
+      semester,
+      baseUrl,
+    );
   } catch (err) {
-    emit({ type: 'error', message: `Catalog search failed: ${(err as Error).message}` })
-    return
+    emit({
+      type: "error",
+      message: `Catalog search failed: ${(err as Error).message}`,
+    });
+    return;
   }
 
   if (catalogCourses.length === 0) {
-    emit({ type: 'error', message: 'No courses found matching your criteria. Try broader interests.' })
-    return
+    emit({
+      type: "error",
+      message:
+        "No courses found matching your criteria. Try broader interests.",
+    });
+    return;
   }
 
-  emit({ type: 'research_done', source: 'catalog', message: `Found ${catalogCourses.length} candidate courses` })
+  emit({
+    type: "research_done",
+    source: "catalog",
+    message: `Found ${catalogCourses.length} candidate courses`,
+  });
 
   // Layer 2b+c: RMP + Reddit in parallel
-  emit({ type: 'researching', source: 'rmp', message: `Checking professor ratings for ${Math.min(catalogCourses.reduce((n, c) => n + c.instructors.length, 0), 50)} instructors...` })
-  emit({ type: 'researching', source: 'reddit', message: `Searching r/USC for student discussions: ${query.redditInstructions.searchQueries.slice(0, 3).map(q => `"${q}"`).join(', ')}...` })
+  emit({
+    type: "researching",
+    source: "rmp",
+    message: `Checking professor ratings for ${Math.min(
+      catalogCourses.reduce((n, c) => n + c.instructors.length, 0),
+      50,
+    )} instructors...`,
+  });
+  emit({
+    type: "researching",
+    source: "reddit",
+    message: `Searching r/USC for student discussions: ${query.redditInstructions.searchQueries
+      .slice(0, 3)
+      .map((q) => `"${q}"`)
+      .join(", ")}...`,
+  });
 
   await Promise.all([
     researchRMP(catalogCourses, query.rmpInstructions, baseUrl).then(() => {
-      const withRating = catalogCourses.filter((c) => c.instructors.some((i) => i.rating))
-      emit({ type: 'research_done', source: 'rmp', message: `${withRating.length} courses have rated professors` })
+      const withRating = catalogCourses.filter((c) =>
+        c.instructors.some((i) => i.rating),
+      );
+      emit({
+        type: "research_done",
+        source: "rmp",
+        message: `${withRating.length} courses have rated professors`,
+      });
     }),
     researchReddit(catalogCourses, query.redditInstructions).then(() => {
-      const withInsights = catalogCourses.filter((c) => c.communityInsights.length > 0)
-      emit({ type: 'research_done', source: 'reddit', message: `${withInsights.length} courses have student discussions` })
+      const withInsights = catalogCourses.filter(
+        (c) => c.communityInsights.length > 0,
+      );
+      emit({
+        type: "research_done",
+        source: "reddit",
+        message: `${withInsights.length} courses have student discussions`,
+      });
     }),
-  ])
+  ]);
 
   // Layer 3: Recommender (uses main model, with optional thinking)
-  emit({ type: 'recommending', message: thinking
-    ? 'Deep-thinking mode: carefully analyzing courses against your preferences...'
-    : 'Ranking courses based on your preferences, professor quality, and community feedback...'
-  })
+  emit({
+    type: "recommending",
+    message: thinking
+      ? "Deep-thinking mode: carefully analyzing courses against your preferences..."
+      : "Ranking courses based on your preferences, professor quality, and community feedback...",
+  });
 
-  let recommendations: AgentRecommendation[]
+  let recommendations: AgentRecommendation[];
   try {
-    const recResult = await recommend(interestText, query, catalogCourses, config, thinking)
-    recommendations = recResult.recommendations
+    const recResult = await recommend(
+      interestText,
+      query,
+      catalogCourses,
+      config,
+      thinking,
+    );
+    recommendations = recResult.recommendations;
     if (recResult.reasoning) {
-      emit({ type: 'reasoning', step: 'recommender', content: recResult.reasoning })
+      emit({
+        type: "reasoning",
+        step: "recommender",
+        content: recResult.reasoning,
+      });
     }
   } catch (err) {
-    emit({ type: 'error', message: `Recommendation failed: ${(err as Error).message}` })
-    return
+    emit({
+      type: "error",
+      message: `Recommendation failed: ${(err as Error).message}`,
+    });
+    return;
   }
 
   // Hard filter by units
   if (unitsFilter) {
     recommendations = recommendations.filter((r) => {
       const courseData = catalogCourses.find(
-        (c) => c.department === r.department && c.number === r.number
-      )
-      return courseData?.units === unitsFilter
-    })
+        (c) => c.department === r.department && c.number === r.number,
+      );
+      return courseData?.units === unitsFilter;
+    });
   }
 
-  emit({ type: 'results', data: recommendations })
+  emit({ type: "results", data: recommendations });
 }
