@@ -34,6 +34,7 @@ export default function SubletCard({
           <img
             src={thumb}
             alt={listing.title}
+            loading="lazy"
             className="w-full h-full object-cover"
           />
         ) : (

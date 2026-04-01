@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SubletListing } from "@/lib/types";
 import { relativeTime, schoolAccent, schoolGold } from "@/lib/utils";
 
@@ -15,11 +15,13 @@ export default function SubletModal({
   const gold = schoolGold(listing.school);
   const photos = listing.photos ?? [];
   const [photoIdx, setPhotoIdx] = useState(0);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
       if (e.key === "ArrowLeft") setPhotoIdx((i) => (i > 0 ? i - 1 : i));
       if (e.key === "ArrowRight")
         setPhotoIdx((i) => (i < photos.length - 1 ? i + 1 : i));
@@ -29,7 +31,7 @@ export default function SubletModal({
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKey);
     };
-  }, [onClose, photos.length]);
+  }, [photos.length]);
 
   const infoParts = [
     listing.school,

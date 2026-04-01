@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { schoolAccent } from "@/lib/utils";
 import { SubletListing, ROOM_TYPE_OPTIONS, SCHOOL_OPTIONS } from "@/lib/types";
 import SubletCard from "@/components/SubletCard";
 import SubletModal from "@/components/SubletModal";
@@ -85,25 +86,30 @@ function SubletContent() {
     fetchListings();
   }, [fetchListings]);
 
-  let filtered = listings.filter((l) => {
-    if (schoolFilter && l.school !== schoolFilter) return false;
-    if (roomTypeFilter && l.room_type !== roomTypeFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      const matchTitle = l.title.toLowerCase().includes(q);
-      const matchApt = l.apartment_name.toLowerCase().includes(q);
-      const matchAddr = l.address.toLowerCase().includes(q);
-      const matchDesc = l.description?.toLowerCase().includes(q);
-      if (!matchTitle && !matchApt && !matchAddr && !matchDesc) return false;
-    }
-    return true;
-  });
+  const filtered = useMemo(() => {
+    let result = listings.filter((l) => {
+      if (schoolFilter && l.school !== schoolFilter) return false;
+      if (roomTypeFilter && l.room_type !== roomTypeFilter) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        if (
+          !l.title.toLowerCase().includes(q) &&
+          !l.apartment_name.toLowerCase().includes(q) &&
+          !l.address.toLowerCase().includes(q) &&
+          !l.description?.toLowerCase().includes(q)
+        )
+          return false;
+      }
+      return true;
+    });
 
-  if (sortBy === "price_asc") {
-    filtered = [...filtered].sort((a, b) => a.rent - b.rent);
-  } else if (sortBy === "price_desc") {
-    filtered = [...filtered].sort((a, b) => b.rent - a.rent);
-  }
+    if (sortBy === "price_asc") {
+      result = [...result].sort((a, b) => a.rent - b.rent);
+    } else if (sortBy === "price_desc") {
+      result = [...result].sort((a, b) => b.rent - a.rent);
+    }
+    return result;
+  }, [listings, schoolFilter, roomTypeFilter, search, sortBy]);
 
   const schoolVars: React.CSSProperties = {};
   if (schoolFilter === "UC Berkeley") {
@@ -211,26 +217,15 @@ function SubletContent() {
 
         {/* Campus Tabs */}
         <div className="flex gap-0 mb-6 flex-wrap">
-          {["", "USC", "UC Berkeley", "Stanford"].map((s) => {
+          {["", ...SCHOOL_OPTIONS].map((s) => {
             const active = schoolFilter === s;
             const label = s || "ALL";
-            let bg = "var(--cream)";
-            let fg = "var(--mid)";
-            if (active) {
-              if (s === "UC Berkeley") {
-                bg = "var(--berkeley-blue)";
-                fg = "white";
-              } else if (s === "Stanford") {
-                bg = "var(--stanford-cardinal)";
-                fg = "white";
-              } else if (s === "USC") {
-                bg = "var(--cardinal)";
-                fg = "white";
-              } else {
-                bg = "var(--black)";
-                fg = "white";
-              }
-            }
+            const bg = active
+              ? s
+                ? schoolAccent(s)
+                : "var(--black)"
+              : "var(--cream)";
+            const fg = active ? "white" : "var(--mid)";
             return (
               <button
                 key={label}

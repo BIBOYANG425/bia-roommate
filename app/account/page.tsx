@@ -168,7 +168,7 @@ export default function AccountPage() {
               .order("created_at", { ascending: false }),
             supabase
               .from("sublet_listings")
-              .select("*")
+              .select("id, title, apartment_name, rent, created_at")
               .eq("user_id", user!.id)
               .order("created_at", { ascending: false }),
           ]);

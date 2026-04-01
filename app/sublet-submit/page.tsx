@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import AuthModal from "@/components/AuthModal";
+import { schoolAccent } from "@/lib/utils";
 import {
   ROOM_TYPE_OPTIONS,
   BATHROOM_OPTIONS,
@@ -64,9 +65,15 @@ export default function SubletSubmitPage() {
   };
 
   const removePhoto = (idx: number) => {
+    URL.revokeObjectURL(photoPreviews[idx]);
     setPhotoFiles((prev) => prev.filter((_, i) => i !== idx));
     setPhotoPreviews((prev) => prev.filter((_, i) => i !== idx));
   };
+
+  useEffect(() => {
+    return () => photoPreviews.forEach(URL.revokeObjectURL);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,37 +81,32 @@ export default function SubletSubmitPage() {
       setShowAuth(true);
       return;
     }
-    if (
-      !title.trim() ||
-      !apartmentName.trim() ||
-      !address.trim() ||
-      !rent ||
-      !contact.trim() ||
-      !posterName.trim() ||
-      !school
-    )
-      return;
+    if (!canSubmit) return;
 
     setSubmitting(true);
     setError(null);
 
-    // Upload photos
-    const photoUrls: string[] = [];
-    for (const file of photoFiles) {
-      const ext = file.name.split(".").pop();
-      const filePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { data: uploadData, error: uploadErr } = await supabase.storage
-        .from("sublet-photos")
-        .upload(filePath, file, { cacheControl: "3600", upsert: true });
-      if (uploadErr) {
+    let photoUrls: string[] = [];
+    if (photoFiles.length > 0) {
+      try {
+        photoUrls = await Promise.all(
+          photoFiles.map(async (file) => {
+            const ext = file.name.split(".").pop();
+            const filePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+            const { data, error: uploadErr } = await supabase.storage
+              .from("sublet-photos")
+              .upload(filePath, file, { cacheControl: "3600", upsert: true });
+            if (uploadErr) throw uploadErr;
+            return supabase.storage
+              .from("sublet-photos")
+              .getPublicUrl(data.path).data.publicUrl;
+          }),
+        );
+      } catch {
         setError("PHOTO UPLOAD FAILED — TRY AGAIN");
         setSubmitting(false);
         return;
       }
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("sublet-photos").getPublicUrl(uploadData.path);
-      photoUrls.push(publicUrl);
     }
 
     const formData = {
@@ -148,12 +150,7 @@ export default function SubletSubmitPage() {
     posterName.trim() &&
     school &&
     !submitting;
-  const headerBg =
-    school === "UC Berkeley"
-      ? "var(--berkeley-blue)"
-      : school === "Stanford"
-        ? "var(--stanford-cardinal)"
-        : "var(--cardinal)";
+  const headerBg = schoolAccent(school);
 
   return (
     <main className="min-h-screen" style={{ background: "var(--beige)" }}>
@@ -265,12 +262,7 @@ export default function SubletSubmitPage() {
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {SCHOOL_OPTIONS.map((s) => {
-                    const color =
-                      s === "UC Berkeley"
-                        ? "var(--berkeley-blue)"
-                        : s === "Stanford"
-                          ? "var(--stanford-cardinal)"
-                          : "var(--cardinal)";
+                    const accent = schoolAccent(s);
                     return (
                       <button
                         key={s}
@@ -280,9 +272,9 @@ export default function SubletSubmitPage() {
                         style={
                           school === s
                             ? {
-                                background: color,
+                                background: accent,
                                 color: "white",
-                                borderColor: color,
+                                borderColor: accent,
                               }
                             : {}
                         }
