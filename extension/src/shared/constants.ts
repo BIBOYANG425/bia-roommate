@@ -1,6 +1,6 @@
 export const BIA_API_BASE = 'https://bia-roommate.vercel.app'
 
-export const USC_SCHOOL_ID = 'U2Nob29sLTExMTI=' // RMP school ID for USC
+export const USC_SCHOOL_ID = 'U2Nob29sLTEzODE=' // RMP school ID for USC (School-1381)
 
 export const RMP_BADGE_COLORS = {
   great: '#4CAF50',   // 4.0 – 5.0

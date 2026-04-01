@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import type { RecommendedCourse } from '@/lib/course-planner/recommender'
+import type { AgentRecommendation } from '@/lib/course-planner/agent'
 
 const QUICK_TAGS = [
   'Animation', 'Film', 'Coding', 'AI', 'Music', 'Psychology',
@@ -11,15 +12,18 @@ const QUICK_TAGS = [
 
 interface InterestInputProps {
   semester: string
-  onResults: (results: RecommendedCourse[]) => void
+  onResults: (results: RecommendedCourse[], agentResults?: AgentRecommendation[], mode?: string, agentFailed?: boolean) => void
+  onAgentSearch?: (interests: string, units: string | null, thinking: boolean) => void
 }
 
-export default function InterestInput({ semester, onResults }: InterestInputProps) {
+export default function InterestInput({ semester, onResults, onAgentSearch }: InterestInputProps) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [unitsFilter, setUnitsFilter] = useState<string | null>(null)
+  const [searchMode, setSearchMode] = useState<'auto' | 'free'>('auto')
+  const [thinkingMode, setThinkingMode] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -33,6 +37,13 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
       setError('TRY DESCRIBING SPECIFIC TOPICS LIKE "PSYCHOLOGY, FILM, CODING"')
       return
     }
+
+    // AI mode → launch agent chat interface
+    if (searchMode === 'auto' && onAgentSearch) {
+      onAgentSearch(input.trim(), unitsFilter, thinkingMode)
+      return
+    }
+
     setLoading(true)
     setError(null)
     setProgress(20)
@@ -51,7 +62,7 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
       const res = await fetch('/api/courses/recommend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ interests: input, semester, units: unitsFilter }),
+        body: JSON.stringify({ interests: input, semester, units: unitsFilter, mode: 'free' }),
         signal: controller.signal,
       })
 
@@ -60,21 +71,46 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
       setProgress(95)
 
       if (!res.ok) {
-        setError('FAILED TO FIND COURSES — TRY DIFFERENT KEYWORDS')
+        const errData = await res.json().catch(() => null)
+        if (errData?.isRejection) {
+          setError(errData.error || 'I CAN ONLY HELP WITH USC COURSE-RELATED QUESTIONS')
+        } else {
+          setError('FAILED TO FIND COURSES — TRY DIFFERENT KEYWORDS')
+        }
         setLoading(false)
         return
       }
 
-      const data: RecommendedCourse[] = await res.json()
+      const data = await res.json()
       setProgress(100)
 
-      if (data.length === 0) {
+      // Handle both response formats: { recommendations, mode } or flat array (legacy)
+      const recs = data.recommendations || data
+      const mode = data.mode
+
+      if (!Array.isArray(recs) || recs.length === 0) {
         setError('NO MATCHING COURSES FOUND — TRY BROADER TOPICS')
         setLoading(false)
         return
       }
 
-      onResults(data)
+      if (mode === 'agent') {
+        // Agent mode: recs are AgentRecommendation[]
+        // Convert to RecommendedCourse[] for backward compat + pass agent data
+        const freeFormat: RecommendedCourse[] = recs.map((r: AgentRecommendation) => ({
+          department: r.department,
+          number: r.number,
+          title: r.title,
+          units: r.units,
+          description: r.description,
+          relevanceScore: r.relevanceScore,
+          matchReasons: r.matchReasons,
+          geTag: r.geTag,
+        }))
+        onResults(freeFormat, recs as AgentRecommendation[], mode)
+      } else {
+        onResults(recs as RecommendedCourse[], undefined, mode, !!data.agentFailed)
+      }
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') return
       setError('NETWORK ERROR — PLEASE TRY AGAIN')
@@ -182,6 +218,71 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
         </div>
       </div>
 
+      {/* Search mode toggle */}
+      <div className="mb-4">
+        <span className="text-xs font-display tracking-wider mr-2" style={{ color: 'var(--mid)' }}>
+          MODE:
+        </span>
+        <div className="inline-flex gap-2">
+          <button
+            onClick={() => setSearchMode('auto')}
+            disabled={loading}
+            aria-pressed={searchMode === 'auto'}
+            className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
+            style={{
+              borderColor: searchMode === 'auto' ? 'var(--cardinal)' : 'var(--beige)',
+              background: searchMode === 'auto' ? 'var(--cardinal)' : 'white',
+              color: searchMode === 'auto' ? 'white' : 'var(--black)',
+              borderRadius: '20px',
+              opacity: loading ? 0.5 : 1,
+            }}
+          >
+            AI SEARCH
+          </button>
+          <button
+            onClick={() => setSearchMode('free')}
+            disabled={loading}
+            aria-pressed={searchMode === 'free'}
+            className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
+            style={{
+              borderColor: searchMode === 'free' ? 'var(--cardinal)' : 'var(--beige)',
+              background: searchMode === 'free' ? 'var(--cardinal)' : 'white',
+              color: searchMode === 'free' ? 'white' : 'var(--black)',
+              borderRadius: '20px',
+              opacity: loading ? 0.5 : 1,
+            }}
+          >
+            KEYWORD
+          </button>
+        </div>
+      </div>
+
+      {/* Thinking mode toggle (AI mode only) */}
+      {searchMode === 'auto' && (
+        <div className="mb-4">
+          <button
+            onClick={() => setThinkingMode(!thinkingMode)}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-display tracking-wider border-[1.5px] transition-all"
+            style={{
+              borderColor: thinkingMode ? 'var(--gold)' : 'var(--beige)',
+              background: thinkingMode ? 'color-mix(in srgb, var(--gold) 20%, white)' : 'white',
+              color: 'var(--black)',
+              borderRadius: '20px',
+              opacity: loading ? 0.5 : 1,
+            }}
+          >
+            <span style={{ fontSize: '14px' }}>{thinkingMode ? '🧠' : '⚡'}</span>
+            {thinkingMode ? 'DEEP THINKING ON' : 'FAST MODE'}
+          </button>
+          <p className="text-[10px] mt-1 ml-1" style={{ color: 'var(--mid)' }}>
+            {thinkingMode
+              ? 'AI will reason deeply about course fit — slower but more thoughtful'
+              : 'Quick AI analysis — faster results'}
+          </p>
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <p className="text-xs mb-3 font-display tracking-wider" style={{ color: 'var(--cardinal)' }}>
@@ -202,7 +303,9 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
             />
           </div>
           <p className="text-xs mt-2" style={{ color: 'var(--mid)' }}>
-            Searching 5000+ courses for your interests...
+            {searchMode === 'auto'
+              ? 'AI agent is researching courses, professors, and student reviews...'
+              : 'Searching 5000+ courses for your interests...'}
           </p>
         </div>
       )}
@@ -219,7 +322,9 @@ export default function InterestInput({ semester, onResults }: InterestInputProp
           borderRadius: '4px',
         }}
       >
-        {loading ? 'SEARCHING...' : 'FIND MATCHING COURSES →'}
+        {loading
+          ? (searchMode === 'auto' ? 'AI SEARCHING...' : 'SEARCHING...')
+          : (searchMode === 'auto' ? 'AI FIND COURSES →' : 'FIND MATCHING COURSES →')}
       </button>
     </div>
   )

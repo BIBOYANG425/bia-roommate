@@ -29,7 +29,26 @@ function transformSection(sec: any): any {
     capacity: sec.totalSeats || 0,
     isClosed: sec.isFull || false,
     isCancelled: sec.isCancelled || false,
+    topic: sec.name || '',
+    hasDClearance: sec.hasDClearance || false,
+    notes: sec.notes || '',
+    linkCode: sec.linkCode || '',
   }
+}
+
+// Format prerequisiteCourseCodes into a readable string
+function formatPrereqs(prereqs: any[]): string {
+  if (!prereqs || prereqs.length === 0) return ''
+  return prereqs
+    .map((group: any) => {
+      const options = (group.courseOptions || []).map((o: any) => o.courseSpace || o.courseHyphen || '')
+      if (options.length === 0) return ''
+      const needed = group.requiredCourses || 1
+      if (needed >= options.length) return options.join(' and ')
+      return `${needed} from (${options.join(' or ')})`
+    })
+    .filter(Boolean)
+    .join('; ')
 }
 
 export async function GET(
@@ -55,6 +74,13 @@ export async function GET(
     const data = await res.json()
 
     // Transform to our Course type
+    const prereqs = formatPrereqs(data.prerequisiteCourseCodes) || undefined
+    const restrictionsList: string[] = []
+    if (data.courseRestrictions) restrictionsList.push(data.courseRestrictions)
+    if (data.majorRestrictions) restrictionsList.push(`Major: ${data.majorRestrictions}`)
+    if (data.schoolRestrictions) restrictionsList.push(`School: ${data.schoolRestrictions}`)
+    const restrictions = restrictionsList.length > 0 ? restrictionsList : undefined
+
     const course = {
       department: data.scheduledCourseCode?.prefix || dept.toUpperCase(),
       number: (data.scheduledCourseCode?.number || number) + (data.scheduledCourseCode?.suffix || ''),
@@ -62,6 +88,8 @@ export async function GET(
       units: data.courseUnits?.[0]?.toString() || '',
       description: data.description || '',
       sections: (data.sections || []).map(transformSection),
+      prereqs,
+      restrictions,
     }
 
     return Response.json(course, {
