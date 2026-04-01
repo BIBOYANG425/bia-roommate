@@ -33,6 +33,10 @@ export interface Section {
   capacity: number
   isClosed: boolean
   isCancelled: boolean
+  topic?: string          // Section-specific topic (e.g. "Advanced Writing for Engineers")
+  hasDClearance?: boolean // Requires department clearance
+  notes?: string          // Additional notes (d-clearance instructions, etc.)
+  linkCode?: string       // Links lecture with its lab/discussion/quiz (e.g. "A", "B")
 }
 
 export interface Course {
@@ -42,6 +46,8 @@ export interface Course {
   units: string      // "4.0"
   description: string
   sections: Section[]
+  prereqs?: string         // e.g. "1 from (WRIT 130 or WRIT 150)"
+  restrictions?: string[]  // Course/major/school restrictions
 }
 
 export interface SearchResult {

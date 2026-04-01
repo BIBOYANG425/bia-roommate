@@ -24,7 +24,25 @@ function transformSection(sec: any): any {
     capacity: sec.totalSeats || 0,
     isClosed: sec.isFull || false,
     isCancelled: sec.isCancelled || false,
+    topic: sec.name || '',
+    hasDClearance: sec.hasDClearance || false,
+    notes: sec.notes || '',
+    linkCode: sec.linkCode || '',
   }
+}
+
+function formatPrereqs(prereqs: any[]): string {
+  if (!prereqs || prereqs.length === 0) return ''
+  return prereqs
+    .map((group: any) => {
+      const options = (group.courseOptions || []).map((o: any) => o.courseSpace || o.courseHyphen || '')
+      if (options.length === 0) return ''
+      const needed = group.requiredCourses || 1
+      if (needed >= options.length) return options.join(' and ')
+      return `${needed} from (${options.join(' or ')})`
+    })
+    .filter(Boolean)
+    .join('; ')
 }
 
 export async function GET(request: NextRequest) {
@@ -53,14 +71,23 @@ export async function GET(request: NextRequest) {
 
     // Transform to our Course format — only include courses that have schedulable sections
     const transformed = courses
-      .map((c: any) => ({
-        department: c.scheduledCourseCode?.prefix || c.prefix || '',
-        number: (c.scheduledCourseCode?.number || c.classNumber || '') + (c.scheduledCourseCode?.suffix || c.suffix || ''),
-        title: c.name || c.fullCourseName || '',
-        units: c.courseUnits?.[0]?.toString() || '',
-        description: c.description || '',
-        sections: (c.sections || []).map(transformSection),
-      }))
+      .map((c: any) => {
+        const prereqs = formatPrereqs(c.prerequisiteCourseCodes)
+        const restrictions: string[] = []
+        if (c.courseRestrictions) restrictions.push(c.courseRestrictions)
+        if (c.majorRestrictions) restrictions.push(`Major: ${c.majorRestrictions}`)
+        if (c.schoolRestrictions) restrictions.push(`School: ${c.schoolRestrictions}`)
+        return {
+          department: c.scheduledCourseCode?.prefix || c.prefix || '',
+          number: (c.scheduledCourseCode?.number || c.classNumber || '') + (c.scheduledCourseCode?.suffix || c.suffix || ''),
+          title: c.name || c.fullCourseName || '',
+          units: c.courseUnits?.[0]?.toString() || '',
+          description: c.description || '',
+          sections: (c.sections || []).map(transformSection),
+          prereqs,
+          restrictions: restrictions.length > 0 ? restrictions : undefined,
+        }
+      })
       .filter((c: any) => {
         // Only include courses that have at least one non-cancelled section with actual times
         return c.sections.some(

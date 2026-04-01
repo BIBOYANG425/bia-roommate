@@ -47,6 +47,7 @@ export function optimizeSchedule({
   let iterations = 0
 
   // Pre-compute: for each course, get viable sections sorted by RMP rating
+  // Deprioritize closed (reserved/restricted) and full sections but still include them
   const courseSections = courses.map((course) => {
     const courseId = `${course.department}-${course.number}`
     return {
@@ -54,11 +55,14 @@ export function optimizeSchedule({
       courseId,
       sections: [...(course.sections || [])]
         .filter((s) => !s.isCancelled)
-        .map((s) => ({
-          section: s,
-          slots: parseSectionTimes(s.times),
-          score: getRmpScore(s, rmpCache),
-        }))
+        .map((s) => {
+          let score = getRmpScore(s, rmpCache)
+          // Penalize full sections (registered >= capacity)
+          if (s.capacity > 0 && s.registered >= s.capacity) score -= 1.0
+          // Penalize closed sections (reserved/restricted registration)
+          if (s.isClosed) score -= 0.5
+          return { section: s, slots: parseSectionTimes(s.times), score }
+        })
         .sort((a, b) => b.score - a.score), // highest rated first
     }
   })

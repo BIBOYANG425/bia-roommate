@@ -13,17 +13,23 @@ function normalizeInstructorName(raw: string): string | null {
 
   if (!cleaned || cleaned === 'Staff' || cleaned === 'TBA' || cleaned === 'TBD' || cleaned.length < 3) return null
 
-  // "Last, First" → "First Last"  (WebReg format)
+  // "Last, First" or "Last, First Middle" → "First Last"  (WebReg format)
   if (cleaned.includes(',')) {
     const parts = cleaned.split(',').map((s) => s.trim())
-    if (parts.length === 2 && !parts[0].includes(' ') && !parts[1].includes(' ')) {
-      return `${parts[1]} ${parts[0]}`
+    if (parts.length === 2 && parts[0] && parts[1]) {
+      // Use first token from the given name (drops middle names/initials)
+      const firstNames = parts[1].split(' ')
+      return `${firstNames[0]} ${parts[0]}`
     }
     return cleaned
   }
 
-  // Already "First Last" format — must have at least 2 words
-  if (cleaned.split(' ').length >= 2) return cleaned
+  // Already "First Last" or "First Middle Last" format
+  const words = cleaned.split(' ')
+  if (words.length >= 2) {
+    // Use first and last token (drops middle names/initials)
+    return `${words[0]} ${words[words.length - 1]}`
+  }
 
   return null
 }

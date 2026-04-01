@@ -22,7 +22,7 @@ query TeacherSearchQuery($query: TeacherSearchQuery!) {
 }
 `
 
-const USC_SCHOOL_ID = 'U2Nob29sLTExMTI='
+const USC_SCHOOL_ID = 'U2Nob29sLTEzODE='
 const MAX_NAMES = 50
 
 interface RmpRating {
@@ -64,17 +64,32 @@ async function lookupProfessor(name: string): Promise<RmpRating | null> {
       return null
     }
 
-    // Prefer exact name match
+    // Match professor — exact first, then fuzzy, then first result
+    const cleanName = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '')
     const nameParts = name.trim().toLowerCase().split(/\s+/)
-    let teacher = edges[0].node
+    const searchFirst = cleanName(nameParts[0] || '')
+    const searchLast = cleanName(nameParts[nameParts.length - 1] || '')
+
+    let teacher = null
     for (const edge of edges) {
-      const fn = (edge.node.firstName || '').trim().toLowerCase()
-      const ln = (edge.node.lastName || '').trim().toLowerCase()
-      if (nameParts.includes(fn) && nameParts.includes(ln)) {
+      const fn = cleanName(edge.node.firstName || '')
+      const ln = cleanName(edge.node.lastName || '')
+      if (fn === searchFirst && ln === searchLast) {
         teacher = edge.node
         break
       }
     }
+    if (!teacher) {
+      for (const edge of edges) {
+        const fn = cleanName(edge.node.firstName || '')
+        const ln = cleanName(edge.node.lastName || '')
+        if (ln === searchLast && (fn.startsWith(searchFirst) || searchFirst.startsWith(fn))) {
+          teacher = edge.node
+          break
+        }
+      }
+    }
+    if (!teacher) teacher = edges[0].node
 
     const rating: RmpRating = {
       avgRating: teacher.avgRating,

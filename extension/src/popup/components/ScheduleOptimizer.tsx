@@ -257,6 +257,9 @@ export function ScheduleOptimizer() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<string>('')
+  const [hideDClearance, setHideDClearance] = useState(false)
+  const [hideGraduate, setHideGraduate] = useState(false)
+  const [hideThematicOption, setHideThematicOption] = useState(false)
 
   // Read course bin from chrome.storage (persists across pages)
   useEffect(() => {
@@ -361,6 +364,31 @@ export function ScheduleOptimizer() {
         return
       }
 
+      // Apply filters
+      const isGradLevel = (num: string) => {
+        const n = parseInt(num.replace(/[^0-9]/g, ''), 10)
+        return !isNaN(n) && n >= 500
+      }
+
+      for (const g of groups) {
+        if (hideGraduate) {
+          g.options = g.options.filter((c) => !isGradLevel(c.number))
+        }
+        if (hideThematicOption) {
+          g.options = g.options.filter((c) =>
+            c.department.toUpperCase() !== 'CORE' &&
+            !c.title.toLowerCase().includes('thematic option')
+          )
+        }
+        if (hideDClearance) {
+          for (const c of g.options) {
+            const noDClear = c.sections.filter((s) => !s.hasDClearance)
+            if (noDClear.length > 0) c.sections = noDClear
+          }
+        }
+        g.options = g.options.filter((c) => c.sections.length > 0)
+      }
+
       setStatus('Finding optimal schedule...')
 
       // Small delay so status renders
@@ -378,7 +406,7 @@ export function ScheduleOptimizer() {
       setLoading(false)
       setStatus('')
     }
-  }, [courseCodes, selectedGEs])
+  }, [courseCodes, selectedGEs, hideDClearance, hideGraduate, hideThematicOption])
 
   const canOptimize = courseCodes.length > 0 || selectedGEs.size > 0
 
@@ -439,6 +467,23 @@ export function ScheduleOptimizer() {
         ))}
       </div>
 
+      {/* Filters */}
+      <p className="section-title">Filters</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#1A1410', cursor: 'pointer' }}>
+          <input type="checkbox" checked={hideDClearance} onChange={(e) => setHideDClearance(e.target.checked)} style={{ accentColor: '#990000', width: 12, height: 12 }} />
+          Hide D-clearance sections
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#1A1410', cursor: 'pointer' }}>
+          <input type="checkbox" checked={hideGraduate} onChange={(e) => setHideGraduate(e.target.checked)} style={{ accentColor: '#990000', width: 12, height: 12 }} />
+          Hide graduate-level courses (500+)
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#1A1410', cursor: 'pointer' }}>
+          <input type="checkbox" checked={hideThematicOption} onChange={(e) => setHideThematicOption(e.target.checked)} style={{ accentColor: '#990000', width: 12, height: 12 }} />
+          Hide Thematic Option (CORE)
+        </label>
+      </div>
+
       {/* Build button */}
       {error && <div className="error-message">{error}</div>}
 
@@ -479,9 +524,22 @@ export function ScheduleOptimizer() {
                   </span>
                   <span style={{ fontSize: 11, color: '#8C7E6A' }}>
                     {sec.section.type} &middot; {sec.units} units
+                    {sec.section.hasDClearance && (
+                      <span
+                        style={{ marginLeft: 4, color: '#990000', fontWeight: 700 }}
+                        title={sec.section.notes || 'Department clearance required'}
+                      >
+                        D-CLR
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="course-card-title">{sec.courseTitle}</div>
+                {sec.section.topic && sec.section.topic !== sec.courseTitle && (
+                  <div style={{ fontSize: 10, color: '#8C7E6A', fontStyle: 'italic', marginBottom: 2 }}>
+                    {sec.section.topic}
+                  </div>
+                )}
                 <div className="course-card-meta">
                   <span>{instrName}</span>
                   <span>
