@@ -121,6 +121,7 @@ export default function AccountPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [sublets, setSublets] = useState<SubletListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [sections, setSections] = useState<Record<string, boolean>>({
     sublets: true,
     saved: true,
@@ -231,7 +232,7 @@ export default function AccountPage() {
           setComments([]);
         }
       } catch {
-        // Silently handle — empty state shown
+        setLoadError(true);
       } finally {
         setLoading(false);
       }
@@ -247,7 +248,8 @@ export default function AccountPage() {
     const { error } = await supabase
       .from("profile_comments")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", user!.id);
     if (error) setComments(prev);
   }
 
@@ -282,7 +284,8 @@ export default function AccountPage() {
     const { error } = await supabase
       .from("saved_schedules")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", user!.id);
     if (error) setSchedules(prev);
   }
 
@@ -312,6 +315,18 @@ export default function AccountPage() {
       >
         &larr; BACK TO HOME
       </button>
+
+      {loadError && (
+        <div
+          className="p-4 border-[3px] border-[var(--cardinal)] text-sm"
+          style={{
+            background: "color-mix(in srgb, var(--cardinal) 5%, white)",
+            color: "var(--cardinal)",
+          }}
+        >
+          Failed to load data. Please refresh the page.
+        </div>
+      )}
 
       {/* ── Profile Card ── */}
       {loading ? (
