@@ -187,6 +187,7 @@ function SubletSubmitContent() {
     apartmentName.trim() &&
     address.trim() &&
     rent &&
+    !isNaN(parseInt(rent, 10)) &&
     contact.trim() &&
     posterName.trim() &&
     school &&

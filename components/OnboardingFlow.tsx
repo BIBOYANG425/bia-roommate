@@ -72,6 +72,7 @@ export default function OnboardingFlow() {
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [existingId, setExistingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
   /* ── Redirect if not authenticated ── */
@@ -188,11 +189,13 @@ export default function OnboardingFlow() {
           .from("roommate_profiles")
           .update(payload)
           .eq("id", existingId)
+          .eq("user_id", user!.id)
       : await supabase
           .from("roommate_profiles")
           .insert({ ...payload, user_id: user!.id });
 
     if (error) {
+      setSaveError(error.message);
       setSubmitting(false);
       return;
     }
@@ -655,6 +658,18 @@ export default function OnboardingFlow() {
                 </button>
               )}
             </div>
+            {saveError && (
+              <div
+                className="mt-3 p-3 border-[2px] text-xs"
+                style={{
+                  borderColor: "var(--cardinal)",
+                  color: "var(--cardinal)",
+                  background: "color-mix(in srgb, var(--cardinal) 5%, white)",
+                }}
+              >
+                SAVE FAILED: {saveError}
+              </div>
+            )}
           </div>
         </div>
       </div>
