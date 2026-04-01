@@ -7,12 +7,14 @@ A platform for USC, UC Berkeley, and Stanford students to find roommates and pla
 ## Features
 
 ### Roommate Matching
+
 - Browse and filter roommate profiles by school, year, gender, and tags
 - Submit your own profile with living habits, hobbies, and preferences
 - School-branded cards with USC / Cal / Stanford logo badges
 - Bilingual support (English + Chinese)
 
 ### Course Planner
+
 - Search USC courses by department, number, or keyword
 - Filter by GE category and semester
 - Schedule optimizer: reads your course bin and builds conflict-free schedules
@@ -20,7 +22,9 @@ A platform for USC, UC Berkeley, and Stanford students to find roommates and pla
 - Visual weekly calendar view
 
 ### Chrome Extension (`/extension`)
+
 A Manifest V3 Chrome extension that enhances USC's WebReg and Schedule of Classes:
+
 - **RateMyProfessors ratings** inline next to instructor names
 - **Seat count badges** showing enrollment / capacity per section
 - **Time conflict highlighting** on WebReg

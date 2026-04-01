@@ -12,6 +12,7 @@
 **Visual:** Selfie-style photo at USC campus (Tommy Trojan or Doheny Library)
 
 **Text:**
+
 ```
 来USC第一年
 我踩过的5个坑 😭
@@ -27,6 +28,7 @@
 **Visual:** Messy room photo or illustration
 
 **Text:**
+
 ```
 坑1: 室友随缘分配，结果生活习惯完全不合
 
@@ -44,6 +46,7 @@
 **Visual:** Map pin or GPS screenshot
 
 **Text:**
+
 ```
 坑2: 租房只看价格，没考虑安全
 
@@ -61,6 +64,7 @@
 **Visual:** Grocery store or empty kitchen photo
 
 **Text:**
+
 ```
 坑3: 以为meal plan够吃，没准备做饭
 
@@ -79,6 +83,7 @@
 **Visual:** Calendar or planner screenshot
 
 **Text:**
+
 ```
 坑4: 所有事情等到了再说
 
@@ -99,6 +104,7 @@
 **Visual:** Happy roommate photo or illustration of two people high-fiving
 
 **Text:**
+
 ```
 坑5: 没有提前认识同学
 

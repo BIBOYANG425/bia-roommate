@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { COURSE_COLORS } from '@/lib/course-planner/colors'
+import { COURSE_COLORS } from "@/lib/course-planner/colors";
 
-const CALENDAR_START_HOUR = 8
-const ROW_HEIGHT = 30
+const CALENDAR_START_HOUR = 8;
+const ROW_HEIGHT = 30;
 
 interface CalendarBlockProps {
-  courseId: string
-  sectionType: string
-  location: string
-  instructor: string
-  colorIndex: number
-  startMin: number
-  endMin: number
+  courseId: string;
+  sectionType: string;
+  location: string;
+  instructor: string;
+  colorIndex: number;
+  startMin: number;
+  endMin: number;
 }
 
 export default function CalendarBlock({
@@ -24,9 +24,12 @@ export default function CalendarBlock({
   startMin,
   endMin,
 }: CalendarBlockProps) {
-  const color = COURSE_COLORS[colorIndex % COURSE_COLORS.length]
-  const topOffset = Math.max(0, ((startMin - CALENDAR_START_HOUR * 60) / 30) * ROW_HEIGHT)
-  const height = Math.max(((endMin - startMin) / 30) * ROW_HEIGHT, ROW_HEIGHT)
+  const color = COURSE_COLORS[colorIndex % COURSE_COLORS.length];
+  const topOffset = Math.max(
+    0,
+    ((startMin - CALENDAR_START_HOUR * 60) / 30) * ROW_HEIGHT,
+  );
+  const height = Math.max(((endMin - startMin) / 30) * ROW_HEIGHT, ROW_HEIGHT);
 
   return (
     <div
@@ -48,5 +51,5 @@ export default function CalendarBlock({
         <div className="text-[9px] opacity-60 truncate">{location}</div>
       )}
     </div>
-  )
+  );
 }

@@ -12,6 +12,7 @@
 **Visual:** Suitcase + checklist graphic, countdown vibe
 
 **Text:**
+
 ```
 8月搬去LA前
 必须做完的10件事 ✅
@@ -25,6 +26,7 @@
 ## Slide 2 — Items 1-2
 
 **Text:**
+
 ```
 ☑️ 1. 确认室友
    还没有？用BIA匹配 → 主页链接
@@ -40,6 +42,7 @@
 ## Slide 3 — Items 3-4
 
 **Text:**
+
 ```
 ☑️ 3. 买机票
    8月中旬到达最合适
@@ -57,6 +60,7 @@
 ## Slide 4 — Items 5-6
 
 **Text:**
+
 ```
 ☑️ 5. 办手机号
    推荐 T-Mobile 或 Mint Mobile
@@ -74,6 +78,7 @@
 ## Slide 5 — Items 7-8
 
 **Text:**
+
 ```
 ☑️ 7. 了解公共交通
    下载 Google Maps + Metro App
@@ -92,6 +97,7 @@
 ## Slide 6 — Items 9-10
 
 **Text:**
+
 ```
 ☑️ 9. 准备重要文件
    护照 + I-20 + 签证页复印件
@@ -113,6 +119,7 @@
 **Visual:** BIA branding, clean summary
 
 **Text:**
+
 ```
 一件一件来，别慌 💪
 

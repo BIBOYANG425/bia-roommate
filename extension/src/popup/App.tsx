@@ -1,13 +1,13 @@
-import { useState } from 'react'
-import { ScheduleOptimizer } from './components/ScheduleOptimizer'
-import { InterestSearch } from './components/InterestSearch'
-import { Settings } from './components/Settings'
-import './styles.css'
+import { useState } from "react";
+import { ScheduleOptimizer } from "./components/ScheduleOptimizer";
+import { InterestSearch } from "./components/InterestSearch";
+import { Settings } from "./components/Settings";
+import "./styles.css";
 
-type Tab = 'optimizer' | 'discover' | 'settings'
+type Tab = "optimizer" | "discover" | "settings";
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('optimizer')
+  const [activeTab, setActiveTab] = useState<Tab>("optimizer");
 
   return (
     <div className="popup-container">
@@ -18,33 +18,33 @@ export function App() {
 
       <nav className="popup-tabs">
         <button
-          className={`popup-tab ${activeTab === 'optimizer' ? 'active' : ''}`}
-          onClick={() => setActiveTab('optimizer')}
-          aria-pressed={activeTab === 'optimizer'}
+          className={`popup-tab ${activeTab === "optimizer" ? "active" : ""}`}
+          onClick={() => setActiveTab("optimizer")}
+          aria-pressed={activeTab === "optimizer"}
         >
           Optimizer
         </button>
         <button
-          className={`popup-tab ${activeTab === 'discover' ? 'active' : ''}`}
-          onClick={() => setActiveTab('discover')}
-          aria-pressed={activeTab === 'discover'}
+          className={`popup-tab ${activeTab === "discover" ? "active" : ""}`}
+          onClick={() => setActiveTab("discover")}
+          aria-pressed={activeTab === "discover"}
         >
           Discover
         </button>
         <button
-          className={`popup-tab ${activeTab === 'settings' ? 'active' : ''}`}
-          onClick={() => setActiveTab('settings')}
-          aria-pressed={activeTab === 'settings'}
+          className={`popup-tab ${activeTab === "settings" ? "active" : ""}`}
+          onClick={() => setActiveTab("settings")}
+          aria-pressed={activeTab === "settings"}
         >
           Settings
         </button>
       </nav>
 
       <main className="popup-content">
-        {activeTab === 'optimizer' && <ScheduleOptimizer />}
-        {activeTab === 'discover' && <InterestSearch />}
-        {activeTab === 'settings' && <Settings />}
+        {activeTab === "optimizer" && <ScheduleOptimizer />}
+        {activeTab === "discover" && <InterestSearch />}
+        {activeTab === "settings" && <Settings />}
       </main>
     </div>
-  )
+  );
 }

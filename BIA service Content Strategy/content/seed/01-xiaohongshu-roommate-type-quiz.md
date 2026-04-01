@@ -12,6 +12,7 @@
 **Visual:** Pastel gradient background, 4 cartoon roommate icons in quadrants
 
 **Text:**
+
 ```
 你是哪种室友类型？
 5个问题测出你的室友人格 🏠
@@ -26,6 +27,7 @@ USC 2026新生必测！
 **Visual:** Two-option layout with icons
 
 **Text:**
+
 ```
 Q1: 你的理想作息是？
 
@@ -43,6 +45,7 @@ B. 夜猫子型 🌙
 **Visual:** Two-option layout with icons
 
 **Text:**
+
 ```
 Q2: 对房间整洁度的要求？
 
@@ -60,6 +63,7 @@ B. 随性型 🎨
 **Visual:** Two-option layout with icons
 
 **Text:**
+
 ```
 Q3: 社交方面你更倾向？
 
@@ -77,6 +81,7 @@ B. 安静型 📚
 **Visual:** Two-option layout with icons
 
 **Text:**
+
 ```
 Q4: 关于共享空间（厨房/客厅）？
 
@@ -94,6 +99,7 @@ B. 随缘型 🤝
 **Visual:** Two-option layout with icons
 
 **Text:**
+
 ```
 Q5: 对噪音的容忍度？
 
@@ -111,6 +117,7 @@ B. BGM模式 🎵
 **Visual:** 2x2 grid, each quadrant a different pastel color with a character illustration
 
 **Text:**
+
 ```
 你的室友人格是？
 
@@ -138,6 +145,7 @@ A+B混合偏B → 晚睡但需要安静
 **Visual:** BIA logo + phone mockup showing questionnaire page
 
 **Text:**
+
 ```
 想找到真正合拍的室友？
 

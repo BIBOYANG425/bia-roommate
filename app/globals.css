@@ -1,26 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --beige: #F2EBD9;
-  --cream: #FAF6EC;
-  --black: #1A1410;
+  --beige: #f2ebd9;
+  --cream: #faf6ec;
+  --black: #1a1410;
   --cardinal: #990000;
-  --gold: #FFCC00;
-  --mid: #8C7E6A;
-  --berkeley-blue: #014B83;
-  --berkeley-gold: #FEDD76;
-  --stanford-cardinal: #8C1515;
-  --stanford-gold: #EAAB00;
+  --gold: #ffcc00;
+  --mid: #8c7e6a;
+  --berkeley-blue: #014b83;
+  --berkeley-gold: #fedd76;
+  --stanford-cardinal: #8c1515;
+  --stanford-gold: #eaab00;
   --font-display: var(--font-display);
   --font-body: var(--font-body);
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   background: var(--beige);
   color: var(--black);
-  font-family: var(--font-body), 'PingFang SC', monospace;
+  font-family: var(--font-body), "PingFang SC", monospace;
   font-size: 13px;
   line-height: 1.5;
   min-height: 100vh;
@@ -57,7 +59,9 @@ body {
 .brutal-card {
   background: var(--cream);
   border: 3px solid var(--black);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 .brutal-card:hover {
   transform: translate(-4px, -4px);
@@ -111,7 +115,9 @@ body {
   padding: 12px 32px;
   font-size: 18px;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 .brutal-btn:hover {
   transform: translate(-3px, -3px);
@@ -195,16 +201,38 @@ body {
   animation: marquee 20s linear infinite;
 }
 @keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 /* Glitch flicker */
 @keyframes glitch {
-  0%, 90%, 100% { text-shadow: none; opacity: 1; }
-  92% { text-shadow: -4px 0 var(--cardinal), 4px 0 var(--gold); opacity: 0.9; }
-  94% { text-shadow: 4px 0 var(--gold), -4px 0 var(--cardinal); opacity: 1; }
-  96% { text-shadow: -2px 0 var(--cardinal); opacity: 0.95; }
+  0%,
+  90%,
+  100% {
+    text-shadow: none;
+    opacity: 1;
+  }
+  92% {
+    text-shadow:
+      -4px 0 var(--cardinal),
+      4px 0 var(--gold);
+    opacity: 0.9;
+  }
+  94% {
+    text-shadow:
+      4px 0 var(--gold),
+      -4px 0 var(--cardinal);
+    opacity: 1;
+  }
+  96% {
+    text-shadow: -2px 0 var(--cardinal);
+    opacity: 0.95;
+  }
 }
 .glitch-text {
   animation: glitch 4s ease-in-out infinite;
@@ -212,8 +240,13 @@ body {
 
 /* NEW DROP badge */
 @keyframes pulse-scale {
-  0%, 100% { transform: rotate(3deg) scale(1); }
-  50% { transform: rotate(3deg) scale(1.05); }
+  0%,
+  100% {
+    transform: rotate(3deg) scale(1);
+  }
+  50% {
+    transform: rotate(3deg) scale(1.05);
+  }
 }
 .new-drop-badge {
   background: var(--gold);
@@ -231,8 +264,14 @@ body {
 
 /* Staggered reveal */
 @keyframes reveal {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .reveal {
   animation: reveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -279,15 +318,29 @@ body {
 
 /* Modal animations */
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-fade-in { animation: fade-in 0.2s ease-out; }
-.animate-slide-up { animation: slide-up 0.25s ease-out; }
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+.animate-slide-up {
+  animation: slide-up 0.25s ease-out;
+}
 
 /* Vertical side label */
 .side-label {
@@ -302,9 +355,15 @@ body {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--beige); }
-::-webkit-scrollbar-thumb { background: var(--black); }
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--beige);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--black);
+}
 
 /* ─── Course Planner ─── */
 
@@ -417,10 +476,22 @@ body {
   border: 2px solid var(--black);
 }
 
-.rmp-good { background: #2D6A4F; color: white; }
-.rmp-ok { background: var(--gold); color: var(--black); }
-.rmp-bad { background: var(--cardinal); color: white; }
-.rmp-na { background: var(--beige); color: var(--mid); }
+.rmp-good {
+  background: #2d6a4f;
+  color: white;
+}
+.rmp-ok {
+  background: var(--gold);
+  color: var(--black);
+}
+.rmp-bad {
+  background: var(--cardinal);
+  color: white;
+}
+.rmp-na {
+  background: var(--beige);
+  color: var(--mid);
+}
 
 .schedule-tab {
   font-family: var(--font-display), Impact, sans-serif;

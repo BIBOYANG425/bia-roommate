@@ -19,7 +19,7 @@
 
 ## Caption Template
 
-*Replace [brackets] with real details. The more specific and authentic, the better.*
+_Replace [brackets] with real details. The more specific and authentic, the better._
 
 ```
 我和室友是BIA匹配认识的 🏠

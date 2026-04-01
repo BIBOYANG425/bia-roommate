@@ -18,7 +18,7 @@ Campus photo with interview-style layout, student silhouette + quote overlay
 
 ## Article Body
 
-*编者按：我们采访了一位USC大二在读的学姐，请她分享大一最真实的感受和建议。以下是她的故事。*
+_编者按：我们采访了一位USC大二在读的学姐，请她分享大一最真实的感受和建议。以下是她的故事。_
 
 ---
 

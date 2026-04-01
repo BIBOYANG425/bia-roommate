@@ -28,11 +28,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className={`${bebasNeue.variable} ${spaceMono.variable}`}>
+    <html
+      lang="zh-CN"
+      className={`${bebasNeue.variable} ${spaceMono.variable}`}
+    >
       <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
         {/* Film grain overlay */}
         <div className="grain" aria-hidden="true" />
       </body>

@@ -12,6 +12,7 @@
 **Visual:** Phone screen with app icons scattered around, pastel background
 
 **Text:**
+
 ```
 USC留学必备App清单 📱
 
@@ -26,6 +27,7 @@ USC留学必备App清单 📱
 ## Slide 2 — 日常生活
 
 **Text:**
+
 ```
 🛒 日常生活
 
@@ -42,6 +44,7 @@ Target / Walmart App — 日常采购
 ## Slide 3 — 吃饭
 
 **Text:**
+
 ```
 🍔 吃饭相关
 
@@ -57,6 +60,7 @@ OpenTable / Resy — 餐厅订位
 ## Slide 4 — 学习
 
 **Text:**
+
 ```
 📚 学习工具
 
@@ -73,6 +77,7 @@ Rate My Professors — 选课前必看
 ## Slide 5 — 社交
 
 **Text:**
+
 ```
 👥 社交
 
@@ -88,6 +93,7 @@ LinkedIn — 找实习必备，大一就开始建档
 ## Slide 6 — 省钱
 
 **Text:**
+
 ```
 💰 省钱神器
 
@@ -103,6 +109,7 @@ Flipp — 超市每周折扣
 ## Slide 7 — 安全
 
 **Text:**
+
 ```
 🔒 安全
 
@@ -122,6 +129,7 @@ USC紧急电话：213-740-4321
 **Visual:** BIA logo + app icon style
 
 **Text:**
+
 ```
 还有一个必备的👇
 
