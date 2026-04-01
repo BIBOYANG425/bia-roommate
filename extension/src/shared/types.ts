@@ -28,6 +28,10 @@ export interface Section {
   capacity: number
   isClosed: boolean
   isCancelled: boolean
+  topic?: string
+  hasDClearance?: boolean
+  notes?: string
+  linkCode?: string
 }
 
 export interface Course {
@@ -37,6 +41,8 @@ export interface Course {
   units: string
   description: string
   sections: Section[]
+  prereqs?: string
+  restrictions?: string[]
 }
 
 export interface RmpRating {

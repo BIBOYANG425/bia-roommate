@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { USC_SCHOOL_ID } from '@/lib/rmp'
 
 const TEACHER_SEARCH_QUERY = `
 query TeacherSearchQuery($query: TeacherSearchQuery!) {
@@ -24,8 +25,6 @@ query TeacherSearchQuery($query: TeacherSearchQuery!) {
   }
 }
 `
-
-const USC_SCHOOL_ID = 'U2Nob29sLTExMTI='
 
 export async function GET(request: NextRequest) {
   const name = request.nextUrl.searchParams.get('name')
@@ -72,16 +71,47 @@ export async function GET(request: NextRequest) {
       return Response.json(null)
     }
 
-    // Prefer exact name match over fuzzy first result
+    // Match professor by name — full normalized, then first+last, then fuzzy
+    const cleanName = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '')
+    const fullNormalized = cleanName(name)
     const nameParts = name.trim().toLowerCase().split(/\s+/)
-    let teacher = edges[0].node
+    const searchFirst = cleanName(nameParts[0] || '')
+    const searchLast = cleanName(nameParts[nameParts.length - 1] || '')
+
+    let teacher = null
+    // Pass 1: full normalized name match
     for (const edge of edges) {
-      const fn = (edge.node.firstName || '').trim().toLowerCase()
-      const ln = (edge.node.lastName || '').trim().toLowerCase()
-      if (nameParts.includes(fn) && nameParts.includes(ln)) {
+      const edgeFull = cleanName((edge.node.firstName || '') + (edge.node.lastName || ''))
+      if (edgeFull === fullNormalized) {
         teacher = edge.node
         break
       }
+    }
+    // Pass 2: exact first+last match
+    if (!teacher) {
+      for (const edge of edges) {
+        const fn = cleanName(edge.node.firstName || '')
+        const ln = cleanName(edge.node.lastName || '')
+        if (fn === searchFirst && ln === searchLast) {
+          teacher = edge.node
+          break
+        }
+      }
+    }
+    // Pass 3: last name match + first name prefix
+    if (!teacher) {
+      for (const edge of edges) {
+        const fn = cleanName(edge.node.firstName || '')
+        const ln = cleanName(edge.node.lastName || '')
+        if (ln === searchLast && (fn.startsWith(searchFirst) || searchFirst.startsWith(fn))) {
+          teacher = edge.node
+          break
+        }
+      }
+    }
+
+    if (!teacher) {
+      return Response.json(null)
     }
 
     return Response.json(

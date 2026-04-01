@@ -48,10 +48,13 @@ function scoreTier1(
   // Department relevance
   const deptScore = matchedDepts.has(dept) ? 1.0 : 0
 
+  // Boost: multiple keyword matches in the title are worth more than proportional
+  const multiMatchBonus = allMatched.length >= 2 ? allMatched.length * 0.5 : 0
+
   // Freshman-level bonus (100-200 level courses)
   const freshmanBonus = num < 300 ? 0.5 : num < 500 ? 0.2 : 0
 
-  const score = bestTitleScore * 3.0 + deptScore * 2.0 + freshmanBonus
+  const score = bestTitleScore * 3.0 + deptScore * 2.0 + freshmanBonus + multiMatchBonus
 
   return { score, matched: allMatched }
 }
@@ -96,6 +99,40 @@ function scoreTier2(
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// ─── Format match reasons into human-readable labels ───
+// Tokens that shouldn't appear as match reasons (GE codes, stems, generic words)
+const REASON_FILTER = new Set([
+  'ge', 'ge-a', 'ge-b', 'ge-c', 'ge-d', 'ge-e', 'ge-f', 'ge-g', 'ge-h',
+  'usc', 'intro', 'introduct', 'introductori', 'level', 'requir',
+])
+
+function formatMatchReasons(
+  rawMatched: string[],
+  dept: string,
+  matchedDepts: Set<string>,
+  geTag?: string
+): string[] {
+  const reasons: string[] = []
+
+  // Add GE tag as a reason
+  if (geTag) reasons.push(`Fulfills ${geTag}`)
+
+  // Add department match
+  if (matchedDepts.has(dept)) reasons.push(`${dept} department`)
+
+  // Capitalize and deduplicate raw keyword matches, filtering very short/generic ones
+  for (const r of rawMatched) {
+    if (r.length < 3) continue
+    if (REASON_FILTER.has(r.toLowerCase())) continue
+    const capitalized = r.charAt(0).toUpperCase() + r.slice(1)
+    if (!reasons.some((existing) => existing.toLowerCase() === capitalized.toLowerCase())) {
+      reasons.push(capitalized)
+    }
+  }
+
+  return reasons.slice(0, 5)
+}
 
 // ─── Main recommendation engine (runs server-side) ───
 export async function getRecommendations(
@@ -211,7 +248,8 @@ export async function getRecommendations(
     )
 
     if (score > 0) {
-      const reasons = [...new Set([...matched, ...detail.tier1Matched])]
+      const rawReasons = [...new Set([...matched, ...detail.tier1Matched])]
+      const reasons = formatMatchReasons(rawReasons, detail.department, matchedDepts)
       scoreMap.set(key, {
         department: detail.department,
         number: detail.number,
@@ -243,7 +281,13 @@ export async function getRecommendations(
         )
         existing.geTag = gc.geTag
         existing.relevanceScore = Math.round(score * 100) / 100
-        existing.matchReasons = [...new Set([...existing.matchReasons, ...matched])]
+        const newReasons = formatMatchReasons(
+          [...new Set([...matched])],
+          existing.department,
+          matchedDepts,
+          gc.geTag
+        )
+        existing.matchReasons = [...new Set([...(existing.matchReasons || []), ...newReasons])]
         continue
       }
 
@@ -258,6 +302,7 @@ export async function getRecommendations(
       )
 
       if (score > 0) {
+        const reasons = formatMatchReasons(matched, gc.department, matchedDepts, gc.geTag)
         scoreMap.set(key, {
           department: gc.department,
           number: gc.number,
@@ -265,7 +310,7 @@ export async function getRecommendations(
           units: gc.units,
           description: gc.description,
           relevanceScore: Math.round(score * 100) / 100,
-          matchReasons: matched,
+          matchReasons: reasons,
           geTag: gc.geTag,
         })
       }

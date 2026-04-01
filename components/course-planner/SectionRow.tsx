@@ -22,6 +22,7 @@ export default function SectionRow({
   const time = section.times[0]
   const isTBA = !time || !time.start_time || time.day?.toUpperCase() === 'TBA'
   const isClosed = section.isClosed || section.isCancelled
+  const isFull = !isClosed && section.registered >= section.capacity && section.capacity > 0
 
   return (
     <div
@@ -29,8 +30,8 @@ export default function SectionRow({
         isSelected ? 'translate-x-1' : ''
       } ${hasConflict ? 'conflict-border' : ''}`}
       style={{
-        background: isSelected ? 'var(--gold)' : isClosed ? 'var(--beige)' : 'var(--cream)',
-        opacity: isClosed ? 0.6 : 1,
+        background: isSelected ? 'var(--gold)' : (isClosed || isFull) ? 'var(--beige)' : 'var(--cream)',
+        opacity: isClosed ? 0.6 : isFull ? 0.75 : 1,
       }}
       onClick={onToggle}
     >
@@ -42,7 +43,7 @@ export default function SectionRow({
         {(section.type ?? '').toUpperCase().slice(0, 3) || 'N/A'}
       </span>
 
-      {/* Time & location */}
+      {/* Time & location & topic */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           {isTBA ? (
@@ -54,7 +55,21 @@ export default function SectionRow({
               {formatDays(time.day)} {formatTime(time.start_time)}-{formatTime(time.end_time)}
             </span>
           )}
+          {section.hasDClearance && (
+            <span
+              className="text-[8px] font-display tracking-wider px-1.5 py-0.5 border border-[var(--cardinal)]"
+              style={{ color: 'var(--cardinal)', background: 'rgba(153,0,0,0.08)' }}
+              title={section.notes || 'Department clearance required'}
+            >
+              D-CLR
+            </span>
+          )}
         </div>
+        {section.topic && (
+          <p className="text-[10px] truncate font-medium" style={{ color: 'var(--mid)' }}>
+            {section.topic}
+          </p>
+        )}
         {time?.location && (
           <p className="text-[10px] truncate" style={{ color: 'var(--mid)' }}>
             {time.location}
@@ -84,6 +99,11 @@ export default function SectionRow({
       {isClosed && (
         <span className="brutal-tag" style={{ background: 'var(--cardinal)', color: 'white', fontSize: '9px' }}>
           {section.isCancelled ? 'CANCELLED' : 'CLOSED'}
+        </span>
+      )}
+      {isFull && (
+        <span className="brutal-tag" style={{ background: 'var(--mid)', color: 'white', fontSize: '9px' }}>
+          FULL
         </span>
       )}
 

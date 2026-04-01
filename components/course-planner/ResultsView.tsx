@@ -145,46 +145,177 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
         ? parseInt(prefs.doneBy.split(':')[0]) * 60
         : 24 * 60
 
-      // Group courses by the original selection
-      const courseGroups: { label: string; isGE: boolean; geTag?: string; options: { course: Course; sections: Section[] }[] }[] = []
-
-      for (const sel of courses) {
-        const matching = selectionMap[sel.id] || []
-        if (matching.length > 0) {
-          const isGE = sel.id.startsWith('GE-')
-          courseGroups.push({
-            label: sel.label,
-            isGE,
-            geTag: isGE ? sel.id : undefined,
-            options: matching
-              .map((c) => {
-                // Keep lecture-type sections (Lecture, Lecture/Discussion, Lecture-Lab, etc.)
-                // Fall back to all sections if no lecture types found
-                const allActive = (c.sections || []).filter(
-                  (s) => !s.isCancelled && s.times.some((t) => t.start_time && t.day !== 'TBA')
-                )
-                const lectureTypes = allActive.filter((s) =>
-                  s.type.toLowerCase().includes('lecture')
-                )
-                return {
-                  course: c,
-                  sections: lectureTypes.length > 0 ? lectureTypes : allActive,
-                }
-              })
-              .filter((opt) => opt.sections.length > 0),
-          })
-        }
+      // Helper: check if a course number is graduate-level (500+)
+      const isGraduateLevel = (num: string): boolean => {
+        const n = parseInt(num.replace(/[^0-9]/g, ''), 10)
+        return !isNaN(n) && n >= 500
       }
 
-      // Pre-sort GE options: for each GE group, sort courses by best section rating
-      // so the backtracking tries the most promising courses first
-      for (const group of courseGroups) {
-        if (group.isGE && group.options.length > 1) {
-          group.options.sort((a, b) => {
-            const bestA = Math.max(...a.sections.map((s) => getRating(s)), 0)
-            const bestB = Math.max(...b.sections.map((s) => getRating(s)), 0)
-            return bestB - bestA
+      // Build section combos: lecture + linked lab/discussion/quiz
+      type SectionCombo = {
+        course: Course
+        sections: Section[]   // all sections in the combo
+        allSlots: { day: string; startMin: number; endMin: number }[]
+        rating: number        // lecture instructor rating
+      }
+
+      function buildCombos(course: Course, geTag?: string): SectionCombo[] {
+        let allActive = (course.sections || []).filter(
+          (s) => !s.isCancelled
+        )
+
+        // Filter out D-clearance sections if preference is set
+        if (prefs.hideDClearance) {
+          allActive = allActive.filter((s) => !s.hasDClearance)
+        }
+
+        // Group by type
+        const byType: Record<string, Section[]> = {}
+        for (const s of allActive) {
+          const type = (s.type || 'Lecture').toLowerCase()
+          if (!byType[type]) byType[type] = []
+          byType[type].push(s)
+        }
+
+        const types = Object.keys(byType)
+        if (types.length === 0) return []
+
+        // Identify primary type (lecture) and secondary types (lab, discussion, quiz)
+        const primaryKey = types.find((t) => t.includes('lecture')) || types[0]
+        const secondaryKeys = types.filter((t) => t !== primaryKey)
+
+        const primaries = byType[primaryKey] || []
+        if (primaries.length === 0) return []
+
+        // If no secondary types, each primary is its own combo
+        if (secondaryKeys.length === 0) {
+          return primaries.map((sec) => {
+            const slots = parseSectionTimes(sec.times)
+            return { course, sections: [sec], allSlots: slots, rating: getRating(sec) }
+          }).filter((c) => c.allSlots.length > 0)
+        }
+
+        // Build combos: for each primary, find compatible secondaries
+        const combos: SectionCombo[] = []
+
+        for (const primary of primaries) {
+          const primarySlots = parseSectionTimes(primary.times)
+          if (primarySlots.length === 0) continue
+
+          // Find matching secondaries for each type
+          const secondaryOptions: Section[][] = secondaryKeys.map((key) => {
+            const candidates = byType[key]
+            // Filter by linkCode: match if same linkCode, or if either is null/empty
+            return candidates.filter((s) => {
+              if (!primary.linkCode && !s.linkCode) return true
+              if (!primary.linkCode || !s.linkCode) return true
+              return primary.linkCode === s.linkCode
+            })
           })
+
+          // Check if any required secondary type has no compatible sections
+          const hasRequired = secondaryKeys.every((key, i) => {
+            // A secondary type is "required" if any section has time slots or is linked
+            const hasTimed = byType[key].some((s) => parseSectionTimes(s.times).length > 0 || !!s.linkCode)
+            return !hasTimed || secondaryOptions[i].length > 0
+          })
+          if (!hasRequired) continue
+
+          // Generate combos: primary + one from each secondary type
+          // For efficiency, limit secondary exploration
+          function generateCombos(
+            secIdx: number,
+            current: Section[],
+            currentSlots: { day: string; startMin: number; endMin: number }[]
+          ) {
+            if (combos.length >= 30) return
+            if (secIdx >= secondaryKeys.length) {
+              combos.push({
+                course,
+                sections: [primary, ...current],
+                allSlots: [...currentSlots],
+                rating: getRating(primary),
+              })
+              return
+            }
+
+            const options = secondaryOptions[secIdx]
+            // If no timed or linked sections for this type, skip it
+            const timedOptions = options.filter((s) => parseSectionTimes(s.times).length > 0 || !!s.linkCode)
+            if (timedOptions.length === 0) {
+              generateCombos(secIdx + 1, current, currentSlots)
+              return
+            }
+
+            for (const sec of timedOptions.slice(0, 8)) {
+              const slots = parseSectionTimes(sec.times)
+              // Check internal conflicts
+              const hasConflict = slots.some((a) =>
+                currentSlots.some((b) =>
+                  a.day === b.day && a.startMin < b.endMin && b.startMin < a.endMin
+                )
+              )
+              if (hasConflict) continue
+
+              current.push(sec)
+              currentSlots.push(...slots)
+              generateCombos(secIdx + 1, current, currentSlots)
+              current.pop()
+              currentSlots.splice(currentSlots.length - slots.length, slots.length)
+            }
+          }
+
+          generateCombos(0, [], primarySlots)
+        }
+
+        return combos
+      }
+
+      // Group courses by the original selection and build combos
+      type CourseGroup = {
+        label: string
+        isGE: boolean
+        geTag?: string
+        combos: SectionCombo[]
+      }
+      const courseGroups: CourseGroup[] = []
+
+      for (const sel of courses) {
+        let matching = selectionMap[sel.id] || []
+
+        // Filter out graduate-level courses if preference is set
+        if (prefs.hideGraduate) {
+          matching = matching.filter((c) => !isGraduateLevel(c.number))
+        }
+
+        // Filter out Thematic Option (CORE) courses if preference is set
+        if (prefs.hideThematicOption) {
+          matching = matching.filter((c) =>
+            c.department.toUpperCase() !== 'CORE' &&
+            !c.title.toLowerCase().includes('thematic option')
+          )
+        }
+
+        if (matching.length > 0) {
+          const isGE = sel.id.startsWith('GE-')
+          const geTag = isGE ? sel.id : undefined
+          const allCombos: SectionCombo[] = []
+
+          for (const c of matching) {
+            allCombos.push(...buildCombos(c, geTag))
+          }
+
+          // Sort by rating descending
+          allCombos.sort((a, b) => b.rating - a.rating)
+
+          if (allCombos.length > 0) {
+            courseGroups.push({
+              label: sel.label,
+              isGE,
+              geTag,
+              combos: isGE ? allCombos.slice(0, 40) : allCombos,
+            })
+          }
         }
       }
 
@@ -203,54 +334,48 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
         if (results.length >= maxResults * 10) return // enough candidates
 
         if (groupIdx >= courseGroups.length) {
-          const avg = selected.length > 0 ? totalRating / selected.length : 0
+          const ratingCount = selected.filter((s) => s.section.type.toLowerCase().includes('lecture') || !s.section.type).length || selected.length
+          const avg = ratingCount > 0 ? totalRating / ratingCount : 0
           results.push({ sections: [...selected], avgRating: Math.round(avg * 100) / 100 })
           return
         }
 
         const group = courseGroups[groupIdx]
-        // For GE groups: try top 10 courses. For regular courses: try all (usually 1).
-        const optionsToTry = group.isGE ? group.options.slice(0, 10) : group.options
+        const combosToTry = group.isGE ? group.combos.slice(0, 20) : group.combos.slice(0, 15)
 
-        for (const opt of optionsToTry) {
-          // Sort sections by rating
-          const sorted = [...opt.sections].sort((a, b) => getRating(b) - getRating(a))
+        for (const combo of combosToTry) {
+          // Check time preferences for all slots
+          const meetsPrefs = combo.allSlots.every((s) => s.startMin >= earliestMin && s.endMin <= doneByMin)
+          if (!meetsPrefs && (prefs.earliestClass || prefs.doneBy)) continue
 
-          for (const sec of sorted.slice(0, 6)) {
-            const slots = parseSectionTimes(sec.times)
-            // Skip sections with no actual time slots (TBA/online)
-            if (slots.length === 0) continue
-
-            // Check time preferences
-            const meetsPrefs = slots.every((s) => s.startMin >= earliestMin && s.endMin <= doneByMin)
-            if (!meetsPrefs && (prefs.earliestClass || prefs.doneBy)) continue
-
-            // Check conflicts
-            const hasConflict = slots.some((newSlot) =>
-              usedSlots.some(
-                (existing) =>
-                  existing.day === newSlot.day &&
-                  existing.startMin < newSlot.endMin &&
-                  newSlot.startMin < existing.endMin
-              )
+          // Check conflicts with already-selected sections
+          const hasConflict = combo.allSlots.some((newSlot) =>
+            usedSlots.some(
+              (existing) =>
+                existing.day === newSlot.day &&
+                existing.startMin < newSlot.endMin &&
+                newSlot.startMin < existing.endMin
             )
-            if (hasConflict) continue
+          )
+          if (hasConflict) continue
 
-            selected.push({
-              course: opt.course,
-              section: sec,
-              colorIndex: groupIdx % COURSE_COLORS.length,
-              geTag: group.geTag,
-            })
-            const newSlots = [...usedSlots, ...slots]
+          // Add all sections in the combo
+          const newEntries: ScheduleSection[] = combo.sections.map((sec) => ({
+            course: combo.course,
+            section: sec,
+            colorIndex: groupIdx % COURSE_COLORS.length,
+            geTag: group.geTag,
+          }))
 
-            backtrack(groupIdx + 1, selected, totalRating + getRating(sec), newSlots)
+          selected.push(...newEntries)
+          const newSlots = [...usedSlots, ...combo.allSlots]
 
-            selected.pop()
+          backtrack(groupIdx + 1, selected, totalRating + combo.rating, newSlots)
 
-            // If we already have enough results, stop exploring this group
-            if (results.length >= maxResults * 10) return
-          }
+          selected.splice(selected.length - newEntries.length, newEntries.length)
+
+          // If we already have enough results, stop exploring this group
+          if (results.length >= maxResults * 10) return
         }
       }
 
@@ -413,16 +538,30 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
                     >
                       {s.section.type}
                     </span>
+                    {s.section.hasDClearance && (
+                      <span
+                        className="px-2 py-0.5 text-[10px] font-display tracking-wider border"
+                        style={{ borderColor: 'var(--cardinal)', color: 'var(--cardinal)', background: 'rgba(153,0,0,0.05)' }}
+                        title={s.section.notes || 'Department clearance required'}
+                      >
+                        D-CLEARANCE
+                      </span>
+                    )}
                   </div>
 
-                  {/* Course title */}
+                  {/* Course title + topic */}
                   <p className="text-sm mb-1" style={{ color: 'var(--black)' }}>
                     {s.course.title}
                   </p>
+                  {s.section.topic && s.section.topic !== s.course.title && (
+                    <p className="text-xs mb-1 italic" style={{ color: 'var(--mid)' }}>
+                      {s.section.topic}
+                    </p>
+                  )}
 
                   {/* Schedule */}
                   <p className="text-sm mb-2" style={{ color: 'var(--mid)' }}>
-                    {timeDisplay} | {s.section.isClosed ? 'CLOSED' : `${s.section.registered}/${s.section.capacity} seats`}
+                    {timeDisplay} | {s.section.isCancelled ? 'CANCELLED' : s.section.isClosed ? 'CLOSED' : s.section.capacity > 0 && s.section.registered >= s.section.capacity ? 'FULL' : `${s.section.registered}/${s.section.capacity} seats`}
                   </p>
 
                   {/* Instructor + RMP */}
@@ -449,6 +588,19 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
                         <span className="text-xs" style={{ color: 'var(--mid)' }}>N/A</span>
                       )}
                     </div>
+                  )}
+
+                  {/* Prereqs & notes */}
+                  {s.course.prereqs && (
+                    <p className="text-[11px] mt-2 px-2 py-1 border-l-[2px]" style={{ borderColor: 'var(--cardinal)', color: 'var(--cardinal)', background: 'rgba(153,0,0,0.03)' }}>
+                      <span className="font-display tracking-wider">PREREQ:</span>{' '}
+                      <span style={{ color: 'var(--black)' }}>{s.course.prereqs}</span>
+                    </p>
+                  )}
+                  {s.section.notes && (
+                    <p className="text-[10px] mt-1 italic" style={{ color: 'var(--mid)' }}>
+                      {s.section.notes.length > 150 ? s.section.notes.substring(0, 150) + '...' : s.section.notes}
+                    </p>
                   )}
                 </div>
               )
