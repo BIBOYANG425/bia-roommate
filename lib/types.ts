@@ -16,6 +16,7 @@ export interface RoommateProfile {
   tags: string[] | null
   avatar_url: string | null
   bio: string | null
+  visible: boolean
   created_at: string
 }
 

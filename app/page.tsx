@@ -32,6 +32,7 @@ function HomeContent() {
   const [error, setError] = useState<string | null>(null)
   const [showToast, setShowToast] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState<RoommateProfile | null>(null)
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
 
   const [search, setSearch] = useState('')
   const [schoolFilter, setSchoolFilter] = useState('')
@@ -51,6 +52,7 @@ function HomeContent() {
     const { data, error: err } = await supabase
       .from('roommate_profiles')
       .select('*')
+      .eq('visible', true)
       .order('created_at', { ascending: false })
 
     if (err) {
@@ -59,6 +61,13 @@ function HomeContent() {
       return
     }
     setProfiles(data || [])
+    if (data && data.length > 0) {
+      const ids = data.map((p: RoommateProfile) => p.id).join(',')
+      fetch(`/api/likes/count?ids=${ids}`)
+        .then((r) => r.json())
+        .then(setLikeCounts)
+        .catch(() => {})
+    }
     setLoading(false)
   }, [])
 
@@ -235,7 +244,17 @@ function HomeContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filtered.map((profile, i) => (
                 <div key={profile.id} className="reveal" style={{ animationDelay: `${i * 0.05}s` }}>
-                  <ProfileCard profile={profile} onClick={() => setSelectedProfile(profile)} />
+                  <ProfileCard
+                    profile={profile}
+                    onClick={() => setSelectedProfile(profile)}
+                    likeCount={likeCounts[profile.id]}
+                    onLikeChange={(id, liked) => {
+                      setLikeCounts((prev) => ({
+                        ...prev,
+                        [id]: Math.max(0, (prev[id] || 0) + (liked ? 1 : -1)),
+                      }))
+                    }}
+                  />
                 </div>
               ))}
             </div>

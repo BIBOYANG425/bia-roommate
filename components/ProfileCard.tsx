@@ -1,8 +1,10 @@
 'use client'
 
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { RoommateProfile } from '@/lib/types'
 import { getAvatarColor, getLastChar, relativeTime, schoolAccent, schoolCardClass } from '@/lib/utils'
+import { useAuth } from './AuthProvider'
 
 const SCHOOL_LOGOS: Record<string, string> = {
   'USC': '/schools/usc.svg',
@@ -13,10 +15,59 @@ const SCHOOL_LOGOS: Record<string, string> = {
 export default function ProfileCard({
   profile,
   onClick,
+  likeCount,
+  onLikeChange,
 }: {
   profile: RoommateProfile
   onClick: () => void
+  likeCount?: number
+  onLikeChange?: (profileId: string, liked: boolean) => void
 }) {
+  const { user } = useAuth()
+  const [likeLoading, setLikeLoading] = useState(false)
+  const [localLiked, setLocalLiked] = useState(false)
+
+  // Check if user has liked this profile
+  useEffect(() => {
+    let mounted = true
+    if (user) {
+      import('@/lib/supabase/client').then(({ createBrowserSupabaseClient }) => {
+        const supabase = createBrowserSupabaseClient()
+        supabase
+          .from('profile_likes')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('profile_id', profile.id)
+          .maybeSingle()
+          .then(({ data }: { data: { id: string } | null }) => {
+            if (mounted) setLocalLiked(!!data)
+          })
+          .catch(() => {})
+      })
+    }
+    return () => { mounted = false }
+  }, [user?.id, profile.id])
+
+  const handleLike = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!user || likeLoading) return
+    setLikeLoading(true)
+    try {
+      const res = await fetch('/api/likes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile_id: profile.id }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setLocalLiked(data.liked)
+        onLikeChange?.(profile.id, data.liked)
+      }
+    } finally {
+      setLikeLoading(false)
+    }
+  }, [user, profile.id, likeLoading, onLikeChange])
+
   const avatarColor = getAvatarColor(profile.name)
   const lastChar = getLastChar(profile.name)
   const accent = schoolAccent(profile.school)
@@ -33,9 +84,9 @@ export default function ProfileCard({
 
   return (
     <div className={`brutal-card ${cardClass} p-5 cursor-pointer flex flex-col gap-3 relative`} onClick={onClick}>
-      {/* School logo */}
-      {profile.school && SCHOOL_LOGOS[profile.school] && (
-        <div className="absolute top-3 right-3">
+      {/* School logo + timestamp */}
+      <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+        {profile.school && SCHOOL_LOGOS[profile.school] && (
           <Image
             src={SCHOOL_LOGOS[profile.school]}
             alt={profile.school}
@@ -43,8 +94,11 @@ export default function ProfileCard({
             height={28}
             className="drop-shadow-sm"
           />
-        </div>
-      )}
+        )}
+        <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--mid)' }}>
+          {relativeTime(profile.created_at)}
+        </span>
+      </div>
 
       {/* Header */}
       <div className="flex items-center gap-3 pr-8">
@@ -91,9 +145,25 @@ export default function ProfileCard({
 
       {/* Footer */}
       <div className="mt-auto pt-3 border-t-[2px] border-[var(--black)] flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--mid)' }}>
-          {relativeTime(profile.created_at)}
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleLike}
+            disabled={!user || likeLoading}
+            className="text-sm transition-transform hover:scale-110"
+            style={{
+              color: localLiked ? 'var(--cardinal)' : 'var(--mid)',
+              cursor: user ? 'pointer' : 'default',
+            }}
+            title={user ? (localLiked ? 'Unlike' : 'Like') : 'Sign in to like'}
+          >
+            {localLiked ? '♥' : '♡'}
+          </button>
+          {(likeCount ?? 0) > 0 && (
+            <span className="text-[10px]" style={{ color: 'var(--mid)' }}>
+              {likeCount}
+            </span>
+          )}
+        </div>
         <span className="font-display text-xs tracking-wider" style={{ color: accent }}>
           VIEW DETAILS →
         </span>
