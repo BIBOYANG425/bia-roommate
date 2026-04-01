@@ -106,6 +106,28 @@ export default function CourseDetail() {
             {course.description}
           </p>
         )}
+
+        {/* Prerequisites */}
+        {course.prereqs && (
+          <div
+            className="mt-2 px-3 py-1.5 text-xs border-l-[3px]"
+            style={{ borderColor: 'var(--cardinal)', background: 'rgba(153,0,0,0.05)', color: 'var(--cardinal)' }}
+          >
+            <span className="font-display tracking-wider">PREREQUISITES:</span>{' '}
+            <span style={{ color: 'var(--black)' }}>{course.prereqs}</span>
+          </div>
+        )}
+
+        {/* Restrictions */}
+        {course.restrictions && course.restrictions.length > 0 && (
+          <div
+            className="mt-1.5 px-3 py-1.5 text-xs border-l-[3px]"
+            style={{ borderColor: 'var(--gold)', background: 'rgba(255,204,0,0.08)', color: 'var(--mid)' }}
+          >
+            <span className="font-display tracking-wider" style={{ color: 'var(--black)' }}>RESTRICTIONS:</span>{' '}
+            {course.restrictions.join('; ')}
+          </div>
+        )}
       </div>
 
       {/* Sections grouped by type */}

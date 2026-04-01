@@ -1,85 +1,104 @@
-import { NextRequest } from "next/server";
-import { GE_MAP } from "@/lib/course-planner/ge-map";
+import { NextRequest } from 'next/server'
+import { GE_MAP } from '@/lib/course-planner/ge-map'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 function transformSection(sec: any): any {
-  const schedule = sec.schedule || [];
+  const schedule = sec.schedule || []
   return {
-    id: sec.sisSectionId || "",
-    type: sec.rnrMode || "Lecture",
-    number: sec.sisSectionId || "",
-    times:
-      schedule.length > 0
-        ? schedule.map((s: any) => ({
-            day: s.dayCode || "TBA",
-            start_time: s.startTime || "",
-            end_time: s.endTime || "",
-            location: "",
-          }))
-        : [{ day: "TBA", start_time: "", end_time: "", location: "" }],
+    id: sec.sisSectionId || '',
+    type: sec.rnrMode || 'Lecture',
+    number: sec.sisSectionId || '',
+    times: schedule.length > 0
+      ? schedule.map((s: any) => ({
+          day: s.dayCode || 'TBA',
+          start_time: s.startTime || '',
+          end_time: s.endTime || '',
+          location: '',
+        }))
+      : [{ day: 'TBA', start_time: '', end_time: '', location: '' }],
     instructor: sec.instructors?.[0]
-      ? {
-          firstName: sec.instructors[0].firstName,
-          lastName: sec.instructors[0].lastName,
-        }
-      : { firstName: "", lastName: "" },
+      ? { firstName: sec.instructors[0].firstName, lastName: sec.instructors[0].lastName }
+      : { firstName: '', lastName: '' },
     registered: sec.registeredSeats || 0,
     capacity: sec.totalSeats || 0,
     isClosed: sec.isFull || false,
     isCancelled: sec.isCancelled || false,
-  };
+    topic: sec.name || '',
+    hasDClearance: sec.hasDClearance || false,
+    notes: sec.notes || '',
+    linkCode: sec.linkCode || '',
+  }
+}
+
+function formatPrereqs(prereqs: any[]): string {
+  if (!prereqs || prereqs.length === 0) return ''
+  return prereqs
+    .map((group: any) => {
+      const options = (group.courseOptions || []).map((o: any) => o.courseSpace || o.courseHyphen || '')
+      if (options.length === 0) return ''
+      const needed = group.requiredCourses || 1
+      if (needed >= options.length) return options.join(' and ')
+      return `${needed} from (${options.join(' or ')})`
+    })
+    .filter(Boolean)
+    .join('; ')
 }
 
 export async function GET(request: NextRequest) {
-  const category = request.nextUrl.searchParams.get("category"); // e.g. "GE-A"
-  const semester = request.nextUrl.searchParams.get("semester") || "20263";
+  const category = request.nextUrl.searchParams.get('category') // e.g. "GE-A"
+  const semester = request.nextUrl.searchParams.get('semester') || '20263'
 
   if (!category || !GE_MAP[category]) {
-    return Response.json({ error: "Invalid GE category" }, { status: 400 });
+    return Response.json({ error: 'Invalid GE category' }, { status: 400 })
   }
 
-  const { requirementPrefix, categoryPrefix } = GE_MAP[category];
+  const { requirementPrefix, categoryPrefix } = GE_MAP[category]
 
   try {
     // Get GE courses for this category
     const res = await fetch(
       `https://classes.usc.edu/api/Courses/GeCoursesByTerm?termCode=${semester}&geRequirementPrefix=${requirementPrefix}&categoryPrefix=${categoryPrefix}`,
-      { next: { revalidate: 600 } },
-    );
+      { next: { revalidate: 600 } }
+    )
 
     if (!res.ok) {
-      return Response.json({ error: "USC API error" }, { status: res.status });
+      return Response.json({ error: 'USC API error' }, { status: res.status })
     }
 
-    const data = await res.json();
-    const courses = Array.isArray(data) ? data : data.courses || [];
+    const data = await res.json()
+    const courses = Array.isArray(data) ? data : data.courses || []
 
     // Transform to our Course format — only include courses that have schedulable sections
     const transformed = courses
-      .map((c: any) => ({
-        department: c.scheduledCourseCode?.prefix || c.prefix || "",
-        number:
-          (c.scheduledCourseCode?.number || c.classNumber || "") +
-          (c.scheduledCourseCode?.suffix || c.suffix || ""),
-        title: c.name || c.fullCourseName || "",
-        units: c.courseUnits?.[0]?.toString() || "",
-        description: c.description || "",
-        sections: (c.sections || []).map(transformSection),
-      }))
+      .map((c: any) => {
+        const prereqs = formatPrereqs(c.prerequisiteCourseCodes)
+        const restrictions: string[] = []
+        if (c.courseRestrictions) restrictions.push(c.courseRestrictions)
+        if (c.majorRestrictions) restrictions.push(`Major: ${c.majorRestrictions}`)
+        if (c.schoolRestrictions) restrictions.push(`School: ${c.schoolRestrictions}`)
+        return {
+          department: c.scheduledCourseCode?.prefix || c.prefix || '',
+          number: (c.scheduledCourseCode?.number || c.classNumber || '') + (c.scheduledCourseCode?.suffix || c.suffix || ''),
+          title: c.name || c.fullCourseName || '',
+          units: c.courseUnits?.[0]?.toString() || '',
+          description: c.description || '',
+          sections: (c.sections || []).map(transformSection),
+          prereqs,
+          restrictions: restrictions.length > 0 ? restrictions : undefined,
+        }
+      })
       .filter((c: any) => {
         // Only include courses that have at least one non-cancelled section with actual times
         return c.sections.some(
-          (s: any) =>
-            !s.isCancelled &&
-            s.times.some((t: any) => t.start_time && t.day !== "TBA"),
-        );
-      });
+          (s: any) => !s.isCancelled && s.times.some((t: any) => t.start_time && t.day !== 'TBA')
+        )
+      })
 
     return Response.json(transformed, {
-      headers: { "Cache-Control": "public, s-maxage=600" },
-    });
+      headers: { 'Cache-Control': 'public, s-maxage=600' },
+    })
   } catch {
-    return Response.json({ error: "Network error" }, { status: 502 });
+    return Response.json({ error: 'Network error' }, { status: 502 })
   }
 }
