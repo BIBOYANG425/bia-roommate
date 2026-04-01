@@ -53,16 +53,15 @@ export default function AuthModal({
       setError(err);
     } else {
       setSuccess(true);
-      if (onSuccess) {
-        onSuccess();
-      } else if (mode === "signup") {
-        // New users go to onboarding to create their profile
-        setTimeout(() => {
-          window.location.href = "/onboarding";
-        }, 500);
+      if (mode === "signup") {
+        // Show "check your email" message — don't redirect
       } else {
-        // Sign in — just close
-        setTimeout(() => handleClose(), 500);
+        // Sign in — redirect to onboarding if no profile, otherwise close
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          setTimeout(() => handleClose(), 500);
+        }
       }
     }
   }
@@ -115,18 +114,24 @@ export default function AuthModal({
         </button>
 
         {success && mode === "signup" ? (
-          /* ── Sign Up Success ── */
+          /* ── Sign Up Success — verify email ── */
           <div className="text-center py-4">
-            <div className="text-4xl mb-3">&#10003;</div>
+            <div className="text-4xl mb-3">&#9993;</div>
             <h2
               className="font-display text-xl tracking-wider mb-2"
               style={{ color: "var(--black)" }}
             >
-              ACCOUNT CREATED
+              CHECK YOUR EMAIL
             </h2>
-            <p className="text-sm mb-4" style={{ color: "var(--mid)" }}>
-              You&apos;re now signed in as{" "}
+            <p className="text-sm mb-2" style={{ color: "var(--mid)" }}>
+              We sent a verification link to
+            </p>
+            <p className="text-sm mb-4">
               <strong style={{ color: "var(--black)" }}>{email}</strong>
+            </p>
+            <p className="text-xs mb-4" style={{ color: "var(--mid)" }}>
+              Click the link in the email to activate your account, then sign
+              in.
             </p>
             <button
               onClick={handleClose}
@@ -136,7 +141,7 @@ export default function AuthModal({
                 boxShadow: "3px 3px 0 var(--black)",
               }}
             >
-              CONTINUE
+              GOT IT
             </button>
           </div>
         ) : (

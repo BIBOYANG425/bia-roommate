@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import AuthModal from "@/components/AuthModal";
 import { schoolAccent } from "@/lib/utils";
 import {
+  SubletListing,
   ROOM_TYPE_OPTIONS,
   BATHROOM_OPTIONS,
   GENDER_PREF_OPTIONS,
@@ -15,12 +16,15 @@ import {
   SCHOOL_OPTIONS,
 } from "@/lib/types";
 
-export default function SubletSubmitPage() {
+function SubletSubmitContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
   const { user, loading: authLoading } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(!!editId);
 
   const [title, setTitle] = useState("");
   const [apartmentName, setApartmentName] = useState("");
@@ -38,6 +42,38 @@ export default function SubletSubmitPage() {
   const [posterName, setPosterName] = useState("");
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!editId) return;
+    async function loadListing() {
+      const { data } = await supabase
+        .from("sublet_listings")
+        .select("*")
+        .eq("id", editId)
+        .single();
+      if (data) {
+        const d = data as SubletListing;
+        setTitle(d.title);
+        setApartmentName(d.apartment_name);
+        setAddress(d.address);
+        setSchool(d.school ?? "");
+        setRent(String(d.rent));
+        setRoomType(d.room_type ?? "");
+        setBathrooms(d.bathrooms ?? "");
+        setMoveInDate(d.move_in_date ?? "");
+        setMoveOutDate(d.move_out_date ?? "");
+        setGenderPref(d.gender_preference ?? "");
+        setAmenities(d.amenities ?? []);
+        setDescription(d.description ?? "");
+        setContact(d.contact);
+        setPosterName(d.poster_name);
+        setExistingPhotos(d.photos ?? []);
+      }
+      setLoadingEdit(false);
+    }
+    loadListing();
+  }, [editId]);
 
   const toggleAmenity = (a: string) => {
     setAmenities((prev) =>
@@ -109,6 +145,7 @@ export default function SubletSubmitPage() {
       }
     }
 
+    const allPhotos = [...existingPhotos, ...photoUrls];
     const formData = {
       title: title.trim(),
       apartment_name: apartmentName.trim(),
@@ -122,15 +159,19 @@ export default function SubletSubmitPage() {
       gender_preference: genderPref || null,
       description: description.trim() || null,
       amenities: amenities.length > 0 ? amenities : null,
-      photos: photoUrls.length > 0 ? photoUrls : null,
+      photos: allPhotos.length > 0 ? allPhotos : null,
       contact: contact.trim(),
       poster_name: posterName.trim(),
       user_id: user.id,
     };
 
-    const { error: err } = await supabase
-      .from("sublet_listings")
-      .insert([formData]);
+    const { error: err } = editId
+      ? await supabase
+          .from("sublet_listings")
+          .update(formData)
+          .eq("id", editId)
+          .eq("user_id", user.id)
+      : await supabase.from("sublet_listings").insert([formData]);
 
     if (err) {
       setError(`SUBMISSION FAILED: ${err.message}`);
@@ -138,7 +179,7 @@ export default function SubletSubmitPage() {
       return;
     }
 
-    router.push("/sublet?submitted=true");
+    router.push(editId ? "/sublet?updated=true" : "/sublet?submitted=true");
   };
 
   const canSubmit =
@@ -164,21 +205,23 @@ export default function SubletSubmitPage() {
             className="ghost-text right-0 top-0 text-[140px]"
             style={{ color: "white", opacity: 0.06 }}
           >
-            POST
+            {editId ? "EDIT" : "POST"}
           </div>
           <Link
-            href="/sublet"
+            href={editId ? "/account" : "/sublet"}
             className="font-display text-xs tracking-[0.2em] text-white/60 hover:text-white mb-4 inline-block"
           >
             ← BACK
           </Link>
           <h1 className="font-display text-[48px] sm:text-[64px] text-white leading-[0.85]">
-            POST YOUR
+            {editId ? "EDIT YOUR" : "POST YOUR"}
             <br />
             SUBLET
           </h1>
           <p className="text-xs text-white/60 mt-3">
-            List your apartment. Find your tenant.
+            {editId
+              ? "Update your listing details."
+              : "List your apartment. Find your tenant."}
           </p>
         </div>
       </div>
@@ -485,6 +528,27 @@ export default function SubletSubmitPage() {
             </h2>
 
             <div className="grid grid-cols-3 gap-3 mb-3">
+              {existingPhotos.map((src, idx) => (
+                <div key={`existing-${idx}`} className="relative">
+                  <img
+                    src={src}
+                    alt={`Existing ${idx + 1}`}
+                    className="w-full h-24 object-cover border-[3px] border-[var(--black)]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExistingPhotos((prev) =>
+                        prev.filter((_, i) => i !== idx),
+                      )
+                    }
+                    className="absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center border-[2px] border-[var(--black)] font-display text-[10px] hover:bg-[var(--gold)] transition-colors"
+                    style={{ background: "var(--cream)" }}
+                  >
+                    X
+                  </button>
+                </div>
+              ))}
               {photoPreviews.map((src, idx) => (
                 <div key={idx} className="relative">
                   <img
@@ -502,7 +566,7 @@ export default function SubletSubmitPage() {
                   </button>
                 </div>
               ))}
-              {photoFiles.length < 6 && (
+              {existingPhotos.length + photoFiles.length < 6 && (
                 <label className="cursor-pointer">
                   <div
                     className="w-full h-24 border-[3px] border-[var(--black)] border-dashed flex items-center justify-center hover:shadow-[4px_4px_0_var(--gold)] transition-all"
@@ -657,12 +721,26 @@ export default function SubletSubmitPage() {
                 : {}
             }
           >
-            {submitting ? "POSTING..." : "POST MY SUBLET"}
+            {submitting
+              ? editId
+                ? "UPDATING..."
+                : "POSTING..."
+              : editId
+                ? "UPDATE LISTING"
+                : "POST MY SUBLET"}
           </button>
         </form>
       </div>
 
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </main>
+  );
+}
+
+export default function SubletSubmitPage() {
+  return (
+    <Suspense>
+      <SubletSubmitContent />
+    </Suspense>
   );
 }

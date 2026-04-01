@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { SubletListing } from "@/lib/types";
 import { relativeTime, schoolAccent, schoolGold } from "@/lib/utils";
 
@@ -142,23 +142,7 @@ export default function SubletModal({
 
         <div className="p-6 space-y-5">
           {/* Contact */}
-          <div
-            className="p-4 border-[3px] border-[var(--black)]"
-            style={{ background: gold }}
-          >
-            <p
-              className="text-[10px] uppercase tracking-wider font-display mb-1"
-              style={{ color: "var(--black)" }}
-            >
-              CONTACT
-            </p>
-            <p
-              className="font-display text-2xl"
-              style={{ color: "var(--black)" }}
-            >
-              {listing.contact}
-            </p>
-          </div>
+          <CopyContact contact={listing.contact} gold={gold} />
 
           {/* Dates */}
           {(listing.move_in_date || listing.move_out_date) && (
@@ -244,6 +228,42 @@ export default function SubletModal({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CopyContact({ contact, gold }: { contact: string; gold: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(contact);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [contact]);
+
+  return (
+    <div
+      className="p-4 border-[3px] border-[var(--black)] flex items-center justify-between"
+      style={{ background: gold }}
+    >
+      <div>
+        <p
+          className="text-[10px] uppercase tracking-wider font-display mb-1"
+          style={{ color: "var(--black)" }}
+        >
+          CONTACT
+        </p>
+        <p className="font-display text-2xl" style={{ color: "var(--black)" }}>
+          {contact}
+        </p>
+      </div>
+      <button
+        onClick={handleCopy}
+        className="font-display text-[10px] tracking-wider px-3 py-1.5 border-[2px] border-[var(--black)] hover:bg-white transition-colors shrink-0"
+        style={{ background: copied ? "white" : "transparent" }}
+      >
+        {copied ? "COPIED!" : "COPY"}
+      </button>
     </div>
   );
 }

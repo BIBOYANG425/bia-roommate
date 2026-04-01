@@ -270,7 +270,8 @@ export default function AccountPage() {
     const { error } = await supabase
       .from("sublet_listings")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", user!.id);
     if (error) setSublets(prev);
   }
 
@@ -503,6 +504,12 @@ export default function AccountPage() {
                         className="font-display text-[10px] tracking-wider px-3 py-1 border-[2px] border-[var(--black)] hover:bg-[var(--gold)] transition-colors"
                       >
                         VIEW
+                      </a>
+                      <a
+                        href={`/sublet-submit?edit=${s.id}`}
+                        className="font-display text-[10px] tracking-wider px-3 py-1 border-[2px] border-[var(--black)] hover:bg-[var(--gold)] transition-colors"
+                      >
+                        EDIT
                       </a>
                       <button
                         onClick={() => handleDeleteSublet(s.id)}

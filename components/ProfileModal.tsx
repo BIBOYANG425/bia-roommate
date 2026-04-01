@@ -240,24 +240,8 @@ export default function ProfileModal({
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Contact — prominent */}
-          <div
-            className="p-4 border-[3px] border-[var(--black)]"
-            style={{ background: gold }}
-          >
-            <p
-              className="text-[10px] uppercase tracking-wider font-display mb-1"
-              style={{ color: "var(--black)" }}
-            >
-              CONTACT
-            </p>
-            <p
-              className="font-display text-2xl"
-              style={{ color: "var(--black)" }}
-            >
-              {profile.contact}
-            </p>
-          </div>
+          {/* Contact — prominent with copy */}
+          <CopyContactBox contact={profile.contact} gold={gold} />
 
           {/* Tags */}
           {profile.tags && profile.tags.length > 0 && (
@@ -361,6 +345,42 @@ export default function ProfileModal({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CopyContactBox({ contact, gold }: { contact: string; gold: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(contact);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [contact]);
+
+  return (
+    <div
+      className="p-4 border-[3px] border-[var(--black)] flex items-center justify-between"
+      style={{ background: gold }}
+    >
+      <div>
+        <p
+          className="text-[10px] uppercase tracking-wider font-display mb-1"
+          style={{ color: "var(--black)" }}
+        >
+          CONTACT
+        </p>
+        <p className="font-display text-2xl" style={{ color: "var(--black)" }}>
+          {contact}
+        </p>
+      </div>
+      <button
+        onClick={handleCopy}
+        className="font-display text-[10px] tracking-wider px-3 py-1.5 border-[2px] border-[var(--black)] hover:bg-white transition-colors shrink-0"
+        style={{ background: copied ? "white" : "transparent" }}
+      >
+        {copied ? "COPIED!" : "COPY"}
+      </button>
     </div>
   );
 }

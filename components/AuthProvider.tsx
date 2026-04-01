@@ -11,6 +11,7 @@ import {
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { isSchoolEmail } from "@/lib/auth";
 import type { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
+import AuthModal from "./AuthModal";
 
 interface AuthContextValue {
   user: User | null;
@@ -41,6 +42,7 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showReauth, setShowReauth] = useState(false);
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
@@ -55,12 +57,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
+      (event: AuthChangeEvent, session: Session | null) => {
+        const hadUser = user !== null;
         setUser(session?.user ?? null);
+        if (event === "SIGNED_OUT" && hadUser) {
+          setShowReauth(true);
+        }
+        if (event === "SIGNED_IN") {
+          setShowReauth(false);
+        }
       },
     );
 
     return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const signUp = useCallback(async (email: string, password: string) => {
@@ -98,12 +108,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = createBrowserSupabaseClient();
     await supabase.auth.signOut();
     setUser(null);
-    window.location.reload();
   }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut }}>
       {children}
+      <AuthModal
+        isOpen={showReauth}
+        onClose={() => setShowReauth(false)}
+        title="SESSION EXPIRED"
+        subtitle="Please sign in again to continue"
+      />
     </AuthContext.Provider>
   );
 }
