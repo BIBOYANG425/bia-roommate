@@ -27,7 +27,16 @@ function normalizeInstructorName(raw: string): string | null {
   // Already "First Last" or "First Middle Last" format
   const words = cleaned.split(' ')
   if (words.length >= 2) {
-    // Use first and last token (drops middle names/initials)
+    if (words.length === 2) return `${words[0]} ${words[1]}`
+    // Preserve common surname particles (de, del, de la, van, von, da, dos, etc.)
+    const particles = new Set(['de', 'del', 'da', 'dos', 'das', 'van', 'von', 'la', 'le', 'el', 'al', 'di', 'du'])
+    const hasParticle = words.slice(1, -1).some((w) => particles.has(w.toLowerCase()))
+    if (hasParticle) {
+      // Keep first word + everything from the first particle onward
+      const particleIdx = words.findIndex((w, i) => i > 0 && particles.has(w.toLowerCase()))
+      return `${words[0]} ${words.slice(particleIdx).join(' ')}`
+    }
+    // No particles — use first and last token (drops middle names/initials)
     return `${words[0]} ${words[words.length - 1]}`
   }
 

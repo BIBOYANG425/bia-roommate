@@ -105,7 +105,7 @@ export default function CourseDetail() {
             className="mt-2 px-3 py-1.5 text-xs border-l-[3px]"
             style={{ borderColor: 'var(--cardinal)', background: 'rgba(153,0,0,0.05)', color: 'var(--cardinal)' }}
           >
-            <span className="font-display tracking-wider">PRE-REQUISITES:</span>{' '}
+            <span className="font-display tracking-wider">PREREQUISITES:</span>{' '}
             <span style={{ color: 'var(--black)' }}>{course.prereqs}</span>
           </div>
         )}

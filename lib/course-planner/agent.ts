@@ -689,7 +689,7 @@ RESEARCH DATA (${courseSummaries.length} courses found):
 
 ${courseSummaries.join('\n\n')}`
 
-  const result = await callLLM(SYSTEM_PROMPT_RECOMMENDER, userMessage, config, 4000, 120000, thinking)
+  const result = await callLLM(SYSTEM_PROMPT_RECOMMENDER, userMessage, config, 4000, 60000, thinking)
 
   const jsonMatch = result.content.match(/\[[\s\S]*\]/)
   if (!jsonMatch) {

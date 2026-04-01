@@ -281,12 +281,13 @@ export async function getRecommendations(
         )
         existing.geTag = gc.geTag
         existing.relevanceScore = Math.round(score * 100) / 100
-        existing.matchReasons = formatMatchReasons(
+        const newReasons = formatMatchReasons(
           [...new Set([...matched])],
           existing.department,
           matchedDepts,
           gc.geTag
         )
+        existing.matchReasons = [...new Set([...(existing.matchReasons || []), ...newReasons])]
         continue
       }
 

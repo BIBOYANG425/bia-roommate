@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { corsHeaders, handleOptions } from '@/lib/cors'
+import { USC_SCHOOL_ID } from '@/lib/rmp'
 
 const TEACHER_SEARCH_QUERY = `
 query TeacherSearchQuery($query: TeacherSearchQuery!) {
@@ -22,7 +23,6 @@ query TeacherSearchQuery($query: TeacherSearchQuery!) {
 }
 `
 
-const USC_SCHOOL_ID = 'U2Nob29sLTEzODE='
 const MAX_NAMES = 50
 
 interface RmpRating {
@@ -64,21 +64,34 @@ async function lookupProfessor(name: string): Promise<RmpRating | null> {
       return null
     }
 
-    // Match professor — exact first, then fuzzy, then first result
+    // Match professor — full normalized name, then first+last, then fuzzy
     const cleanName = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '')
+    const fullNormalized = cleanName(name)
     const nameParts = name.trim().toLowerCase().split(/\s+/)
     const searchFirst = cleanName(nameParts[0] || '')
     const searchLast = cleanName(nameParts[nameParts.length - 1] || '')
 
     let teacher = null
+    // Pass 1: full normalized name match
     for (const edge of edges) {
-      const fn = cleanName(edge.node.firstName || '')
-      const ln = cleanName(edge.node.lastName || '')
-      if (fn === searchFirst && ln === searchLast) {
+      const edgeFull = cleanName((edge.node.firstName || '') + (edge.node.lastName || ''))
+      if (edgeFull === fullNormalized) {
         teacher = edge.node
         break
       }
     }
+    // Pass 2: exact first+last match
+    if (!teacher) {
+      for (const edge of edges) {
+        const fn = cleanName(edge.node.firstName || '')
+        const ln = cleanName(edge.node.lastName || '')
+        if (fn === searchFirst && ln === searchLast) {
+          teacher = edge.node
+          break
+        }
+      }
+    }
+    // Pass 3: fuzzy last name + first name prefix
     if (!teacher) {
       for (const edge of edges) {
         const fn = cleanName(edge.node.firstName || '')
@@ -89,7 +102,11 @@ async function lookupProfessor(name: string): Promise<RmpRating | null> {
         }
       }
     }
-    if (!teacher) teacher = edges[0].node
+
+    if (!teacher) {
+      rmpCache.set(name, null)
+      return null
+    }
 
     const rating: RmpRating = {
       avgRating: teacher.avgRating,

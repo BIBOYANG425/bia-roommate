@@ -382,8 +382,7 @@ export function ScheduleOptimizer() {
         }
         if (hideDClearance) {
           for (const c of g.options) {
-            const noDClear = c.sections.filter((s) => !s.hasDClearance)
-            if (noDClear.length > 0) c.sections = noDClear
+            c.sections = c.sections.filter((s) => !s.hasDClearance)
           }
         }
         g.options = g.options.filter((c) => c.sections.length > 0)

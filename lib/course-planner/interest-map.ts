@@ -218,7 +218,7 @@ export function tokenMatchScore(tokens: string[], targetText: string): { score: 
       continue
     }
     // Prefix match (e.g., "anim" matches "animation")
-    if (token.length >= 3 && targetTokens.some((t) => t.startsWith(token) || token.startsWith(t))) {
+    if (token.length >= 3 && targetTokens.some((t) => t.startsWith(token) || (token.startsWith(t) && t.length >= 4))) {
       matched.push(token)
       continue
     }

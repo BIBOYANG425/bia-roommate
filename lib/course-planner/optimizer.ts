@@ -41,7 +41,7 @@ export function optimizeSchedule({
   timeoutMs = 30000,
 }: OptimizeInput): OptimizeResult {
   const startTime = Date.now()
-  let bestScore = -1
+  let bestScore = Number.NEGATIVE_INFINITY
   let bestSections: SelectedSection[] = []
   let explored = 0
   let iterations = 0
@@ -138,7 +138,7 @@ export function optimizeSchedule({
 
   return {
     sections: bestSections,
-    score: bestScore,
+    score: bestScore === Number.NEGATIVE_INFINITY ? -1 : bestScore,
     explored,
   }
 }

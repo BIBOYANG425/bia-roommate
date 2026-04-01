@@ -396,7 +396,7 @@ export default function AgentChat({ interests, semester, unitsFilter, thinking, 
     runStream()
 
     return () => { controller.abort() }
-  }, [interests, semester, unitsFilter, addMessage, onResults])
+  }, [interests, semester, unitsFilter, thinking, addMessage, onResults])
 
   function toggleCourse(id: string) {
     setSelectedCourses((prev) => {
@@ -546,7 +546,10 @@ export default function AgentChat({ interests, semester, unitsFilter, thinking, 
           {selectedCourses.size > 0 && (
             <button
               onClick={() => {
-                // TODO: integrate with course planner store
+                if (results) {
+                  const selected = results.filter((r) => selectedCourses.has(`${r.department}-${r.number}`))
+                  if (selected.length > 0) onResults(selected)
+                }
                 onBack()
               }}
               className="w-full py-4 font-display text-lg tracking-wider text-white border-[3px] border-[var(--black)] transition-all hover:translate-y-[-2px]"

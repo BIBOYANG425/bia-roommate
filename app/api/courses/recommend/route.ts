@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
             )
           }
           // Agent failed but not a rejection — fall through to free mode
+          agentFailed = true
         } else {
           return Response.json(
             { recommendations: result.recommendations, mode: 'agent' },

@@ -74,11 +74,12 @@ export async function GET(
     const data = await res.json()
 
     // Transform to our Course type
-    const prereqs = formatPrereqs(data.prerequisiteCourseCodes)
-    const restrictions: string[] = []
-    if (data.courseRestrictions) restrictions.push(data.courseRestrictions)
-    if (data.majorRestrictions) restrictions.push(`Major: ${data.majorRestrictions}`)
-    if (data.schoolRestrictions) restrictions.push(`School: ${data.schoolRestrictions}`)
+    const prereqs = formatPrereqs(data.prerequisiteCourseCodes) || undefined
+    const restrictionsList: string[] = []
+    if (data.courseRestrictions) restrictionsList.push(data.courseRestrictions)
+    if (data.majorRestrictions) restrictionsList.push(`Major: ${data.majorRestrictions}`)
+    if (data.schoolRestrictions) restrictionsList.push(`School: ${data.schoolRestrictions}`)
+    const restrictions = restrictionsList.length > 0 ? restrictionsList : undefined
 
     const course = {
       department: data.scheduledCourseCode?.prefix || dept.toUpperCase(),

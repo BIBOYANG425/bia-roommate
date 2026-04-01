@@ -4,8 +4,17 @@
  */
 
 export function getCurrentSemesterCode(): string {
-  // Default to Fall 2026 for incoming freshmen
-  return '20263'
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() + 1 // 1-12
+
+  // Spring: Jan–May (1), Summer: Jun–Jul (2), Fall: Aug–Dec (3)
+  let termCode: number
+  if (month <= 5) termCode = 1
+  else if (month <= 7) termCode = 2
+  else termCode = 3
+
+  return `${year}${termCode}`
 }
 
 export function semesterLabel(code: string): string {
@@ -16,11 +25,32 @@ export function semesterLabel(code: string): string {
 }
 
 export function getAvailableSemesters(): { code: string; label: string }[] {
-  // Fall 2026 first (default for incoming freshmen), then nearby semesters
-  return [
-    { code: '20263', label: 'Fall 2026' },
-    { code: '20271', label: 'Spring 2027' },
-    { code: '20261', label: 'Spring 2026' },
-    { code: '20262', label: 'Summer 2026' },
-  ]
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() + 1
+
+  // Build semesters: current + next few terms
+  const semesters: { code: string; label: string }[] = []
+
+  if (month <= 5) {
+    // In Spring → show Spring (current), Summer, Fall, next Spring
+    semesters.push({ code: `${year}1`, label: `Spring ${year}` })
+    semesters.push({ code: `${year}2`, label: `Summer ${year}` })
+    semesters.push({ code: `${year}3`, label: `Fall ${year}` })
+    semesters.push({ code: `${year + 1}1`, label: `Spring ${year + 1}` })
+  } else if (month <= 7) {
+    // In Summer → show Summer (current), Fall, next Spring, next Summer
+    semesters.push({ code: `${year}2`, label: `Summer ${year}` })
+    semesters.push({ code: `${year}3`, label: `Fall ${year}` })
+    semesters.push({ code: `${year + 1}1`, label: `Spring ${year + 1}` })
+    semesters.push({ code: `${year + 1}2`, label: `Summer ${year + 1}` })
+  } else {
+    // In Fall → show Fall (current), next Spring, next Summer, next Fall
+    semesters.push({ code: `${year}3`, label: `Fall ${year}` })
+    semesters.push({ code: `${year + 1}1`, label: `Spring ${year + 1}` })
+    semesters.push({ code: `${year + 1}2`, label: `Summer ${year + 1}` })
+    semesters.push({ code: `${year + 1}3`, label: `Fall ${year + 1}` })
+  }
+
+  return semesters
 }

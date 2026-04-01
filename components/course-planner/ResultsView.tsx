@@ -166,8 +166,7 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
 
         // Filter out D-clearance sections if preference is set
         if (prefs.hideDClearance) {
-          const noDClear = allActive.filter((s) => !s.hasDClearance)
-          if (noDClear.length > 0) allActive = noDClear
+          allActive = allActive.filter((s) => !s.hasDClearance)
         }
 
         // Group by type
@@ -216,8 +215,8 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
 
           // Check if any required secondary type has no compatible sections
           const hasRequired = secondaryKeys.every((key, i) => {
-            // A secondary type is "required" if any section has time slots
-            const hasTimed = byType[key].some((s) => parseSectionTimes(s.times).length > 0)
+            // A secondary type is "required" if any section has time slots or is linked
+            const hasTimed = byType[key].some((s) => parseSectionTimes(s.times).length > 0 || !!s.linkCode)
             return !hasTimed || secondaryOptions[i].length > 0
           })
           if (!hasRequired) continue
@@ -241,8 +240,8 @@ export default function ResultsView({ courses, semester, prefs, onBack }: Result
             }
 
             const options = secondaryOptions[secIdx]
-            // If no timed sections for this type, skip it
-            const timedOptions = options.filter((s) => parseSectionTimes(s.times).length > 0)
+            // If no timed or linked sections for this type, skip it
+            const timedOptions = options.filter((s) => parseSectionTimes(s.times).length > 0 || !!s.linkCode)
             if (timedOptions.length === 0) {
               generateCombos(secIdx + 1, current, currentSlots)
               return
