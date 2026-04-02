@@ -536,10 +536,9 @@ export default function ResultsView({
       const newCombo = group.combos[comboIdx];
 
       // Check conflicts with other courses' sections
+      const courseDeptNum = courseKey.split(" — ")[0] || courseKey;
       const otherSections = schedule.sections.filter(
-        (s) =>
-          `${s.course.department} ${s.course.number}` !==
-            courseKey.split(":")[0]?.trim() && s.course.title !== courseKey,
+        (s) => `${s.course.department} ${s.course.number}` !== courseDeptNum,
       );
       const otherSlots = otherSections.flatMap((s) =>
         s.section.times
@@ -729,111 +728,123 @@ export default function ResultsView({
                     >
                       {s.course.department} {s.course.number}
                     </span>
-                    {s.section.type.toLowerCase().includes("lecture") && (
-                      <button
-                        onClick={() => {
-                          const key = courseGroupsRef.current.find((g) =>
-                            g.label.includes(
-                              `${s.course.department} ${s.course.number}`,
-                            ),
-                          )?.label;
-                          if (key)
-                            setSwappingCourse(
-                              swappingCourse === key ? null : key,
-                            );
-                        }}
-                        className="font-display text-[10px] tracking-wider px-2 py-0.5 border hover:bg-[var(--gold)] transition-colors"
-                        style={{
-                          borderColor: "var(--beige)",
-                          borderRadius: "3px",
-                        }}
-                      >
-                        SWAP
-                      </button>
-                    )}
+                    {s.section.type.toLowerCase().includes("lecture") &&
+                      (() => {
+                        const courseKey = `${s.course.department} ${s.course.number}`;
+                        const groupIdx = courseGroupsRef.current.findIndex(
+                          (g) => g.label.startsWith(courseKey),
+                        );
+                        return groupIdx >= 0 ? (
+                          <button
+                            onClick={() =>
+                              setSwappingCourse(
+                                swappingCourse === courseKey ? null : courseKey,
+                              )
+                            }
+                            className="font-display text-[10px] tracking-wider px-2 py-0.5 border hover:bg-[var(--gold)] transition-colors"
+                            style={{
+                              borderColor:
+                                swappingCourse === courseKey
+                                  ? "var(--gold)"
+                                  : "var(--beige)",
+                              background:
+                                swappingCourse === courseKey
+                                  ? "var(--gold)"
+                                  : "transparent",
+                              borderRadius: "3px",
+                            }}
+                          >
+                            {swappingCourse === courseKey ? "CLOSE" : "SWAP"}
+                          </button>
+                        ) : null;
+                      })()}
                   </div>
                   {/* Swap alternatives panel */}
-                  {swappingCourse &&
-                    courseGroupsRef.current
-                      .find((g) => g.label === swappingCourse)
-                      ?.label.includes(
-                        `${s.course.department} ${s.course.number}`,
-                      ) &&
-                    s.section.type.toLowerCase().includes("lecture") && (
-                      <div
-                        className="mb-3 p-3 border-[2px] space-y-2"
-                        style={{
-                          borderColor: "var(--gold)",
-                          background: "var(--cream)",
-                          borderRadius: "4px",
-                        }}
-                      >
-                        <p
-                          className="font-display text-[10px] tracking-wider"
-                          style={{ color: "var(--mid)" }}
+                  {swappingCourse ===
+                    `${s.course.department} ${s.course.number}` &&
+                    s.section.type.toLowerCase().includes("lecture") &&
+                    (() => {
+                      const group = courseGroupsRef.current.find((g) =>
+                        g.label.startsWith(
+                          `${s.course.department} ${s.course.number}`,
+                        ),
+                      );
+                      if (!group) return null;
+                      return (
+                        <div
+                          className="mb-3 p-3 border-[2px] space-y-2"
+                          style={{
+                            borderColor: "var(--gold)",
+                            background: "var(--cream)",
+                            borderRadius: "4px",
+                          }}
                         >
-                          ALTERNATIVE SECTIONS
-                        </p>
-                        {courseGroupsRef.current
-                          .find((g) => g.label === swappingCourse)
-                          ?.combos.slice(0, 8)
-                          .map((combo: any, ci: number) => {
-                            const lec = combo.sections.find(
-                              (sec: any) =>
-                                sec.type.toLowerCase().includes("lecture") ||
-                                !sec.type,
-                            );
-                            if (!lec) return null;
-                            const inst = lec.instructor?.lastName
-                              ? `${lec.instructor.firstName} ${lec.instructor.lastName}`
-                              : "TBA";
-                            const time = lec.times?.[0];
-                            const timeStr = time?.start_time
-                              ? `${time.day} ${time.start_time}`
-                              : "TBA";
-                            const isCurrent = s.section.id === lec.id;
-                            return (
-                              <button
-                                key={ci}
-                                onClick={() =>
-                                  !isCurrent && handleSwap(swappingCourse, ci)
-                                }
-                                disabled={isCurrent}
-                                className="w-full text-left p-2 border text-xs flex justify-between items-center hover:bg-white transition-colors"
-                                style={{
-                                  borderColor: isCurrent
-                                    ? "var(--cardinal)"
-                                    : "var(--beige)",
-                                  background: isCurrent
-                                    ? "white"
-                                    : "transparent",
-                                  borderRadius: "3px",
-                                  opacity: isCurrent ? 0.6 : 1,
-                                }}
-                              >
-                                <span style={{ color: "var(--black)" }}>
-                                  {inst} — {timeStr}
-                                </span>
-                                {isCurrent ? (
-                                  <span
-                                    className="font-display text-[9px] tracking-wider"
-                                    style={{ color: "var(--mid)" }}
-                                  >
-                                    CURRENT
+                          <p
+                            className="font-display text-[10px] tracking-wider"
+                            style={{ color: "var(--mid)" }}
+                          >
+                            ALTERNATIVE SECTIONS
+                          </p>
+                          {group.combos
+                            .slice(0, 8)
+                            .map((combo: any, ci: number) => {
+                              const lec = combo.sections.find(
+                                (sec: any) =>
+                                  sec.type.toLowerCase().includes("lecture") ||
+                                  !sec.type,
+                              );
+                              if (!lec) return null;
+                              const inst = lec.instructor?.lastName
+                                ? `${lec.instructor.firstName} ${lec.instructor.lastName}`
+                                : "TBA";
+                              const time = lec.times?.[0];
+                              const timeStr = time?.start_time
+                                ? `${time.day} ${time.start_time}`
+                                : "TBA";
+                              const isCurrent = s.section.id === lec.id;
+                              return (
+                                <button
+                                  key={ci}
+                                  onClick={() =>
+                                    !isCurrent && handleSwap(group.label, ci)
+                                  }
+                                  disabled={isCurrent}
+                                  className="w-full text-left p-2 border text-xs flex justify-between items-center hover:bg-white transition-colors"
+                                  style={{
+                                    borderColor: isCurrent
+                                      ? "var(--cardinal)"
+                                      : "var(--beige)",
+                                    background: isCurrent
+                                      ? "white"
+                                      : "transparent",
+                                    borderRadius: "3px",
+                                    opacity: isCurrent ? 0.6 : 1,
+                                  }}
+                                >
+                                  <span style={{ color: "var(--black)" }}>
+                                    {inst} — {timeStr}
                                   </span>
-                                ) : (
-                                  <span
-                                    className="font-display text-[9px] tracking-wider"
-                                    style={{ color: "var(--cardinal)" }}
-                                  >
-                                    SELECT
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                      </div>
-                    )}
+                                  {isCurrent ? (
+                                    <span
+                                      className="font-display text-[9px] tracking-wider"
+                                      style={{ color: "var(--mid)" }}
+                                    >
+                                      CURRENT
+                                    </span>
+                                  ) : (
+                                    <span
+                                      className="font-display text-[9px] tracking-wider"
+                                      style={{ color: "var(--cardinal)" }}
+                                    >
+                                      SELECT
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                        </div>
+                      );
+                    })()}
 
                   {/* Tags row */}
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
