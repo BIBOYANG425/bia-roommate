@@ -42,4 +42,9 @@ export const GE_MAP: Record<
     categoryPrefix: "GPH",
     label: "Global Perspectives II",
   },
+  GESM: {
+    requirementPrefix: "GESM",
+    categoryPrefix: "GESM",
+    label: "GE Seminars",
+  },
 };

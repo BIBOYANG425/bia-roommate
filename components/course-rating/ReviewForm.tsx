@@ -113,7 +113,10 @@ export default function ReviewForm({
         style={{ background: "var(--cream)" }}
       >
         <div className="h-5 w-40 mb-4" style={{ background: "var(--beige)" }} />
-        <div className="h-10 w-full mb-3" style={{ background: "var(--beige)" }} />
+        <div
+          className="h-10 w-full mb-3"
+          style={{ background: "var(--beige)" }}
+        />
         <div className="h-10 w-full" style={{ background: "var(--beige)" }} />
       </div>
     );
@@ -154,7 +157,8 @@ export default function ReviewForm({
         body: JSON.stringify({
           dept,
           course_number: courseNumber,
-          professor: (showCustomProfessor ? customProfessor : professor) || undefined,
+          professor:
+            (showCustomProfessor ? customProfessor : professor) || undefined,
           term,
           difficulty,
           workload,
@@ -268,9 +272,21 @@ export default function ReviewForm({
 
       {/* Ratings */}
       <div className="flex flex-wrap gap-4 mb-4">
-        <RatingSelector label="难度 Difficulty" value={difficulty} onChange={setDifficulty} />
-        <RatingSelector label="工作量 Workload" value={workload} onChange={setWorkload} />
-        <RatingSelector label="给分 Grading" value={grading} onChange={setGrading} />
+        <RatingSelector
+          label="难度 Difficulty"
+          value={difficulty}
+          onChange={setDifficulty}
+        />
+        <RatingSelector
+          label="工作量 Workload"
+          value={workload}
+          onChange={setWorkload}
+        />
+        <RatingSelector
+          label="给分 Grading"
+          value={grading}
+          onChange={setGrading}
+        />
       </div>
 
       {/* GPA */}

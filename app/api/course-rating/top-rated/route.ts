@@ -6,9 +6,8 @@ export async function GET(request: NextRequest) {
     request.nextUrl.searchParams.get("limit") || "20",
     10,
   );
-  const limit = Number.isFinite(rawLimit) && rawLimit >= 1
-    ? Math.min(rawLimit, 50)
-    : 20;
+  const limit =
+    Number.isFinite(rawLimit) && rawLimit >= 1 ? Math.min(rawLimit, 50) : 20;
   const sort = request.nextUrl.searchParams.get("sort") || "rating";
 
   const supabase = await createServerSupabaseClient();

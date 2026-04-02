@@ -302,7 +302,11 @@ export function simpleStem(word: string): string {
 }
 
 // ─── Base tokenizer: clean, split, remove stop words, stem ───
-function tokenizeBase(text: string): { stemmed: string[]; filtered: string[]; words: string[] } {
+function tokenizeBase(text: string): {
+  stemmed: string[];
+  filtered: string[];
+  words: string[];
+} {
   const cleaned = text.toLowerCase().replace(/[^a-z0-9\s-]/g, " ");
   const words = cleaned.split(/\s+/).filter((w) => w.length >= 2);
   const filtered = words.filter((w) => !STOP_WORDS.has(w));

@@ -97,7 +97,9 @@ export async function GET(
       title: data.name || data.fullCourseName || "",
       units: data.courseUnits?.[0]?.toString() || "",
       description: data.description || "",
-      sections: (data.sections || []).map(transformSection),
+      sections: (data.sections || [])
+        .map(transformSection)
+        .filter((s: any) => !s.isCancelled),
       prereqs,
       restrictions,
     };

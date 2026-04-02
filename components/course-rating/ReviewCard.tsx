@@ -72,8 +72,7 @@ function MiniRating({ label, value }: { label: string; value: number }) {
     value <= 2 ? "#2d6a4f" : value <= 3.5 ? "var(--gold)" : "var(--cardinal)";
   return (
     <span className="font-mono text-[11px]">
-      {label}{" "}
-      <strong style={{ color }}>{value}</strong>
+      {label} <strong style={{ color }}>{value}</strong>
       <span className="text-[var(--mid)]">/5</span>
     </span>
   );

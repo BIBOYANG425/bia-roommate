@@ -35,10 +35,10 @@ export default function ReviewModal({ onClose }: { onClose: () => void }) {
 
     Promise.allSettled([
       fetch(`/api/courses/${dept}/${number}`).then((r) =>
-        r.ok ? r.json() : null
+        r.ok ? r.json() : null,
       ),
       fetch(
-        `/api/course-rating/reviews?dept=${encodeURIComponent(dept)}&number=${encodeURIComponent(number)}`
+        `/api/course-rating/reviews?dept=${encodeURIComponent(dept)}&number=${encodeURIComponent(number)}`,
       ).then((r) => (r.ok ? r.json() : null)),
     ]).then(([courseResult, reviewsResult]) => {
       if (!isActive) return;
@@ -66,7 +66,9 @@ export default function ReviewModal({ onClose }: { onClose: () => void }) {
       setProfessors(Array.from(set).sort());
     });
 
-    return () => { isActive = false; };
+    return () => {
+      isActive = false;
+    };
   }, [selectedCourse]);
 
   const fetchSuggestions = useCallback(async (q: string) => {
@@ -81,12 +83,18 @@ export default function ReviewModal({ onClose }: { onClose: () => void }) {
     try {
       const res = await fetch(
         `/api/courses/autocomplete?q=${encodeURIComponent(q)}`,
-        { signal: controller.signal }
+        { signal: controller.signal },
       );
       if (!res.ok) return;
       const data = await res.json();
 
-      let items: { id: string; dept: string; number: string; label: string; title: string }[] = [];
+      let items: {
+        id: string;
+        dept: string;
+        number: string;
+        label: string;
+        title: string;
+      }[] = [];
       if (Array.isArray(data)) {
         items = data
           .map((d: { text?: string } | string) => {
@@ -146,7 +154,11 @@ export default function ReviewModal({ onClose }: { onClose: () => void }) {
               </button>
             </div>
 
-            <div ref={wrapperRef} className="relative" style={{ overflow: "visible" }}>
+            <div
+              ref={wrapperRef}
+              className="relative"
+              style={{ overflow: "visible" }}
+            >
               <input
                 type="text"
                 placeholder='搜索课程 (e.g. "CSCI 104", "MATH 225")'
