@@ -184,7 +184,12 @@ async function interpret(
   );
 
   const jsonStr = extractJSON(result.content, "object");
-  const raw = JSON.parse(jsonStr);
+  let raw: unknown;
+  try {
+    raw = JSON.parse(jsonStr);
+  } catch {
+    throw new Error("Failed to parse query interpretation as JSON");
+  }
   const query = validateInterpretedQuery(raw);
 
   return { query, reasoning: result.reasoning };
@@ -758,7 +763,12 @@ ${courseSummaries.join("\n\n")}`;
   );
 
   const jsonStr = extractJSON(result.content, "array");
-  const ranked = JSON.parse(jsonStr) as any[];
+  let ranked: any[];
+  try {
+    ranked = JSON.parse(jsonStr) as any[];
+  } catch {
+    throw new Error("Failed to parse recommendations as JSON");
+  }
 
   const recommendations = ranked.slice(0, 15).map((rec: any) => {
     const courseData = courses.find(

@@ -55,6 +55,7 @@ function PlannerContent() {
     interests: string;
     units: string | null;
     thinking: boolean;
+    level: string | null;
   } | null>(null);
   const [showTour, setShowTour] = useState(false);
 
@@ -136,8 +137,8 @@ function PlannerContent() {
   );
 
   const handleAgentSearch = useCallback(
-    (interests: string, units: string | null, thinking: boolean) => {
-      setAgentQuery({ interests, units, thinking });
+    (interests: string, units: string | null, thinking: boolean, level: string | null) => {
+      setAgentQuery({ interests, units, thinking, level });
       setMode("agentChat");
     },
     [],
@@ -246,6 +247,7 @@ function PlannerContent() {
             interests={agentQuery.interests}
             semester={state.semester}
             unitsFilter={agentQuery.units}
+            levelFilter={agentQuery.level}
             thinking={agentQuery.thinking}
             onResults={handleAgentResults}
             onBack={() => setMode("interest")}

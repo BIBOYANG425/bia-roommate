@@ -8,7 +8,7 @@ CREATE TABLE course_reviews (
   dept text NOT NULL,
   course_number text NOT NULL,
   professor text,
-  term text,
+  term text NOT NULL,
   difficulty int NOT NULL CHECK (difficulty BETWEEN 1 AND 5),
   workload int NOT NULL CHECK (workload BETWEEN 1 AND 5),
   grading int NOT NULL CHECK (grading BETWEEN 1 AND 5),
@@ -58,6 +58,31 @@ DECLARE
   v_number text;
   v_count int;
 BEGIN
+  -- On UPDATE where dept/course_number changed, refresh the OLD course first
+  IF TG_OP = 'UPDATE'
+    AND (OLD.dept IS DISTINCT FROM NEW.dept OR OLD.course_number IS DISTINCT FROM NEW.course_number)
+  THEN
+    SELECT count(*) INTO v_count
+    FROM course_reviews
+    WHERE dept = OLD.dept AND course_number = OLD.course_number;
+
+    IF v_count = 0 THEN
+      DELETE FROM course_rating_aggregates
+      WHERE dept = OLD.dept AND course_number = OLD.course_number;
+    ELSE
+      INSERT INTO course_rating_aggregates (dept, course_number, review_count, avg_difficulty, avg_workload, avg_grading, professors, updated_at)
+      SELECT OLD.dept, OLD.course_number, count(*),
+        round(avg(difficulty), 2), round(avg(workload), 2), round(avg(grading), 2),
+        COALESCE(array_agg(DISTINCT professor) FILTER (WHERE professor IS NOT NULL AND professor <> ''), '{}'),
+        now()
+      FROM course_reviews WHERE dept = OLD.dept AND course_number = OLD.course_number
+      ON CONFLICT (dept, course_number) DO UPDATE SET
+        review_count = EXCLUDED.review_count, avg_difficulty = EXCLUDED.avg_difficulty,
+        avg_workload = EXCLUDED.avg_workload, avg_grading = EXCLUDED.avg_grading,
+        professors = EXCLUDED.professors, updated_at = EXCLUDED.updated_at;
+    END IF;
+  END IF;
+
   IF TG_OP = 'DELETE' THEN
     v_dept := OLD.dept;
     v_number := OLD.course_number;

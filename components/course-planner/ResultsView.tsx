@@ -100,6 +100,10 @@ export default function ResultsView({
             // Section-pinned: "WRIT-340@30001" → dept=WRIT, num=340, pin to section 30001
             const [baseId, pinnedSectionId] = c.id.split("@");
             const parts = baseId.split("-");
+            if (parts.length < 2 || !parts[0] || !parts[1]) {
+              console.warn(`[ResultsView] Malformed course ID: ${c.id}`);
+              continue;
+            }
             const res = await fetch(
               `/api/courses/${encodeURIComponent(parts[0])}/${encodeURIComponent(parts[1])}?semester=${semester}`,
             );

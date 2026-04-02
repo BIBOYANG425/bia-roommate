@@ -14,6 +14,7 @@ export default function ProfessorPills({
   return (
     <div className="flex flex-wrap gap-2 overflow-x-auto">
       <button
+        type="button"
         onClick={() => onSelect(null)}
         className={`brutal-tag text-[10px] cursor-pointer transition-colors ${
           !selected ? "brutal-tag-filled" : ""
@@ -23,6 +24,7 @@ export default function ProfessorPills({
       </button>
       {professors.map((name) => (
         <button
+          type="button"
           key={name}
           onClick={() => onSelect(selected === name ? null : name)}
           className={`brutal-tag text-[10px] cursor-pointer transition-colors ${

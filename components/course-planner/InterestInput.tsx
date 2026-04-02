@@ -34,6 +34,7 @@ interface InterestInputProps {
     interests: string,
     units: string | null,
     thinking: boolean,
+    level: string | null,
   ) => void;
 }
 
@@ -70,10 +71,7 @@ export default function InterestInput({
 
     // AI mode → launch agent chat interface
     if (searchMode === "auto" && onAgentSearch) {
-      const levelHint = levelFilter
-        ? ` (only ${levelFilter === "lower" ? "lower division 100-299" : levelFilter === "upper" ? "upper division 300-499" : "graduate 500+"} courses)`
-        : "";
-      onAgentSearch(input.trim() + levelHint, unitsFilter, thinkingMode);
+      onAgentSearch(input.trim(), unitsFilter, thinkingMode, levelFilter);
       return;
     }
 

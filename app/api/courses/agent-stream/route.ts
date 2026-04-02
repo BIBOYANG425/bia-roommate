@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { interests, semester, units, thinking } = body ?? {};
+    const { interests, semester, units, level, thinking } = body ?? {};
 
     if (typeof interests !== "string" || interests.trim().length < 2) {
       return Response.json(
@@ -37,11 +37,24 @@ export async function POST(request: NextRequest) {
       typeof semester === "string" && semester ? semester : "20263";
     const unitsFilter = typeof units === "string" ? units : undefined;
 
+    const levelFilter = typeof level === "string" ? level : undefined;
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
       async start(controller) {
         function emit(event: AgentEvent) {
+          // Filter recommendations by level if specified
+          if (levelFilter && event.type === "results") {
+            const filtered = event.data.filter((r) => {
+              const num = parseInt(r.number, 10);
+              if (isNaN(num)) return true;
+              if (levelFilter === "lower") return num >= 100 && num <= 299;
+              if (levelFilter === "upper") return num >= 300 && num <= 499;
+              if (levelFilter === "graduate") return num >= 500;
+              return true;
+            });
+            event = { ...event, data: filtered };
+          }
           const data = JSON.stringify(event);
           controller.enqueue(encoder.encode(`data: ${data}\n\n`));
         }

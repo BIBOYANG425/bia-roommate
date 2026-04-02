@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import NavTabs from "@/components/NavTabs";
 import CourseRatingSearch from "@/components/course-rating/CourseRatingSearch";
 import CourseRatingCard from "@/components/course-rating/CourseRatingCard";
@@ -66,7 +67,6 @@ export default function CourseRatingPage() {
   const [lists, setLists] = useState<CourseList[]>([]);
   const [loading, setLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -112,7 +112,7 @@ export default function CourseRatingPage() {
 
       <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Search */}
-        <div className="mb-6" ref={searchRef}>
+        <div className="mb-6">
           <label
             className="font-display text-sm tracking-wider mb-2 block"
             style={{ color: "var(--cardinal)" }}
@@ -237,7 +237,7 @@ export default function CourseRatingPage() {
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {list.courses.map((c) => (
-                    <a
+                    <Link
                       key={`${c.dept}-${c.number}`}
                       href={`/course-rating/${c.dept}/${c.number}`}
                       className="brutal-card p-4 cursor-pointer flex flex-col gap-1"
@@ -259,7 +259,7 @@ export default function CourseRatingPage() {
                           </span>
                         )}
                       </div>
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>

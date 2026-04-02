@@ -30,8 +30,8 @@ export default function ReviewModal({ onClose }: { onClose: () => void }) {
   // Fetch professors from USC API sections + review aggregates
   useEffect(() => {
     if (!selectedCourse) return;
+    let isActive = true;
     const { dept, number } = selectedCourse;
-    const set = new Set<string>();
 
     Promise.allSettled([
       fetch(`/api/courses/${dept}/${number}`).then((r) =>
@@ -41,6 +41,8 @@ export default function ReviewModal({ onClose }: { onClose: () => void }) {
         `/api/course-rating/reviews?dept=${encodeURIComponent(dept)}&number=${encodeURIComponent(number)}`
       ).then((r) => (r.ok ? r.json() : null)),
     ]).then(([courseResult, reviewsResult]) => {
+      if (!isActive) return;
+      const set = new Set<string>();
       // From USC API sections
       if (courseResult.status === "fulfilled" && courseResult.value?.sections) {
         for (const s of courseResult.value.sections) {
@@ -63,6 +65,8 @@ export default function ReviewModal({ onClose }: { onClose: () => void }) {
       }
       setProfessors(Array.from(set).sort());
     });
+
+    return () => { isActive = false; };
   }, [selectedCourse]);
 
   const fetchSuggestions = useCallback(async (q: string) => {
@@ -88,7 +92,7 @@ export default function ReviewModal({ onClose }: { onClose: () => void }) {
           .map((d: { text?: string } | string) => {
             const text = typeof d === "string" ? d : d.text || "";
             if (!text) return null;
-            const match = text.match(/^([A-Z]+)-(\d+[A-Z]?)\s+(.+)$/i);
+            const match = text.match(/^([A-Z]+)-(\d+[A-Z]*)\s+(.+)$/i);
             if (match) {
               return {
                 id: `${match[1]}-${match[2]}`,

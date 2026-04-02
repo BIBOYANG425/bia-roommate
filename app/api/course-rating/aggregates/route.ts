@@ -13,13 +13,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Parse "CSCI-201,MATH-225" format
+  // Parse "CSCI-201,MATH-225" format — validate each token
+  const COURSE_KEY_RE = /^[A-Z]{2,10}-[A-Z0-9]{1,10}$/;
   const courseKeys = [
     ...new Set(
       coursesParam
         .split(",")
         .map((c) => c.trim().toUpperCase())
-        .filter(Boolean),
+        .filter((c) => c && COURSE_KEY_RE.test(c)),
     ),
   ].slice(0, MAX_COURSES);
 

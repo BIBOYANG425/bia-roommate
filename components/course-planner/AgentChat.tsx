@@ -20,6 +20,7 @@ interface AgentChatProps {
   interests: string;
   semester: string;
   unitsFilter: string | null;
+  levelFilter: string | null;
   thinking: boolean;
   onResults: (results: AgentRecommendation[]) => void;
   onBack: () => void;
@@ -432,6 +433,7 @@ export default function AgentChat({
   interests,
   semester,
   unitsFilter,
+  levelFilter,
   thinking,
   onResults,
   onBack,
@@ -472,6 +474,7 @@ export default function AgentChat({
             interests,
             semester,
             units: unitsFilter,
+            level: levelFilter,
             thinking,
           }),
           signal: controller.signal,

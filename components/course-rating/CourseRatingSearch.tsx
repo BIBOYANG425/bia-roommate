@@ -50,7 +50,7 @@ export default function CourseRatingSearch() {
           .map((d: { text?: string } | string) => {
             const text = typeof d === "string" ? d : d.text || "";
             if (!text) return null;
-            const match = text.match(/^([A-Z]+)-(\d+[A-Z]?)\s+(.+)$/i);
+            const match = text.match(/^([A-Z]+)-(\d+[A-Z]*)\s+(.+)$/i);
             if (match) {
               return {
                 id: `${match[1]}-${match[2]}`,

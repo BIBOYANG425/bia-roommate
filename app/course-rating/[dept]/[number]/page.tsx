@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import NavTabs from "@/components/NavTabs";
@@ -29,8 +29,8 @@ interface CourseData {
 
 export default function CourseRatingDetailPage() {
   const params = useParams<{ dept: string; number: string }>();
-  const dept = (params.dept as string).toUpperCase();
-  const courseNumber = params.number as string;
+  const dept = params.dept.toUpperCase();
+  const courseNumber = params.number;
 
   const [course, setCourse] = useState<CourseData | null>(null);
   const [reviews, setReviews] = useState<CourseReview[]>([]);
@@ -75,7 +75,7 @@ export default function CourseRatingDetailPage() {
   }, [fetchData]);
 
   // Merge professors from reviews + USC sections
-  const allProfessors = (() => {
+  const allProfessors = useMemo(() => {
     const set = new Set<string>();
     if (aggregate?.professors) {
       aggregate.professors.forEach((p) => set.add(p));
@@ -91,7 +91,7 @@ export default function CourseRatingDetailPage() {
       });
     }
     return Array.from(set).sort();
-  })();
+  }, [aggregate?.professors, course?.sections]);
 
   // Filter reviews by selected professor
   const filteredReviews = selectedProfessor
@@ -104,6 +104,8 @@ export default function CourseRatingDetailPage() {
     });
     if (res.ok) {
       fetchData();
+    } else {
+      setError("Failed to delete review. Please try again.");
     }
   }
 

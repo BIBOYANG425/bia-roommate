@@ -56,8 +56,21 @@ export async function GET(request: NextRequest) {
       : Promise.resolve({ data: [] }),
   ]);
 
+  // Check for failures
+  if (
+    reviewsResult.status === "rejected" ||
+    (reviewsResult.status === "fulfilled" && reviewsResult.value.error)
+  ) {
+    console.error("[course-rating] reviews query failed:",
+      reviewsResult.status === "rejected" ? reviewsResult.reason : reviewsResult.value.error);
+    return NextResponse.json(
+      { error: "Failed to load reviews" },
+      { status: 500 },
+    );
+  }
+
   const reviews: CourseReview[] = [];
-  if (reviewsResult.status === "fulfilled" && reviewsResult.value.data) {
+  if (reviewsResult.value.data) {
     const ownIds = new Set<string>();
     if (ownResult.status === "fulfilled") {
       const ownData = "data" in ownResult.value ? ownResult.value.data : [];
@@ -71,13 +84,19 @@ export async function GET(request: NextRequest) {
   }
 
   const aggregate: CourseAggregate | null =
-    aggregateResult.status === "fulfilled" && aggregateResult.value.data
+    aggregateResult.status === "fulfilled" &&
+    !aggregateResult.value.error &&
+    aggregateResult.value.data
       ? aggregateResult.value.data
       : null;
 
   const response: ReviewsResponse = { reviews, aggregate };
   return NextResponse.json(response, {
-    headers: { "Cache-Control": "public, s-maxage=60" },
+    headers: {
+      "Cache-Control": user
+        ? "private, no-cache, no-store"
+        : "public, s-maxage=60",
+    },
   });
 }
 
