@@ -1,5 +1,6 @@
 import {
   tokenize,
+  tokenizeRaw,
   tokenMatchScore,
   getDepartmentMatches,
 } from "./interest-map";
@@ -14,6 +15,7 @@ export interface RecommendedCourse {
   relevanceScore: number;
   matchReasons: string[];
   geTag?: string;
+  sectionTopics?: string[];
 }
 
 interface AutocompleteCourse {
@@ -69,7 +71,7 @@ function scoreTier1(
   return { score, matched: allMatched };
 }
 
-// ─── Tier 2: Score with full description ───
+// ─── Tier 2: Score with full description + section topics ───
 function scoreTier2(
   title: string,
   description: string,
@@ -78,7 +80,9 @@ function scoreTier2(
   tokens: string[],
   matchedDepts: Set<string>,
   geTag?: string,
-): { score: number; matched: string[] } {
+  sectionTopics?: string[],
+  rawTokens?: string[],
+): { score: number; matched: string[]; matchedTopic?: string } {
   const num = parseInt(courseNumber || "999", 10);
 
   // Description keyword match (best signal when available)
@@ -88,6 +92,24 @@ function scoreTier2(
 
   // Title keyword match
   const titleResult = tokenMatchScore(tokens, title);
+
+  // Section topic matching — use raw tokens (no synonym expansion) to avoid
+  // diluting the match ratio. E.g., "natural science writing" should be 3/3 = 1.0
+  // against "Advanced Writing for Natural Sciences", not 3/7 after expansion.
+  let topicBonus = 0;
+  let topicMatched: string[] = [];
+  let bestTopic: string | undefined;
+  const topicTokens = rawTokens || tokens;
+  if (sectionTopics && sectionTopics.length > 0) {
+    for (const topic of sectionTopics) {
+      const topicResult = tokenMatchScore(topicTokens, topic);
+      if (topicResult.score > topicBonus) {
+        topicBonus = topicResult.score;
+        topicMatched = topicResult.matched;
+        bestTopic = topic;
+      }
+    }
+  }
 
   // Department relevance
   const deptScore = matchedDepts.has(dept) ? 1.0 : 0;
@@ -101,18 +123,30 @@ function scoreTier2(
   const score =
     descResult.score * 4.0 +
     titleResult.score * 3.0 +
+    topicBonus * 3.5 +
     deptScore * 2.0 +
     geBonus +
     freshmanBonus;
 
   const allMatched = [
-    ...new Set([...descResult.matched, ...titleResult.matched]),
+    ...new Set([...descResult.matched, ...titleResult.matched, ...topicMatched]),
   ];
 
-  return { score, matched: allMatched };
+  return { score, matched: allMatched, matchedTopic: bestTopic };
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// ─── Extract unique section topic names from API sections array ───
+function extractSectionTopics(sections: any[]): string[] {
+  return [
+    ...new Set(
+      sections
+        .filter((s: any) => !s.isCancelled && s.name)
+        .map((s: any) => s.name as string),
+    ),
+  ];
+}
 
 // ─── Format match reasons into human-readable labels ───
 // Tokens that shouldn't appear as match reasons (GE codes, stems, generic words)
@@ -139,8 +173,12 @@ function formatMatchReasons(
   dept: string,
   matchedDepts: Set<string>,
   geTag?: string,
+  matchedTopic?: string,
 ): string[] {
   const reasons: string[] = [];
+
+  // Add matched section topic as a reason (most specific signal)
+  if (matchedTopic) reasons.push(`"${matchedTopic}" section`);
 
   // Add GE tag as a reason
   if (geTag) reasons.push(`Fulfills ${geTag}`);
@@ -174,6 +212,7 @@ export async function getRecommendations(
 ): Promise<RecommendedCourse[]> {
   const tokens = tokenize(interestText);
   if (tokens.length === 0) return [];
+  const rawTokens = tokenizeRaw(interestText);
 
   const matchedDepts = getDepartmentMatches(tokens);
 
@@ -193,11 +232,25 @@ export async function getRecommendations(
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  const top30 = tier1Scored.slice(0, 30);
+  // Courses with section-level topic variation that need Tier 2 regardless of Tier 1 rank.
+  // These have distinct section topics (e.g., WRIT 340 "for Publishing" vs "for Natural Science")
+  // that can only be matched once we fetch full course details.
+  const MULTI_TOPIC_PREFIXES = new Set(["WRIT", "GESM"]);
+  const top30Set = new Set(
+    tier1Scored.slice(0, 30).map((x) => x.course.scheduledCourseCode.courseSmashed),
+  );
+  const multiTopicExtra = autoCourses
+    .filter((c) => {
+      const prefix = c.scheduledCourseCode?.prefix || c.prefix || "";
+      return MULTI_TOPIC_PREFIXES.has(prefix) && !top30Set.has(c.scheduledCourseCode.courseSmashed);
+    })
+    .slice(0, 15)
+    .map((c) => ({ course: c, score: 0, matched: [] as string[] }));
 
-  // ── Tier 2: Fetch details for top candidates + all GE categories ──
-  // Parallel: 30 course detail fetches + 8 GE category fetches
-  const detailPromises = top30.map(async (item) => {
+  const tier2Candidates = [...tier1Scored.slice(0, 30), ...multiTopicExtra];
+
+  // ── Tier 2: Fetch details for top candidates + multi-topic courses + all GE categories ──
+  const detailPromises = tier2Candidates.map(async (item) => {
     const code = item.course.scheduledCourseCode;
     try {
       const res = await fetch(
@@ -222,6 +275,7 @@ export async function getRecommendations(
         description: data.description || "",
         units: data.courseUnits?.[0]?.toString() || "",
         tier1Matched: item.matched,
+        sectionTopics: extractSectionTopics(sections),
       };
     } catch {
       return null;
@@ -254,6 +308,7 @@ export async function getRecommendations(
             description: c.description || "",
             units: c.courseUnits?.[0]?.toString() || "",
             geTag: geCode,
+            sectionTopics: extractSectionTopics(c.sections || []),
           }));
       } catch {
         return [];
@@ -275,13 +330,16 @@ export async function getRecommendations(
     const key = `${detail.department}-${detail.number}`;
     if (scoreMap.has(key)) continue;
 
-    const { score, matched } = scoreTier2(
+    const { score, matched, matchedTopic } = scoreTier2(
       detail.title,
       detail.description,
       detail.department,
       detail.number,
       tokens,
       matchedDepts,
+      undefined,
+      detail.sectionTopics,
+      rawTokens,
     );
 
     if (score > 0) {
@@ -290,6 +348,8 @@ export async function getRecommendations(
         rawReasons,
         detail.department,
         matchedDepts,
+        undefined,
+        matchedTopic,
       );
       scoreMap.set(key, {
         department: detail.department,
@@ -299,6 +359,10 @@ export async function getRecommendations(
         description: detail.description,
         relevanceScore: Math.round(score * 100) / 100,
         matchReasons: reasons,
+        sectionTopics:
+          detail.sectionTopics.length > 0
+            ? detail.sectionTopics
+            : undefined,
       });
     }
   }
@@ -311,7 +375,7 @@ export async function getRecommendations(
 
       if (existing) {
         // Course already scored from detail fetch — re-score with GE bonus and attach tag
-        const { score, matched } = scoreTier2(
+        const { score, matched, matchedTopic } = scoreTier2(
           existing.title,
           existing.description,
           existing.department,
@@ -319,14 +383,20 @@ export async function getRecommendations(
           tokens,
           matchedDepts,
           gc.geTag,
+          gc.sectionTopics,
+          rawTokens,
         );
         existing.geTag = gc.geTag;
         existing.relevanceScore = Math.round(score * 100) / 100;
+        if (!existing.sectionTopics && gc.sectionTopics?.length > 0) {
+          existing.sectionTopics = gc.sectionTopics;
+        }
         const newReasons = formatMatchReasons(
           [...new Set([...matched])],
           existing.department,
           matchedDepts,
           gc.geTag,
+          matchedTopic,
         );
         existing.matchReasons = [
           ...new Set([...(existing.matchReasons || []), ...newReasons]),
@@ -334,7 +404,7 @@ export async function getRecommendations(
         continue;
       }
 
-      const { score, matched } = scoreTier2(
+      const { score, matched, matchedTopic } = scoreTier2(
         gc.title,
         gc.description,
         gc.department,
@@ -342,6 +412,8 @@ export async function getRecommendations(
         tokens,
         matchedDepts,
         gc.geTag,
+        gc.sectionTopics,
+        rawTokens,
       );
 
       if (score > 0) {
@@ -350,6 +422,7 @@ export async function getRecommendations(
           gc.department,
           matchedDepts,
           gc.geTag,
+          matchedTopic,
         );
         scoreMap.set(key, {
           department: gc.department,
@@ -360,6 +433,8 @@ export async function getRecommendations(
           relevanceScore: Math.round(score * 100) / 100,
           matchReasons: reasons,
           geTag: gc.geTag,
+          sectionTopics:
+            gc.sectionTopics.length > 0 ? gc.sectionTopics : undefined,
         });
       }
     }

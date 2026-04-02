@@ -55,6 +55,7 @@ function PlannerContent() {
     interests: string;
     units: string | null;
     thinking: boolean;
+    level: string | null;
   } | null>(null);
   const [showTour, setShowTour] = useState(false);
 
@@ -136,8 +137,8 @@ function PlannerContent() {
   );
 
   const handleAgentSearch = useCallback(
-    (interests: string, units: string | null, thinking: boolean) => {
-      setAgentQuery({ interests, units, thinking });
+    (interests: string, units: string | null, thinking: boolean, level: string | null) => {
+      setAgentQuery({ interests, units, thinking, level });
       setMode("agentChat");
     },
     [],
@@ -145,7 +146,17 @@ function PlannerContent() {
 
   const handleAgentResults = useCallback((results: AgentRecommendation[]) => {
     setAgentResults(results);
-    // Also set as recommendations for potential use
+    // Convert to selectedCourses with section-pinned IDs for GESM/WRIT
+    const newSelected = results.map((r) => {
+      const id = r.sectionId
+        ? `${r.department}-${r.number}@${r.sectionId}`
+        : `${r.department}-${r.number}`;
+      const label = r.sectionId
+        ? `${r.department} ${r.number} — ${r.sectionTopic || r.title}`
+        : `${r.department} ${r.number} — ${r.title}`;
+      return { id, label };
+    });
+    setSelectedCourses(newSelected.slice(0, 6));
     setRecommendations(
       results.map((r) => ({
         department: r.department,
@@ -156,6 +167,7 @@ function PlannerContent() {
         relevanceScore: r.relevanceScore,
         matchReasons: r.matchReasons,
         geTag: r.geTag,
+        sectionTopics: r.sectionTopics,
       })),
     );
     setRecMode("agent");
@@ -235,6 +247,7 @@ function PlannerContent() {
             interests={agentQuery.interests}
             semester={state.semester}
             unitsFilter={agentQuery.units}
+            levelFilter={agentQuery.level}
             thinking={agentQuery.thinking}
             onResults={handleAgentResults}
             onBack={() => setMode("interest")}
@@ -537,6 +550,7 @@ function PlannerContent() {
                             ))}
                           </div>
                         )}
+
                       </div>
                     )}
 
@@ -563,6 +577,35 @@ function PlannerContent() {
                             {reason}
                           </span>
                         ))}
+                      </div>
+                    )}
+
+                    {/* Section topics (both modes) */}
+                    {rec.sectionTopics && rec.sectionTopics.length > 1 && (
+                      <div className="mt-1.5">
+                        <span className="text-[10px]" style={{ color: "var(--mid)" }}>
+                          Topics:
+                        </span>
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {rec.sectionTopics.slice(0, 6).map((topic) => (
+                            <span
+                              key={topic}
+                              className="px-2 py-0.5 text-[10px]"
+                              style={{
+                                background: "color-mix(in srgb, var(--cardinal) 10%, white)",
+                                color: "var(--cardinal)",
+                                borderRadius: "10px",
+                              }}
+                            >
+                              {topic}
+                            </span>
+                          ))}
+                          {rec.sectionTopics.length > 6 && (
+                            <span className="text-[10px]" style={{ color: "var(--mid)" }}>
+                              +{rec.sectionTopics.length - 6} more
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

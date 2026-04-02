@@ -1,35 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { AgentRecommendation } from "@/lib/course-planner/agent";
-
-// ─── Types for SSE events ───
-type AgentEvent =
-  | { type: "thinking"; message: string }
-  | { type: "reasoning"; step: "interpreter" | "recommender"; content: string }
-  | {
-      type: "interpreted";
-      data: {
-        interests: string[];
-        preferences: string[];
-        dealbreakers: string[];
-        departments: string[];
-        geCategories: string[];
-      };
-    }
-  | {
-      type: "researching";
-      source: "catalog" | "rmp" | "reddit";
-      message: string;
-    }
-  | {
-      type: "research_done";
-      source: "catalog" | "rmp" | "reddit";
-      message: string;
-    }
-  | { type: "recommending"; message: string }
-  | { type: "results"; data: AgentRecommendation[] }
-  | { type: "error"; message: string; isRejection?: boolean };
+import type {
+  AgentRecommendation,
+  AgentEvent,
+} from "@/lib/course-planner/agent";
 
 interface ChatMessage {
   id: string;
@@ -45,6 +20,7 @@ interface AgentChatProps {
   interests: string;
   semester: string;
   unitsFilter: string | null;
+  levelFilter: string | null;
   thinking: boolean;
   onResults: (results: AgentRecommendation[]) => void;
   onBack: () => void;
@@ -142,6 +118,64 @@ function CourseCard({
           <p className="text-sm mb-1" style={{ color: "var(--black)" }}>
             {rec.title}
           </p>
+
+          {/* Section-level recommendation (GESM/WRIT): show time + instructor */}
+          {rec.sectionId && (
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              {rec.sectionTime && (
+                <span
+                  className="px-1.5 py-0.5 text-[10px] font-display tracking-wider"
+                  style={{
+                    background: "color-mix(in srgb, var(--cardinal) 10%, white)",
+                    color: "var(--cardinal)",
+                    borderRadius: "3px",
+                  }}
+                >
+                  {rec.sectionTime}
+                </span>
+              )}
+              {rec.sectionInstructor && (
+                <span className="text-[11px]" style={{ color: "var(--black)" }}>
+                  {rec.sectionInstructor}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Section topics for non-section-level recs (fallback) */}
+          {!rec.sectionId && rec.sectionTopics && rec.sectionTopics.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1">
+              {rec.sectionTopics.slice(0, 4).map((topic) => (
+                <span
+                  key={topic}
+                  className="px-1.5 py-0.5 text-[10px]"
+                  style={{
+                    background: "color-mix(in srgb, var(--cardinal) 8%, white)",
+                    color: "var(--cardinal)",
+                    borderRadius: "3px",
+                  }}
+                >
+                  {topic}
+                </span>
+              ))}
+              {rec.sectionTopics.length > 4 && (
+                <span
+                  className="px-1.5 py-0.5 text-[10px]"
+                  style={{ color: "var(--mid)" }}
+                >
+                  +{rec.sectionTopics.length - 4} more
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Suggested lecturer (for non-section recs) */}
+          {!rec.sectionId && rec.suggestedInstructor && (
+            <p className="text-[11px] mb-0.5" style={{ color: "var(--mid)" }}>
+              <span style={{ color: "var(--black)" }}>Suggested:</span>{" "}
+              {rec.suggestedInstructor}
+            </p>
+          )}
 
           {/* Compact preview of why */}
           {rec.aiReasoning && (
@@ -399,6 +433,7 @@ export default function AgentChat({
   interests,
   semester,
   unitsFilter,
+  levelFilter,
   thinking,
   onResults,
   onBack,
@@ -439,6 +474,7 @@ export default function AgentChat({
             interests,
             semester,
             units: unitsFilter,
+            level: levelFilter,
             thinking,
           }),
           signal: controller.signal,
@@ -718,7 +754,10 @@ export default function AgentChat({
 
           <div className="flex flex-col gap-3 mb-4">
             {results.map((rec, i) => {
-              const courseId = `${rec.department}-${rec.number}`;
+              // For section-level recs (GESM/WRIT), use sectionId to distinguish
+              const courseId = rec.sectionId
+                ? `${rec.department}-${rec.number}@${rec.sectionId}`
+                : `${rec.department}-${rec.number}`;
               return (
                 <CourseCard
                   key={`${courseId}-${i}`}
@@ -736,9 +775,12 @@ export default function AgentChat({
             <button
               onClick={() => {
                 if (results) {
-                  const selected = results.filter((r) =>
-                    selectedCourses.has(`${r.department}-${r.number}`),
-                  );
+                  const selected = results.filter((r) => {
+                    const id = r.sectionId
+                      ? `${r.department}-${r.number}@${r.sectionId}`
+                      : `${r.department}-${r.number}`;
+                    return selectedCourses.has(id);
+                  });
                   if (selected.length > 0) onResults(selected);
                 }
                 onBack();

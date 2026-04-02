@@ -52,7 +52,6 @@ export async function GET(request: NextRequest) {
             },
           },
         }),
-        next: { revalidate: 86400 },
         signal: controller.signal,
       });
     } catch {

@@ -301,11 +301,19 @@ export function simpleStem(word: string): string {
   return word;
 }
 
+// ─── Base tokenizer: clean, split, remove stop words, stem ───
+function tokenizeBase(text: string): { stemmed: string[]; filtered: string[]; words: string[] } {
+  const cleaned = text.toLowerCase().replace(/[^a-z0-9\s-]/g, " ");
+  const words = cleaned.split(/\s+/).filter((w) => w.length >= 2);
+  const filtered = words.filter((w) => !STOP_WORDS.has(w));
+  const stemmed = filtered.map(simpleStem);
+  return { stemmed, filtered, words };
+}
+
 // ─── Tokenize interest text into meaningful stemmed tokens ───
 // Also extracts bigrams for multi-word phrase matching
 export function tokenize(text: string): string[] {
-  const cleaned = text.toLowerCase().replace(/[^a-z0-9\s-]/g, " ");
-  const words = cleaned.split(/\s+/).filter((w) => w.length >= 2);
+  const { stemmed, filtered, words } = tokenizeBase(text);
 
   // Extract bigrams before removing stop words (phrases like "social justice" need both words)
   const bigrams: string[] = [];
@@ -313,13 +321,9 @@ export function tokenize(text: string): string[] {
     bigrams.push(`${words[i]} ${words[i + 1]}`);
   }
 
-  const filtered = words.filter((w) => !STOP_WORDS.has(w));
-  const stemmed = filtered.map(simpleStem);
-
   // Expand synonyms: check both raw words and bigrams
   const expanded = new Set(stemmed);
 
-  // Check single-word synonyms against raw (unstemmed) filtered words
   for (const word of filtered) {
     const syns = SYNONYMS[word];
     if (syns) {
@@ -329,7 +333,6 @@ export function tokenize(text: string): string[] {
     }
   }
 
-  // Check bigram synonyms
   for (const bigram of bigrams) {
     const syns = SYNONYMS[bigram];
     if (syns) {
@@ -340,6 +343,12 @@ export function tokenize(text: string): string[] {
   }
 
   return [...expanded];
+}
+
+// Raw stemmed tokens without synonym expansion — used for section topic matching
+// where expanded synonyms dilute the match ratio
+export function tokenizeRaw(text: string): string[] {
+  return tokenizeBase(text).stemmed;
 }
 
 // ─── Score how well a target text matches a set of interest tokens ───

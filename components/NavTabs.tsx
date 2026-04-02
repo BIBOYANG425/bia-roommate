@@ -10,6 +10,7 @@ const TABS = [
   { href: "/", label: "找室友" },
   { href: "/sublet", label: "转租" },
   { href: "/course-planner", label: "选课" },
+  { href: "/course-rating", label: "课评" },
   { href: "/usc-group", label: "USC 新生群" },
 ];
 
@@ -21,16 +22,18 @@ export default function NavTabs() {
   return (
     <>
       <nav
-        className="border-b-[3px] border-[var(--black)] flex items-center"
+        className="border-b-[3px] border-[var(--black)] flex items-center overflow-x-auto"
         style={{ background: "var(--cream)" }}
       >
         {TABS.map((tab) => {
-          const active = pathname === tab.href;
+          const active =
+            pathname === tab.href ||
+            (tab.href !== "/" && pathname.startsWith(tab.href));
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className="font-display text-sm sm:text-base tracking-[0.1em] px-5 sm:px-8 py-3 border-r-[3px] border-[var(--black)] transition-colors"
+              className="font-display text-sm sm:text-base tracking-[0.1em] px-5 sm:px-8 py-3 border-r-[3px] border-[var(--black)] transition-colors shrink-0 whitespace-nowrap"
               style={
                 active
                   ? { background: "var(--cardinal)", color: "white" }
