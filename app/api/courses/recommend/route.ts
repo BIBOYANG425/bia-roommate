@@ -1,7 +1,22 @@
 import { NextRequest } from "next/server";
-import { getRecommendations } from "@/lib/course-planner/recommender";
+import { getRecommendations, RecommendedCourse } from "@/lib/course-planner/recommender";
 import { runAgent, AgentRecommendation } from "@/lib/course-planner/agent";
 import { corsHeaders, handleOptions } from "@/lib/cors";
+
+function filterByLevel<T extends { number: string }>(
+  courses: T[],
+  level: string | undefined,
+): T[] {
+  if (!level) return courses;
+  return courses.filter((c) => {
+    const num = parseInt(c.number, 10);
+    if (isNaN(num)) return true;
+    if (level === "lower") return num >= 100 && num <= 299;
+    if (level === "upper") return num >= 300 && num <= 499;
+    if (level === "graduate") return num >= 500;
+    return true;
+  });
+}
 
 export async function OPTIONS(request: NextRequest) {
   return handleOptions(request) ?? new Response(null, { status: 204 });
@@ -11,7 +26,7 @@ export async function POST(request: NextRequest) {
   const cors = corsHeaders(request);
   try {
     const body = await request.json();
-    const { interests, semester, units, mode } = body ?? {};
+    const { interests, semester, units, level, mode } = body ?? {};
 
     if (typeof interests !== "string" || interests.trim().length < 2) {
       return Response.json(
@@ -52,8 +67,9 @@ export async function POST(request: NextRequest) {
           // Agent failed but not a rejection — fall through to free mode
           agentFailed = true;
         } else {
+          const filtered = filterByLevel(result.recommendations, level);
           return Response.json(
-            { recommendations: result.recommendations, mode: "agent" },
+            { recommendations: filtered, mode: "agent" },
             { headers: cors },
           );
         }
@@ -77,11 +93,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Free mode: keyword-based matching
-    const recommendations = await getRecommendations(
-      interests,
-      semesterCode,
-      baseUrl,
-      unitsFilter,
+    const recommendations = filterByLevel(
+      await getRecommendations(interests, semesterCode, baseUrl, unitsFilter),
+      level,
     );
 
     return Response.json(

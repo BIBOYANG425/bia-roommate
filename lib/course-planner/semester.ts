@@ -8,13 +8,12 @@ export function getCurrentSemesterCode(): string {
   const year = now.getFullYear();
   const month = now.getMonth() + 1; // 1-12
 
-  // Spring: Jan–May (1), Summer: Jun–Jul (2), Fall: Aug–Dec (3)
-  let termCode: number;
-  if (month <= 5) termCode = 1;
-  else if (month <= 7) termCode = 2;
-  else termCode = 3;
-
-  return `${year}${termCode}`;
+  // Default to the NEXT major semester (what students are planning for)
+  // Spring (Jan-May): planning for Fall → Fall same year
+  // Summer (Jun-Jul): planning for Fall → Fall same year
+  // Fall (Aug-Dec): planning for Spring → Spring next year
+  if (month <= 7) return `${year}3`;       // → Fall of current year
+  return `${year + 1}1`;                    // → Spring of next year
 }
 
 export function semesterLabel(code: string): string {

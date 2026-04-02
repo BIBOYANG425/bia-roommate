@@ -47,6 +47,7 @@ export default function InterestInput({
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [unitsFilter, setUnitsFilter] = useState<string | null>(null);
+  const [levelFilter, setLevelFilter] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState<"auto" | "free">("auto");
   const [thinkingMode, setThinkingMode] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -69,7 +70,10 @@ export default function InterestInput({
 
     // AI mode → launch agent chat interface
     if (searchMode === "auto" && onAgentSearch) {
-      onAgentSearch(input.trim(), unitsFilter, thinkingMode);
+      const levelHint = levelFilter
+        ? ` (only ${levelFilter === "lower" ? "lower division 100-299" : levelFilter === "upper" ? "upper division 300-499" : "graduate 500+"} courses)`
+        : "";
+      onAgentSearch(input.trim() + levelHint, unitsFilter, thinkingMode);
       return;
     }
 
@@ -95,6 +99,7 @@ export default function InterestInput({
           interests: input,
           semester,
           units: unitsFilter,
+          level: levelFilter,
           mode: "free",
         }),
         signal: controller.signal,
@@ -269,6 +274,41 @@ export default function InterestInput({
               }}
             >
               {u}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Level filter */}
+      <div className="mb-4">
+        <span
+          className="text-xs font-display tracking-wider mr-2"
+          style={{ color: "var(--mid)" }}
+        >
+          LEVEL:
+        </span>
+        <div className="inline-flex gap-2 flex-wrap">
+          {([
+            { value: null, label: "ANY" },
+            { value: "lower", label: "LOWER (100-299)" },
+            { value: "upper", label: "UPPER (300-499)" },
+            { value: "graduate", label: "GRADUATE (500+)" },
+          ] as const).map((opt) => (
+            <button
+              key={opt.label}
+              onClick={() => setLevelFilter(levelFilter === opt.value ? null : opt.value)}
+              disabled={loading}
+              aria-pressed={levelFilter === opt.value}
+              className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
+              style={{
+                borderColor: "var(--beige)",
+                background: levelFilter === opt.value ? "var(--cardinal)" : "white",
+                color: levelFilter === opt.value ? "white" : "var(--black)",
+                borderRadius: "20px",
+                opacity: loading ? 0.5 : 1,
+              }}
+            >
+              {opt.label}
             </button>
           ))}
         </div>

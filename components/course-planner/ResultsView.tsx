@@ -97,15 +97,33 @@ export default function ResultsView({
             }
           } else {
             // Regular course: split "CSCI-201" → dept=CSCI, num=201
-            const parts = c.id.split("-");
+            // Section-pinned: "WRIT-340@30001" → dept=WRIT, num=340, pin to section 30001
+            const [baseId, pinnedSectionId] = c.id.split("@");
+            const parts = baseId.split("-");
             const res = await fetch(
               `/api/courses/${encodeURIComponent(parts[0])}/${encodeURIComponent(parts[1])}?semester=${semester}`,
             );
             if (res.ok) {
               const data = await res.json();
               if (data.sections?.length > 0) {
-                courseData.push(data);
-                selectionMap[c.id].push(data);
+                // If a specific section was selected (GESM/WRIT), filter to only that section
+                if (pinnedSectionId) {
+                  const pinned = data.sections.filter(
+                    (s: Section) => s.id === pinnedSectionId || s.number === pinnedSectionId,
+                  );
+                  if (pinned.length > 0) {
+                    const filtered = { ...data, sections: pinned };
+                    courseData.push(filtered);
+                    selectionMap[c.id].push(filtered);
+                  } else {
+                    // Fallback: section ID not found, use all sections
+                    courseData.push(data);
+                    selectionMap[c.id].push(data);
+                  }
+                } else {
+                  courseData.push(data);
+                  selectionMap[c.id].push(data);
+                }
               }
             }
           }
