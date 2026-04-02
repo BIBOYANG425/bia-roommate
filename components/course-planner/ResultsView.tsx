@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import type { SchedulePrefs } from "@/app/course-planner/page";
 import type { Course, Section, RmpRating } from "@/lib/course-planner/types";
 import { parseSectionTimes, formatTime } from "@/lib/course-planner/conflicts";
@@ -62,6 +62,10 @@ export default function ResultsView({
     "idle" | "naming" | "saving" | "saved" | "error"
   >("idle");
   const [scheduleName, setScheduleName] = useState("");
+  const [swappingCourse, setSwappingCourse] = useState<string | null>(null);
+  const courseGroupsRef = useRef<
+    { label: string; isGE: boolean; geTag?: string; combos: any[] }[]
+  >([]);
 
   const buildSchedules = useCallback(async () => {
     setLoading(true);
@@ -113,7 +117,8 @@ export default function ResultsView({
                 // If a specific section was selected (GESM/WRIT), filter to only that section
                 if (pinnedSectionId) {
                   const pinned = data.sections.filter(
-                    (s: Section) => s.id === pinnedSectionId || s.number === pinnedSectionId,
+                    (s: Section) =>
+                      s.id === pinnedSectionId || s.number === pinnedSectionId,
                   );
                   if (pinned.length > 0) {
                     const filtered = { ...data, sections: pinned };
@@ -385,10 +390,24 @@ export default function ResultsView({
         }
       }
 
-      // Generate top schedules via backtracking
+      // Generate top schedules via backtracking with diversity
       const results: GeneratedSchedule[] = [];
       const maxResults = 5;
       const timeout = Date.now() + 25000;
+
+      // Shuffle combos with similar ratings for diversity
+      function shuffleTied<T extends { rating: number }>(arr: T[]): T[] {
+        const copy = [...arr];
+        for (let i = copy.length - 1; i > 0; i--) {
+          // Only shuffle among items with similar ratings (within 0.15)
+          let j = i;
+          while (j > 0 && Math.abs(copy[j - 1].rating - copy[i].rating) < 0.15)
+            j--;
+          const swapIdx = j + Math.floor(Math.random() * (i - j + 1));
+          [copy[i], copy[swapIdx]] = [copy[swapIdx], copy[i]];
+        }
+        return copy;
+      }
 
       function backtrack(
         groupIdx: number,
@@ -397,7 +416,7 @@ export default function ResultsView({
         usedSlots: { day: string; startMin: number; endMin: number }[],
       ) {
         if (Date.now() > timeout) return;
-        if (results.length >= maxResults * 10) return; // enough candidates
+        if (results.length >= maxResults * 10) return;
 
         if (groupIdx >= courseGroups.length) {
           const ratingCount =
@@ -415,9 +434,10 @@ export default function ResultsView({
         }
 
         const group = courseGroups[groupIdx];
-        const combosToTry = group.isGE
+        const baseSlice = group.isGE
           ? group.combos.slice(0, 20)
           : group.combos.slice(0, 15);
+        const combosToTry = shuffleTied(baseSlice);
 
         for (const combo of combosToTry) {
           // Check time preferences for all slots
@@ -465,13 +485,26 @@ export default function ResultsView({
         }
       }
 
+      courseGroupsRef.current = courseGroups;
       backtrack(0, [], 0, []);
 
       setProgress(95);
 
-      // Sort by average rating and take top 5
+      // Sort by average rating and deduplicate, then take top 5
       results.sort((a, b) => b.avgRating - a.avgRating);
-      const top = results.slice(0, maxResults);
+      const seen = new Set<string>();
+      const top: GeneratedSchedule[] = [];
+      for (const r of results) {
+        const key = r.sections
+          .map((s) => s.section.id)
+          .sort()
+          .join(",");
+        if (!seen.has(key)) {
+          seen.add(key);
+          top.push(r);
+        }
+        if (top.length >= maxResults) break;
+      }
 
       if (top.length === 0) {
         setError("NO VALID SCHEDULE FOUND — TRY ADJUSTING PREFERENCES");
@@ -490,6 +523,71 @@ export default function ResultsView({
   useEffect(() => {
     buildSchedules();
   }, [buildSchedules]);
+
+  // Swap a course in the active schedule with an alternative combo
+  const handleSwap = useCallback(
+    (courseKey: string, comboIdx: number) => {
+      const schedule = schedules[activeIdx];
+      if (!schedule) return;
+
+      const group = courseGroupsRef.current.find((g) => g.label === courseKey);
+      if (!group || comboIdx >= group.combos.length) return;
+
+      const newCombo = group.combos[comboIdx];
+
+      // Check conflicts with other courses' sections
+      const otherSections = schedule.sections.filter(
+        (s) =>
+          `${s.course.department} ${s.course.number}` !==
+            courseKey.split(":")[0]?.trim() && s.course.title !== courseKey,
+      );
+      const otherSlots = otherSections.flatMap((s) =>
+        s.section.times
+          .filter((t) => t.start_time && t.day !== "TBA")
+          .map((t) => ({
+            day: t.day,
+            startMin:
+              parseInt(t.start_time.split(":")[0]) * 60 +
+              parseInt(t.start_time.split(":")[1] || "0"),
+            endMin:
+              parseInt(t.end_time.split(":")[0]) * 60 +
+              parseInt(t.end_time.split(":")[1] || "0"),
+          })),
+      );
+
+      const hasConflict = newCombo.allSlots.some((newSlot: any) =>
+        otherSlots.some(
+          (existing) =>
+            existing.day === newSlot.day &&
+            existing.startMin < newSlot.endMin &&
+            newSlot.startMin < existing.endMin,
+        ),
+      );
+
+      if (hasConflict) return; // Can't swap — conflicts
+
+      // Replace sections for this course group
+      const groupIdx = courseGroupsRef.current.indexOf(group);
+      const newSections = [
+        ...otherSections,
+        ...newCombo.sections.map((sec: any) => ({
+          course: newCombo.course,
+          section: sec,
+          colorIndex: groupIdx % 8,
+          geTag: group.geTag,
+        })),
+      ];
+
+      const updated = [...schedules];
+      updated[activeIdx] = {
+        ...schedule,
+        sections: newSections,
+      };
+      setSchedules(updated);
+      setSwappingCourse(null);
+    },
+    [schedules, activeIdx],
+  );
 
   if (loading) {
     return (
@@ -626,12 +724,116 @@ export default function ResultsView({
                       style={{ background: color.bg }}
                     />
                     <span
-                      className="font-display text-base tracking-wider"
+                      className="font-display text-base tracking-wider flex-1"
                       style={{ color: "var(--cardinal)" }}
                     >
                       {s.course.department} {s.course.number}
                     </span>
+                    {s.section.type.toLowerCase().includes("lecture") && (
+                      <button
+                        onClick={() => {
+                          const key = courseGroupsRef.current.find((g) =>
+                            g.label.includes(
+                              `${s.course.department} ${s.course.number}`,
+                            ),
+                          )?.label;
+                          if (key)
+                            setSwappingCourse(
+                              swappingCourse === key ? null : key,
+                            );
+                        }}
+                        className="font-display text-[10px] tracking-wider px-2 py-0.5 border hover:bg-[var(--gold)] transition-colors"
+                        style={{
+                          borderColor: "var(--beige)",
+                          borderRadius: "3px",
+                        }}
+                      >
+                        SWAP
+                      </button>
+                    )}
                   </div>
+                  {/* Swap alternatives panel */}
+                  {swappingCourse &&
+                    courseGroupsRef.current
+                      .find((g) => g.label === swappingCourse)
+                      ?.label.includes(
+                        `${s.course.department} ${s.course.number}`,
+                      ) &&
+                    s.section.type.toLowerCase().includes("lecture") && (
+                      <div
+                        className="mb-3 p-3 border-[2px] space-y-2"
+                        style={{
+                          borderColor: "var(--gold)",
+                          background: "var(--cream)",
+                          borderRadius: "4px",
+                        }}
+                      >
+                        <p
+                          className="font-display text-[10px] tracking-wider"
+                          style={{ color: "var(--mid)" }}
+                        >
+                          ALTERNATIVE SECTIONS
+                        </p>
+                        {courseGroupsRef.current
+                          .find((g) => g.label === swappingCourse)
+                          ?.combos.slice(0, 8)
+                          .map((combo: any, ci: number) => {
+                            const lec = combo.sections.find(
+                              (sec: any) =>
+                                sec.type.toLowerCase().includes("lecture") ||
+                                !sec.type,
+                            );
+                            if (!lec) return null;
+                            const inst = lec.instructor?.lastName
+                              ? `${lec.instructor.firstName} ${lec.instructor.lastName}`
+                              : "TBA";
+                            const time = lec.times?.[0];
+                            const timeStr = time?.start_time
+                              ? `${time.day} ${time.start_time}`
+                              : "TBA";
+                            const isCurrent = s.section.id === lec.id;
+                            return (
+                              <button
+                                key={ci}
+                                onClick={() =>
+                                  !isCurrent && handleSwap(swappingCourse, ci)
+                                }
+                                disabled={isCurrent}
+                                className="w-full text-left p-2 border text-xs flex justify-between items-center hover:bg-white transition-colors"
+                                style={{
+                                  borderColor: isCurrent
+                                    ? "var(--cardinal)"
+                                    : "var(--beige)",
+                                  background: isCurrent
+                                    ? "white"
+                                    : "transparent",
+                                  borderRadius: "3px",
+                                  opacity: isCurrent ? 0.6 : 1,
+                                }}
+                              >
+                                <span style={{ color: "var(--black)" }}>
+                                  {inst} — {timeStr}
+                                </span>
+                                {isCurrent ? (
+                                  <span
+                                    className="font-display text-[9px] tracking-wider"
+                                    style={{ color: "var(--mid)" }}
+                                  >
+                                    CURRENT
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="font-display text-[9px] tracking-wider"
+                                    style={{ color: "var(--cardinal)" }}
+                                  >
+                                    SELECT
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                      </div>
+                    )}
 
                   {/* Tags row */}
                   <div className="flex items-center gap-2 mb-2 flex-wrap">

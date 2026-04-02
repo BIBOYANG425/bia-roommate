@@ -286,21 +286,26 @@ export default function InterestInput({
           LEVEL:
         </span>
         <div className="inline-flex gap-2 flex-wrap">
-          {([
-            { value: null, label: "ANY" },
-            { value: "lower", label: "LOWER (100-299)" },
-            { value: "upper", label: "UPPER (300-499)" },
-            { value: "graduate", label: "GRADUATE (500+)" },
-          ] as const).map((opt) => (
+          {(
+            [
+              { value: null, label: "ANY" },
+              { value: "lower", label: "LOWER (100-299)" },
+              { value: "upper", label: "UPPER (300-499)" },
+              { value: "graduate", label: "GRADUATE (500+)" },
+            ] as const
+          ).map((opt) => (
             <button
               key={opt.label}
-              onClick={() => setLevelFilter(levelFilter === opt.value ? null : opt.value)}
+              onClick={() =>
+                setLevelFilter(levelFilter === opt.value ? null : opt.value)
+              }
               disabled={loading}
               aria-pressed={levelFilter === opt.value}
               className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
               style={{
                 borderColor: "var(--beige)",
-                background: levelFilter === opt.value ? "var(--cardinal)" : "white",
+                background:
+                  levelFilter === opt.value ? "var(--cardinal)" : "white",
                 color: levelFilter === opt.value ? "white" : "var(--black)",
                 borderRadius: "20px",
                 opacity: loading ? 0.5 : 1,

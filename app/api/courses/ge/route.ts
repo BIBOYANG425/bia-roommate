@@ -62,11 +62,13 @@ export async function GET(request: NextRequest) {
   const { requirementPrefix, categoryPrefix } = GE_MAP[category];
 
   try {
-    // Get GE courses for this category
-    const res = await fetch(
-      `https://classes.usc.edu/api/Courses/GeCoursesByTerm?termCode=${semester}&geRequirementPrefix=${requirementPrefix}&categoryPrefix=${categoryPrefix}`,
-      { next: { revalidate: 600 } },
-    );
+    // GESM uses department search, regular GE uses GE requirement API
+    const isGESM = category === "GESM";
+    const apiUrl = isGESM
+      ? `https://classes.usc.edu/api/Courses/CoursesByDepartment?termCode=${semester}&departmentPrefix=GESM`
+      : `https://classes.usc.edu/api/Courses/GeCoursesByTerm?termCode=${semester}&geRequirementPrefix=${requirementPrefix}&categoryPrefix=${categoryPrefix}`;
+
+    const res = await fetch(apiUrl, { next: { revalidate: 600 } });
 
     if (!res.ok) {
       return Response.json({ error: "USC API error" }, { status: res.status });
@@ -98,12 +100,14 @@ export async function GET(request: NextRequest) {
           restrictions: restrictions.length > 0 ? restrictions : undefined,
         };
       })
+      .map((c: any) => ({
+        ...c,
+        sections: c.sections.filter((s: any) => !s.isCancelled && !s.isClosed),
+      }))
       .filter((c: any) => {
-        // Only include courses that have at least one non-cancelled section with actual times
-        return c.sections.some(
-          (s: any) =>
-            !s.isCancelled &&
-            s.times.some((t: any) => t.start_time && t.day !== "TBA"),
+        // Only include courses that have at least one open section with actual times
+        return c.sections.some((s: any) =>
+          s.times.some((t: any) => t.start_time && t.day !== "TBA"),
         );
       });
 

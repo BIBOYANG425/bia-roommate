@@ -37,7 +37,9 @@ export default function CourseRatingDetailPage() {
   const [aggregate, setAggregate] = useState<CourseAggregate | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProfessor, setSelectedProfessor] = useState<string | null>(null);
+  const [selectedProfessor, setSelectedProfessor] = useState<string | null>(
+    null,
+  );
   const [showDescription, setShowDescription] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
 
@@ -48,7 +50,7 @@ export default function CourseRatingDetailPage() {
     const [courseResult, reviewsResult] = await Promise.allSettled([
       fetch(`/api/courses/${dept}/${courseNumber}`),
       fetch(
-        `/api/course-rating/reviews?dept=${encodeURIComponent(dept)}&number=${encodeURIComponent(courseNumber)}`
+        `/api/course-rating/reviews?dept=${encodeURIComponent(dept)}&number=${encodeURIComponent(courseNumber)}`,
       ),
     ]);
 
@@ -156,7 +158,10 @@ export default function CourseRatingDetailPage() {
                 )}
               </div>
               {course?.title && (
-                <p className="font-mono text-sm mt-1" style={{ color: "var(--black)" }}>
+                <p
+                  className="font-mono text-sm mt-1"
+                  style={{ color: "var(--black)" }}
+                >
                   {course.title}
                 </p>
               )}
@@ -177,7 +182,9 @@ export default function CourseRatingDetailPage() {
                 className="border-[3px] border-[var(--cardinal)] p-6 text-center mb-6"
                 style={{ background: "var(--cream)" }}
               >
-                <p className="font-display text-lg mb-1">BE THE FIRST TO REVIEW!</p>
+                <p className="font-display text-lg mb-1">
+                  BE THE FIRST TO REVIEW!
+                </p>
                 <p className="font-mono text-[11px] text-[var(--mid)] mb-3">
                   这门课还没有评价，来分享你的体验吧
                 </p>

@@ -126,7 +126,8 @@ function CourseCard({
                 <span
                   className="px-1.5 py-0.5 text-[10px] font-display tracking-wider"
                   style={{
-                    background: "color-mix(in srgb, var(--cardinal) 10%, white)",
+                    background:
+                      "color-mix(in srgb, var(--cardinal) 10%, white)",
                     color: "var(--cardinal)",
                     borderRadius: "3px",
                   }}
@@ -143,31 +144,34 @@ function CourseCard({
           )}
 
           {/* Section topics for non-section-level recs (fallback) */}
-          {!rec.sectionId && rec.sectionTopics && rec.sectionTopics.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-1">
-              {rec.sectionTopics.slice(0, 4).map((topic) => (
-                <span
-                  key={topic}
-                  className="px-1.5 py-0.5 text-[10px]"
-                  style={{
-                    background: "color-mix(in srgb, var(--cardinal) 8%, white)",
-                    color: "var(--cardinal)",
-                    borderRadius: "3px",
-                  }}
-                >
-                  {topic}
-                </span>
-              ))}
-              {rec.sectionTopics.length > 4 && (
-                <span
-                  className="px-1.5 py-0.5 text-[10px]"
-                  style={{ color: "var(--mid)" }}
-                >
-                  +{rec.sectionTopics.length - 4} more
-                </span>
-              )}
-            </div>
-          )}
+          {!rec.sectionId &&
+            rec.sectionTopics &&
+            rec.sectionTopics.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-1">
+                {rec.sectionTopics.slice(0, 4).map((topic) => (
+                  <span
+                    key={topic}
+                    className="px-1.5 py-0.5 text-[10px]"
+                    style={{
+                      background:
+                        "color-mix(in srgb, var(--cardinal) 8%, white)",
+                      color: "var(--cardinal)",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    {topic}
+                  </span>
+                ))}
+                {rec.sectionTopics.length > 4 && (
+                  <span
+                    className="px-1.5 py-0.5 text-[10px]"
+                    style={{ color: "var(--mid)" }}
+                  >
+                    +{rec.sectionTopics.length - 4} more
+                  </span>
+                )}
+              </div>
+            )}
 
           {/* Suggested lecturer (for non-section recs) */}
           {!rec.sectionId && rec.suggestedInstructor && (

@@ -12,8 +12,8 @@ export function getCurrentSemesterCode(): string {
   // Spring (Jan-May): planning for Fall → Fall same year
   // Summer (Jun-Jul): planning for Fall → Fall same year
   // Fall (Aug-Dec): planning for Spring → Spring next year
-  if (month <= 7) return `${year}3`;       // → Fall of current year
-  return `${year + 1}1`;                    // → Spring of next year
+  if (month <= 7) return `${year}3`; // → Fall of current year
+  return `${year + 1}1`; // → Spring of next year
 }
 
 export function semesterLabel(code: string): string {

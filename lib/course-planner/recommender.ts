@@ -129,7 +129,11 @@ function scoreTier2(
     freshmanBonus;
 
   const allMatched = [
-    ...new Set([...descResult.matched, ...titleResult.matched, ...topicMatched]),
+    ...new Set([
+      ...descResult.matched,
+      ...titleResult.matched,
+      ...topicMatched,
+    ]),
   ];
 
   return { score, matched: allMatched, matchedTopic: bestTopic };
@@ -237,12 +241,17 @@ export async function getRecommendations(
   // that can only be matched once we fetch full course details.
   const MULTI_TOPIC_PREFIXES = new Set(["WRIT", "GESM"]);
   const top30Set = new Set(
-    tier1Scored.slice(0, 30).map((x) => x.course.scheduledCourseCode.courseSmashed),
+    tier1Scored
+      .slice(0, 30)
+      .map((x) => x.course.scheduledCourseCode.courseSmashed),
   );
   const multiTopicExtra = autoCourses
     .filter((c) => {
       const prefix = c.scheduledCourseCode?.prefix || c.prefix || "";
-      return MULTI_TOPIC_PREFIXES.has(prefix) && !top30Set.has(c.scheduledCourseCode.courseSmashed);
+      return (
+        MULTI_TOPIC_PREFIXES.has(prefix) &&
+        !top30Set.has(c.scheduledCourseCode.courseSmashed)
+      );
     })
     .slice(0, 15)
     .map((c) => ({ course: c, score: 0, matched: [] as string[] }));
@@ -360,9 +369,7 @@ export async function getRecommendations(
         relevanceScore: Math.round(score * 100) / 100,
         matchReasons: reasons,
         sectionTopics:
-          detail.sectionTopics.length > 0
-            ? detail.sectionTopics
-            : undefined,
+          detail.sectionTopics.length > 0 ? detail.sectionTopics : undefined,
       });
     }
   }

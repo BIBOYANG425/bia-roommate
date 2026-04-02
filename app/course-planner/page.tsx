@@ -137,7 +137,12 @@ function PlannerContent() {
   );
 
   const handleAgentSearch = useCallback(
-    (interests: string, units: string | null, thinking: boolean, level: string | null) => {
+    (
+      interests: string,
+      units: string | null,
+      thinking: boolean,
+      level: string | null,
+    ) => {
       setAgentQuery({ interests, units, thinking, level });
       setMode("agentChat");
     },
@@ -550,7 +555,6 @@ function PlannerContent() {
                             ))}
                           </div>
                         )}
-
                       </div>
                     )}
 
@@ -583,7 +587,10 @@ function PlannerContent() {
                     {/* Section topics (both modes) */}
                     {rec.sectionTopics && rec.sectionTopics.length > 1 && (
                       <div className="mt-1.5">
-                        <span className="text-[10px]" style={{ color: "var(--mid)" }}>
+                        <span
+                          className="text-[10px]"
+                          style={{ color: "var(--mid)" }}
+                        >
                           Topics:
                         </span>
                         <div className="flex flex-wrap gap-1 mt-0.5">
@@ -592,7 +599,8 @@ function PlannerContent() {
                               key={topic}
                               className="px-2 py-0.5 text-[10px]"
                               style={{
-                                background: "color-mix(in srgb, var(--cardinal) 10%, white)",
+                                background:
+                                  "color-mix(in srgb, var(--cardinal) 10%, white)",
                                 color: "var(--cardinal)",
                                 borderRadius: "10px",
                               }}
@@ -601,7 +609,10 @@ function PlannerContent() {
                             </span>
                           ))}
                           {rec.sectionTopics.length > 6 && (
-                            <span className="text-[10px]" style={{ color: "var(--mid)" }}>
+                            <span
+                              className="text-[10px]"
+                              style={{ color: "var(--mid)" }}
+                            >
                               +{rec.sectionTopics.length - 6} more
                             </span>
                           )}

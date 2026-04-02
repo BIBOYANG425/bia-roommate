@@ -1,5 +1,8 @@
 import { NextRequest } from "next/server";
-import { getRecommendations, RecommendedCourse } from "@/lib/course-planner/recommender";
+import {
+  getRecommendations,
+  RecommendedCourse,
+} from "@/lib/course-planner/recommender";
 import { runAgent, AgentRecommendation } from "@/lib/course-planner/agent";
 import { corsHeaders, handleOptions } from "@/lib/cors";
 

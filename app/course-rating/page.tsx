@@ -16,7 +16,11 @@ const POPULAR_COURSES = [
     courses: [
       { dept: "CSCI", number: "104", title: "Data Structures" },
       { dept: "CSCI", number: "170", title: "Discrete Methods" },
-      { dept: "CSCI", number: "201", title: "Principles of Software Development" },
+      {
+        dept: "CSCI",
+        number: "201",
+        title: "Principles of Software Development",
+      },
       { dept: "MATH", number: "225", title: "Linear Algebra" },
       { dept: "MATH", number: "226", title: "Calculus III" },
       { dept: "WRIT", number: "150", title: "Writing and Critical Reasoning" },
@@ -30,14 +34,22 @@ const POPULAR_COURSES = [
     levelZh: "高阶课程",
     courses: [
       { dept: "CSCI", number: "310", title: "Software Engineering" },
-      { dept: "CSCI", number: "356", title: "Introduction to Computer Systems" },
+      {
+        dept: "CSCI",
+        number: "356",
+        title: "Introduction to Computer Systems",
+      },
       { dept: "CSCI", number: "360", title: "Introduction to AI" },
       { dept: "BUAD", number: "304", title: "Organizational Behavior" },
       { dept: "BUAD", number: "306", title: "Business Finance" },
       { dept: "ACCT", number: "410", title: "Foundations of Accounting" },
       { dept: "ECON", number: "305", title: "Intermediate Microeconomics" },
       { dept: "ITP", number: "303", title: "Full-Stack Web Development" },
-      { dept: "COMM", number: "322", title: "Communication and Social Influence" },
+      {
+        dept: "COMM",
+        number: "322",
+        title: "Communication and Social Influence",
+      },
     ],
   },
   {
@@ -47,8 +59,16 @@ const POPULAR_COURSES = [
       { dept: "CSCI", number: "570", title: "Analysis of Algorithms" },
       { dept: "CSCI", number: "561", title: "Foundations of AI" },
       { dept: "CSCI", number: "585", title: "Database Systems" },
-      { dept: "EE", number: "503", title: "Probability for Electrical Engineers" },
-      { dept: "DSCI", number: "510", title: "Principles of Programming for Data Science" },
+      {
+        dept: "EE",
+        number: "503",
+        title: "Probability for Electrical Engineers",
+      },
+      {
+        dept: "DSCI",
+        number: "510",
+        title: "Principles of Programming for Data Science",
+      },
       { dept: "DSCI", number: "553", title: "Foundations of Data Mining" },
       { dept: "FBE", number: "529", title: "Financial Analysis and Valuation" },
       { dept: "GSBA", number: "510", title: "Accounting Concepts" },
@@ -124,11 +144,11 @@ export default function CourseRatingPage() {
 
         {/* Tab switcher */}
         <div className="flex gap-2 mb-6">
-          {([
+          {[
             { key: "recent" as Tab, label: "最近评价" },
             { key: "top-rated" as Tab, label: "热门推荐" },
             { key: "curated" as Tab, label: "推荐课单" },
-          ]).map((t) => (
+          ].map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
@@ -153,10 +173,22 @@ export default function CourseRatingPage() {
                 key={i}
                 className="brutal-card p-4 animate-pulse flex flex-col gap-2"
               >
-                <div className="h-6 w-24" style={{ background: "var(--beige)" }} />
-                <div className="h-3 w-full" style={{ background: "var(--beige)" }} />
-                <div className="h-3 w-3/4" style={{ background: "var(--beige)" }} />
-                <div className="h-3 w-1/2" style={{ background: "var(--beige)" }} />
+                <div
+                  className="h-6 w-24"
+                  style={{ background: "var(--beige)" }}
+                />
+                <div
+                  className="h-3 w-full"
+                  style={{ background: "var(--beige)" }}
+                />
+                <div
+                  className="h-3 w-3/4"
+                  style={{ background: "var(--beige)" }}
+                />
+                <div
+                  className="h-3 w-1/2"
+                  style={{ background: "var(--beige)" }}
+                />
               </div>
             ))}
           </div>
@@ -176,7 +208,9 @@ export default function CourseRatingPage() {
                 className="border-[3px] border-[var(--cardinal)] p-6 text-center mb-6"
                 style={{ background: "var(--cream)" }}
               >
-                <p className="font-display text-lg mb-2">BE THE FIRST TO REVIEW!</p>
+                <p className="font-display text-lg mb-2">
+                  BE THE FIRST TO REVIEW!
+                </p>
                 <p className="font-mono text-[11px] text-[var(--mid)] mb-4">
                   还没有课评，搜索课程或点击下方热门课程，分享你的体验
                 </p>
@@ -188,11 +222,16 @@ export default function CourseRatingPage() {
                 </button>
               </div>
 
-              <p className="font-display text-sm tracking-wider mb-3">DISCOVER BY INTEREST</p>
+              <p className="font-display text-sm tracking-wider mb-3">
+                DISCOVER BY INTEREST
+              </p>
               {POPULAR_COURSES.map((section) => (
                 <div key={section.level} className="mb-6">
                   <div className="flex items-baseline gap-2 mb-2">
-                    <span className="font-display text-xs tracking-wider" style={{ color: "var(--cardinal)" }}>
+                    <span
+                      className="font-display text-xs tracking-wider"
+                      style={{ color: "var(--cardinal)" }}
+                    >
                       {section.level}
                     </span>
                     <span className="font-mono text-[10px] text-[var(--mid)]">
@@ -203,10 +242,15 @@ export default function CourseRatingPage() {
                     {section.courses.map((c) => (
                       <button
                         key={`${c.dept}-${c.number}`}
-                        onClick={() => router.push(`/course-rating/${c.dept}/${c.number}`)}
+                        onClick={() =>
+                          router.push(`/course-rating/${c.dept}/${c.number}`)
+                        }
                         className="brutal-card p-4 cursor-pointer text-left flex flex-col gap-1"
                       >
-                        <span className="font-display text-base" style={{ color: "var(--cardinal)" }}>
+                        <span
+                          className="font-display text-base"
+                          style={{ color: "var(--cardinal)" }}
+                        >
                           {c.dept} {c.number}
                         </span>
                         <span className="font-mono text-[11px]">{c.title}</span>
@@ -251,7 +295,9 @@ export default function CourseRatingPage() {
                       <span className="font-mono text-[11px]">{c.title}</span>
                       <div className="flex gap-2 mt-1">
                         {c.units && (
-                          <span className="brutal-tag text-[9px]">{c.units} units</span>
+                          <span className="brutal-tag text-[9px]">
+                            {c.units} units
+                          </span>
                         )}
                         {c.geTag && (
                           <span className="brutal-tag brutal-tag-gold text-[9px]">
@@ -270,7 +316,9 @@ export default function CourseRatingPage() {
             className="border-[3px] border-[var(--black)] p-8 text-center"
             style={{ background: "var(--cream)" }}
           >
-            <p className="font-display text-lg mb-2">CURATED LISTS COMING SOON</p>
+            <p className="font-display text-lg mb-2">
+              CURATED LISTS COMING SOON
+            </p>
             <p className="font-mono text-[11px] text-[var(--mid)]">
               Search for a course above to see or write reviews.
             </p>

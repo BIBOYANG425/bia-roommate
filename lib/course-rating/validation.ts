@@ -41,7 +41,9 @@ export const reviewSchema = z.object({
   comment: z
     .string()
     .transform((v) => v.trim())
-    .pipe(z.string().min(10, "Review must be at least 10 characters").max(2000)),
+    .pipe(
+      z.string().min(10, "Review must be at least 10 characters").max(2000),
+    ),
 });
 
 export type ReviewInput = z.infer<typeof reviewSchema>;
