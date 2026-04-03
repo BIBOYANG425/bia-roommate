@@ -2,9 +2,13 @@
 
 :root {
   --beige: #f2ebd9;
-  --cream: #faf6ec;
+  --cream: #F2EBD9;
+  --cream-light: #FAF6EC;
   --black: #1a1410;
+  --ink: #1A1410;
+  --ink-muted: #8C7E6A;
   --cardinal: #990000;
+  --crimson: #990000;
   --gold: #ffcc00;
   --mid: #8c7e6a;
   --berkeley-blue: #014b83;
@@ -13,6 +17,8 @@
   --stanford-gold: #eaab00;
   --font-display: var(--font-display);
   --font-body: var(--font-body);
+  --font-display-en: var(--font-display-en);
+  --font-display-zh: var(--font-display-zh);
 }
 
 * {
@@ -522,4 +528,107 @@ body {
     min-height: auto;
     max-height: 50vh;
   }
+}
+
+/* ─── Landing Page ─── */
+
+/* Scroll-driven reveal */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scroll-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Scroll indicator pulse */
+@keyframes scroll-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.4;
+    transform: translateY(6px);
+  }
+}
+.scroll-indicator {
+  animation: scroll-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-indicator {
+    animation: none;
+  }
+}
+
+/* Landing page pillar row */
+.pillar-row {
+  transition: color 200ms ease-out;
+}
+.pillar-row:hover {
+  color: var(--crimson);
+}
+
+/* Landing service card */
+.service-card {
+  background: var(--cream);
+  border: 1px solid var(--ink-muted);
+  transition:
+    border-color 200ms ease-out,
+    transform 200ms ease-out,
+    box-shadow 200ms ease-out;
+}
+.service-card:hover {
+  border-color: var(--crimson);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(26, 20, 16, 0.08);
+}
+
+/* Footer link hover */
+.hover-underline-cream {
+  border-bottom: 1px solid transparent;
+}
+.hover-underline-cream:hover {
+  border-bottom-color: var(--cream);
+}
+
+/* Dot-grid background pattern */
+.dot-grid {
+  background-image: radial-gradient(
+    circle,
+    var(--ink-muted) 0.6px,
+    transparent 0.6px
+  );
+  background-size: 24px 24px;
+}
+
+/* Service card icon color transition */
+.service-card .service-icon {
+  color: var(--ink-muted);
+  transition: color 200ms ease-out;
+}
+.service-card:hover .service-icon {
+  color: var(--crimson);
+}
+
+/* Event dot decoration */
+.event-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ink-muted);
+  flex-shrink: 0;
 }

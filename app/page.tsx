@@ -1,450 +1,652 @@
-"use client";
-
-import { useEffect, useState, useCallback, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import ScrollReveal from "@/components/ScrollReveal";
 import {
-  RoommateProfile,
-  GENDER_OPTIONS,
-  YEAR_OPTIONS,
-  SCHOOL_OPTIONS,
-} from "@/lib/types";
-import ProfileCard from "@/components/ProfileCard";
-import ProfileModal from "@/components/ProfileModal";
-import SkeletonCard from "@/components/SkeletonCard";
-import Toast from "@/components/Toast";
-import NavTabs from "@/components/NavTabs";
+  BridgeIllustration,
+  CloudDivider,
+  CulturalBridge,
+  CircuitNode,
+  CompassRose,
+  IconHome,
+  IconKey,
+  IconUsers,
+  IconBook,
+  IconStar,
+  IconChat,
+} from "@/components/illustrations";
+import type { ComponentType, SVGProps } from "react";
 
-function Marquee({
-  bg,
-  text,
-  items,
-}: {
-  bg: string;
-  text: string;
-  items: string[];
-}) {
-  const content = items.join("  //  ") + "  //  ";
+const PILLARS = [
+  {
+    num: "01",
+    name: "Cultural Bridge",
+    description:
+      "Meaningful exchange between international students and American communities — orientation events, social gatherings, and cross-cultural dialogue.",
+    Icon: CulturalBridge,
+  },
+  {
+    num: "02",
+    name: "Tech & Innovation",
+    description:
+      "Exploring and applying cutting-edge technology trends — AI hackathons, startup talks, and hands-on building sessions.",
+    Icon: CircuitNode,
+  },
+  {
+    num: "03",
+    name: "Career Development",
+    description:
+      "Company sharing sessions, resume optimization, and resource matching to help international students enter the global workforce.",
+    Icon: CompassRose,
+  },
+];
+
+const SERVICES: {
+  label: string;
+  sub: string;
+  href: string;
+  Icon: ComponentType<SVGProps<SVGSVGElement>>;
+}[] = [
+  { label: "找室友", sub: "Roommate Match", href: "/roommates", Icon: IconHome },
+  { label: "转租", sub: "Sublet", href: "/sublet", Icon: IconKey },
+  { label: "找搭子", sub: "Find Partners", href: "/roommates", Icon: IconUsers },
+  { label: "选课", sub: "Course Planner", href: "/course-planner", Icon: IconBook },
+  { label: "课评", sub: "Course Reviews", href: "/course-rating", Icon: IconStar },
+  { label: "USC 新生群", sub: "Freshman Groups", href: "/usc-group", Icon: IconChat },
+];
+
+const EVENTS = [
+  {
+    title: "miHoYo Recruiting Session",
+    date: "Oct 2025",
+    detail: "500+ attendees. Exclusive campus recruiting event.",
+  },
+  {
+    title: "Startup 101 with YC China",
+    date: "Dec 2025",
+    detail: "Founders from Y Combinator China share real startup lessons.",
+  },
+  {
+    title: "AI Hackathon",
+    date: "Spring 2026",
+    detail: "Build with LLMs, ship in 48 hours, win prizes.",
+  },
+];
+
+export default function LandingPage() {
   return (
-    <div
-      className="overflow-hidden border-y-[3px] border-[var(--black)]"
-      style={{ background: bg, color: text }}
-    >
-      <div className="marquee-track py-2">
-        <span className="font-display text-sm tracking-[0.15em] whitespace-nowrap px-4">
-          {content}
-        </span>
-        <span className="font-display text-sm tracking-[0.15em] whitespace-nowrap px-4">
-          {content}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function HomeContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [profiles, setProfiles] = useState<RoommateProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showToast, setShowToast] = useState(false);
-  const [selectedProfile, setSelectedProfile] =
-    useState<RoommateProfile | null>(null);
-  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
-
-  const [search, setSearch] = useState("");
-  const [schoolFilter, setSchoolFilter] = useState("");
-  const [genderFilter, setGenderFilter] = useState("");
-  const [yearFilter, setYearFilter] = useState("");
-
-  useEffect(() => {
-    if (searchParams.get("submitted") === "true") {
-      setShowToast(true);
-      router.replace("/", { scroll: false });
-    }
-  }, [searchParams, router]);
-
-  const fetchProfiles = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const { data, error: err } = await supabase
-      .from("roommate_profiles")
-      .select("*")
-      .eq("visible", true)
-      .order("created_at", { ascending: false });
-
-    if (err) {
-      setError("LOAD FAILED — RETRY");
-      setLoading(false);
-      return;
-    }
-    setProfiles(data || []);
-    if (data && data.length > 0) {
-      const ids = data.map((p: RoommateProfile) => p.id).join(",");
-      fetch(`/api/likes/count?ids=${ids}`)
-        .then((r) => r.json())
-        .then(setLikeCounts)
-        .catch(() => {});
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    fetchProfiles();
-  }, [fetchProfiles]);
-
-  const filtered = profiles.filter((p) => {
-    if (schoolFilter && p.school !== schoolFilter) return false;
-    if (genderFilter && p.gender !== genderFilter) return false;
-    if (yearFilter && p.year !== yearFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      const matchName = p.name.toLowerCase().includes(q);
-      const matchMajor = p.major?.toLowerCase().includes(q);
-      const matchTags = p.tags?.some((t) => t.toLowerCase().includes(q));
-      const matchHobbies = p.hobbies?.toLowerCase().includes(q);
-      if (!matchName && !matchMajor && !matchTags && !matchHobbies)
-        return false;
-    }
-    return true;
-  });
-
-  // Override CSS variables at page level so every element inherits school colors
-  const schoolVars: React.CSSProperties = {};
-  if (schoolFilter === "UC Berkeley") {
-    Object.assign(schoolVars, {
-      "--cardinal": "#014B83",
-      "--gold": "#FEDD76",
-    } as Record<string, string>);
-  } else if (schoolFilter === "Stanford") {
-    Object.assign(schoolVars, {
-      "--cardinal": "#8C1515",
-      "--gold": "#EAAB00",
-    } as Record<string, string>);
-  }
-
-  return (
-    <main className="min-h-screen" style={schoolVars}>
-      {showToast && (
-        <Toast
-          message="PROFILE DROPPED SUCCESSFULLY"
-          onClose={() => setShowToast(false)}
-        />
-      )}
-
-      {/* Nav */}
-      <NavTabs />
-
-      {/* Top Marquee */}
-      <Marquee
-        bg="var(--cardinal)"
-        text="var(--gold)"
-        items={[
-          "BIA 新生找室友",
-          "FIND YOUR ROOMMATE",
-          "CLASS OF 2030",
-          "NEW DROP",
-          "USC ✕ BERKELEY ✕ STANFORD",
-          "ROOMMATE MATCH",
-        ]}
-      />
-
-      {/* Hero */}
-      <section
-        className="relative overflow-hidden border-b-[3px] border-[var(--black)]"
+    <main>
+      {/* ─── Minimal Nav ─── */}
+      <nav
+        className="flex items-center justify-between px-6 sm:px-10 py-5"
         style={{ background: "var(--cream)" }}
       >
-        <div className="ghost-text -left-4 top-1/2 -translate-y-1/2">
-          ROOMMATE
+        <Link
+          href="/"
+          className="text-[18px] font-bold tracking-[0.04em]"
+          style={{
+            fontFamily: "var(--font-display-en), serif",
+            color: "var(--ink)",
+          }}
+        >
+          BIA
+        </Link>
+        <Link
+          href="/roommates"
+          className="text-[13px] tracking-[0.02em]"
+          style={{
+            fontFamily: "var(--font-display-zh), serif",
+            color: "var(--ink-muted)",
+            transition: "color 200ms ease-out",
+          }}
+        >
+          新生服务
+        </Link>
+      </nav>
+
+      {/* ─── Hero ─── */}
+      <section
+        className="relative flex flex-col items-center justify-center text-center overflow-hidden"
+        style={{
+          background: "var(--cream)",
+          minHeight: "100svh",
+          paddingLeft: "1.5rem",
+          paddingRight: "1.5rem",
+        }}
+      >
+        {/* Decorative dot pattern along left edge */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "60px",
+            height: "100%",
+            backgroundImage:
+              "radial-gradient(circle, var(--ink-muted) 0.5px, transparent 0.5px)",
+            backgroundSize: "16px 16px",
+            opacity: 0.15,
+          }}
+        />
+        {/* Decorative dot pattern along right edge */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: "60px",
+            height: "100%",
+            backgroundImage:
+              "radial-gradient(circle, var(--ink-muted) 0.5px, transparent 0.5px)",
+            backgroundSize: "16px 16px",
+            opacity: 0.15,
+          }}
+        />
+
+        <h1
+          style={{
+            fontFamily: "var(--font-display-en), serif",
+            fontSize: "clamp(60px, 10vw, 120px)",
+            fontWeight: 400,
+            lineHeight: 0.95,
+            color: "var(--ink)",
+            letterSpacing: "-0.02em",
+            margin: 0,
+          }}
+        >
+          BIA
+        </h1>
+
+        <p
+          className="mt-4 sm:mt-6"
+          style={{
+            fontFamily: "var(--font-display-en), serif",
+            fontSize: "clamp(14px, 2vw, 20px)",
+            fontWeight: 400,
+            color: "var(--ink-muted)",
+            letterSpacing: "0.08em",
+          }}
+        >
+          Bridging Internationals Association
+        </p>
+
+        <p
+          className="mt-3"
+          style={{
+            fontSize: "clamp(11px, 1.2vw, 14px)",
+            color: "var(--ink-muted)",
+            letterSpacing: "0.15em",
+            fontFamily: "system-ui, sans-serif",
+          }}
+        >
+          USC &middot; Est. 2024
+        </p>
+
+        {/* Bridge illustration */}
+        <div className="mt-8 sm:mt-12" aria-hidden="true">
+          <BridgeIllustration
+            style={{
+              color: "var(--ink-muted)",
+              opacity: 0.6,
+              width: "clamp(200px, 40vw, 300px)",
+              height: "auto",
+            }}
+          />
         </div>
-        <div className="max-w-6xl mx-auto px-6 py-16 sm:py-24 relative">
-          <div className="flex items-center gap-6 mb-8">
-            <Image
-              src="/logo.jpg"
-              alt="BIA Class of 2030"
-              width={100}
-              height={100}
-              className="border-[3px] border-[var(--black)]"
-              style={{ boxShadow: "6px 6px 0 var(--cardinal)" }}
+
+        {/* Scroll indicator */}
+        <div
+          className="scroll-indicator absolute bottom-8 left-1/2 -translate-x-1/2"
+          aria-hidden="true"
+        >
+          <svg
+            width="20"
+            height="28"
+            viewBox="0 0 20 28"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect
+              x="1"
+              y="1"
+              width="18"
+              height="26"
+              rx="9"
+              stroke="var(--ink-muted)"
+              strokeWidth="1.5"
             />
-            <div>
-              <div className="new-drop-badge mb-2">NEW DROP 2030</div>
-              <p
-                className="font-display text-sm"
-                style={{ color: "var(--mid)" }}
-              >
-                BIA ROOMMATE MATCH
-              </p>
-            </div>
-          </div>
-
-          <h1
-            className="font-display text-[60px] sm:text-[96px] leading-[0.85] mb-6"
-            style={{ color: "var(--black)" }}
-          >
-            BIA 新生
-            <br />
-            <span className="glitch-text" style={{ color: "var(--cardinal)" }}>
-              找室友
-            </span>
-          </h1>
-
-          <p
-            className="text-sm sm:text-base max-w-md mb-10"
-            style={{ color: "var(--mid)" }}
-          >
-            填写你的生活习惯，找到最合拍的室友。
-            <br />
-            Drop your profile. Find your match.
-          </p>
-
-          <Link
-            href="/submit"
-            className="brutal-btn brutal-btn-primary inline-block"
-          >
-            DROP MY PROFILE →
-          </Link>
+            <circle cx="10" cy="8" r="2" fill="var(--ink-muted)" />
+          </svg>
         </div>
       </section>
 
-      {/* Filters */}
-      <section className="max-w-6xl mx-auto px-6 py-8 relative">
-        <span className="section-number">01</span>
-        <h2
-          className="font-display text-[40px] sm:text-[60px] mb-6"
-          style={{ color: "var(--black)" }}
-        >
-          BROWSE
-        </h2>
+      {/* ─── Cloud Divider ─── */}
+      <div
+        aria-hidden="true"
+        style={{
+          background: "var(--cream-light)",
+          color: "var(--ink-muted)",
+          opacity: 0.4,
+          paddingTop: "0.5rem",
+        }}
+      >
+        <CloudDivider />
+      </div>
 
-        {/* Campus Tabs */}
-        <div className="flex gap-0 mb-6 flex-wrap">
-          {["", "USC", "UC Berkeley", "Stanford"].map((s) => {
-            const active = schoolFilter === s;
-            const label = s || "ALL";
-            let bg = "var(--cream)";
-            let fg = "var(--mid)";
-            if (active) {
-              if (s === "UC Berkeley") {
-                bg = "var(--berkeley-blue)";
-                fg = "white";
-              } else if (s === "Stanford") {
-                bg = "var(--stanford-cardinal)";
-                fg = "white";
-              } else if (s === "USC") {
-                bg = "var(--cardinal)";
-                fg = "white";
-              } else {
-                bg = "var(--black)";
-                fg = "white";
-              }
-            }
-            return (
-              <button
-                key={label}
-                onClick={() => setSchoolFilter(s)}
-                className="font-display text-sm sm:text-base tracking-[0.1em] px-5 sm:px-8 py-3 border-[3px] border-[var(--black)] -mr-[3px] first:mr-0 transition-colors"
-                style={{ background: bg, color: fg }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <input
-            type="text"
-            placeholder="SEARCH NAME / MAJOR / TAGS..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="brutal-input flex-1"
-          />
-          <select
-            value={genderFilter}
-            onChange={(e) => setGenderFilter(e.target.value)}
-            className="brutal-select"
+      {/* ─── Mission ─── */}
+      <section
+        className="py-24 sm:py-32 px-6"
+        style={{ background: "var(--cream-light)" }}
+      >
+        <ScrollReveal>
+          <p
+            className="max-w-3xl mx-auto text-center"
+            style={{
+              fontSize: "clamp(18px, 3vw, 28px)",
+              lineHeight: 1.6,
+              color: "var(--ink)",
+              fontWeight: 400,
+              fontFamily: "system-ui, sans-serif",
+            }}
           >
-            <option value="">ALL GENDERS</option>
-            {GENDER_OPTIONS.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-          <select
-            value={yearFilter}
-            onChange={(e) => setYearFilter(e.target.value)}
-            className="brutal-select"
-          >
-            <option value="">ALL YEARS</option>
-            {YEAR_OPTIONS.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-        </div>
+            We{" "}
+            <span style={{ fontFamily: "var(--font-display-en), serif", fontStyle: "italic" }}>
+              bridge
+            </span>{" "}
+            cultural exchange, encourage members to explore cutting-edge{" "}
+            <span style={{ fontFamily: "var(--font-display-en), serif", fontStyle: "italic" }}>
+              technology
+            </span>
+            , and provide hands-on support to help international students
+            integrate into the{" "}
+            <span style={{ fontFamily: "var(--font-display-en), serif", fontStyle: "italic" }}>
+              American workplace
+            </span>{" "}
+            and the global stage.
+          </p>
+        </ScrollReveal>
+      </section>
 
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
-        ) : error ? (
-          <div className="text-center py-20">
+      {/* ─── Three Pillars ─── */}
+      <section
+        className="relative py-20 sm:py-28 px-6 sm:px-10 dot-grid"
+        style={{ background: "var(--cream)" }}
+      >
+        {/* Dot-grid is set via CSS class; we layer a semi-transparent cream to soften it */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "var(--cream)",
+            opacity: 0.92,
+            pointerEvents: "none",
+          }}
+        />
+
+        <div style={{ position: "relative" }}>
+          <ScrollReveal>
             <p
-              className="font-display text-2xl"
-              style={{ color: "var(--cardinal)" }}
+              className="mb-12 sm:mb-16"
+              style={{
+                fontSize: "11px",
+                letterSpacing: "0.2em",
+                color: "var(--ink-muted)",
+                fontFamily: "system-ui, sans-serif",
+                textTransform: "uppercase",
+              }}
             >
-              {error}
+              What We Do
             </p>
-            <button
-              onClick={fetchProfiles}
-              className="brutal-btn brutal-btn-gold mt-6"
-            >
-              RETRY
-            </button>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-20 relative">
-            <div className="ghost-text left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[120px]">
-              EMPTY
-            </div>
-            <h3
-              className="font-display text-3xl mb-3 relative"
-              style={{ color: "var(--black)" }}
-            >
-              {profiles.length === 0 ? "NO PROFILES YET" : "NO MATCHES"}
-            </h3>
-            <p
-              className="text-sm mb-6 relative"
-              style={{ color: "var(--mid)" }}
-            >
-              {profiles.length === 0
-                ? "Be the first to drop your profile."
-                : "Try adjusting your filters."}
-            </p>
-            {profiles.length === 0 && (
-              <Link
-                href="/submit"
-                className="brutal-btn brutal-btn-primary inline-block relative"
-              >
-                DROP PROFILE
-              </Link>
-            )}
-          </div>
-        ) : (
-          <>
-            <p
-              className="text-xs mb-4"
-              style={{ color: "var(--mid)", fontFamily: "var(--font-body)" }}
-            >
-              {filtered.length} PROFILES FOUND
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filtered.map((profile, i) => (
+          </ScrollReveal>
+
+          <div className="max-w-4xl mx-auto">
+            {PILLARS.map((pillar, i) => (
+              <ScrollReveal key={pillar.num} delay={i * 100}>
                 <div
-                  key={profile.id}
-                  className="reveal"
-                  style={{ animationDelay: `${i * 0.05}s` }}
+                  className="pillar-row py-8 sm:py-10"
+                  style={{
+                    borderTop: "1px solid var(--ink-muted)",
+                    ...(i === PILLARS.length - 1
+                      ? { borderBottom: "1px solid var(--ink-muted)" }
+                      : {}),
+                  }}
                 >
-                  <ProfileCard
-                    profile={profile}
-                    onClick={() => setSelectedProfile(profile)}
-                    likeCount={likeCounts[profile.id]}
-                    onLikeChange={(id, liked) => {
-                      setLikeCounts((prev) => ({
-                        ...prev,
-                        [id]: Math.max(0, (prev[id] || 0) + (liked ? 1 : -1)),
-                      }));
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-8">
+                    {/* Icon + number */}
+                    <div
+                      className="flex items-center gap-3"
+                      style={{ flexShrink: 0 }}
+                    >
+                      <pillar.Icon
+                        style={{
+                          color: "var(--ink-muted)",
+                          opacity: 0.7,
+                          width: "36px",
+                          height: "36px",
+                        }}
+                        aria-hidden="true"
+                      />
+                      <span
+                        style={{
+                          fontFamily: "system-ui, sans-serif",
+                          fontSize: "12px",
+                          color: "var(--ink-muted)",
+                          letterSpacing: "0.05em",
+                          width: "2rem",
+                        }}
+                      >
+                        {pillar.num}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <h3
+                        style={{
+                          fontFamily: "var(--font-display-en), serif",
+                          fontSize: "clamp(22px, 3vw, 32px)",
+                          fontWeight: 400,
+                          color: "var(--ink)",
+                          lineHeight: 1.2,
+                          margin: 0,
+                        }}
+                      >
+                        {pillar.name}
+                      </h3>
+                      <p
+                        className="mt-2 sm:mt-3"
+                        style={{
+                          fontFamily: "system-ui, sans-serif",
+                          fontSize: "clamp(14px, 1.5vw, 16px)",
+                          color: "var(--ink-muted)",
+                          lineHeight: 1.6,
+                          maxWidth: "520px",
+                        }}
+                      >
+                        {pillar.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Services ─── */}
+      <section
+        className="py-20 sm:py-28 px-6 sm:px-10"
+        style={{ background: "var(--cream-light)" }}
+      >
+        <ScrollReveal>
+          <p
+            className="mb-12 sm:mb-16"
+            style={{
+              fontSize: "11px",
+              letterSpacing: "0.2em",
+              color: "var(--ink-muted)",
+              fontFamily: "system-ui, sans-serif",
+              textTransform: "uppercase",
+            }}
+          >
+            新生服务
+          </p>
+        </ScrollReveal>
+
+        <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-6">
+          {SERVICES.map((svc, i) => (
+            <ScrollReveal key={svc.label} delay={i * 80}>
+              <Link href={svc.href} className="block">
+                <div className="service-card rounded-sm px-6 py-8 sm:px-8 sm:py-10">
+                  <svc.Icon
+                    className="service-icon"
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      marginBottom: "12px",
+                    }}
+                    aria-hidden="true"
+                  />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-display-zh), serif",
+                      fontSize: "clamp(20px, 2.5vw, 26px)",
+                      fontWeight: 400,
+                      color: "var(--ink)",
+                      display: "block",
+                    }}
+                  >
+                    {svc.label}
+                  </span>
+                  <span
+                    className="mt-1 block"
+                    style={{
+                      fontFamily: "system-ui, sans-serif",
+                      fontSize: "12px",
+                      color: "var(--ink-muted)",
+                      letterSpacing: "0.03em",
+                    }}
+                  >
+                    {svc.sub}
+                  </span>
+                </div>
+              </Link>
+            </ScrollReveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── Events ─── */}
+      <section
+        className="py-20 sm:py-28 px-6 sm:px-10"
+        style={{ background: "var(--cream)" }}
+      >
+        <ScrollReveal>
+          <p
+            className="mb-12 sm:mb-16"
+            style={{
+              fontSize: "11px",
+              letterSpacing: "0.2em",
+              color: "var(--ink-muted)",
+              fontFamily: "system-ui, sans-serif",
+              textTransform: "uppercase",
+            }}
+          >
+            Past Events
+          </p>
+        </ScrollReveal>
+
+        <div className="max-w-4xl mx-auto">
+          {EVENTS.map((evt, i) => (
+            <ScrollReveal key={evt.title} delay={i * 100}>
+              <div
+                className="py-6 sm:py-8"
+                style={{
+                  borderTop: "1px solid var(--ink-muted)",
+                  ...(i === EVENTS.length - 1
+                    ? { borderBottom: "1px solid var(--ink-muted)" }
+                    : {}),
+                }}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-6">
+                  <div
+                    className="flex items-center gap-2"
+                    style={{ flexShrink: 0, minWidth: "5rem" }}
+                  >
+                    {/* Decorative dots */}
+                    <span className="event-dot" aria-hidden="true" />
+                    <span className="event-dot" aria-hidden="true" />
+                    <span
+                      style={{
+                        fontFamily: "system-ui, sans-serif",
+                        fontSize: "12px",
+                        color: "var(--ink-muted)",
+                        letterSpacing: "0.05em",
+                      }}
+                    >
+                      {evt.date}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <h4
+                      style={{
+                        fontFamily: "var(--font-display-en), serif",
+                        fontSize: "clamp(16px, 2vw, 22px)",
+                        fontWeight: 400,
+                        color: "var(--ink)",
+                        lineHeight: 1.3,
+                        margin: 0,
+                      }}
+                    >
+                      {evt.title}
+                    </h4>
+                    <p
+                      className="mt-1"
+                      style={{
+                        fontFamily: "system-ui, sans-serif",
+                        fontSize: "14px",
+                        color: "var(--ink-muted)",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {evt.detail}
+                    </p>
+                  </div>
+                  {/* Decorative line element on right */}
+                  <div
+                    aria-hidden="true"
+                    className="hidden sm:block"
+                    style={{
+                      width: "32px",
+                      height: "1px",
+                      background: "var(--ink-muted)",
+                      opacity: 0.3,
+                      flexShrink: 0,
+                      alignSelf: "center",
                     }}
                   />
                 </div>
-              ))}
-            </div>
-          </>
-        )}
-      </section>
-
-      {/* Bottom Marquee */}
-      <Marquee
-        bg="var(--gold)"
-        text="var(--cardinal)"
-        items={[
-          "CLASS OF 2030",
-          "FIGHT ON",
-          "GO BEARS",
-          "GO CARDINAL",
-          "BIA",
-          "ROOMMATE MATCH",
-          "DROP YOUR PROFILE",
-        ]}
-      />
-
-      {/* Social Links */}
-      <section
-        className="border-t-[3px] border-[var(--black)] py-8 px-6"
-        style={{ background: "var(--cream)" }}
-      >
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <a
-            href="https://www.instagram.com/bia_usc/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="brutal-btn brutal-btn-ghost text-sm flex items-center gap-2"
-          >
-            <span>INSTAGRAM</span>
-            <span style={{ color: "var(--cardinal)" }}>@BIA_USC</span>
-            <span style={{ color: "var(--mid)", fontSize: "10px" }}>→</span>
-          </a>
-          <a
-            href="https://xhslink.com/m/2t4EzpZAKAc"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="brutal-btn brutal-btn-ghost text-sm flex items-center gap-2"
-          >
-            <span style={{ color: "var(--cardinal)" }}>小红书</span>
-            <span
-              className="new-drop-badge"
-              style={{ fontSize: "9px", padding: "1px 6px" }}
-            >
-              4138 LIKES
-            </span>
-            <span style={{ color: "var(--mid)", fontSize: "10px" }}>→</span>
-          </a>
+              </div>
+            </ScrollReveal>
+          ))}
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-6 px-6 text-center border-t-[3px] border-[var(--black)]">
-        <p
-          className="font-display text-xs tracking-[0.2em]"
-          style={{ color: "var(--mid)" }}
+      {/* ─── Dark Footer ─── */}
+      <footer
+        className="relative py-16 sm:py-20 px-6 sm:px-10 overflow-hidden"
+        style={{ background: "var(--ink)" }}
+      >
+        {/* Decorative bridge illustration in background */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            bottom: "10%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            opacity: 0.04,
+            pointerEvents: "none",
+          }}
         >
-          BIA 新生找室友 — EXCLUSIVE TO BIA FRESHMEN
-        </p>
+          <BridgeIllustration
+            style={{
+              color: "var(--cream)",
+              width: "clamp(300px, 60vw, 500px)",
+              height: "auto",
+            }}
+          />
+        </div>
+
+        <div className="relative max-w-4xl mx-auto text-center">
+          <ScrollReveal>
+            <h2
+              style={{
+                fontFamily: "var(--font-display-en), serif",
+                fontSize: "clamp(28px, 5vw, 48px)",
+                fontWeight: 400,
+                color: "var(--cream)",
+                lineHeight: 1.1,
+                margin: 0,
+              }}
+            >
+              Join BIA
+            </h2>
+            <p
+              className="mt-4 mb-10"
+              style={{
+                fontFamily: "system-ui, sans-serif",
+                fontSize: "14px",
+                color: "var(--ink-muted)",
+                lineHeight: 1.6,
+              }}
+            >
+              3,500+ followers. 1,500+ group chat members. 80+ cohort alumni.
+            </p>
+          </ScrollReveal>
+
+          <ScrollReveal delay={100}>
+            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 mb-12">
+              <a
+                href="https://www.instagram.com/bia_usc/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontFamily: "system-ui, sans-serif",
+                  fontSize: "13px",
+                  color: "var(--cream)",
+                  letterSpacing: "0.05em",
+                  textDecoration: "none",
+                  borderBottom: "1px solid transparent",
+                  transition: "border-color 200ms ease-out",
+                }}
+                className="hover-underline-cream"
+              >
+                Instagram
+              </a>
+              <a
+                href="https://xhslink.com/m/2t4EzpZAKAc"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontFamily: "system-ui, sans-serif",
+                  fontSize: "13px",
+                  color: "var(--cream)",
+                  letterSpacing: "0.05em",
+                  textDecoration: "none",
+                  borderBottom: "1px solid transparent",
+                  transition: "border-color 200ms ease-out",
+                }}
+                className="hover-underline-cream"
+              >
+                小红书
+              </a>
+              <span
+                style={{
+                  fontFamily: "system-ui, sans-serif",
+                  fontSize: "13px",
+                  color: "var(--cream)",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                WeChat: BIA_USC
+              </span>
+            </div>
+          </ScrollReveal>
+
+          <p
+            style={{
+              fontFamily: "system-ui, sans-serif",
+              fontSize: "11px",
+              color: "var(--ink-muted)",
+              letterSpacing: "0.1em",
+            }}
+          >
+            &copy; {new Date().getFullYear()} Bridging Internationals
+            Association at USC
+          </p>
+        </div>
       </footer>
-
-      {/* Detail Modal */}
-      {selectedProfile && (
-        <ProfileModal
-          profile={selectedProfile}
-          onClose={() => setSelectedProfile(null)}
-        />
-      )}
     </main>
-  );
-}
-
-export default function Home() {
-  return (
-    <Suspense>
-      <HomeContent />
-    </Suspense>
   );
 }
