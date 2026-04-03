@@ -33,7 +33,7 @@ export default function SquadModal({
         .eq("post_id", post.id)
         .eq("user_id", user.id)
         .maybeSingle()
-        .then(({ data }) => setHasJoined(!!data))
+        .then((result) => setHasJoined(!!result.data))
         .catch(() => {});
     });
   }, [user, post.id]);
