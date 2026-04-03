@@ -25,17 +25,17 @@ export default function SquadModal({
   // Check if user already joined
   useEffect(() => {
     if (!user) return;
-    import("@/lib/supabase/client").then(({ createBrowserSupabaseClient }) => {
+    (async () => {
+      const { createBrowserSupabaseClient } = await import("@/lib/supabase/client");
       const supabase = createBrowserSupabaseClient();
-      supabase
+      const { data } = await supabase
         .from("squad_members")
         .select("id")
         .eq("post_id", post.id)
         .eq("user_id", user.id)
-        .maybeSingle()
-        .then((result) => setHasJoined(!!result.data))
-        .catch(() => {});
-    });
+        .maybeSingle();
+      setHasJoined(!!data);
+    })().catch(() => {});
   }, [user, post.id]);
 
   const handleJoin = useCallback(async () => {
