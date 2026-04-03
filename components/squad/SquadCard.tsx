@@ -25,7 +25,16 @@ export default function SquadCard({
   return (
     <div
       className="brutal-card p-5 cursor-pointer flex flex-col gap-3 relative"
+      role="button"
+      tabIndex={0}
+      aria-label={`${post.poster_name}的${post.category}搭子帖子`}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
       {/* Header: avatar + name + category tag */}
       <div className="flex items-start justify-between gap-2">

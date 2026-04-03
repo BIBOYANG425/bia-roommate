@@ -36,8 +36,8 @@ create policy "Squad posts viewable by all"
 create policy "Auth users can create squad posts"
   on squad_posts for insert with check (auth.uid() = user_id);
 
-create policy "Squad members viewable by all"
-  on squad_members for select using (true);
+create policy "Squad members viewable by owner"
+  on squad_members for select using (user_id = auth.uid());
 
 create policy "Auth users can join squad posts"
   on squad_members for insert with check (auth.uid() = user_id);
@@ -48,4 +48,55 @@ create policy "Auth users can leave squad posts"
 -- Index for faster category + time queries
 create index if not exists idx_squad_posts_category on squad_posts(category);
 create index if not exists idx_squad_posts_created_at on squad_posts(created_at desc);
-create index if not exists idx_squad_members_post_user on squad_members(post_id, user_id);
+-- View for aggregate member counts (exposes counts without individual memberships)
+create or replace view squad_member_counts as
+  select post_id, count(*)::int as member_count
+  from squad_members
+  group by post_id;
+
+grant select on squad_member_counts to anon, authenticated;
+
+-- Trigger: atomically check capacity and maintain current_people
+create or replace function fn_update_squad_current_people()
+returns trigger
+security definer
+set search_path = public
+language plpgsql as $$
+declare
+  v_current int;
+  v_max int;
+begin
+  if (TG_OP = 'INSERT') then
+    select current_people, max_people
+    into v_current, v_max
+    from squad_posts
+    where id = NEW.post_id
+    for update;
+
+    if v_current is null then
+      raise exception 'post_not_found';
+    end if;
+
+    if v_current >= v_max then
+      raise exception 'squad_full';
+    end if;
+
+    update squad_posts
+    set current_people = current_people + 1
+    where id = NEW.post_id;
+
+    return NEW;
+  elsif (TG_OP = 'DELETE') then
+    update squad_posts
+    set current_people = greatest(1, current_people - 1)
+    where id = OLD.post_id;
+
+    return OLD;
+  end if;
+  return null;
+end;
+$$;
+
+create trigger trg_squad_member_count
+before insert or delete on squad_members
+for each row execute function fn_update_squad_current_people();

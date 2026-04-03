@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { SQUAD_CATEGORIES, SQUAD_GENDER_OPTIONS } from "@/lib/types";
 
 export async function GET() {
   const supabase = await createServerSupabaseClient();
@@ -34,9 +35,27 @@ export async function POST(request: Request) {
     contact,
   } = body;
 
-  if (!poster_name || !category || !content || !contact)
+  const trimmedPosterName = poster_name?.trim() ?? "";
+  const trimmedCategory = category?.trim() ?? "";
+  const trimmedContent = content?.trim() ?? "";
+  const trimmedContact = contact?.trim() ?? "";
+  const trimmedSchool = school?.trim() ?? "";
+  const trimmedLocation = location?.trim() ?? "";
+  const trimmedGender = (gender_restriction?.trim() || "不限");
+
+  if (!trimmedPosterName || !trimmedCategory || !trimmedContent || !trimmedContact)
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+
+  if (!(SQUAD_CATEGORIES as readonly string[]).includes(trimmedCategory))
+    return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+
+  if (!(SQUAD_GENDER_OPTIONS as readonly string[]).includes(trimmedGender))
+    return NextResponse.json({ error: "Invalid gender_restriction" }, { status: 400 });
+
+  const parsedMaxPeople = parseInt(String(max_people), 10);
+  if (isNaN(parsedMaxPeople) || parsedMaxPeople < 1 || parsedMaxPeople > 50)
     return NextResponse.json(
-      { error: "Missing required fields" },
+      { error: "max_people must be between 1 and 50" },
       { status: 400 },
     );
 
@@ -44,16 +63,16 @@ export async function POST(request: Request) {
     .from("squad_posts")
     .insert({
       user_id: user.id,
-      poster_name,
-      school: school || null,
-      category,
-      content,
-      location: location || null,
-      max_people: Number(max_people) || 2,
+      poster_name: trimmedPosterName,
+      school: trimmedSchool || null,
+      category: trimmedCategory,
+      content: trimmedContent,
+      location: trimmedLocation || null,
+      max_people: parsedMaxPeople,
       current_people: 1,
       deadline: deadline || null,
-      gender_restriction: gender_restriction || "不限",
-      contact: contact || null,
+      gender_restriction: trimmedGender,
+      contact: trimmedContact,
     })
     .select()
     .single();

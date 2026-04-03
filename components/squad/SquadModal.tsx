@@ -18,25 +18,53 @@ export default function SquadModal({
   const { user } = useAuth();
   const [joining, setJoining] = useState(false);
   const [hasJoined, setHasJoined] = useState(false);
+  const [membershipLoading, setMembershipLoading] = useState(true);
   const [count, setCount] = useState(post.current_people);
   const catColor = CATEGORY_COLORS[post.category] ?? "#1a1410";
   const isFull = count >= post.max_people;
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = `squad-modal-title-${post.id}`;
 
-  // Check if user already joined
+  // Sync count when parent updates the post prop
   useEffect(() => {
-    if (!user) return;
+    setCount(post.current_people);
+  }, [post.current_people]);
+
+  // Reset join state and look up membership when user or post changes
+  useEffect(() => {
+    setHasJoined(false);
+    setMembershipLoading(true);
+    if (!user) {
+      setMembershipLoading(false);
+      return;
+    }
+    let cancelled = false;
     (async () => {
-      const { createBrowserSupabaseClient } = await import("@/lib/supabase/client");
-      const supabase = createBrowserSupabaseClient();
-      const { data } = await supabase
-        .from("squad_members")
-        .select("id")
-        .eq("post_id", post.id)
-        .eq("user_id", user.id)
-        .maybeSingle();
-      setHasJoined(!!data);
-    })().catch(() => {});
+      try {
+        const { createBrowserSupabaseClient } = await import("@/lib/supabase/client");
+        const supabase = createBrowserSupabaseClient();
+        const { data } = await supabase
+          .from("squad_members")
+          .select("id")
+          .eq("post_id", post.id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (!cancelled) setHasJoined(!!data);
+      } finally {
+        if (!cancelled) setMembershipLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [user, post.id]);
+
+  // Move focus into panel on open; restore to previously focused element on close
+  useEffect(() => {
+    const prevFocus = document.activeElement as HTMLElement | null;
+    panelRef.current?.focus();
+    return () => {
+      prevFocus?.focus();
+    };
+  }, []);
 
   const handleJoin = useCallback(async () => {
     if (!user || joining) return;
@@ -50,15 +78,14 @@ export default function SquadModal({
       if (res.ok) {
         const data = await res.json();
         if (data.error) return;
-        const newCount = data.joined ? count + 1 : Math.max(1, count - 1);
         setHasJoined(data.joined);
-        setCount(newCount);
-        onCountChange?.(post.id, newCount);
+        setCount(data.current_people);
+        onCountChange?.(post.id, data.current_people);
       }
     } finally {
       setJoining(false);
     }
-  }, [user, joining, post.id, count, onCountChange]);
+  }, [user, joining, post.id, onCountChange]);
 
   return (
     <div
@@ -67,7 +94,12 @@ export default function SquadModal({
       onClick={onClose}
     >
       <div
-        className="brutal-container w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="brutal-container w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal header */}
@@ -76,6 +108,7 @@ export default function SquadModal({
           style={{ background: "var(--cream)" }}
         >
           <span
+            id={titleId}
             className="font-display text-2xl"
             style={{ color: "var(--black)" }}
           >
@@ -94,6 +127,7 @@ export default function SquadModal({
             </span>
             <button
               onClick={onClose}
+              aria-label="关闭"
               className="font-display text-xl px-2"
               style={{ color: "var(--mid)" }}
             >
@@ -246,7 +280,7 @@ export default function SquadModal({
           {user ? (
             <button
               onClick={handleJoin}
-              disabled={(!hasJoined && isFull) || joining}
+              disabled={membershipLoading || (!hasJoined && isFull) || joining}
               className="brutal-btn w-full text-center text-lg"
               style={{
                 background:
@@ -261,10 +295,18 @@ export default function SquadModal({
                     : hasJoined
                       ? "var(--gold)"
                       : "var(--black)",
-                opacity: joining ? 0.7 : 1,
+                opacity: joining || membershipLoading ? 0.7 : 1,
               }}
             >
-              {joining ? "处理中..." : !hasJoined && isFull ? "已满员" : hasJoined ? "退出" : "加入"}
+              {joining
+                ? "处理中..."
+                : membershipLoading
+                  ? "..."
+                  : !hasJoined && isFull
+                    ? "已满员"
+                    : hasJoined
+                      ? "退出"
+                      : "加入"}
             </button>
           ) : (
             <p

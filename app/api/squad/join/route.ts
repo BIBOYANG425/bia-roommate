@@ -21,43 +21,51 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (existing) {
-    await supabase
+    // Leave: delete member row; trigger decrements current_people
+    const { error: deleteError } = await supabase
       .from("squad_members")
       .delete()
       .eq("post_id", post_id)
       .eq("user_id", user.id);
-    const { data: post } = await supabase
+
+    if (deleteError)
+      return NextResponse.json({ error: "Failed to leave squad" }, { status: 500 });
+
+    const { data: updatedPost, error: fetchError } = await supabase
       .from("squad_posts")
       .select("current_people")
       .eq("id", post_id)
       .single();
-    if (post) {
-      await supabase
-        .from("squad_posts")
-        .update({ current_people: Math.max(1, post.current_people - 1) })
-        .eq("id", post_id);
-    }
-    return NextResponse.json({ joined: false });
+
+    if (fetchError)
+      return NextResponse.json({ error: "Failed to fetch squad" }, { status: 500 });
+
+    return NextResponse.json({ joined: false, current_people: updatedPost.current_people });
   }
 
-  const { data: post } = await supabase
-    .from("squad_posts")
-    .select("max_people, current_people")
-    .eq("id", post_id)
-    .single();
-
-  if (post && post.current_people >= post.max_people)
-    return NextResponse.json({ error: "已满员" }, { status: 400 });
-
-  await supabase
+  // Join: trigger checks capacity + increments current_people atomically
+  const { error: insertError } = await supabase
     .from("squad_members")
     .insert({ post_id, user_id: user.id });
 
-  if (post) {
-    await supabase
-      .from("squad_posts")
-      .update({ current_people: post.current_people + 1 })
-      .eq("id", post_id);
+  if (insertError) {
+    if (insertError.message?.includes("squad_full"))
+      return NextResponse.json({ error: "已满员" }, { status: 400 });
+    if (insertError.message?.includes("post_not_found") || insertError.code === "23503")
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    if (insertError.code === "23505")
+      return NextResponse.json({ error: "Already joined" }, { status: 409 });
+    return NextResponse.json({ error: "Failed to join squad" }, { status: 500 });
   }
-  return NextResponse.json({ joined: true });
+
+  const { data: updatedPost, error: fetchError } = await supabase
+    .from("squad_posts")
+    .select("current_people")
+    .eq("id", post_id)
+    .single();
+
+  if (fetchError)
+    return NextResponse.json({ error: "Failed to fetch squad" }, { status: 500 });
+
+  return NextResponse.json({ joined: true, current_people: updatedPost.current_people });
 }

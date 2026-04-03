@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { SquadPost, SQUAD_CATEGORIES } from "@/lib/types";
+import { SquadPost, SQUAD_CATEGORIES, SQUAD_GENDER_OPTIONS } from "@/lib/types";
 import SquadCard, { CATEGORY_COLORS } from "@/components/squad/SquadCard";
 import SquadModal from "@/components/squad/SquadModal";
 import SkeletonCard from "@/components/SkeletonCard";
@@ -189,9 +189,9 @@ function SquadContent() {
             className="brutal-select"
           >
             <option value="">ALL GENDERS</option>
-            <option value="不限">不限</option>
-            <option value="仅男生">仅男生</option>
-            <option value="仅女生">仅女生</option>
+            {SQUAD_GENDER_OPTIONS.map((g) => (
+              <option key={g} value={g}>{g}</option>
+            ))}
           </select>
           <select
             value={sortBy}
