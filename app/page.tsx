@@ -296,7 +296,7 @@ export default function LandingPage() {
               <p className="text-lg opacity-90 mb-8 max-w-lg font-light leading-relaxed">
                 {t.hackathon.desc[lang]}
               </p>
-              <Link href="/events" className="bg-white text-[#1F1F29] px-8 py-3 rounded-full hover:bg-[#F9FAF7] hover:scale-105 transition-all font-medium inline-flex items-center gap-2 shadow-xl">
+              <Link href="/hackathon" className="bg-white text-[#1F1F29] px-8 py-3 rounded-full hover:bg-[#F9FAF7] hover:scale-105 transition-all font-medium inline-flex items-center gap-2 shadow-xl">
                 {t.hackathon.cta[lang]} <ArrowIcon />
               </Link>
             </div>
