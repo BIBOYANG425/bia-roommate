@@ -48,7 +48,7 @@ export default function LandingPage() {
             <div className="flex items-center gap-3 text-sm">
               <button
                 onClick={() => setLang(lang === "en" ? "zh" : "en")}
-                className="hidden sm:flex items-center gap-1.5 border border-white/20 px-3 py-1 rounded-full text-xs text-white/80 hover:text-white hover:border-white/40 transition-colors cursor-pointer"
+                className="hidden sm:flex items-center gap-1.5 border border-white/20 px-4 py-2.5 rounded-full text-xs text-white/80 hover:text-white hover:border-white/40 transition-colors cursor-pointer min-h-[44px]"
               >
                 {lang === "en" ? "中文" : "EN"}
               </button>
