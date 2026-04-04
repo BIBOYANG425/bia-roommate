@@ -78,7 +78,7 @@ export default function OnboardingFlow() {
   /* ── Redirect if not authenticated ── */
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push("/");
+      router.push("/roommates");
     }
   }, [authLoading, user, router]);
 
@@ -240,7 +240,7 @@ export default function OnboardingFlow() {
         </div>
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between relative z-10">
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/roommates")}
             className="font-display text-xs tracking-wider text-white/70 hover:text-white transition-colors"
           >
             ← HOME

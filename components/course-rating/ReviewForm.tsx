@@ -8,7 +8,8 @@ const TERMS = (() => {
   const now = new Date();
   const year = now.getFullYear();
   const terms: string[] = [];
-  for (let y = year + 1; y >= year - 3; y--) {
+  // Include next year through 10 years back so any recent student can review
+  for (let y = year + 1; y >= year - 10; y--) {
     terms.push(`Fall ${y}`, `Summer ${y}`, `Spring ${y}`);
   }
   return terms;

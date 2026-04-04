@@ -136,7 +136,7 @@ export default function AccountPage() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      router.push("/");
+      router.push("/roommates");
       return;
     }
 
@@ -309,7 +309,7 @@ export default function AccountPage() {
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
       {/* Back button */}
       <button
-        onClick={() => router.push("/")}
+        onClick={() => router.push("/roommates")}
         className="font-display text-xs tracking-wider mb-2 hover:opacity-60 transition-opacity"
         style={{ color: "var(--mid)" }}
       >

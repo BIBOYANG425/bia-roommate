@@ -1,450 +1,397 @@
 "use client";
-
-import { useEffect, useState, useCallback, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
-import {
-  RoommateProfile,
-  GENDER_OPTIONS,
-  YEAR_OPTIONS,
-  SCHOOL_OPTIONS,
-} from "@/lib/types";
-import ProfileCard from "@/components/ProfileCard";
-import ProfileModal from "@/components/ProfileModal";
-import SkeletonCard from "@/components/SkeletonCard";
-import Toast from "@/components/Toast";
-import NavTabs from "@/components/NavTabs";
+import Link from "next/link";
+import { SERVICES_DATA } from "@/lib/services";
+import CardSwap, { Card } from "@/components/CardSwap";
 
-function Marquee({
-  bg,
-  text,
-  items,
-}: {
-  bg: string;
-  text: string;
-  items: string[];
-}) {
-  const content = items.join("  //  ") + "  //  ";
+function ArrowIcon() {
   return (
-    <div
-      className="overflow-hidden border-y-[3px] border-[var(--black)]"
-      style={{ background: bg, color: text }}
-    >
-      <div className="marquee-track py-2">
-        <span className="font-display text-sm tracking-[0.15em] whitespace-nowrap px-4">
-          {content}
-        </span>
-        <span className="font-display text-sm tracking-[0.15em] whitespace-nowrap px-4">
-          {content}
-        </span>
-      </div>
-    </div>
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="inline ml-1" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1 6H11M11 6L6 1M11 6L6 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
-function HomeContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [profiles, setProfiles] = useState<RoommateProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showToast, setShowToast] = useState(false);
-  const [selectedProfile, setSelectedProfile] =
-    useState<RoommateProfile | null>(null);
-  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
-
-  const [search, setSearch] = useState("");
-  const [schoolFilter, setSchoolFilter] = useState("");
-  const [genderFilter, setGenderFilter] = useState("");
-  const [yearFilter, setYearFilter] = useState("");
+export default function LandingPage() {
+  const [time, setTime] = useState("");
 
   useEffect(() => {
-    if (searchParams.get("submitted") === "true") {
-      setShowToast(true);
-      router.replace("/", { scroll: false });
-    }
-  }, [searchParams, router]);
-
-  const fetchProfiles = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const { data, error: err } = await supabase
-      .from("roommate_profiles")
-      .select("*")
-      .eq("visible", true)
-      .order("created_at", { ascending: false });
-
-    if (err) {
-      setError("LOAD FAILED — RETRY");
-      setLoading(false);
-      return;
-    }
-    setProfiles(data || []);
-    if (data && data.length > 0) {
-      const ids = data.map((p: RoommateProfile) => p.id).join(",");
-      fetch(`/api/likes/count?ids=${ids}`)
-        .then((r) => r.json())
-        .then(setLikeCounts)
-        .catch(() => {});
-    }
-    setLoading(false);
+    const updateTime = () => setTime(new Date().toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: "2-digit", minute: "2-digit" }));
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    fetchProfiles();
-  }, [fetchProfiles]);
-
-  const filtered = profiles.filter((p) => {
-    if (schoolFilter && p.school !== schoolFilter) return false;
-    if (genderFilter && p.gender !== genderFilter) return false;
-    if (yearFilter && p.year !== yearFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      const matchName = p.name.toLowerCase().includes(q);
-      const matchMajor = p.major?.toLowerCase().includes(q);
-      const matchTags = p.tags?.some((t) => t.toLowerCase().includes(q));
-      const matchHobbies = p.hobbies?.toLowerCase().includes(q);
-      if (!matchName && !matchMajor && !matchTags && !matchHobbies)
-        return false;
-    }
-    return true;
-  });
-
-  // Override CSS variables at page level so every element inherits school colors
-  const schoolVars: React.CSSProperties = {};
-  if (schoolFilter === "UC Berkeley") {
-    Object.assign(schoolVars, {
-      "--cardinal": "#014B83",
-      "--gold": "#FEDD76",
-    } as Record<string, string>);
-  } else if (schoolFilter === "Stanford") {
-    Object.assign(schoolVars, {
-      "--cardinal": "#8C1515",
-      "--gold": "#EAAB00",
-    } as Record<string, string>);
-  }
-
   return (
-    <main className="min-h-screen" style={schoolVars}>
-      {showToast && (
-        <Toast
-          message="PROFILE DROPPED SUCCESSFULLY"
-          onClose={() => setShowToast(false)}
-        />
-      )}
+    <div className="relative min-h-screen bg-[#F9FAF7] text-[#171717] overflow-x-hidden font-sans">
+      <main className="relative z-10 flex flex-col bg-transparent">
 
-      {/* Nav */}
-      <NavTabs />
-
-      {/* Top Marquee */}
-      <Marquee
-        bg="var(--cardinal)"
-        text="var(--gold)"
-        items={[
-          "BIA 新生找室友",
-          "FIND YOUR ROOMMATE",
-          "CLASS OF 2030",
-          "NEW DROP",
-          "USC ✕ BERKELEY ✕ STANFORD",
-          "ROOMMATE MATCH",
-        ]}
-      />
-
-      {/* Hero */}
-      <section
-        className="relative overflow-hidden border-b-[3px] border-[var(--black)]"
-        style={{ background: "var(--cream)" }}
-      >
-        <div className="ghost-text -left-4 top-1/2 -translate-y-1/2">
-          ROOMMATE
-        </div>
-        <div className="max-w-6xl mx-auto px-6 py-16 sm:py-24 relative">
-          <div className="flex items-center gap-6 mb-8">
-            <Image
-              src="/logo.jpg"
-              alt="BIA Class of 2030"
-              width={100}
-              height={100}
-              className="border-[3px] border-[var(--black)]"
-              style={{ boxShadow: "6px 6px 0 var(--cardinal)" }}
-            />
-            <div>
-              <div className="new-drop-badge mb-2">NEW DROP 2030</div>
-              <p
-                className="font-display text-sm"
-                style={{ color: "var(--mid)" }}
-              >
-                BIA ROOMMATE MATCH
-              </p>
-            </div>
-          </div>
-
-          <h1
-            className="font-display text-[60px] sm:text-[96px] leading-[0.85] mb-6"
-            style={{ color: "var(--black)" }}
-          >
-            BIA 新生
-            <br />
-            <span className="glitch-text" style={{ color: "var(--cardinal)" }}>
-              找室友
-            </span>
-          </h1>
-
-          <p
-            className="text-sm sm:text-base max-w-md mb-10"
-            style={{ color: "var(--mid)" }}
-          >
-            填写你的生活习惯，找到最合拍的室友。
-            <br />
-            Drop your profile. Find your match.
-          </p>
-
-          <Link
-            href="/submit"
-            className="brutal-btn brutal-btn-primary inline-block"
-          >
-            DROP MY PROFILE →
-          </Link>
-        </div>
-      </section>
-
-      {/* Filters */}
-      <section className="max-w-6xl mx-auto px-6 py-8 relative">
-        <span className="section-number">01</span>
-        <h2
-          className="font-display text-[40px] sm:text-[60px] mb-6"
-          style={{ color: "var(--black)" }}
-        >
-          BROWSE
-        </h2>
-
-        {/* Campus Tabs */}
-        <div className="flex gap-0 mb-6 flex-wrap">
-          {["", "USC", "UC Berkeley", "Stanford"].map((s) => {
-            const active = schoolFilter === s;
-            const label = s || "ALL";
-            let bg = "var(--cream)";
-            let fg = "var(--mid)";
-            if (active) {
-              if (s === "UC Berkeley") {
-                bg = "var(--berkeley-blue)";
-                fg = "white";
-              } else if (s === "Stanford") {
-                bg = "var(--stanford-cardinal)";
-                fg = "white";
-              } else if (s === "USC") {
-                bg = "var(--cardinal)";
-                fg = "white";
-              } else {
-                bg = "var(--black)";
-                fg = "white";
-              }
-            }
-            return (
-              <button
-                key={label}
-                onClick={() => setSchoolFilter(s)}
-                className="font-display text-sm sm:text-base tracking-[0.1em] px-5 sm:px-8 py-3 border-[3px] border-[var(--black)] -mr-[3px] first:mr-0 transition-colors"
-                style={{ background: bg, color: fg }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <input
-            type="text"
-            placeholder="SEARCH NAME / MAJOR / TAGS..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="brutal-input flex-1"
-          />
-          <select
-            value={genderFilter}
-            onChange={(e) => setGenderFilter(e.target.value)}
-            className="brutal-select"
-          >
-            <option value="">ALL GENDERS</option>
-            {GENDER_OPTIONS.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-          <select
-            value={yearFilter}
-            onChange={(e) => setYearFilter(e.target.value)}
-            className="brutal-select"
-          >
-            <option value="">ALL YEARS</option>
-            {YEAR_OPTIONS.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
-        ) : error ? (
-          <div className="text-center py-20">
-            <p
-              className="font-display text-2xl"
-              style={{ color: "var(--cardinal)" }}
-            >
-              {error}
-            </p>
-            <button
-              onClick={fetchProfiles}
-              className="brutal-btn brutal-btn-gold mt-6"
-            >
-              RETRY
-            </button>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-20 relative">
-            <div className="ghost-text left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[120px]">
-              EMPTY
-            </div>
-            <h3
-              className="font-display text-3xl mb-3 relative"
-              style={{ color: "var(--black)" }}
-            >
-              {profiles.length === 0 ? "NO PROFILES YET" : "NO MATCHES"}
-            </h3>
-            <p
-              className="text-sm mb-6 relative"
-              style={{ color: "var(--mid)" }}
-            >
-              {profiles.length === 0
-                ? "Be the first to drop your profile."
-                : "Try adjusting your filters."}
-            </p>
-            {profiles.length === 0 && (
-              <Link
-                href="/submit"
-                className="brutal-btn brutal-btn-primary inline-block relative"
-              >
-                DROP PROFILE
+        {/* ─── Floating Navbar ─── */}
+        <div className="fixed top-6 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none">
+          <nav className="glass-nav text-white w-full max-w-4xl py-3 px-6 flex items-center justify-between pointer-events-auto shadow-2xl transition-all duration-300">
+            <div className="flex items-center gap-6">
+              <Link href="/" className="flex items-center gap-2">
+                <Image src="/logo.png" alt="BIA" width={32} height={32} className="object-contain" style={{ height: "auto" }} />
+                <span className="heading-serif text-xl tracking-tight">BIA</span>
               </Link>
-            )}
+              <div className="hidden sm:flex gap-4 text-sm text-gray-200">
+                <Link href="/about" className="link-hover py-2 px-1">About</Link>
+                <Link href="/events" className="link-hover py-2 px-1">Events</Link>
+                <Link href="/roommates" className="link-hover py-2 px-1" style={{ fontFamily: "var(--font-display-zh)" }}>新生服务</Link>
+                <Link href="/join" className="link-hover py-2 px-1">Join Us</Link>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="hidden sm:flex items-center gap-2 opacity-80 border border-white/20 px-3 py-1 rounded-full text-xs">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
+                LA {time || "..."}
+              </div>
+              <Link href="/join" className="bg-[#171717] hover:bg-[#2C2C2C] text-white px-5 py-2 rounded-full transition-colors flex items-center shadow-lg">
+                Join Us
+              </Link>
+            </div>
+          </nav>
+        </div>
+
+        {/* ─── Hero Section (sticky, gets covered by content) ─── */}
+        <section className="sticky top-0 z-10 h-[95vh] w-full flex items-center justify-center overflow-hidden bg-[#1F1F29]">
+          {/* Background Image */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src="/hero-usc-anime.jpg"
+              alt="USC Campus Golden Hour Anime Style"
+              className="w-full h-full object-cover opacity-75 hover:scale-105 transition-transform duration-[10s] ease-in-out bg-[#1F1F29]"
+            />
           </div>
-        ) : (
-          <>
-            <p
-              className="text-xs mb-4"
-              style={{ color: "var(--mid)", fontFamily: "var(--font-body)" }}
-            >
-              {filtered.length} PROFILES FOUND
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filtered.map((profile, i) => (
+
+          {/* Title */}
+          <div className="relative z-10 text-center w-full px-4">
+            <h1 className="heading-serif text-white text-[12vw] sm:text-[80px] drop-shadow-xl leading-none">
+              BIA at USC
+            </h1>
+          </div>
+
+          {/* Bottom Left Glass Card */}
+          <div className="absolute bottom-10 sm:bottom-16 left-6 sm:left-16 z-20 max-w-sm">
+            <div className="glass-panel p-6 text-white text-left shadow-2xl">
+              <p className="text-[#A0D7D1] text-xs uppercase tracking-widest font-semibold mb-2 drop-shadow-md">Bridging Internationals</p>
+              <p className="text-sm opacity-90 mb-4 leading-relaxed font-light">
+                Meaningful exchange between international students and American communities through tech, career, and culture.
+              </p>
+              <Link href="#mission" className="inline-flex items-center text-sm font-medium hover:text-[#A0D7D1] transition-colors link-hover">
+                Learn More <ArrowIcon />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Main Content Overlay (scrolls over hero, reveals footer) ─── */}
+        <div className="relative z-20 bg-[#F9FAF7] rounded-t-[2.5rem] -mt-10 shadow-[0_-8px_40px_rgba(0,0,0,0.2)]">
+
+          {/* ─── Mission Section ─── */}
+          <section id="mission" className="py-24 sm:py-32 px-6 sm:px-16 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative">
+            <div className="w-full md:w-1/2 rounded-3xl overflow-hidden aspect-square md:aspect-[4/3] bg-[#1F1F29] shadow-xl border border-black/5 relative group">
+              <Image
+                src="/globe-community.jpg"
+                alt="Hand holding glowing globe — bridging global communities"
+                width={800}
+                height={600}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[3s]"
+              />
+            </div>
+            <div className="w-full md:w-1/2">
+              <h2 className="heading-serif text-[#171717] text-4xl sm:text-5xl mb-6 leading-tight">
+                Where bridging global communities starts.
+              </h2>
+              <p className="text-[#646464] text-lg leading-relaxed max-w-lg mb-8">
+                Our vision is to empower international voices at USC by fostering an inclusive environment that intersects technology, professional growth, and shared experiences. We are building the foundational network for global ambition.
+              </p>
+              <div className="h-px w-24 bg-[#A0D7D1]"></div>
+            </div>
+          </section>
+
+          {/* ─── 新生服务 — CardSwap in Apple Folder ─── */}
+          <section className="relative overflow-hidden bg-[#F9FAF7] py-24 sm:py-32 px-6 sm:px-16">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-black/10 to-transparent"></div>
+            <div className="max-w-5xl mx-auto">
+              <h2 className="heading-serif text-4xl sm:text-5xl mb-2 text-[#171717]" style={{ fontFamily: "var(--font-display-zh)" }}>新生服务</h2>
+              <p className="text-[#999] text-sm uppercase tracking-widest mb-10">Freshman Services</p>
+
+              {/* Folder tab */}
+              <div className="flex items-end">
                 <div
-                  key={profile.id}
-                  className="reveal"
-                  style={{ animationDelay: `${i * 0.05}s` }}
+                  className="relative px-8 py-3 rounded-t-xl"
+                  style={{
+                    background: "linear-gradient(180deg, #5AC8C8 0%, #3BAAAA 100%)",
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.3)",
+                  }}
                 >
-                  <ProfileCard
-                    profile={profile}
-                    onClick={() => setSelectedProfile(profile)}
-                    likeCount={likeCounts[profile.id]}
-                    onLikeChange={(id, liked) => {
-                      setLikeCounts((prev) => ({
-                        ...prev,
-                        [id]: Math.max(0, (prev[id] || 0) + (liked ? 1 : -1)),
-                      }));
-                    }}
+                  <span className="text-white text-sm font-semibold tracking-wide" style={{ fontFamily: "var(--font-display-zh)" }}>新生服务</span>
+                </div>
+                <div
+                  className="px-5 py-2 rounded-t-lg ml-0.5"
+                  style={{
+                    background: "linear-gradient(180deg, #D8D8DA 0%, #C4C4C8 100%)",
+                  }}
+                >
+                  <span className="text-[#666] text-xs tracking-wide">Freshman Services</span>
+                </div>
+              </div>
+
+              {/* Folder body */}
+              <div
+                className="rounded-b-2xl rounded-tr-2xl overflow-hidden"
+                style={{
+                  background: "linear-gradient(180deg, #FFFFFF 0%, #F4F4F6 100%)",
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  boxShadow: "0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+                }}
+              >
+                {/* Toolbar */}
+                <div className="flex items-center justify-between px-6 py-3 border-b border-black/5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
+                    <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
+                    <div className="w-3 h-3 rounded-full bg-[#28C840]" />
+                  </div>
+                  <p className="text-[#999] text-xs tracking-wide">BIA &gt; 新生服务</p>
+                  <div className="w-16" />
+                </div>
+
+                {/* CardSwap inside folder */}
+                <div className="p-6 sm:p-10">
+                  <div className="flex flex-col lg:flex-row gap-8 items-start">
+                    {/* Left: CardSwap preview */}
+                    <div className="w-full lg:w-3/5" style={{ height: '480px', position: 'relative' }}>
+                      <CardSwap
+                        cardDistance={50}
+                        verticalDistance={60}
+                        delay={4000}
+                        pauseOnHover={true}
+                      >
+                        {[
+                          { title: "找室友", sub: "Roommate Match", desc: "Find your perfect roommate at USC with our compatibility-driven algorithm.", href: "/roommates", preview: "/previews/roommates.png" },
+                          { title: "选课", sub: "Course Planner", desc: "Optimize your semester with peer reviews, alumni insights, and scheduling tools.", href: "/course-planner", preview: "/previews/course-planner.png" },
+                          { title: "课评", sub: "Course Reviews", desc: "Read honest course reviews from fellow USC international students.", href: "/course-rating", preview: "/previews/course-rating.png" },
+                          { title: "转租", sub: "Sublet", desc: "Safe, verified subleases strictly within our international student community.", href: "/sublet", preview: "/previews/sublet.png" },
+                          { title: "新生群", sub: "Freshman Groups", desc: "Join class-year WeChat groups and connect before you arrive on campus.", href: "/usc-group", preview: "/previews/usc-group.png" },
+                        ].map((svc) => (
+                          <Card key={svc.title} className="w-full h-full rounded-xl overflow-hidden border border-black/5 shadow-md bg-white">
+                            <div className="relative w-full h-[65%]">
+                              <img
+                                src={svc.preview}
+                                alt={svc.sub}
+                                className="w-full h-full object-cover object-top"
+                              />
+                            </div>
+                            <div className="p-5 flex flex-col gap-2">
+                              <div className="flex items-center gap-3">
+                                <h3 className="text-xl font-semibold text-[#2C2C2C]" style={{ fontFamily: "var(--font-display-zh)" }}>{svc.title}</h3>
+                                <span className="text-xs text-[#999] uppercase tracking-wider">{svc.sub}</span>
+                              </div>
+                              <p className="text-sm text-[#646464] leading-relaxed">{svc.desc}</p>
+                              <Link href={svc.href} className="text-[#3AA8A8] text-sm font-medium mt-1 inline-flex items-center hover:text-[#2C2C2C] transition-colors">
+                                Open <ArrowIcon />
+                              </Link>
+                            </div>
+                          </Card>
+                        ))}
+                      </CardSwap>
+                    </div>
+
+                    {/* Right: Service list / sidebar */}
+                    <div className="w-full lg:w-2/5 flex flex-col gap-4 pt-4">
+                      <p className="text-xs text-[#999] uppercase tracking-widest mb-2">5 services available</p>
+                      {[
+                        { label: "找室友", sub: "Roommate Match", href: "/roommates" },
+                        { label: "选课", sub: "Course Planner", href: "/course-planner" },
+                        { label: "课评", sub: "Course Reviews", href: "/course-rating" },
+                        { label: "转租", sub: "Sublet", href: "/sublet" },
+                        { label: "新生群", sub: "Freshman Groups", href: "/usc-group" },
+                      ].map((svc) => (
+                        <Link
+                          key={svc.label}
+                          href={svc.href}
+                          className="group flex items-center gap-4 p-3 rounded-lg hover:bg-[#E8F0F0] transition-colors"
+                        >
+                          {/* Mini folder icon */}
+                          <div className="relative w-10 h-8 shrink-0">
+                            <div className="absolute inset-0 rounded" style={{ background: "linear-gradient(180deg, #6DD4D4 0%, #4ABCBC 100%)" }} />
+                            <div className="absolute -top-1 left-1 w-4 h-1.5 rounded-t-sm" style={{ background: "#6DD4D4" }} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-[#2C2C2C] group-hover:text-[#3AA8A8] transition-colors" style={{ fontFamily: "var(--font-display-zh)" }}>{svc.label}</p>
+                            <p className="text-[10px] text-[#999] uppercase tracking-wider">{svc.sub}</p>
+                          </div>
+                        </Link>
+                      ))}
+
+                      <div className="mt-4 pt-4 border-t border-black/5">
+                        <p className="text-[#999] text-xs">Built by BIA members for USC international students</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <div className="h-px bg-gradient-to-r from-transparent via-black/10 to-transparent"></div>
+
+          {/* ─── Three Pillars ─── */}
+          <section className="py-24 sm:py-32 px-6 sm:px-16">
+            <h2 className="heading-serif text-4xl sm:text-5xl mb-4 text-[#171717]">What We Do</h2>
+            <p className="text-[#999] text-sm uppercase tracking-widest mb-16">Three Pillars</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {[
+                {
+                  title: "Cultural Bridge-Building",
+                  titleZh: "文化桥梁",
+                  image: "/cultural-bridge.jpg",
+                  zoom: false,
+                },
+                {
+                  title: "Technology & Innovation",
+                  titleZh: "科技创新",
+                  image: "/tech-innovation.jpg",
+                  zoom: false,
+                },
+                {
+                  title: "Career Development",
+                  titleZh: "职业发展",
+                  image: "/career-development.jpg",
+                  zoom: false,
+                },
+              ].map((pillar) => (
+                <div key={pillar.title} className="group relative rounded-2xl overflow-hidden aspect-[4/3] cursor-pointer">
+                  <Image
+                    src={pillar.image}
+                    alt={pillar.title}
+                    width={600}
+                    height={800}
+                    className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-700${pillar.zoom ? " scale-150" : ""}`}
                   />
+                  {/* Bottom gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  {/* Text */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 className="text-white text-lg sm:text-xl font-medium leading-snug mb-1">{pillar.title}</h3>
+                    <p className="text-white/60 text-sm" style={{ fontFamily: "var(--font-display-zh)" }}>{pillar.titleZh}</p>
+                  </div>
                 </div>
               ))}
             </div>
-          </>
-        )}
-      </section>
+          </section>
 
-      {/* Bottom Marquee */}
-      <Marquee
-        bg="var(--gold)"
-        text="var(--cardinal)"
-        items={[
-          "CLASS OF 2030",
-          "FIGHT ON",
-          "GO BEARS",
-          "GO CARDINAL",
-          "BIA",
-          "ROOMMATE MATCH",
-          "DROP YOUR PROFILE",
-        ]}
-      />
+          {/* ─── Featured Product/Event Section ─── */}
+          <section className="relative w-full h-[85vh] flex items-center px-6 sm:px-16 overflow-hidden bg-[#1F1F29]">
+            <img
+              src="/hackathon-anime.jpg"
+              alt="BIA Hackathon — students coding at USC"
+              className="absolute inset-0 w-full h-full object-cover opacity-60 hover:scale-105 transition-transform duration-[10s]"
+            />
+            <div className="relative z-10 max-w-2xl text-white">
+              <span className="inline-block px-4 py-1.5 border border-white/30 rounded-full text-xs font-semibold uppercase tracking-wider mb-6 glass-panel">
+                Featured Event
+              </span>
+              <h2 className="heading-serif text-5xl sm:text-6xl mb-6 leading-tight drop-shadow-md">BIA Hackathon: Build with Trae & Minimax</h2>
+              <p className="text-lg opacity-90 mb-8 max-w-lg font-light leading-relaxed">
+                500+ participants joined our flagship tech summit — building with cutting-edge AI tools, shipping real products, and pushing boundaries.
+              </p>
+              <Link href="/events" className="bg-white text-[#1F1F29] px-8 py-3 rounded-full hover:bg-[#F9FAF7] hover:scale-105 transition-all font-medium inline-flex items-center gap-2 shadow-xl">
+                Check It Out <ArrowIcon />
+              </Link>
+            </div>
+          </section>
 
-      {/* Social Links */}
-      <section
-        className="border-t-[3px] border-[var(--black)] py-8 px-6"
-        style={{ background: "var(--cream)" }}
-      >
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <a
-            href="https://www.instagram.com/bia_usc/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="brutal-btn brutal-btn-ghost text-sm flex items-center gap-2"
-          >
-            <span>INSTAGRAM</span>
-            <span style={{ color: "var(--cardinal)" }}>@BIA_USC</span>
-            <span style={{ color: "var(--mid)", fontSize: "10px" }}>→</span>
-          </a>
-          <a
-            href="https://xhslink.com/m/2t4EzpZAKAc"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="brutal-btn brutal-btn-ghost text-sm flex items-center gap-2"
-          >
-            <span style={{ color: "var(--cardinal)" }}>小红书</span>
-            <span
-              className="new-drop-badge"
-              style={{ fontSize: "9px", padding: "1px 6px" }}
-            >
-              4138 LIKES
-            </span>
-            <span style={{ color: "var(--mid)", fontSize: "10px" }}>→</span>
-          </a>
+          {/* ─── Blog/Articles ─── */}
+          <section className="py-24 sm:py-32 px-6 sm:px-16 max-w-7xl mx-auto">
+            <h2 className="heading-serif text-4xl sm:text-5xl mb-12 text-[#171717]">Latest Dispatches</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-8">
+              {[
+                { title: "Inside the miHoYo Recruiting Session", href: "#", tilt: "-2deg", offset: "0px", image: "/blog-mihoyo.jpg" },
+                { title: "Startup 101 with YC China Founders", href: "#", tilt: "1.5deg", offset: "-8px", image: "/blog-yc-china.jpg" },
+                { title: "Welcome, Class of 2030!", href: "/usc-group", tilt: "-1deg", offset: "4px", image: "/blog-class-2030.jpg" },
+              ].map((post, i) => (
+                <Link
+                  key={post.title}
+                  href={post.href}
+                  className="group flex flex-col tilted-card"
+                  style={{
+                    "--tilt": post.tilt,
+                    "--offset": post.offset,
+                    transform: `rotate(var(--tilt)) translateY(var(--offset))`,
+                  } as React.CSSProperties}
+                >
+                  <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 mb-6 border border-black/5 shadow-lg">
+                    <img
+                      src={post.image || `https://placehold.co/600x400/e0e0e0/334444?text=Blog+Art+${i + 1}`}
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                  </div>
+                  <h3 className="text-2xl font-medium text-[#2C2C2C] mb-3 group-hover:text-[#A0D7D1] transition-colors heading-serif leading-snug">
+                    {post.title}
+                  </h3>
+                  <p className="text-sm text-[#A0D7D1] font-medium tracking-wide mt-auto uppercase">By BIA Editorial Team</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* ─── CTA/Closing ─── */}
+          <section className="py-32 px-6 text-center border-t border-black/5 bg-[#FEFFFC] rounded-b-[2rem]">
+            <h2 className="heading-serif text-4xl sm:text-5xl md:text-6xl max-w-4xl mx-auto text-[#171717] mb-10 leading-tight">
+              We're building community and opportunity for the next generation of global builders.
+            </h2>
+            <Link href="/join" className="text-xl text-[#334444] hover:text-[#A0D7D1] transition-colors inline-flex items-center gap-2 link-hover pb-1 font-medium">
+              If that sounds interesting, come join us <ArrowIcon />
+            </Link>
+          </section>
+
+        </div>{/* end Main Content Overlay */}
+
+        {/* ─── Footer Text Reveal Hole (Transparent) ─── */}
+        <div className="relative w-full text-white flex flex-col justify-end pb-8 bg-transparent" style={{ height: "70vh", minHeight: "600px" }}>
+          <div className="max-w-7xl mx-auto px-6 sm:px-16 w-full">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10 border-b border-white/20 pb-12 mb-8">
+              <div className="flex gap-6 text-sm font-medium">
+                <Link href="/" className="hover:text-[#A0D7D1] transition-colors link-hover py-2">Home</Link>
+                <Link href="/about" className="hover:text-[#A0D7D1] transition-colors link-hover py-2">About</Link>
+                <Link href="/events" className="hover:text-[#A0D7D1] transition-colors link-hover py-2">Events</Link>
+                <Link href="/roommates" className="hover:text-[#A0D7D1] transition-colors link-hover py-2" style={{ fontFamily: "var(--font-display-zh)" }}>新生服务</Link>
+              </div>
+              <div className="flex gap-6">
+                {['Insta', 'X', 'LinkedIn', 'Discord'].map(social => (
+                  <a key={social} href="#" className="text-sm font-medium opacity-80 hover:opacity-100 hover:text-[#A0D7D1] transition-colors link-hover py-2 px-1 min-w-[44px] text-center">
+                    {social}
+                  </a>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-between items-center text-xs opacity-60 font-light">
+              <p>&copy; {new Date().getFullYear()} Bridging Internationals Association.</p>
+              <p className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> Los Angeles, CA
+              </p>
+            </div>
+          </div>
         </div>
-      </section>
+      </main>
 
-      {/* Footer */}
-      <footer className="py-6 px-6 text-center border-t-[3px] border-[var(--black)]">
-        <p
-          className="font-display text-xs tracking-[0.2em]"
-          style={{ color: "var(--mid)" }}
-        >
-          BIA 新生找室友 — EXCLUSIVE TO BIA FRESHMEN
-        </p>
+      {/* ─── Footer Fixed Background ─── */}
+      <footer className="fixed bottom-0 left-0 w-full z-0 bg-[#1F1F29]" style={{ height: "70vh", minHeight: "600px" }}>
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/footer-night.jpg"
+            alt="USC Campus at Night — Pixel Art"
+            className="w-full h-full object-cover object-bottom opacity-40 hover:scale-105 transition-transform duration-[20s]"
+          />
+        </div>
       </footer>
-
-      {/* Detail Modal */}
-      {selectedProfile && (
-        <ProfileModal
-          profile={selectedProfile}
-          onClose={() => setSelectedProfile(null)}
-        />
-      )}
-    </main>
-  );
-}
-
-export default function Home() {
-  return (
-    <Suspense>
-      <HomeContent />
-    </Suspense>
+    </div>
   );
 }

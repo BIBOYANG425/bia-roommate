@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { Bebas_Neue, Space_Mono } from "next/font/google";
+import {
+  Bebas_Neue,
+  Inter,
+  Instrument_Serif,
+  ZCOOL_XiaoWei,
+} from "next/font/google";
 import { AuthProvider } from "@/components/AuthProvider";
 import "./globals.css";
 
@@ -10,16 +15,31 @@ const bebasNeue = Bebas_Neue({
   display: "swap",
 });
 
-const spaceMono = Space_Mono({
-  weight: ["400", "700"],
+const interFont = Inter({
+  weight: ["400", "500", "700"],
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
 });
 
+const instrumentSerif = Instrument_Serif({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-display-en",
+  display: "swap",
+});
+
+const zcoolXiaoWei = ZCOOL_XiaoWei({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-display-zh",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "BIA 新生找室友",
-  description: "BIA 新生室友匹配平台，填写生活习惯，找到最合适的室友",
+  title: "BIA | Bridging Internationals Association",
+  description:
+    "USC international student community — cultural bridge-building, tech & innovation, career development. Est. 2024.",
 };
 
 export default function RootLayout({
@@ -30,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${bebasNeue.variable} ${spaceMono.variable}`}
+      className={`${bebasNeue.variable} ${interFont.variable} ${instrumentSerif.variable} ${zcoolXiaoWei.variable}`}
     >
       <body>
         <AuthProvider>{children}</AuthProvider>
