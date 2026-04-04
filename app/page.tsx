@@ -38,11 +38,11 @@ export default function LandingPage() {
                 <Image src="/logo.png" alt="BIA" width={32} height={26} className="object-contain" style={{ height: "auto" }} />
                 <span className="heading-serif text-xl tracking-tight">BIA</span>
               </Link>
-              <div className="hidden sm:flex gap-4 text-sm text-gray-200">
-                <Link href="/about" className="link-hover py-2 px-1">{t.nav.about[lang]}</Link>
-                <Link href="/events" className="link-hover py-2 px-1">{t.nav.events[lang]}</Link>
-                <Link href="/roommates" className="link-hover py-2 px-1" style={{ fontFamily: "var(--font-display-zh)" }}>{t.nav.freshmanServices[lang]}</Link>
-                <Link href="/join" className="link-hover py-2 px-1">{t.nav.joinUs[lang]}</Link>
+              <div className="hidden sm:flex gap-4 text-sm text-gray-200 items-center">
+                <Link href="/about" className="link-hover py-3 px-1">{t.nav.about[lang]}</Link>
+                <Link href="/events" className="link-hover py-3 px-1">{t.nav.events[lang]}</Link>
+                <Link href="/roommates" className="link-hover py-3 px-1" style={{ fontFamily: "var(--font-display-zh)" }}>{t.nav.freshmanServices[lang]}</Link>
+                <Link href="/join" className="link-hover py-3 px-1">{t.nav.joinUs[lang]}</Link>
               </div>
             </div>
             <div className="flex items-center gap-3 text-sm">

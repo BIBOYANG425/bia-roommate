@@ -94,7 +94,7 @@ export default function HackathonPage() {
         <div className="max-w-[720px] mx-auto px-6 h-14 flex items-center justify-between">
           <Link
             href="/"
-            className="flex items-center gap-2 text-[#8b949e] hover:text-white transition-colors text-sm"
+            className="flex items-center gap-2 text-[#8b949e] hover:text-white transition-colors text-sm py-3"
           >
             <BackArrow />
             <Image src="/logo.png" alt="BIA" width={20} height={16} style={{ height: "auto" }} />
