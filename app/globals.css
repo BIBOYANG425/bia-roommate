@@ -36,6 +36,11 @@
   box-sizing: border-box;
 }
 
+*:focus-visible {
+  outline: 2px solid var(--accent-teal, #A0D7D1);
+  outline-offset: 2px;
+}
+
 body {
   background: var(--beige);
   color: var(--black);
