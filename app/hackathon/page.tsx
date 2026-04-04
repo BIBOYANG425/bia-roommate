@@ -148,9 +148,9 @@ export default function HackathonPage() {
         {/* ─── Table of Contents ─── */}
         <nav className="px-6 py-5 border-b border-[#30363d] bg-[#161b22]/50">
           <p className="text-[11px] tracking-[3px] mb-3 font-bold text-[#484f58] uppercase">Contents</p>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-[13px]">
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-[13px]">
             {["What Happened", "The Numbers", "Build With", "Speakers", "Winners", "Sponsors", "Why We Build"].map((item) => (
-              <a key={item} href={`#${item.toLowerCase().replace(/ /g, "-")}`} className="text-[#58a6ff] hover:text-[#79c0ff] transition-colors">
+              <a key={item} href={`#${item.toLowerCase().replace(/ /g, "-")}`} className="text-[#58a6ff] hover:text-[#79c0ff] transition-colors py-2 inline-block min-h-[44px] flex items-center">
                 {item}
               </a>
             ))}
@@ -373,14 +373,14 @@ export default function HackathonPage() {
             <div className="flex items-center gap-4">
               <Link
                 href="/"
-                className="text-[13px] text-[#58a6ff] hover:text-[#79c0ff] transition-colors flex items-center gap-1.5"
+                className="text-[13px] text-[#58a6ff] hover:text-[#79c0ff] transition-colors flex items-center gap-1.5 py-2 min-h-[44px]"
               >
                 <BackArrow /> Back to Home
               </Link>
               <span className="text-[#30363d]">·</span>
               <Link
                 href="/roommates"
-                className="text-[13px] text-[#58a6ff] hover:text-[#79c0ff] transition-colors"
+                className="text-[13px] text-[#58a6ff] hover:text-[#79c0ff] transition-colors py-2 min-h-[44px] inline-flex items-center"
               >
                 新生服务
               </Link>
