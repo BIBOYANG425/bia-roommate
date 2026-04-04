@@ -74,6 +74,7 @@ body {
 .heading-serif {
   font-family: var(--font-display);
   letter-spacing: -1px;
+  text-wrap: balance;
 }
 
 .link-hover {
