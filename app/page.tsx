@@ -89,16 +89,22 @@ export default function LandingPage() {
             </ScrollFloat>
           </div>
 
-          {/* Bottom Left Glass Card */}
-          <div className="absolute bottom-10 sm:bottom-16 left-6 sm:left-16 z-20 max-w-sm">
-            <div className="glass-panel p-6 text-white text-left shadow-2xl">
-              <p className="text-[#A0D7D1] text-xs uppercase tracking-widest font-semibold mb-2 drop-shadow-md">{t.hero.subtitle[lang]}</p>
-              <p className="text-sm mb-4 leading-relaxed font-light">
+          {/* Bottom CTA — centered */}
+          <div className="absolute bottom-10 sm:bottom-16 left-0 right-0 z-20 flex justify-center px-6">
+            <div className="glass-panel p-6 sm:p-8 text-white text-center shadow-2xl max-w-lg w-full">
+              <p className="text-[#A0D7D1] text-xs uppercase tracking-widest font-semibold mb-2 drop-shadow-md">Starter · {t.hero.subtitle[lang]}</p>
+              <p className="text-sm mb-5 leading-relaxed font-light">
                 {t.hero.desc[lang]}
               </p>
-              <Link href="#mission" className="inline-flex items-center text-sm font-medium hover:text-[#A0D7D1] transition-colors link-hover">
-                {t.hero.learnMore[lang]} <ArrowIcon />
-              </Link>
+              <div className="flex flex-col items-center gap-2">
+                <Link
+                  href="/roommates"
+                  className="bg-white text-[#171717] px-8 py-3.5 rounded-full text-sm font-semibold hover:bg-[#A0D7D1] hover:text-[#171717] transition-colors shadow-lg inline-flex items-center gap-2 min-h-[44px]"
+                >
+                  {t.hero.cta[lang]} <ArrowIcon />
+                </Link>
+                <span className="text-xs text-white/60 mt-1">{t.hero.ctaSub[lang]}</span>
+              </div>
             </div>
           </div>
         </section>

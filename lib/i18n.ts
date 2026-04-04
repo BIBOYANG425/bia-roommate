@@ -10,10 +10,12 @@ export const t = {
   hero: {
     subtitle: { en: "Bridging Internationals", zh: "连接国际学生" },
     desc: {
-      en: "Meaningful exchange between international students and American communities through tech, career, and culture.",
-      zh: "通过科技、职业和文化，促进留学生与美国社区之间有意义的交流。",
+      en: "Roommates, courses, sublets, and community — everything you need to start at USC.",
+      zh: "室友、选课、转租、社群——你在USC起步需要的一切。",
     },
     learnMore: { en: "Learn More", zh: "了解更多" },
+    cta: { en: "Try Starter", zh: "试试新生通" },
+    ctaSub: { en: "5 free tools for incoming Trojans", zh: "5款免费工具，为新Trojan打造" },
   },
   mission: {
     heading: {
@@ -26,9 +28,9 @@ export const t = {
     },
   },
   services: {
-    heading: { en: "新生服务", zh: "新生服务" },
-    subtitle: { en: "Freshman Services", zh: "新生专属服务" },
-    available: { en: "5 services available", zh: "5 项服务" },
+    heading: { en: "Starter · 新生通", zh: "新生通 · Starter" },
+    subtitle: { en: "Everything you need to start at USC", zh: "你在USC起步需要的一切" },
+    available: { en: "5 free tools", zh: "5 款免费工具" },
     builtBy: {
       en: "Built by BIA members for USC international students",
       zh: "由 BIA 成员为 USC 留学生打造",
