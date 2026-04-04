@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import AuthModal from "./AuthModal";
@@ -25,6 +26,15 @@ export default function NavTabs() {
         className="border-b-[3px] border-[var(--black)] flex items-center overflow-x-auto"
         style={{ background: "var(--cream)" }}
       >
+        <Link
+          href="/"
+          className="flex items-center gap-2 px-4 sm:px-6 py-2 border-r-[3px] border-[var(--black)] shrink-0 hover:opacity-80 transition-opacity"
+          style={{ background: "var(--cream)" }}
+        >
+          <Image src="/logo.png" alt="BIA" width={24} height={24} className="object-contain" />
+          <span className="font-display text-sm sm:text-base tracking-[0.1em]" style={{ color: "var(--black)" }}>BIA</span>
+        </Link>
+
         {TABS.map((tab) => {
           const active =
             pathname === tab.href ||

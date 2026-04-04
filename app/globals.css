@@ -94,6 +94,19 @@ body {
   transform-origin: bottom left;
 }
 
+/* Tilted blog cards */
+.tilted-card {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease;
+  will-change: transform;
+}
+.tilted-card:hover {
+  transform: rotate(0deg) translateY(-12px) !important;
+  z-index: 10;
+}
+.tilted-card:hover .shadow-lg {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
 /* ═══════════════════════════════════════════════════
    Brutalist design system (tools pages)
    ═══════════════════════════════════════════════════ */
