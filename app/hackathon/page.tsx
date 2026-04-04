@@ -89,7 +89,7 @@ export default function HackathonPage() {
   return (
     <div className="min-h-screen bg-[#0d1117] text-[#e6edf3]">
 
-      {/* ─── Top Nav Bar ─── */}
+      {/* ─── Top Nav Bar (outside main for a11y) ─── */}
       <nav className="sticky top-0 z-50 bg-[#0d1117]/90 backdrop-blur-md border-b border-[#30363d]">
         <div className="max-w-[720px] mx-auto px-6 h-14 flex items-center justify-between">
           <Link
@@ -108,6 +108,7 @@ export default function HackathonPage() {
       </nav>
 
       {/* ─── Blog Article ─── */}
+      <main>
       <article className="max-w-[720px] mx-auto" style={{ fontFamily: "'Menlo','SF Mono','Courier New',monospace" }}>
 
         {/* ─── Hero ─── */}
@@ -394,6 +395,7 @@ export default function HackathonPage() {
         </footer>
 
       </article>
+      </main>
     </div>
   );
 }
