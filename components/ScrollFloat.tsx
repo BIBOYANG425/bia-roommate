@@ -45,6 +45,12 @@ export default function ScrollFloat({
     const spans = el.querySelectorAll<HTMLSpanElement>(".scroll-float-char");
     if (!spans.length) return;
 
+    // Respect reduced motion preference
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      gsap.set(spans, { y: 0, opacity: 1, rotateX: 0 });
+      return;
+    }
+
     if (animateOnMount) {
       gsap.fromTo(
         spans,
