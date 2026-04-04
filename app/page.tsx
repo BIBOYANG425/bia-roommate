@@ -32,7 +32,7 @@ export default function LandingPage() {
           <nav className="glass-nav text-white w-full max-w-4xl py-3 px-6 flex items-center justify-between pointer-events-auto shadow-2xl transition-all duration-300">
             <div className="flex items-center gap-6">
               <Link href="/" className="flex items-center gap-2">
-                <Image src="/logo.png" alt="BIA" width={32} height={32} className="object-contain" />
+                <Image src="/logo.png" alt="BIA" width={32} height={32} className="object-contain" style={{ height: "auto" }} />
                 <span className="heading-serif text-xl tracking-tight">BIA</span>
               </Link>
               <div className="hidden sm:flex gap-4 text-sm text-gray-200">
