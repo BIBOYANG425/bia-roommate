@@ -287,7 +287,7 @@ export default function LandingPage() {
           </section>
 
           {/* ─── Featured Product/Event Section ─── */}
-          <section className="relative w-full h-[85vh] flex items-center px-6 sm:px-16 overflow-hidden bg-[#0081C0]">
+          <section className="relative w-full h-[85vh] flex items-center px-6 sm:px-16 overflow-hidden bg-[#1F1F29]">
             <img
               src="/hackathon-anime.jpg"
               alt="BIA Hackathon — students coding at USC"
@@ -301,7 +301,7 @@ export default function LandingPage() {
               <p className="text-lg opacity-90 mb-8 max-w-lg font-light leading-relaxed">
                 500+ participants joined our flagship tech summit — building with cutting-edge AI tools, shipping real products, and pushing boundaries.
               </p>
-              <Link href="/events" className="bg-white text-[#0081C0] px-8 py-3 rounded-full hover:bg-[#F9FAF7] hover:scale-105 transition-all font-medium inline-flex items-center gap-2 shadow-xl">
+              <Link href="/events" className="bg-white text-[#1F1F29] px-8 py-3 rounded-full hover:bg-[#F9FAF7] hover:scale-105 transition-all font-medium inline-flex items-center gap-2 shadow-xl">
                 Check It Out <ArrowIcon />
               </Link>
             </div>
