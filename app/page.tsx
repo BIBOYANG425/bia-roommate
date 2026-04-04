@@ -285,6 +285,7 @@ export default function LandingPage() {
             <img
               src="/hackathon-anime.jpg"
               alt="BIA Hackathon — students coding at USC"
+              loading="lazy"
               className="absolute inset-0 w-full h-full object-cover opacity-60 hover:scale-105 transition-transform duration-[10s]"
             />
             <div className="relative z-10 max-w-2xl text-white">
@@ -324,6 +325,7 @@ export default function LandingPage() {
                     <img
                       src={post.image}
                       alt={t.blog.posts[post.idx][lang]}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
                   </div>
@@ -382,6 +384,7 @@ export default function LandingPage() {
           <img
             src="/footer-night.jpg"
             alt="USC Campus at Night — Pixel Art"
+            loading="lazy"
             className="w-full h-full object-cover object-bottom opacity-40 hover:scale-105 transition-transform duration-[20s]"
           />
         </div>
