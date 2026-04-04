@@ -3,10 +3,16 @@ import {
   Bebas_Neue,
   Inter,
   Instrument_Serif,
-  ZCOOL_XiaoWei,
 } from "next/font/google";
+import localFont from "next/font/local";
 import { AuthProvider } from "@/components/AuthProvider";
 import "./globals.css";
+
+const playlistScript = localFont({
+  src: "../public/fonts/Playlist-Script.otf",
+  variable: "--font-playlist",
+  display: "swap",
+});
 
 const bebasNeue = Bebas_Neue({
   weight: "400",
@@ -29,12 +35,6 @@ const instrumentSerif = Instrument_Serif({
   display: "swap",
 });
 
-const zcoolXiaoWei = ZCOOL_XiaoWei({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-display-zh",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "BIA | Bridging Internationals Association",
@@ -50,8 +50,13 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${bebasNeue.variable} ${interFont.variable} ${instrumentSerif.variable} ${zcoolXiaoWei.variable}`}
+      className={`${bebasNeue.variable} ${interFont.variable} ${instrumentSerif.variable} ${playlistScript.variable}`}
     >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet" />
+      </head>
       <body>
         <AuthProvider>{children}</AuthProvider>
         {/* Film grain overlay */}
