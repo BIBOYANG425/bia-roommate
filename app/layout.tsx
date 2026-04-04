@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import {
   Bebas_Neue,
-  Space_Mono,
+  Inter,
   Instrument_Serif,
   ZCOOL_XiaoWei,
 } from "next/font/google";
@@ -15,8 +15,8 @@ const bebasNeue = Bebas_Neue({
   display: "swap",
 });
 
-const spaceMono = Space_Mono({
-  weight: ["400", "700"],
+const interFont = Inter({
+  weight: ["400", "500", "700"],
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
@@ -50,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${bebasNeue.variable} ${spaceMono.variable} ${instrumentSerif.variable} ${zcoolXiaoWei.variable}`}
+      className={`${bebasNeue.variable} ${interFont.variable} ${instrumentSerif.variable} ${zcoolXiaoWei.variable}`}
     >
       <body>
         <AuthProvider>{children}</AuthProvider>

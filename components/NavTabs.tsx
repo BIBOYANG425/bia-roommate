@@ -7,7 +7,7 @@ import { useAuth } from "./AuthProvider";
 import AuthModal from "./AuthModal";
 
 const TABS = [
-  { href: "/", label: "找室友" },
+  { href: "/roommates", label: "找室友" },
   { href: "/sublet", label: "转租" },
   { href: "/course-planner", label: "选课" },
   { href: "/course-rating", label: "课评" },
