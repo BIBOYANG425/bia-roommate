@@ -1,14 +1,5 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'Black Mango';
-  src: url('/fonts/blackmango-regular.woff2') format('woff2'),
-    url('/fonts/blackmango-regular.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   --bg-primary: #F9FAF7;
   --text-dark: #171717;
@@ -17,8 +8,8 @@
   --navy: #1F1F29;
   --blue-feature: #0081C0;
   --olive: #334444;
-  /* Use Black Mango if provided, gracefully fall back to Instrument Serif or Playfair */
-  --font-display: 'Black Mango', var(--font-instrument), "Playfair Display", serif;
+  --font-display: var(--font-display-en), "Playfair Display", serif;
+  --font-display-zh: var(--font-display-zh), "PingFang SC", serif;
   --font-body: var(--font-body), "Inter", -apple-system, sans-serif;
 }
 

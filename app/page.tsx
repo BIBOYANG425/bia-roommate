@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 function ArrowIcon() {
@@ -26,11 +27,14 @@ export default function LandingPage() {
       <div className="fixed top-6 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none">
         <nav className="glass-nav text-white w-full max-w-4xl py-3 px-6 flex items-center justify-between pointer-events-auto shadow-2xl transition-all duration-300">
           <div className="flex items-center gap-6">
-            <Link href="/" className="heading-serif text-xl tracking-tight">BIA</Link>
+            <Link href="/" className="flex items-center gap-2">
+              <Image src="/logo.png" alt="BIA" width={32} height={32} className="object-contain" />
+              <span className="heading-serif text-xl tracking-tight">BIA</span>
+            </Link>
             <div className="hidden sm:flex gap-6 text-sm text-gray-200">
-              <Link href="#" className="link-hover">Home</Link>
-              <Link href="#" className="link-hover">About</Link>
+              <Link href="/about" className="link-hover">About</Link>
               <Link href="/events" className="link-hover">Events</Link>
+              <Link href="/roommates" className="link-hover" style={{ fontFamily: "var(--font-display-zh)" }}>新生服务</Link>
               <Link href="/join" className="link-hover">Join Us</Link>
             </div>
           </div>
@@ -204,10 +208,10 @@ export default function LandingPage() {
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-16 mt-20">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10 border-b border-white/20 pb-12 mb-8">
             <div className="flex gap-10 text-sm font-medium">
-              <Link href="#" className="hover:text-[#A0D7D1] transition-colors link-hover">Home</Link>
-              <Link href="#" className="hover:text-[#A0D7D1] transition-colors link-hover">About</Link>
-              <Link href="#" className="hover:text-[#A0D7D1] transition-colors link-hover">Events</Link>
-              <Link href="#" className="hover:text-[#A0D7D1] transition-colors link-hover">Contact</Link>
+              <Link href="/" className="hover:text-[#A0D7D1] transition-colors link-hover">Home</Link>
+              <Link href="/about" className="hover:text-[#A0D7D1] transition-colors link-hover">About</Link>
+              <Link href="/events" className="hover:text-[#A0D7D1] transition-colors link-hover">Events</Link>
+              <Link href="/roommates" className="hover:text-[#A0D7D1] transition-colors link-hover" style={{ fontFamily: "var(--font-display-zh)" }}>新生服务</Link>
             </div>
             <div className="flex gap-8">
               {['Insta', 'X', 'LinkedIn', 'Discord'].map(social => (
