@@ -89,12 +89,12 @@ export default function HackathonPage() {
   return (
     <div className="min-h-screen bg-[#0d1117] text-[#e6edf3]">
 
-      {/* ─── Top Nav Bar ─── */}
+      {/* ─── Top Nav Bar (outside main for a11y) ─── */}
       <nav className="sticky top-0 z-50 bg-[#0d1117]/90 backdrop-blur-md border-b border-[#30363d]">
         <div className="max-w-[720px] mx-auto px-6 h-14 flex items-center justify-between">
           <Link
             href="/"
-            className="flex items-center gap-2 text-[#8b949e] hover:text-white transition-colors text-sm"
+            className="flex items-center gap-2 text-[#8b949e] hover:text-white transition-colors text-sm py-3"
           >
             <BackArrow />
             <Image src="/logo.png" alt="BIA" width={20} height={16} style={{ height: "auto" }} />
@@ -108,6 +108,7 @@ export default function HackathonPage() {
       </nav>
 
       {/* ─── Blog Article ─── */}
+      <main>
       <article className="max-w-[720px] mx-auto" style={{ fontFamily: "'Menlo','SF Mono','Courier New',monospace" }}>
 
         {/* ─── Hero ─── */}
@@ -148,9 +149,9 @@ export default function HackathonPage() {
         {/* ─── Table of Contents ─── */}
         <nav className="px-6 py-5 border-b border-[#30363d] bg-[#161b22]/50">
           <p className="text-[11px] tracking-[3px] mb-3 font-bold text-[#484f58] uppercase">Contents</p>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-[13px]">
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-[13px]">
             {["What Happened", "The Numbers", "Build With", "Speakers", "Winners", "Sponsors", "Why We Build"].map((item) => (
-              <a key={item} href={`#${item.toLowerCase().replace(/ /g, "-")}`} className="text-[#58a6ff] hover:text-[#79c0ff] transition-colors">
+              <a key={item} href={`#${item.toLowerCase().replace(/ /g, "-")}`} className="text-[#58a6ff] hover:text-[#79c0ff] transition-colors py-2 inline-block min-h-[44px] flex items-center">
                 {item}
               </a>
             ))}
@@ -160,11 +161,11 @@ export default function HackathonPage() {
         {/* ─── What Happened ─── */}
         <section id="what-happened" className="px-6 py-10 border-b border-[#30363d]">
           <p className="text-[11px] tracking-[4px] mb-5 font-bold text-[#3fb950]">// WHAT HAPPENED</p>
-          <p className="mb-4 text-[15px] leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>3月28日，USC。</p>
-          <p className="mb-4 text-[15px] leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
+          <p className="mb-4 text-base leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>3月28日，USC。</p>
+          <p className="mb-4 text-base leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
             60个人走进来，带着想法。<br />24小时后，15个真实产品被交付。
           </p>
-          <p className="mb-4 text-[15px] leading-relaxed text-[#8b949e]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
+          <p className="mb-4 text-base leading-relaxed text-[#8b949e]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
             不是PPT。不是概念图。<br />是能跑、能用、能演示的东西。
           </p>
           <figure className="my-8">
@@ -178,7 +179,7 @@ export default function HackathonPage() {
           <p className="font-bold text-lg" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
             当AI成为真正的队友，24小时能造出什么？
           </p>
-          <p className="mt-2 text-[#8b949e] text-[15px]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>我们得到了答案。</p>
+          <p className="mt-2 text-[#8b949e] text-base" style={{ fontFamily: "'PingFang SC',sans-serif" }}>我们得到了答案。</p>
         </section>
 
         {/* ─── The Numbers ─── */}
@@ -197,10 +198,10 @@ export default function HackathonPage() {
         {/* ─── Build With ─── */}
         <section id="build-with" className="px-6 py-10 border-b border-[#30363d]">
           <p className="text-[11px] tracking-[4px] mb-5 font-bold text-[#3fb950]">// BUILD WITH TRAE × MINIMAX</p>
-          <p className="mb-4 text-[15px] leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
+          <p className="mb-4 text-base leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
             每支队伍基于 <strong className="text-[#3fb950]">Trae.ai</strong> 开发——一个真正把AI Agent融入每一行代码的IDE。
           </p>
-          <p className="mb-6 text-[15px] leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
+          <p className="mb-6 text-base leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
             调用 <strong className="text-[#F4347F]">MiniMax</strong> 的多模态API——文本、视觉、语音、视频，全部拉满。
           </p>
           <div className="grid grid-cols-2 gap-3 my-8">
@@ -211,14 +212,14 @@ export default function HackathonPage() {
               <img src="/hackathon/working-2.jpg" alt="团队讨论中" className="w-full block" loading="lazy" />
             </figure>
           </div>
-          <p className="text-[#8b949e] mb-1 text-[15px]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>不是在学怎么用AI。</p>
-          <p className="font-bold text-[15px]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>是在用AI造真正的产品。</p>
+          <p className="text-[#8b949e] mb-1 text-base" style={{ fontFamily: "'PingFang SC',sans-serif" }}>不是在学怎么用AI。</p>
+          <p className="font-bold text-base" style={{ fontFamily: "'PingFang SC',sans-serif" }}>是在用AI造真正的产品。</p>
         </section>
 
         {/* ─── Speakers ─── */}
         <section id="speakers" className="px-6 py-10 border-b border-[#30363d]">
           <p className="text-[11px] tracking-[4px] mb-5 font-bold text-[#3fb950]">// KEYNOTE SPEAKERS</p>
-          <p className="mb-6 text-[15px] text-[#8b949e] leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
+          <p className="mb-6 text-base text-[#8b949e] leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
             来自 Trae 和 MiniMax 的技术负责人到场，带参赛者快速了解工具能力，直接上手。
           </p>
           <div className="flex gap-3">
@@ -304,7 +305,7 @@ export default function HackathonPage() {
               </span>
             ))}
           </div>
-          <p className="text-[15px] text-[#8b949e]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
+          <p className="text-base text-[#8b949e]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
             一场Hackathon，连接了整个南加的builder社区。
           </p>
         </section>
@@ -317,8 +318,8 @@ export default function HackathonPage() {
               <img src="/hackathon/working-3.jpg" alt="参赛者协作" className="w-full block" loading="lazy" />
             </div>
           </figure>
-          <p className="mb-4 text-[15px] leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>你花了24小时，写了代码，交了产品，站上去做了展示。</p>
-          <p className="mb-6 text-[15px] leading-relaxed text-[#8b949e]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>很多人想了一年的事情，你用一天做完了。</p>
+          <p className="mb-4 text-base leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>你花了24小时，写了代码，交了产品，站上去做了展示。</p>
+          <p className="mb-6 text-base leading-relaxed text-[#8b949e]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>很多人想了一年的事情，你用一天做完了。</p>
           <blockquote className="border-l-[3px] border-[#3fb950] bg-[#1c2128] px-6 py-5 rounded-r-md">
             <p className="font-bold text-[17px]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>不管排名多少，你已经赢了。</p>
           </blockquote>
@@ -327,14 +328,14 @@ export default function HackathonPage() {
         {/* ─── Why We Build ─── */}
         <section id="why-we-build" className="px-6 py-10 border-b border-[#30363d]">
           <p className="text-[11px] tracking-[4px] mb-5 font-bold text-[#3fb950]">// WHY WE BUILD</p>
-          <p className="mb-4 text-[15px] leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>BIA永远在学习。</p>
-          <p className="mb-4 text-[15px] leading-relaxed text-[#8b949e]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
+          <p className="mb-4 text-base leading-relaxed" style={{ fontFamily: "'PingFang SC',sans-serif" }}>BIA永远在学习。</p>
+          <p className="mb-4 text-base leading-relaxed text-[#8b949e]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
             从第一天起，我们就相信一件事：<br />留学生社团不应该只做social和聚餐。
           </p>
-          <p className="mb-4 text-[15px] leading-relaxed text-[#8b949e]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
+          <p className="mb-4 text-base leading-relaxed text-[#8b949e]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
             当AI重新定义每个行业的时候，我们选择站在最前面——不是旁观，是亲手去造。
           </p>
-          <p className="mb-6 text-[15px] leading-relaxed text-[#8b949e]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
+          <p className="mb-6 text-base leading-relaxed text-[#8b949e]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>
             这场Hackathon不是终点。它是BIA走向技术前沿的第一步。
           </p>
           <figure className="my-8">
@@ -356,7 +357,7 @@ export default function HackathonPage() {
         <section className="px-6 py-12 border-b border-[#30363d] text-center">
           <p className="text-[11px] tracking-[4px] mb-5 font-bold text-[#3fb950]">// WHAT&apos;S NEXT</p>
           <p className="mb-3 text-xl font-bold" style={{ fontFamily: "'PingFang SC',sans-serif" }}>第一次，但绝不是最后一次。</p>
-          <p className="mb-6 text-[#8b949e] text-[15px]" style={{ fontFamily: "'PingFang SC',sans-serif" }}>下一场，已经在路上了。</p>
+          <p className="mb-6 text-[#8b949e] text-base" style={{ fontFamily: "'PingFang SC',sans-serif" }}>下一场，已经在路上了。</p>
           <p className="text-2xl font-black text-[#3fb950]">Stay tuned.</p>
         </section>
 
@@ -373,14 +374,14 @@ export default function HackathonPage() {
             <div className="flex items-center gap-4">
               <Link
                 href="/"
-                className="text-[13px] text-[#58a6ff] hover:text-[#79c0ff] transition-colors flex items-center gap-1.5"
+                className="text-[13px] text-[#58a6ff] hover:text-[#79c0ff] transition-colors flex items-center gap-1.5 py-2 min-h-[44px]"
               >
                 <BackArrow /> Back to Home
               </Link>
               <span className="text-[#30363d]">·</span>
               <Link
                 href="/roommates"
-                className="text-[13px] text-[#58a6ff] hover:text-[#79c0ff] transition-colors"
+                className="text-[13px] text-[#58a6ff] hover:text-[#79c0ff] transition-colors py-2 min-h-[44px] inline-flex items-center"
               >
                 新生服务
               </Link>
@@ -394,6 +395,7 @@ export default function HackathonPage() {
         </footer>
 
       </article>
+      </main>
     </div>
   );
 }
