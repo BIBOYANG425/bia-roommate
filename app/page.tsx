@@ -5,6 +5,9 @@ import Link from "next/link";
 import { SERVICES_DATA } from "@/lib/services";
 import CardSwap, { Card } from "@/components/CardSwap";
 import ScrollFloat from "@/components/ScrollFloat";
+import GlassSurface from "@/components/GlassSurface";
+import BorderGlow from "@/components/BorderGlow";
+import ScrollStack, { ScrollStackItem } from "@/components/ScrollStack";
 import { t, type Lang } from "@/lib/i18n";
 
 function ArrowIcon() {
@@ -32,7 +35,18 @@ export default function LandingPage() {
 
         {/* ─── Floating Navbar ─── */}
         <div className="fixed top-6 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none">
-          <nav className="glass-nav text-white w-full max-w-4xl py-3 px-6 flex items-center justify-between pointer-events-auto shadow-2xl transition-all duration-300">
+          <GlassSurface
+            width="100%"
+            height="auto"
+            borderRadius={16}
+            brightness={12}
+            opacity={0.9}
+            blur={14}
+            displace={0.3}
+            backgroundOpacity={0.45}
+            className="text-white w-full max-w-4xl pointer-events-auto shadow-2xl transition-all duration-300"
+          >
+          <nav className="w-full py-3 px-6 flex items-center justify-between">
             <div className="flex items-center gap-6">
               <Link href="/" className="flex items-center gap-2">
                 <Image src="/logo.png" alt="BIA" width={32} height={26} className="object-contain" style={{ height: "auto" }} />
@@ -56,11 +70,12 @@ export default function LandingPage() {
                 <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
                 LA {time || "..."}
               </div>
-              <Link href="/join" className="bg-[#171717] hover:bg-[#2C2C2C] text-white px-5 py-2 rounded-full transition-colors flex items-center shadow-lg">
+              <Link href="/join" className="bg-white/90 text-[#171717] hover:bg-white px-5 py-2.5 rounded-lg transition-all duration-200 flex items-center shadow-lg font-semibold text-sm tracking-wide min-h-[44px]">
                 {t.nav.joinUs[lang]}
               </Link>
             </div>
           </nav>
+          </GlassSurface>
         </div>
 
         {/* ─── Hero Section (sticky, gets covered by content) ─── */}
@@ -89,23 +104,49 @@ export default function LandingPage() {
             </ScrollFloat>
           </div>
 
-          {/* Bottom CTA — centered */}
-          <div className="absolute bottom-10 sm:bottom-16 left-0 right-0 z-20 flex justify-center px-6">
-            <div className="glass-panel p-6 sm:p-8 text-white text-center shadow-2xl max-w-lg w-full">
-              <p className="text-[#A0D7D1] text-xs uppercase tracking-widest font-semibold mb-2 drop-shadow-md">Starter · {t.hero.subtitle[lang]}</p>
-              <p className="text-sm mb-5 leading-relaxed font-light">
-                {t.hero.desc[lang]}
-              </p>
-              <div className="flex flex-col items-center gap-2">
-                <Link
-                  href="/roommates"
-                  className="bg-white text-[#171717] px-8 py-3.5 rounded-full text-sm font-semibold hover:bg-[#A0D7D1] hover:text-[#171717] transition-colors shadow-lg inline-flex items-center gap-2 min-h-[44px]"
-                >
-                  {t.hero.cta[lang]} <ArrowIcon />
-                </Link>
-                <span className="text-xs text-white/60 mt-1">{t.hero.ctaSub[lang]}</span>
+          {/* Bottom Left CTA */}
+          <div className="absolute bottom-10 sm:bottom-16 left-6 sm:left-16 z-20 max-w-md">
+            <GlassSurface
+              width="100%"
+              height="auto"
+              borderRadius={16}
+              brightness={25}
+              opacity={0.9}
+              blur={16}
+              displace={0.4}
+              className="shadow-2xl"
+            >
+              <div className="p-6 text-white text-left w-full">
+                <p className="text-[#A0D7D1] text-xs uppercase tracking-widest font-semibold mb-2 drop-shadow-md">Starter · {t.hero.subtitle[lang]}</p>
+                <p className="text-sm mb-5 leading-relaxed font-light">
+                  {t.hero.desc[lang]}
+                </p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <BorderGlow
+                    edgeSensitivity={5}
+                    glowColor="170 60 75"
+                    backgroundColor="transparent"
+                    borderRadius={10}
+                    glowRadius={35}
+                    glowIntensity={1.2}
+                    coneSpread={35}
+                    animated
+                    colors={['#A0D7D1', '#6DD4D4', '#ffffff']}
+                  >
+                    <Link
+                      href="/roommates"
+                      className="group bg-white/95 text-[#171717] px-8 py-3.5 rounded-[10px] text-sm font-bold tracking-wide uppercase hover:bg-white transition-all duration-200 inline-flex items-center gap-2.5 min-h-[48px]"
+                    >
+                      {t.hero.cta[lang]}
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="transition-transform duration-200 group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 7H13M13 7L7 1M13 7L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </Link>
+                  </BorderGlow>
+                  <span className="text-xs text-white/60">{t.hero.ctaSub[lang]}</span>
+                </div>
               </div>
-            </div>
+            </GlassSurface>
           </div>
         </section>
 
@@ -134,124 +175,52 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ─── 新生服务 — CardSwap in Apple Folder ─── */}
-          <section className="relative overflow-hidden bg-[#F9FAF7] py-24 sm:py-32 px-6 sm:px-16">
+          {/* ─── 新生服务 — ScrollStack ─── */}
+          <section className="relative bg-[#F9FAF7] pt-24 sm:pt-32 px-6 sm:px-16 pb-8">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-black/10 to-transparent"></div>
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-4xl mx-auto text-center mb-16">
               <h2 className="heading-serif text-4xl sm:text-5xl mb-2 text-[#171717]" style={{ fontFamily: "var(--font-display-zh)" }}>{t.services.heading[lang]}</h2>
-              <p className="text-[#999] text-sm uppercase tracking-widest mb-10">{t.services.subtitle[lang]}</p>
-
-              {/* Folder tab */}
-              <div className="flex items-end">
-                <div
-                  className="relative px-8 py-3 rounded-t-xl"
-                  style={{
-                    background: "linear-gradient(180deg, #5AC8C8 0%, #3BAAAA 100%)",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.3)",
-                  }}
-                >
-                  <span className="text-white text-sm font-semibold tracking-wide" style={{ fontFamily: "var(--font-display-zh)" }}>新生服务</span>
-                </div>
-                <div
-                  className="px-5 py-2 rounded-t-lg ml-0.5"
-                  style={{
-                    background: "linear-gradient(180deg, #D8D8DA 0%, #C4C4C8 100%)",
-                  }}
-                >
-                  <span className="text-[#666] text-xs tracking-wide">Freshman Services</span>
-                </div>
-              </div>
-
-              {/* Folder body */}
-              <div
-                className="rounded-b-2xl rounded-tr-2xl overflow-hidden"
-                style={{
-                  background: "linear-gradient(180deg, #FFFFFF 0%, #F4F4F6 100%)",
-                  border: "1px solid rgba(0,0,0,0.08)",
-                  boxShadow: "0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
-                }}
+              <p className="text-[#999] text-sm uppercase tracking-widest mb-4">{t.services.subtitle[lang]}</p>
+              <p className="text-[#646464] text-sm">{t.services.builtBy[lang]}</p>
+            </div>
+            <div className="max-w-3xl mx-auto">
+              <ScrollStack
+                itemDistance={80}
+                itemScale={0.04}
+                itemStackDistance={20}
+                stackPosition="25%"
+                scaleEndPosition="15%"
+                baseScale={0.88}
+                blurAmount={2}
               >
-                {/* Toolbar */}
-                <div className="flex items-center justify-between px-6 py-3 border-b border-black/5">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-                    <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
-                    <div className="w-3 h-3 rounded-full bg-[#28C840]" />
-                  </div>
-                  <p className="text-[#999] text-xs tracking-wide">BIA &gt; 新生服务</p>
-                  <div className="w-16" />
-                </div>
-
-                {/* CardSwap inside folder */}
-                <div className="p-6 sm:p-10">
-                  <div className="flex flex-col lg:flex-row gap-8 items-start">
-                    {/* Left: CardSwap preview */}
-                    <div className="w-full lg:w-3/5" style={{ height: '480px', position: 'relative' }}>
-                      <CardSwap
-                        cardDistance={50}
-                        verticalDistance={60}
-                        delay={4000}
-                        pauseOnHover={true}
-                      >
-                        {t.services.items.map((svc, idx) => {
-                          const hrefs = ["/roommates", "/course-planner", "/course-rating", "/sublet", "/usc-group"];
-                          const previews = ["/previews/roommates.png", "/previews/course-planner.png", "/previews/course-rating.png", "/previews/sublet.png", "/previews/usc-group.png"];
-                          return (
-                          <Card key={svc.title.en} className="w-full h-full rounded-xl overflow-hidden border border-black/5 shadow-md bg-white">
-                            <div className="relative w-full h-[65%]">
-                              <img
-                                src={previews[idx]}
-                                alt={svc.sub[lang]}
-                                className="w-full h-full object-cover object-top"
-                              />
-                            </div>
-                            <div className="p-5 flex flex-col gap-2">
-                              <div className="flex items-center gap-3">
-                                <h3 className="text-xl font-semibold text-[#2C2C2C]" style={{ fontFamily: "var(--font-display-zh)" }}>{svc.title[lang]}</h3>
-                                <span className="text-xs text-[#999] uppercase tracking-wider">{svc.sub[lang]}</span>
-                              </div>
-                              <p className="text-sm text-[#646464] leading-relaxed">{svc.desc[lang]}</p>
-                              <Link href={hrefs[idx]} className="text-[#3AA8A8] text-sm font-medium mt-1 inline-flex items-center hover:text-[#2C2C2C] transition-colors">
-                                {t.services.open[lang]} <ArrowIcon />
-                              </Link>
-                            </div>
-                          </Card>
-                          );
-                        })}
-                      </CardSwap>
-                    </div>
-
-                    {/* Right: Service list / sidebar */}
-                    <div className="w-full lg:w-2/5 flex flex-col gap-4 pt-4">
-                      <p className="text-xs text-[#999] uppercase tracking-widest mb-2">{t.services.available[lang]}</p>
-                      {t.services.items.map((svc, idx) => {
-                        const hrefs = ["/roommates", "/course-planner", "/course-rating", "/sublet", "/usc-group"];
-                        return (
-                        <Link
-                          key={svc.title.en}
-                          href={hrefs[idx]}
-                          className="group flex items-center gap-4 p-3 rounded-lg hover:bg-[#E8F0F0] transition-colors"
-                        >
-                          <div className="relative w-10 h-8 shrink-0">
-                            <div className="absolute inset-0 rounded" style={{ background: "linear-gradient(180deg, #6DD4D4 0%, #4ABCBC 100%)" }} />
-                            <div className="absolute -top-1 left-1 w-4 h-1.5 rounded-t-sm" style={{ background: "#6DD4D4" }} />
+                {(() => {
+                  const hrefs = ["/roommates", "/course-planner", "/course-rating", "/sublet", "/usc-group"];
+                  const previews = ["/previews/roommates.png", "/previews/course-planner.png", "/previews/course-rating.png", "/previews/sublet.png", "/previews/usc-group.png"];
+                  return t.services.items.map((svc, idx) => (
+                    <ScrollStackItem key={svc.title.en}>
+                      <Link href={hrefs[idx]} className="block bg-white rounded-2xl overflow-hidden border border-black/8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                        <div className="relative w-full h-48 sm:h-56">
+                          <img
+                            src={previews[idx]}
+                            alt={svc.sub[lang]}
+                            className="w-full h-full object-cover object-top"
+                          />
+                        </div>
+                        <div className="p-6 sm:p-8">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-2xl font-semibold text-[#171717]" style={{ fontFamily: "var(--font-display-zh)" }}>{svc.title[lang]}</h3>
+                            <span className="text-xs text-[#999] uppercase tracking-wider">{svc.sub[lang]}</span>
                           </div>
-                          <div>
-                            <p className="text-sm font-medium text-[#2C2C2C] group-hover:text-[#3AA8A8] transition-colors" style={{ fontFamily: "var(--font-display-zh)" }}>{svc.title[lang]}</p>
-                            <p className="text-[10px] text-[#999] uppercase tracking-wider">{svc.sub[lang]}</p>
-                          </div>
-                        </Link>
-                        );
-                      })}
-
-                      <div className="mt-4 pt-4 border-t border-black/5">
-                        <p className="text-[#999] text-xs">{t.services.builtBy[lang]}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
+                          <p className="text-[#646464] text-sm leading-relaxed mb-3">{svc.desc[lang]}</p>
+                          <span className="text-[#A0D7D1] text-sm font-medium inline-flex items-center gap-1">
+                            {t.services.open[lang]} <ArrowIcon />
+                          </span>
+                        </div>
+                      </Link>
+                    </ScrollStackItem>
+                  ));
+                })()}
+              </ScrollStack>
             </div>
           </section>
 
@@ -302,9 +271,26 @@ export default function LandingPage() {
               <p className="text-lg opacity-90 mb-8 max-w-lg font-light leading-relaxed">
                 {t.hackathon.desc[lang]}
               </p>
-              <Link href="/hackathon" className="bg-white text-[#1F1F29] px-8 py-3 rounded-full hover:bg-[#F9FAF7] hover:scale-105 transition-all font-medium inline-flex items-center gap-2 shadow-xl">
-                {t.hackathon.cta[lang]} <ArrowIcon />
-              </Link>
+              <div className="inline-block">
+                <BorderGlow
+                  edgeSensitivity={5}
+                  glowColor="170 60 75"
+                  backgroundColor="transparent"
+                  borderRadius={10}
+                  glowRadius={35}
+                  glowIntensity={1.2}
+                  coneSpread={35}
+                  animated
+                  colors={['#A0D7D1', '#6DD4D4', '#ffffff']}
+                >
+                  <Link href="/hackathon" className="group bg-white/95 text-[#1F1F29] px-8 py-3.5 rounded-[10px] hover:bg-white transition-all duration-200 font-bold text-sm tracking-wide uppercase inline-flex items-center gap-2.5 min-h-[48px]">
+                    {t.hackathon.cta[lang]}
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="transition-transform duration-200 group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 7H13M13 7L7 1M13 7L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </Link>
+                </BorderGlow>
+              </div>
             </div>
           </section>
 
@@ -349,9 +335,26 @@ export default function LandingPage() {
             <h2 className="heading-serif text-4xl sm:text-5xl md:text-6xl max-w-4xl mx-auto text-[#171717] mb-10 leading-tight">
               {t.cta.heading[lang]}
             </h2>
-            <Link href="/join" className="text-xl text-[#334444] hover:text-[#A0D7D1] transition-colors inline-flex items-center gap-2 link-hover pb-1 font-medium">
-              {t.cta.link[lang]} <ArrowIcon />
-            </Link>
+            <div className="inline-block">
+              <BorderGlow
+                edgeSensitivity={5}
+                glowColor="20 10 40"
+                backgroundColor="transparent"
+                borderRadius={12}
+                glowRadius={40}
+                glowIntensity={1.0}
+                coneSpread={35}
+                animated
+                colors={['#334444', '#A0D7D1', '#1F1F29']}
+              >
+                <Link href="/join" className="group bg-[#171717] text-white px-10 py-4 rounded-[12px] hover:bg-[#2C2C2C] transition-all duration-200 inline-flex items-center gap-3 font-bold text-base tracking-wide min-h-[52px]">
+                  {t.cta.link[lang]}
+                  <svg width="16" height="16" viewBox="0 0 14 14" fill="none" className="transition-transform duration-200 group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 7H13M13 7L7 1M13 7L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Link>
+              </BorderGlow>
+            </div>
           </section>
 
         </div>{/* end Main Content Overlay */}
