@@ -24,7 +24,7 @@ export function useAccountData() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      router.push("/");
+      router.push("/roommates");
       return;
     }
 

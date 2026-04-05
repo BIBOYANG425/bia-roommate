@@ -55,7 +55,7 @@ export default function AccountPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
       <button
-        onClick={() => router.push("/")}
+        onClick={() => router.push("/roommates")}
         className="font-display text-xs tracking-wider mb-2 hover:opacity-60 transition-opacity"
         style={{ color: "var(--mid)" }}
       >

@@ -104,7 +104,7 @@ export default function SubmitPage() {
 
     // If already logged in, go straight home
     if (user) {
-      router.push("/?submitted=true");
+      router.push("/roommates?submitted=true");
       return;
     }
 
@@ -135,7 +135,7 @@ export default function SubmitPage() {
         data: { user: authUser },
       } = await supabase.auth.getUser();
       if (!authUser) {
-        router.push("/?submitted=true");
+        router.push("/roommates?submitted=true");
         return;
       }
       const { error } = await supabase
@@ -143,7 +143,7 @@ export default function SubmitPage() {
         .update({ user_id: authUser.id })
         .eq("id", submittedProfileId)
         .is("user_id", null);
-      router.push(error ? "/?submitted=true" : "/?submitted=true&linked=true");
+      router.push(error ? "/roommates?submitted=true" : "/roommates?submitted=true&linked=true");
     };
 
     return (
@@ -178,7 +178,7 @@ export default function SubmitPage() {
             CREATE ACCOUNT
           </button>
           <button
-            onClick={() => router.push("/?submitted=true")}
+            onClick={() => router.push("/roommates?submitted=true")}
             className="w-full py-3 font-display text-sm tracking-wider border-[3px] border-[var(--black)] transition-all hover:translate-y-[-2px]"
             style={{ background: "white", color: "var(--black)" }}
           >
@@ -213,7 +213,7 @@ export default function SubmitPage() {
             DROP
           </div>
           <Link
-            href="/"
+            href="/roommates"
             className="font-display text-xs tracking-[0.2em] text-white/60 hover:text-white mb-4 inline-block"
           >
             &larr; BACK
