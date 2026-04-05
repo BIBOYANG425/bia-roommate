@@ -89,6 +89,7 @@ export default function CourseRatingPage() {
   const [showReviewModal, setShowReviewModal] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loading state for tab data fetch
     setLoading(true);
     if (tab === "recent") {
       fetch("/api/course-rating/top-rated?limit=20&sort=recent")

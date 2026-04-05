@@ -143,7 +143,11 @@ export default function SubmitPage() {
         .update({ user_id: authUser.id })
         .eq("id", submittedProfileId)
         .is("user_id", null);
-      router.push(error ? "/roommates?submitted=true" : "/roommates?submitted=true&linked=true");
+      router.push(
+        error
+          ? "/roommates?submitted=true"
+          : "/roommates?submitted=true&linked=true",
+      );
     };
 
     return (

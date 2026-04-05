@@ -15,7 +15,10 @@ export const t = {
     },
     learnMore: { en: "Learn More", zh: "了解更多" },
     cta: { en: "Try Starter", zh: "试试新生通" },
-    ctaSub: { en: "5 free tools for incoming Trojans", zh: "5款免费工具，为新Trojan打造" },
+    ctaSub: {
+      en: "5 free tools for incoming Trojans",
+      zh: "5款免费工具，为新Trojan打造",
+    },
   },
   mission: {
     heading: {
@@ -29,7 +32,10 @@ export const t = {
   },
   services: {
     heading: { en: "Starter · 新生通", zh: "新生通 · Starter" },
-    subtitle: { en: "Everything you need to start at USC", zh: "你在USC起步需要的一切" },
+    subtitle: {
+      en: "Everything you need to start at USC",
+      zh: "你在USC起步需要的一切",
+    },
     available: { en: "5 free tools", zh: "5 款免费工具" },
     builtBy: {
       en: "Built by BIA members for USC international students",
@@ -99,7 +105,10 @@ export const t = {
   },
   hackathon: {
     badge: { en: "Featured Event", zh: "精选活动" },
-    title: { en: "BIA Hackathon: Build with Trae & Minimax", zh: "BIA 黑客松：与 Trae & Minimax 共建" },
+    title: {
+      en: "BIA Hackathon: Build with Trae & Minimax",
+      zh: "BIA 黑客松：与 Trae & Minimax 共建",
+    },
     desc: {
       en: "500+ participants joined our flagship tech summit — building with cutting-edge AI tools, shipping real products, and pushing boundaries.",
       zh: "500+ 参与者加入了我们的旗舰科技峰会——使用前沿 AI 工具构建真实产品，突破边界。",
@@ -110,7 +119,10 @@ export const t = {
     heading: { en: "Latest Dispatches", zh: "最新动态" },
     byline: { en: "By BIA Editorial Team", zh: "BIA 编辑部" },
     posts: [
-      { en: "Inside the miHoYo Recruiting Session", zh: "走进米哈游校园招聘会" },
+      {
+        en: "Inside the miHoYo Recruiting Session",
+        zh: "走进米哈游校园招聘会",
+      },
       { en: "Startup 101 with YC China Founders", zh: "YC 中国创始人的创业课" },
       { en: "Welcome, Class of 2030!", zh: "欢迎，2030 届新生！" },
     ],
@@ -137,9 +149,15 @@ export const t = {
     },
     stats: [
       { value: "3,500+", label: { en: "Community reach", zh: "社区覆盖" } },
-      { value: "80+", label: { en: "Members across 4 cohorts", zh: "4期成员" } },
+      {
+        value: "80+",
+        label: { en: "Members across 4 cohorts", zh: "4期成员" },
+      },
       { value: "15+", label: { en: "Events per year", zh: "每年活动" } },
-      { value: "4", label: { en: "Cohorts since founding", zh: "创立以来的期数" } },
+      {
+        value: "4",
+        label: { en: "Cohorts since founding", zh: "创立以来的期数" },
+      },
     ],
     structure: {
       heading: { en: "How We're Built", zh: "组织架构" },
@@ -176,8 +194,14 @@ export const t = {
         },
         perks: [
           { en: "Lead and own your projects", zh: "领导并拥有你的项目" },
-          { en: "Propose new initiatives to E-Board", zh: "向 E-Board 提出新项目提案" },
-          { en: "Host 1 external + 1 internal event per semester", zh: "每学期举办1场外部+1场内部活动" },
+          {
+            en: "Propose new initiatives to E-Board",
+            zh: "向 E-Board 提出新项目提案",
+          },
+          {
+            en: "Host 1 external + 1 internal event per semester",
+            zh: "每学期举办1场外部+1场内部活动",
+          },
           { en: "Mentor incoming Interns", zh: "指导新入职的 Intern" },
         ],
         promotion: {
@@ -195,8 +219,14 @@ export const t = {
         perks: [
           { en: "Set BIA's strategic direction", zh: "制定 BIA 战略方向" },
           { en: "Approve new project proposals", zh: "审批新项目提案" },
-          { en: "Host flagship events each semester", zh: "每学期举办旗舰活动" },
-          { en: "Represent BIA to sponsors & partners", zh: "代表 BIA 对接赞助商与合作伙伴" },
+          {
+            en: "Host flagship events each semester",
+            zh: "每学期举办旗舰活动",
+          },
+          {
+            en: "Represent BIA to sponsors & partners",
+            zh: "代表 BIA 对接赞助商与合作伙伴",
+          },
         ],
         promotion: {
           en: "",
@@ -207,10 +237,34 @@ export const t = {
     process: {
       heading: { en: "The Process", zh: "申请流程" },
       steps: [
-        { title: { en: "Apply", zh: "提交申请" }, desc: { en: "Tell us who you are and what you want to build.", zh: "告诉我们你是谁，你想做什么。" } },
-        { title: { en: "Coffee Chat", zh: "咖啡聊天" }, desc: { en: "Casual conversation with current members.", zh: "与现任成员的轻松对话。" } },
-        { title: { en: "Interview", zh: "面试" }, desc: { en: "Show us your drive and how you think.", zh: "展示你的动力和思维方式。" } },
-        { title: { en: "Decision", zh: "录取通知" }, desc: { en: "Selected candidates join as Interns.", zh: "入选者以 Intern 身份加入。" } },
+        {
+          title: { en: "Apply", zh: "提交申请" },
+          desc: {
+            en: "Tell us who you are and what you want to build.",
+            zh: "告诉我们你是谁，你想做什么。",
+          },
+        },
+        {
+          title: { en: "Coffee Chat", zh: "咖啡聊天" },
+          desc: {
+            en: "Casual conversation with current members.",
+            zh: "与现任成员的轻松对话。",
+          },
+        },
+        {
+          title: { en: "Interview", zh: "面试" },
+          desc: {
+            en: "Show us your drive and how you think.",
+            zh: "展示你的动力和思维方式。",
+          },
+        },
+        {
+          title: { en: "Decision", zh: "录取通知" },
+          desc: {
+            en: "Selected candidates join as Interns.",
+            zh: "入选者以 Intern 身份加入。",
+          },
+        },
       ],
       note: {
         en: "We recruit at the start of each semester. Limited spots per cohort.",

@@ -60,8 +60,13 @@ export default function SquadCard({
             >
               {post.poster_name}
             </p>
-            <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--mid)" }}>
-              {post.school ?? ""}{post.school ? " · " : ""}{relativeTime(post.created_at)}
+            <p
+              className="text-[10px] uppercase tracking-wider"
+              style={{ color: "var(--mid)" }}
+            >
+              {post.school ?? ""}
+              {post.school ? " · " : ""}
+              {relativeTime(post.created_at)}
             </p>
           </div>
         </div>
@@ -102,12 +107,18 @@ export default function SquadCard({
       {/* Meta row */}
       <div className="flex flex-wrap gap-x-3 gap-y-1">
         {post.location && (
-          <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--mid)" }}>
+          <span
+            className="text-[10px] uppercase tracking-wider"
+            style={{ color: "var(--mid)" }}
+          >
             ◎ {post.location}
           </span>
         )}
         {post.deadline && (
-          <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--mid)" }}>
+          <span
+            className="text-[10px] uppercase tracking-wider"
+            style={{ color: "var(--mid)" }}
+          >
             截止 {new Date(post.deadline).toLocaleDateString("zh-CN")}
           </span>
         )}
@@ -125,9 +136,7 @@ export default function SquadCard({
           {post.gender_restriction !== "不限" && (
             <span className="brutal-tag">{post.gender_restriction}</span>
           )}
-          {isFull && (
-            <span className="brutal-tag brutal-tag-filled">已满</span>
-          )}
+          {isFull && <span className="brutal-tag brutal-tag-filled">已满</span>}
         </div>
         <span
           className="font-display text-xs tracking-wider"

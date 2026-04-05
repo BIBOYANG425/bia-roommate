@@ -63,7 +63,7 @@ export default function ScrollFloat({
           ease,
           stagger,
           delay: mountDelay,
-        }
+        },
       );
     } else {
       gsap.fromTo(
@@ -82,14 +82,22 @@ export default function ScrollFloat({
             end: scrollEnd,
             scrub: true,
           },
-        }
+        },
       );
     }
 
     return () => {
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
-  }, [animateOnMount, mountDelay, animationDuration, ease, scrollStart, scrollEnd, stagger]);
+  }, [
+    animateOnMount,
+    mountDelay,
+    animationDuration,
+    ease,
+    scrollStart,
+    scrollEnd,
+    stagger,
+  ]);
 
   // Split children text into individual character spans
   // Handles mixed children (strings + elements like <span>USC</span>)
@@ -107,18 +115,19 @@ export default function ScrollFloat({
               style={{ display: "inline-block", perspective: "800px" }}
             >
               {char === " " ? "\u00A0" : char}
-            </span>
+            </span>,
           );
           charIndex++;
         });
-      } else if (
-        node &&
-        typeof node === "object" &&
-        "props" in node
-      ) {
+      } else if (node && typeof node === "object" && "props" in node) {
         // It's a React element (e.g. <span style={...}>USC</span>)
-        const el = node as React.ReactElement<{ children?: ReactNode; className?: string; style?: React.CSSProperties }>;
-        const text = typeof el.props.children === "string" ? el.props.children : "";
+        const el = node as React.ReactElement<{
+          children?: ReactNode;
+          className?: string;
+          style?: React.CSSProperties;
+        }>;
+        const text =
+          typeof el.props.children === "string" ? el.props.children : "";
         const { children: _, ...restProps } = el.props;
         text.split("").forEach((char: string) => {
           result.push(
@@ -126,10 +135,14 @@ export default function ScrollFloat({
               key={charIndex}
               {...restProps}
               className={`scroll-float-char inline-block ${el.props.className || ""} ${spanClassName}`}
-              style={{ ...el.props.style, display: "inline-block", perspective: "800px" }}
+              style={{
+                ...el.props.style,
+                display: "inline-block",
+                perspective: "800px",
+              }}
             >
               {char === " " ? "\u00A0" : char}
-            </span>
+            </span>,
           );
           charIndex++;
         });

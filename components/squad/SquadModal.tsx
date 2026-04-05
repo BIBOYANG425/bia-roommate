@@ -41,7 +41,8 @@ export default function SquadModal({
     let cancelled = false;
     (async () => {
       try {
-        const { createBrowserSupabaseClient } = await import("@/lib/supabase/client");
+        const { createBrowserSupabaseClient } =
+          await import("@/lib/supabase/client");
         const supabase = createBrowserSupabaseClient();
         const { data } = await supabase
           .from("squad_members")
@@ -54,7 +55,9 @@ export default function SquadModal({
         if (!cancelled) setMembershipLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user, post.id]);
 
   // Move focus into panel on open; restore to previously focused element on close
@@ -271,9 +274,7 @@ export default function SquadModal({
         </div>
 
         {/* Contact */}
-        {post.contact && (
-          <CopyContact contact={post.contact} />
-        )}
+        {post.contact && <CopyContact contact={post.contact} />}
 
         {/* Join button */}
         <div className="p-5" style={{ background: "var(--cream)" }}>

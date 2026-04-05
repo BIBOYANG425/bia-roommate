@@ -16,7 +16,9 @@ export default function SubletModal({
   const photos = listing.photos ?? [];
   const [photoIdx, setPhotoIdx] = useState(0);
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";

@@ -41,16 +41,27 @@ export async function POST(request: Request) {
   const trimmedContact = contact?.trim() ?? "";
   const trimmedSchool = school?.trim() ?? "";
   const trimmedLocation = location?.trim() ?? "";
-  const trimmedGender = (gender_restriction?.trim() || "不限");
+  const trimmedGender = gender_restriction?.trim() || "不限";
 
-  if (!trimmedPosterName || !trimmedCategory || !trimmedContent || !trimmedContact)
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  if (
+    !trimmedPosterName ||
+    !trimmedCategory ||
+    !trimmedContent ||
+    !trimmedContact
+  )
+    return NextResponse.json(
+      { error: "Missing required fields" },
+      { status: 400 },
+    );
 
   if (!(SQUAD_CATEGORIES as readonly string[]).includes(trimmedCategory))
     return NextResponse.json({ error: "Invalid category" }, { status: 400 });
 
   if (!(SQUAD_GENDER_OPTIONS as readonly string[]).includes(trimmedGender))
-    return NextResponse.json({ error: "Invalid gender_restriction" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid gender_restriction" },
+      { status: 400 },
+    );
 
   const parsedMaxPeople = parseInt(String(max_people), 10);
   if (isNaN(parsedMaxPeople) || parsedMaxPeople < 1 || parsedMaxPeople > 50)

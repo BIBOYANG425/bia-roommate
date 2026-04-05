@@ -58,12 +58,13 @@ function PlannerContent() {
   const [savedSchedule, setSavedSchedule] = useState<{
     name: string;
     semester: string;
-    schedule_data: { sections: any[]; avgRating: number };
+    schedule_data: { sections: unknown[]; avgRating: number };
   } | null>(null);
   const [savedLoading, setSavedLoading] = useState(false);
 
   useEffect(() => {
     if (!scheduleId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting state when param removed
       setSavedSchedule(null);
       return;
     }
@@ -86,6 +87,7 @@ function PlannerContent() {
 
   useEffect(() => {
     const seen = localStorage.getItem("bia-tour-seen");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initializing from localStorage on mount
     if (!seen) setShowTour(true);
   }, []);
 

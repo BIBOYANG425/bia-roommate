@@ -62,6 +62,7 @@ function HomeContent() {
 
   useEffect(() => {
     if (searchParams.get("submitted") === "true") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time toast on redirect
       setShowToast(true);
       router.replace("/roommates", { scroll: false });
     }
@@ -93,6 +94,7 @@ function HomeContent() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch sets state in async callback
     fetchProfiles();
   }, [fetchProfiles]);
 
