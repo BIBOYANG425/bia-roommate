@@ -215,7 +215,7 @@ export default function ResultsView({
         rating: number; // lecture instructor rating
       };
 
-      function buildCombos(course: Course, geTag?: string): SectionCombo[] {
+      function buildCombos(course: Course, _geTag?: string): SectionCombo[] {
         let allActive = (course.sections || []).filter((s) => !s.isCancelled);
 
         // Filter out D-clearance sections if preference is set
@@ -513,7 +513,7 @@ export default function ResultsView({
 
       setSchedules(top);
       setActiveIdx(0);
-    } catch (e) {
+    } catch {
       setError("FAILED TO BUILD SCHEDULES");
     } finally {
       setLoading(false);

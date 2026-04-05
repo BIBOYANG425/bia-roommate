@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { SquadPost } from "@/lib/types";
 import { relativeTime } from "@/lib/utils";
+import Image from "next/image";
 import { useAuth } from "@/components/AuthProvider";
 import { CATEGORY_COLORS } from "./SquadCard";
 
@@ -145,9 +146,11 @@ export default function SquadModal({
           style={{ background: "var(--cream)" }}
         >
           {post.avatar_url ? (
-            <img
+            <Image
               src={post.avatar_url}
               alt={post.poster_name}
+              width={48}
+              height={48}
               className="w-12 h-12 object-cover border-[3px] border-[var(--black)] shrink-0"
             />
           ) : (
@@ -196,10 +199,12 @@ export default function SquadModal({
             style={{ background: "var(--cream)" }}
           >
             {post.photos.map((url, i) => (
-              <img
+              <Image
                 key={i}
                 src={url}
-                alt=""
+                alt={`Photo ${i + 1}`}
+                width={112}
+                height={96}
                 className="w-28 h-24 object-cover border-[2px] border-[var(--black)]"
               />
             ))}

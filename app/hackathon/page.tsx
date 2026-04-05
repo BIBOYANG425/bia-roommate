@@ -142,10 +142,13 @@ export default function HackathonPage() {
         >
           {/* ─── Hero ─── */}
           <section className="relative overflow-hidden">
-            <img
+            <Image
               src="/hackathon/group-photo.jpg"
               alt="Build with TRAE × MiniMax @ USC — 全体合影"
+              width={800}
+              height={600}
               className="w-full block opacity-85"
+              style={{ width: "100%", height: "auto" }}
             />
             <div
               className="absolute bottom-0 left-0 right-0 px-6 pb-5 pt-10"
@@ -266,11 +269,14 @@ export default function HackathonPage() {
             </p>
             <figure className="my-8">
               <div className="border border-[#30363d] rounded-lg overflow-hidden">
-                <img
+                <Image
                   src="/hackathon/full-room.jpg"
                   alt="全场参赛者工作中"
+                  width={800}
+                  height={600}
                   className="w-full block"
                   loading="lazy"
+                  style={{ width: "100%", height: "auto" }}
                 />
               </div>
               <figcaption
@@ -346,19 +352,25 @@ export default function HackathonPage() {
             </p>
             <div className="grid grid-cols-2 gap-3 my-8">
               <figure className="border border-[#30363d] rounded-lg overflow-hidden">
-                <img
+                <Image
                   src="/hackathon/working-1.jpg"
                   alt="参赛者在写代码"
+                  width={400}
+                  height={300}
                   className="w-full block"
                   loading="lazy"
+                  style={{ width: "100%", height: "auto" }}
                 />
               </figure>
               <figure className="border border-[#30363d] rounded-lg overflow-hidden">
-                <img
+                <Image
                   src="/hackathon/working-2.jpg"
                   alt="团队讨论中"
+                  width={400}
+                  height={300}
                   className="w-full block"
                   loading="lazy"
+                  style={{ width: "100%", height: "auto" }}
                 />
               </figure>
             </div>
@@ -393,11 +405,14 @@ export default function HackathonPage() {
             </p>
             <div className="flex gap-3">
               <figure className="flex-1 border border-[#30363d] rounded-lg overflow-hidden flex flex-col">
-                <img
+                <Image
                   src="/hackathon/speaker-trae.jpg"
                   alt="Trae 嘉宾分享"
+                  width={400}
+                  height={500}
                   className="w-full block flex-1 object-cover"
                   loading="lazy"
+                  style={{ width: "100%", height: "auto" }}
                 />
                 <div className="px-3 py-2.5 bg-[#1c2128]">
                   <p className="text-[12px] text-[#3fb950] font-bold">
@@ -407,19 +422,25 @@ export default function HackathonPage() {
               </figure>
               <div className="flex-1 flex flex-col gap-3">
                 <figure className="flex-1 border border-[#30363d] rounded-lg overflow-hidden">
-                  <img
+                  <Image
                     src="/hackathon/speaker-minimax-1.jpg"
                     alt="MiniMax 嘉宾演讲"
+                    width={400}
+                    height={300}
                     className="w-full block"
                     loading="lazy"
+                    style={{ width: "100%", height: "auto" }}
                   />
                 </figure>
                 <figure className="flex-1 border border-[#30363d] rounded-lg overflow-hidden flex flex-col">
-                  <img
+                  <Image
                     src="/hackathon/speaker-minimax-2.jpg"
                     alt="MiniMax 嘉宾分享"
+                    width={400}
+                    height={300}
                     className="w-full block flex-1 object-cover"
                     loading="lazy"
+                    style={{ width: "100%", height: "auto" }}
                   />
                   <div className="px-3 py-2.5 bg-[#1c2128]">
                     <p className="text-[12px] text-[#F4347F] font-bold">
@@ -459,18 +480,24 @@ export default function HackathonPage() {
                       {w.prize}
                     </span>
                   </div>
-                  <img
+                  <Image
                     src={w.demo}
                     alt={w.demoAlt}
+                    width={800}
+                    height={600}
                     className="w-full block"
                     loading="lazy"
+                    style={{ width: "100%", height: "auto" }}
                   />
                   <div className="p-4">
-                    <img
+                    <Image
                       src={w.team}
                       alt={w.teamAlt}
+                      width={800}
+                      height={600}
                       className="w-full block rounded-md"
                       loading="lazy"
+                      style={{ width: "100%", height: "auto" }}
                     />
                   </div>
                 </div>
@@ -483,18 +510,24 @@ export default function HackathonPage() {
                     ⚡ PHOTON.CODES 专项赛道
                   </span>
                 </div>
-                <img
+                <Image
                   src="/hackathon/photon-demo.jpg"
                   alt="Photon赛道团队展示"
+                  width={800}
+                  height={600}
                   className="w-full block"
                   loading="lazy"
+                  style={{ width: "100%", height: "auto" }}
                 />
                 <div className="p-4">
-                  <img
+                  <Image
                     src="/hackathon/photon-team.jpg"
                     alt="Photon赛道获奖团队"
+                    width={800}
+                    height={600}
                     className="w-full block rounded-md"
                     loading="lazy"
+                    style={{ width: "100%", height: "auto" }}
                   />
                 </div>
               </div>
@@ -515,12 +548,18 @@ export default function HackathonPage() {
                   key={s.alt}
                   className="bg-[#1c2128] border border-[#30363d] rounded-lg p-5 text-center"
                 >
-                  <img
+                  <Image
                     src={s.logo}
                     alt={s.alt}
+                    width={120}
+                    height={32}
                     className="h-8 mx-auto mb-3 block"
                     loading="lazy"
-                    style={{ borderRadius: "rounded" in s ? "6px" : undefined }}
+                    style={{
+                      borderRadius: "rounded" in s ? "6px" : undefined,
+                      width: "auto",
+                      height: "32px",
+                    }}
                   />
                   <p
                     className="text-[12px] text-[#8b949e] leading-relaxed"
@@ -533,11 +572,14 @@ export default function HackathonPage() {
             </div>
             <div className="flex justify-center mb-4">
               <div className="bg-[#1c2128] border border-[#30363d] rounded-lg p-5 w-[calc(50%-6px)] text-center">
-                <img
+                <Image
                   src="/hackathon/alipay-logo.png"
                   alt="支付宝留学缴费"
+                  width={120}
+                  height={32}
                   className="h-8 mx-auto mb-3 block rounded-md"
                   loading="lazy"
+                  style={{ width: "auto", height: "32px" }}
                 />
                 <p
                   className="text-[12px] text-[#8b949e] leading-relaxed"
@@ -587,11 +629,14 @@ export default function HackathonPage() {
             </p>
             <figure className="my-6">
               <div className="border border-[#30363d] rounded-lg overflow-hidden">
-                <img
+                <Image
                   src="/hackathon/working-3.jpg"
                   alt="参赛者协作"
+                  width={800}
+                  height={600}
                   className="w-full block"
                   loading="lazy"
+                  style={{ width: "100%", height: "auto" }}
                 />
               </div>
             </figure>
@@ -653,11 +698,14 @@ export default function HackathonPage() {
             </p>
             <figure className="my-8">
               <div className="border border-[#30363d] rounded-lg overflow-hidden">
-                <img
+                <Image
                   src="/hackathon/bia-staff.jpg"
                   alt="BIA组织团队"
+                  width={800}
+                  height={600}
                   className="w-full block"
                   loading="lazy"
+                  style={{ width: "100%", height: "auto" }}
                 />
                 <div className="px-4 py-2.5 bg-[#1c2128]">
                   <p

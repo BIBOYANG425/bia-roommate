@@ -14,7 +14,7 @@ interface TagPickerProps {
 
 export default function TagPicker({
   selectedTags,
-  maxTags,
+  maxTags: _maxTags,
   onToggle,
   accent = "var(--cardinal)",
   layout = "wrap",

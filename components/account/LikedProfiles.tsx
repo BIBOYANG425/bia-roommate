@@ -42,9 +42,11 @@ function MiniProfileCard({
 
       {/* Avatar */}
       {profile.avatar_url ? (
-        <img
+        <Image
           src={profile.avatar_url}
           alt={profile.name}
+          width={40}
+          height={40}
           className="w-10 h-10 object-cover border-[3px] border-[var(--black)] shrink-0"
         />
       ) : (

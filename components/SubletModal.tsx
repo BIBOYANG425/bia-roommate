@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import Image from "next/image";
 import { SubletListing } from "@/lib/types";
 import { relativeTime, schoolAccent, schoolGold } from "@/lib/utils";
 
@@ -71,10 +72,12 @@ export default function SubletModal({
             className="relative w-full h-56 sm:h-64 border-b-[3px] border-[var(--black)] overflow-hidden"
             style={{ background: "var(--beige)" }}
           >
-            <img
+            <Image
               src={photos[photoIdx]}
               alt={`Photo ${photoIdx + 1}`}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              unoptimized
             />
             {photos.length > 1 && (
               <>

@@ -2,8 +2,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { SERVICES_DATA } from "@/lib/services";
-import CardSwap, { Card } from "@/components/CardSwap";
 import ScrollFloat from "@/components/ScrollFloat";
 import GlassSurface from "@/components/GlassSurface";
 import BorderGlow from "@/components/BorderGlow";
@@ -125,10 +123,11 @@ export default function LandingPage() {
         <section className="sticky top-0 z-10 h-[95vh] w-full flex items-center justify-center overflow-hidden bg-[#1F1F29]">
           {/* Background Image */}
           <div className="absolute inset-0 z-0">
-            <img
+            <Image
               src="/hero-usc-anime.jpg"
               alt="USC Campus Golden Hour Anime Style"
-              className="w-full h-full object-cover opacity-75 hover:scale-105 transition-transform duration-[10s] ease-in-out bg-[#1F1F29]"
+              fill
+              className="object-cover opacity-75 hover:scale-105 transition-transform duration-[10s] ease-in-out bg-[#1F1F29]"
             />
           </div>
 
@@ -295,10 +294,11 @@ export default function LandingPage() {
                         className="block bg-white rounded-2xl overflow-hidden border border-black/8 shadow-lg hover:shadow-xl transition-shadow duration-300"
                       >
                         <div className="relative w-full h-48 sm:h-56">
-                          <img
+                          <Image
                             src={previews[idx]}
                             alt={svc.sub[lang]}
-                            className="w-full h-full object-cover object-top"
+                            fill
+                            className="object-cover object-top"
                           />
                         </div>
                         <div className="p-6 sm:p-8">
@@ -375,11 +375,11 @@ export default function LandingPage() {
 
           {/* ─── Featured Product/Event Section ─── */}
           <section className="relative w-full h-[85vh] flex items-center px-6 sm:px-16 overflow-hidden bg-[#1F1F29]">
-            <img
+            <Image
               src="/hackathon-anime.jpg"
               alt="BIA Hackathon — students coding at USC"
-              loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover opacity-60 hover:scale-105 transition-transform duration-[10s]"
+              fill
+              className="object-cover opacity-60 hover:scale-105 transition-transform duration-[10s]"
             />
             <div className="relative z-10 max-w-2xl text-white">
               <span className="inline-block px-4 py-1.5 border border-white/30 rounded-full text-xs font-semibold uppercase tracking-wider mb-6 glass-panel">
@@ -471,12 +471,12 @@ export default function LandingPage() {
                     } as React.CSSProperties
                   }
                 >
-                  <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 mb-6 border border-black/5 shadow-lg">
-                    <img
+                  <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 mb-6 border border-black/5 shadow-lg">
+                    <Image
                       src={post.image}
                       alt={t.blog.posts[post.idx][lang]}
-                      loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-700"
                     />
                   </div>
                   <h3 className="text-2xl font-medium text-[#2C2C2C] mb-3 group-hover:text-[#A0D7D1] transition-colors heading-serif leading-snug">
@@ -600,11 +600,11 @@ export default function LandingPage() {
         style={{ height: "70vh", minHeight: "600px" }}
       >
         <div className="absolute inset-0 z-0">
-          <img
+          <Image
             src="/footer-night.jpg"
             alt="USC Campus at Night — Pixel Art"
-            loading="lazy"
-            className="w-full h-full object-cover object-bottom opacity-40 hover:scale-105 transition-transform duration-[20s]"
+            fill
+            className="object-cover object-bottom opacity-40 hover:scale-105 transition-transform duration-[20s]"
           />
         </div>
       </footer>

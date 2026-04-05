@@ -5,12 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import {
-  RoommateProfile,
-  GENDER_OPTIONS,
-  YEAR_OPTIONS,
-  SCHOOL_OPTIONS,
-} from "@/lib/types";
+import { RoommateProfile, GENDER_OPTIONS, YEAR_OPTIONS } from "@/lib/types";
 import ProfileCard from "@/components/ProfileCard";
 import ProfileModal from "@/components/ProfileModal";
 import SkeletonCard from "@/components/SkeletonCard";

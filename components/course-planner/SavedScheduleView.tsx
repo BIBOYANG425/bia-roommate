@@ -1,7 +1,7 @@
 "use client";
 
 import type { Course, Section } from "@/lib/course-planner/types";
-import { parseSectionTimes, formatTime } from "@/lib/course-planner/conflicts";
+import { formatTime } from "@/lib/course-planner/conflicts";
 import { COURSE_COLORS } from "@/lib/course-planner/colors";
 import ResultCalendar from "./ResultCalendar";
 

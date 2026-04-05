@@ -128,7 +128,7 @@ export default function ScrollFloat({
         }>;
         const text =
           typeof el.props.children === "string" ? el.props.children : "";
-        const { children: _, ...restProps } = el.props;
+        const { children: _children, ...restProps } = el.props;
         text.split("").forEach((char: string) => {
           result.push(
             <span

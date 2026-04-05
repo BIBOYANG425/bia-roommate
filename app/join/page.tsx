@@ -164,10 +164,11 @@ export default function JoinPage() {
         <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
           {/* Background */}
           <div className="absolute inset-0 z-0">
-            <img
+            <Image
               src="/hackathon/group-photo.jpg"
               alt="BIA Members"
-              className="w-full h-full object-cover opacity-20 bg-[#0D0D0F]"
+              fill
+              className="object-cover opacity-20 bg-[#0D0D0F]"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-[#0D0D0F] via-[#0D0D0F]/60 to-[#0D0D0F]" />
           </div>

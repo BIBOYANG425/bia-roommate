@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { TagPicker, HabitSelector } from "@/components/form";
-import { useProfileForm, type ProfileFormData } from "@/hooks/useProfileForm";
+import { useProfileForm } from "@/hooks/useProfileForm";
 import {
   SLEEP_OPTIONS,
   CLEAN_OPTIONS,
@@ -390,10 +391,13 @@ export default function OnboardingFlow() {
                 />
                 {formData.avatarUrl && (
                   <div className="mt-3">
-                    <img
+                    <Image
                       src={formData.avatarUrl}
                       alt="Avatar preview"
+                      width={64}
+                      height={64}
                       className="w-16 h-16 object-cover border-[3px] border-[var(--black)]"
+                      unoptimized
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
                       }}

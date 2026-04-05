@@ -2,6 +2,7 @@
 
 import { SquadPost } from "@/lib/types";
 import { relativeTime } from "@/lib/utils";
+import Image from "next/image";
 
 export const CATEGORY_COLORS: Record<string, string> = {
   拼车: "#2D6A4F",
@@ -40,9 +41,11 @@ export default function SquadCard({
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {post.avatar_url ? (
-            <img
+            <Image
               src={post.avatar_url}
               alt={post.poster_name}
+              width={40}
+              height={40}
               className="w-10 h-10 object-cover border-[3px] border-[var(--black)] shrink-0"
             />
           ) : (
@@ -94,10 +97,12 @@ export default function SquadCard({
       {post.photos && post.photos.length > 0 && (
         <div className="flex gap-2">
           {post.photos.slice(0, 3).map((url, i) => (
-            <img
+            <Image
               key={i}
               src={url}
-              alt=""
+              alt={`Photo ${i + 1}`}
+              width={80}
+              height={56}
               className="w-20 h-14 object-cover border-[2px] border-[var(--black)]"
             />
           ))}

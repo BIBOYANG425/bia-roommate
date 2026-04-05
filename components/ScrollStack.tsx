@@ -214,12 +214,16 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
     window.addEventListener("scroll", onScroll, { passive: true });
     updateCardTransforms();
 
+    const rafCleanup = rafRef;
+    const cardsCleanup = cardsRef;
+    const lastTransformsCleanup = lastTransformsRef;
+    const stackCompletedCleanup = stackCompletedRef;
     return () => {
       window.removeEventListener("scroll", onScroll);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      cardsRef.current = [];
-      lastTransformsRef.current.clear();
-      stackCompletedRef.current = false;
+      if (rafCleanup.current) cancelAnimationFrame(rafCleanup.current);
+      cardsCleanup.current = [];
+      lastTransformsCleanup.current.clear();
+      stackCompletedCleanup.current = false;
     };
   }, [mounted, itemDistance, updateCardTransforms]);
 

@@ -580,7 +580,15 @@ export default function AgentChat({
     return () => {
       controller.abort();
     };
-  }, [interests, semester, unitsFilter, thinking, addMessage, onResults]);
+  }, [
+    interests,
+    semester,
+    unitsFilter,
+    levelFilter,
+    thinking,
+    addMessage,
+    onResults,
+  ]);
 
   function toggleCourse(id: string) {
     setSelectedCourses((prev) => {

@@ -69,9 +69,11 @@ export default function ProfileCard({ profile, loading }: ProfileCardProps) {
       <div className="flex items-start gap-4">
         {/* Avatar */}
         {profile.avatar_url ? (
-          <img
+          <Image
             src={profile.avatar_url}
             alt={profile.name}
+            width={64}
+            height={64}
             className="w-16 h-16 object-cover border-[3px] border-[var(--black)] shrink-0"
           />
         ) : (

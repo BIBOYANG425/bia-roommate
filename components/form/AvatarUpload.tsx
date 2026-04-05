@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface AvatarUploadProps {
   avatarPreview: string | null;
   onFileChange: (file: File | null) => void;
@@ -38,14 +40,16 @@ export default function AvatarUpload({
       <div className="flex items-center gap-4">
         <label className="cursor-pointer">
           <div
-            className="w-20 h-20 border-[3px] border-[var(--black)] flex items-center justify-center overflow-hidden transition-all hover:shadow-[4px_4px_0_var(--gold)]"
+            className="relative w-20 h-20 border-[3px] border-[var(--black)] flex items-center justify-center overflow-hidden transition-all hover:shadow-[4px_4px_0_var(--gold)]"
             style={{ background: "var(--beige)" }}
           >
             {avatarPreview ? (
-              <img
+              <Image
                 src={avatarPreview}
                 alt="Preview"
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                unoptimized
               />
             ) : (
               <span

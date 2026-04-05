@@ -182,6 +182,7 @@ export default function ReviewModal({ onClose }: { onClose: () => void }) {
                     <div
                       key={`${item.id}-${i}`}
                       role="option"
+                      aria-selected={false}
                       tabIndex={0}
                       className="px-4 py-3 font-mono text-sm cursor-pointer transition-colors hover:bg-[var(--cream)] focus:bg-[var(--cream)] outline-none"
                       style={{
