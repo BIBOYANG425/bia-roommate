@@ -1,11 +1,7 @@
 import { NextRequest } from "next/server";
 import { getCurrentSemesterCode } from "@/lib/course-planner/semester";
+import { getCached, setCache } from "@/lib/course-planner/course-cache";
 
-// Share cache with autocomplete route is tricky across files,
-// so we maintain our own cache here too
-const cache = new Map<string, { data: CourseEntry[]; ts: number }>();
-const CACHE_TTL = 3600_000;
-const MAX_CACHE_ENTRIES = 10;
 const SEMESTER_RE = /^20\d{2}[1-3]$/;
 
 interface CourseEntry {
@@ -36,9 +32,9 @@ export async function GET(request: NextRequest) {
   try {
     // Get or fetch the full course list
     let courses: CourseEntry[];
-    const cached = cache.get(semester);
-    if (cached && Date.now() - cached.ts < CACHE_TTL) {
-      courses = cached.data;
+    const cached = getCached<CourseEntry[]>(semester);
+    if (cached) {
+      courses = cached;
     } else {
       const res = await fetch(
         `https://classes.usc.edu/api/Search/Autocomplete?termCode=${semester}`,
@@ -52,19 +48,7 @@ export async function GET(request: NextRequest) {
       }
       const data = await res.json();
       courses = data.courses || [];
-      if (cache.size >= MAX_CACHE_ENTRIES) {
-        // Evict oldest entry
-        let oldestKey = "";
-        let oldestTs = Infinity;
-        for (const [k, v] of cache) {
-          if (v.ts < oldestTs) {
-            oldestTs = v.ts;
-            oldestKey = k;
-          }
-        }
-        if (oldestKey) cache.delete(oldestKey);
-      }
-      cache.set(semester, { data: courses, ts: Date.now() });
+      setCache(semester, courses);
     }
 
     // Filter and transform to SearchResult format

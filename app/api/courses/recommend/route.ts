@@ -82,14 +82,6 @@ export async function POST(request: NextRequest) {
           "[recommend] Agent mode failed, falling back to free:",
           errMsg,
         );
-        console.error(
-          "[recommend] LLM provider:",
-          process.env.ANTHROPIC_API_KEY
-            ? "anthropic"
-            : process.env.OPENAI_API_KEY
-              ? "openai"
-              : "nvidia",
-        );
         agentFailed = true;
         // Fall through to free mode
       }

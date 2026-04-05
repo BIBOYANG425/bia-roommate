@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { TagPicker, HabitSelector } from "@/components/form";
+import { useProfileForm, type ProfileFormData } from "@/hooks/useProfileForm";
 import {
-  VALID_TAGS,
   SLEEP_OPTIONS,
   CLEAN_OPTIONS,
   NOISE_OPTIONS,
@@ -19,48 +20,12 @@ import { schoolAccent } from "@/lib/utils";
 
 /* ── Habit config ── */
 const HABITS = [
-  { key: "sleep_habit", label: "SLEEP", options: SLEEP_OPTIONS },
-  { key: "clean_level", label: "CLEAN", options: CLEAN_OPTIONS },
-  { key: "noise_level", label: "NOISE", options: NOISE_OPTIONS },
-  { key: "music_habit", label: "MUSIC", options: MUSIC_OPTIONS },
-  { key: "study_style", label: "STUDY", options: STUDY_OPTIONS },
-] as const;
-
-type HabitKey = (typeof HABITS)[number]["key"];
-
-interface FormData {
-  name: string;
-  school: string;
-  year: string;
-  major: string;
-  enrollment_term: string;
-  avatar_url: string;
-  bio: string;
-  contact: string;
-  tags: string[];
-  sleep_habit: string;
-  clean_level: string;
-  noise_level: string;
-  music_habit: string;
-  study_style: string;
-}
-
-const INITIAL_FORM: FormData = {
-  name: "",
-  school: "",
-  year: "",
-  major: "",
-  enrollment_term: "",
-  avatar_url: "",
-  bio: "",
-  contact: "",
-  tags: [],
-  sleep_habit: "",
-  clean_level: "",
-  noise_level: "",
-  music_habit: "",
-  study_style: "",
-};
+  { key: "sleepHabit" as const, label: "SLEEP", options: SLEEP_OPTIONS },
+  { key: "cleanLevel" as const, label: "CLEAN", options: CLEAN_OPTIONS },
+  { key: "noiseLevel" as const, label: "NOISE", options: NOISE_OPTIONS },
+  { key: "musicHabit" as const, label: "MUSIC", options: MUSIC_OPTIONS },
+  { key: "studyStyle" as const, label: "STUDY", options: STUDY_OPTIONS },
+];
 
 const TOTAL_STEPS = 4;
 
@@ -68,11 +33,20 @@ export default function OnboardingFlow() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
+  const {
+    formData,
+    updateField,
+    toggleTag,
+    errors,
+    setError,
+    submitting,
+    setSubmitting,
+    setForm,
+    buildPayload,
+  } = useProfileForm({ maxTags: 6 });
+
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [existingId, setExistingId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
   /* ── Redirect if not authenticated ── */
@@ -99,18 +73,21 @@ export default function OnboardingFlow() {
         setForm({
           name: data.name || "",
           school: data.school || "",
+          gender: "",
           year: data.year || "",
           major: data.major || "",
-          enrollment_term: data.enrollment_term || "",
-          avatar_url: data.avatar_url || "",
+          enrollmentTerm: data.enrollment_term || "",
+          avatarUrl: data.avatar_url || "",
           bio: data.bio || "",
           contact: data.contact || "",
           tags: data.tags || [],
-          sleep_habit: data.sleep_habit || "",
-          clean_level: data.clean_level || "",
-          noise_level: data.noise_level || "",
-          music_habit: data.music_habit || "",
-          study_style: data.study_style || "",
+          sleepHabit: data.sleep_habit || "",
+          customSleep: "",
+          cleanLevel: data.clean_level || "",
+          noiseLevel: data.noise_level || "",
+          musicHabit: data.music_habit || "",
+          studyStyle: data.study_style || "",
+          hobbies: "",
         });
       }
 
@@ -118,41 +95,18 @@ export default function OnboardingFlow() {
     }
 
     loadProfile();
-  }, [user]);
-
-  /* ── Field updater ── */
-  function updateField<K extends keyof FormData>(key: K, value: FormData[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  }
-
-  /* ── Tag toggle ── */
-  function toggleTag(tag: string) {
-    setForm((prev) => {
-      const has = prev.tags.includes(tag);
-      if (has) return { ...prev, tags: prev.tags.filter((t) => t !== tag) };
-      if (prev.tags.length >= 6) return prev;
-      return { ...prev, tags: [...prev.tags, tag] };
-    });
-  }
-
-  /* ── Habit toggle (click again to deselect) ── */
-  function toggleHabit(key: HabitKey, value: string) {
-    setForm((prev) => ({
-      ...prev,
-      [key]: prev[key] === value ? "" : value,
-    }));
-  }
+  }, [user, setForm]);
 
   /* ── Validation ── */
   function canProceed(): boolean {
     if (step === 1)
       return (
-        form.name.trim() !== "" &&
-        form.school !== "" &&
-        form.year !== "" &&
-        form.major.trim() !== ""
+        formData.name.trim() !== "" &&
+        formData.school !== "" &&
+        formData.year !== "" &&
+        formData.major.trim() !== ""
       );
-    if (step === 2) return form.contact.trim() !== "";
+    if (step === 2) return formData.contact.trim() !== "";
     return true;
   }
 
@@ -162,27 +116,7 @@ export default function OnboardingFlow() {
     setSubmitting(true);
 
     const supabase = createBrowserSupabaseClient();
-
-    const payload = {
-      name: form.name.trim(),
-      school: form.school || null,
-      year: form.year || null,
-      major: form.major.trim() || null,
-      enrollment_term:
-        form.year === "新生" && form.enrollment_term
-          ? form.enrollment_term
-          : null,
-      avatar_url: form.avatar_url.trim() || null,
-      bio: form.bio.trim() || null,
-      contact: form.contact.trim(),
-      tags: form.tags.length > 0 ? form.tags : null,
-      sleep_habit: form.sleep_habit || null,
-      clean_level: form.clean_level || null,
-      noise_level: form.noise_level || null,
-      music_habit: form.music_habit || null,
-      study_style: form.study_style || null,
-      visible: form.year === "新生",
-    };
+    const payload = buildPayload(null);
 
     const { error } = existingId
       ? await supabase
@@ -195,7 +129,7 @@ export default function OnboardingFlow() {
           .insert({ ...payload, user_id: user!.id });
 
     if (error) {
-      setSaveError(error.message);
+      setError(error.message);
       setSubmitting(false);
       return;
     }
@@ -204,7 +138,9 @@ export default function OnboardingFlow() {
   }
 
   /* ── Dynamic accent color based on selected school ── */
-  const accent = form.school ? schoolAccent(form.school) : "var(--cardinal)";
+  const accent = formData.school
+    ? schoolAccent(formData.school)
+    : "var(--cardinal)";
 
   /* ── Loading state ── */
   if (authLoading || profileLoading) {
@@ -243,7 +179,7 @@ export default function OnboardingFlow() {
             onClick={() => router.push("/")}
             className="font-display text-xs tracking-wider text-white/70 hover:text-white transition-colors"
           >
-            ← HOME
+            &larr; HOME
           </button>
           <span className="font-display text-sm tracking-[0.15em] text-white">
             STEP {step} OF {TOTAL_STEPS}
@@ -292,7 +228,7 @@ export default function OnboardingFlow() {
                   type="text"
                   className="brutal-input"
                   placeholder="Your name"
-                  value={form.name}
+                  value={formData.name}
                   onChange={(e) => updateField("name", e.target.value)}
                 />
               </div>
@@ -313,7 +249,7 @@ export default function OnboardingFlow() {
                       onClick={() => updateField("school", s)}
                       className="brutal-btn text-sm px-5 py-2 transition-colors"
                       style={
-                        form.school === s
+                        formData.school === s
                           ? {
                               background: schoolAccent(s),
                               color: "white",
@@ -346,7 +282,7 @@ export default function OnboardingFlow() {
                       key={y}
                       className="flex items-center gap-2 cursor-pointer border-[3px] border-[var(--black)] px-4 py-2 text-xs font-display tracking-wider transition-colors"
                       style={
-                        form.year === y
+                        formData.year === y
                           ? { background: accent, color: "white" }
                           : {
                               background: "var(--cream)",
@@ -358,7 +294,7 @@ export default function OnboardingFlow() {
                         type="radio"
                         name="year"
                         value={y}
-                        checked={form.year === y}
+                        checked={formData.year === y}
                         onChange={() => updateField("year", y)}
                         className="sr-only"
                       />
@@ -369,7 +305,7 @@ export default function OnboardingFlow() {
               </div>
 
               {/* Enrollment Term (conditional) */}
-              {form.year === "新生" && (
+              {formData.year === "新生" && (
                 <div className="reveal">
                   <label
                     className="font-display text-xs tracking-wider block mb-2"
@@ -382,10 +318,10 @@ export default function OnboardingFlow() {
                       <button
                         key={t}
                         type="button"
-                        onClick={() => updateField("enrollment_term", t)}
+                        onClick={() => updateField("enrollmentTerm", t)}
                         className="brutal-btn text-sm px-5 py-2 transition-colors"
                         style={
-                          form.enrollment_term === t
+                          formData.enrollmentTerm === t
                             ? {
                                 background: accent,
                                 color: "white",
@@ -417,7 +353,7 @@ export default function OnboardingFlow() {
                   type="text"
                   className="brutal-input"
                   placeholder="e.g. Computer Science"
-                  value={form.major}
+                  value={formData.major}
                   onChange={(e) => updateField("major", e.target.value)}
                 />
               </div>
@@ -449,13 +385,13 @@ export default function OnboardingFlow() {
                   type="text"
                   className="brutal-input"
                   placeholder="Paste image URL"
-                  value={form.avatar_url}
-                  onChange={(e) => updateField("avatar_url", e.target.value)}
+                  value={formData.avatarUrl}
+                  onChange={(e) => updateField("avatarUrl", e.target.value)}
                 />
-                {form.avatar_url && (
+                {formData.avatarUrl && (
                   <div className="mt-3">
                     <img
-                      src={form.avatar_url}
+                      src={formData.avatarUrl}
                       alt="Avatar preview"
                       className="w-16 h-16 object-cover border-[3px] border-[var(--black)]"
                       onError={(e) => {
@@ -479,7 +415,7 @@ export default function OnboardingFlow() {
                   rows={4}
                   maxLength={200}
                   placeholder="A short intro about yourself..."
-                  value={form.bio}
+                  value={formData.bio}
                   onChange={(e) => updateField("bio", e.target.value)}
                 />
                 <div className="flex justify-end mt-1">
@@ -487,12 +423,12 @@ export default function OnboardingFlow() {
                     className="text-[10px] font-display tracking-wider"
                     style={{
                       color:
-                        form.bio.length >= 200
+                        formData.bio.length >= 200
                           ? "var(--cardinal)"
                           : "var(--mid)",
                     }}
                   >
-                    {form.bio.length}/200
+                    {formData.bio.length}/200
                   </span>
                 </div>
               </div>
@@ -509,7 +445,7 @@ export default function OnboardingFlow() {
                   type="text"
                   className="brutal-input"
                   placeholder="WeChat / Instagram / Email"
-                  value={form.contact}
+                  value={formData.contact}
                   onChange={(e) => updateField("contact", e.target.value)}
                 />
               </div>
@@ -531,35 +467,17 @@ export default function OnboardingFlow() {
                   className="ml-2 font-display tracking-wider"
                   style={{ color: accent }}
                 >
-                  {form.tags.length}/6
+                  {formData.tags.length}/6
                 </span>
               </p>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {VALID_TAGS.map((tag) => {
-                  const selected = form.tags.includes(tag);
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleTag(tag)}
-                      className={`brutal-tag text-xs py-2 px-3 text-center cursor-pointer transition-colors ${
-                        selected ? "brutal-tag-filled" : ""
-                      }`}
-                      style={
-                        selected
-                          ? {}
-                          : {
-                              background: "var(--cream)",
-                              color: "var(--black)",
-                            }
-                      }
-                    >
-                      {tag}
-                    </button>
-                  );
-                })}
-              </div>
+              <TagPicker
+                selectedTags={formData.tags}
+                maxTags={6}
+                onToggle={toggleTag}
+                accent={accent}
+                layout="grid"
+              />
             </div>
           )}
 
@@ -577,37 +495,15 @@ export default function OnboardingFlow() {
               </p>
 
               {HABITS.map(({ key, label, options }) => (
-                <div key={key}>
-                  <label
-                    className="font-display text-xs tracking-wider block mb-2"
-                    style={{ color: "var(--black)" }}
-                  >
-                    {label}
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {options.map((opt) => {
-                      const selected = form[key] === opt;
-                      return (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => toggleHabit(key, opt)}
-                          className="border-[3px] border-[var(--black)] px-4 py-2 text-xs font-display tracking-wider cursor-pointer transition-colors"
-                          style={
-                            selected
-                              ? { background: accent, color: "white" }
-                              : {
-                                  background: "var(--cream)",
-                                  color: "var(--black)",
-                                }
-                          }
-                        >
-                          {opt}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                <HabitSelector
+                  key={key}
+                  label={label}
+                  options={options}
+                  value={formData[key]}
+                  onChange={(v) => updateField(key, v)}
+                  accent={accent}
+                  mode="toggle"
+                />
               ))}
             </div>
           )}
@@ -622,7 +518,7 @@ export default function OnboardingFlow() {
                   onClick={() => setStep((s) => s - 1)}
                   className="brutal-btn brutal-btn-ghost text-sm"
                 >
-                  ← BACK
+                  &larr; BACK
                 </button>
               )}
             </div>
@@ -645,7 +541,7 @@ export default function OnboardingFlow() {
                   onClick={() => setStep((s) => s + 1)}
                   className="brutal-btn brutal-btn-primary text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none"
                 >
-                  NEXT →
+                  NEXT &rarr;
                 </button>
               ) : (
                 <button
@@ -654,11 +550,11 @@ export default function OnboardingFlow() {
                   onClick={handleSubmit}
                   className="brutal-btn brutal-btn-gold text-sm disabled:opacity-40"
                 >
-                  {submitting ? "SAVING..." : "FINISH ✓"}
+                  {submitting ? "SAVING..." : "FINISH \u2713"}
                 </button>
               )}
             </div>
-            {saveError && (
+            {errors.general && (
               <div
                 className="mt-3 p-3 border-[2px] text-xs"
                 style={{
@@ -667,7 +563,7 @@ export default function OnboardingFlow() {
                   background: "color-mix(in srgb, var(--cardinal) 5%, white)",
                 }}
               >
-                SAVE FAILED: {saveError}
+                SAVE FAILED: {errors.general}
               </div>
             )}
           </div>
