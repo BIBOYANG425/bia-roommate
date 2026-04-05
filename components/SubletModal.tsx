@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import Image from "next/image";
 import { SubletListing } from "@/lib/types";
 import { relativeTime, schoolAccent, schoolGold } from "@/lib/utils";
 
@@ -16,7 +17,9 @@ export default function SubletModal({
   const photos = listing.photos ?? [];
   const [photoIdx, setPhotoIdx] = useState(0);
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -69,10 +72,12 @@ export default function SubletModal({
             className="relative w-full h-56 sm:h-64 border-b-[3px] border-[var(--black)] overflow-hidden"
             style={{ background: "var(--beige)" }}
           >
-            <img
+            <Image
               src={photos[photoIdx]}
               alt={`Photo ${photoIdx + 1}`}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              unoptimized
             />
             {photos.length > 1 && (
               <>

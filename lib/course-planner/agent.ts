@@ -22,7 +22,6 @@ import { GE_API_MAP, validateInterpretedQuery } from "./agent/types";
 import {
   getLLMConfig,
   getInterpreterConfig,
-  callLLM,
   callLLMWithRetry,
   extractJSON,
 } from "./agent/llm-client";
@@ -166,7 +165,7 @@ Respond with ONLY valid JSON:
 async function interpret(
   interestText: string,
   config: LLMConfig,
-  thinking: boolean = false,
+  _thinking: boolean = false,
 ): Promise<{ query: InterpretedQuery; reasoning?: string }> {
   // Cap input length to prevent prompt injection / excessive token usage
   const sanitized = interestText.slice(0, 500).replace(/"/g, '\\"');

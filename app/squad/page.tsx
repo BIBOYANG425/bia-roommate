@@ -90,7 +90,9 @@ function SquadContent() {
         const db = b.deadline ? new Date(b.deadline).getTime() : Infinity;
         return da - db;
       }
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
     });
 
   return (
@@ -121,9 +123,7 @@ function SquadContent() {
         className="relative overflow-hidden border-b-[3px] border-[var(--black)]"
         style={{ background: "var(--cream)" }}
       >
-        <div className="ghost-text -left-4 top-1/2 -translate-y-1/2">
-          SQUAD
-        </div>
+        <div className="ghost-text -left-4 top-1/2 -translate-y-1/2">SQUAD</div>
         <div className="max-w-6xl mx-auto px-6 py-14 sm:py-20 relative flex flex-col sm:flex-row sm:items-end gap-8 justify-between">
           <div>
             <div className="new-drop-badge mb-3">NEW</div>
@@ -133,7 +133,10 @@ function SquadContent() {
             >
               BIA
               <br />
-              <span className="glitch-text" style={{ color: "var(--cardinal)" }}>
+              <span
+                className="glitch-text"
+                style={{ color: "var(--cardinal)" }}
+              >
                 找搭子
               </span>
             </h1>
@@ -190,14 +193,14 @@ function SquadContent() {
           >
             <option value="">ALL GENDERS</option>
             {SQUAD_GENDER_OPTIONS.map((g) => (
-              <option key={g} value={g}>{g}</option>
+              <option key={g} value={g}>
+                {g}
+              </option>
             ))}
           </select>
           <select
             value={sortBy}
-            onChange={(e) =>
-              setSortBy(e.target.value as "newest" | "deadline")
-            }
+            onChange={(e) => setSortBy(e.target.value as "newest" | "deadline")}
             className="brutal-select"
           >
             <option value="newest">最新发布</option>
@@ -273,10 +276,7 @@ function SquadContent() {
                   className="reveal"
                   style={{ animationDelay: `${i * 0.05}s` }}
                 >
-                  <SquadCard
-                    post={post}
-                    onClick={() => setSelected(post)}
-                  />
+                  <SquadCard post={post} onClick={() => setSelected(post)} />
                 </div>
               ))}
             </div>

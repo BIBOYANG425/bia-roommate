@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
-import {
-  Bebas_Neue,
-  Inter,
-  Instrument_Serif,
-} from "next/font/google";
+import { Bebas_Neue, Inter, Instrument_Serif } from "next/font/google";
 import localFont from "next/font/local";
 import { AuthProvider } from "@/components/AuthProvider";
 import "./globals.css";
@@ -35,7 +31,6 @@ const instrumentSerif = Instrument_Serif({
   display: "swap",
 });
 
-
 export const metadata: Metadata = {
   title: "BIA | Bridging Internationals Association",
   description:
@@ -54,8 +49,15 @@ export default function RootLayout({
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap"
+          rel="stylesheet"
+        />
       </head>
       <body>
         <AuthProvider>{children}</AuthProvider>

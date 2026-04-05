@@ -20,7 +20,9 @@ export const supabase = new Proxy(
   {} as ReturnType<typeof createBrowserClient>,
   {
     get(_target, prop) {
-      return (createBrowserSupabaseClient() as any)[prop];
+      return (
+        createBrowserSupabaseClient() as Record<string | symbol, unknown>
+      )[prop];
     },
   },
 );

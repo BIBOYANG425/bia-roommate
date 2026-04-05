@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { SubletListing } from "@/lib/types";
 import { relativeTime, schoolAccent, schoolCardClass } from "@/lib/utils";
 
@@ -27,15 +28,16 @@ export default function SubletCard({
     >
       {/* Thumbnail */}
       <div
-        className="w-full h-40 border-b-[3px] border-[var(--black)] flex items-center justify-center overflow-hidden"
+        className="relative w-full h-40 border-b-[3px] border-[var(--black)] flex items-center justify-center overflow-hidden"
         style={{ background: "var(--beige)" }}
       >
         {thumb ? (
-          <img
+          <Image
             src={thumb}
             alt={listing.title}
-            loading="lazy"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            unoptimized
           />
         ) : (
           <span

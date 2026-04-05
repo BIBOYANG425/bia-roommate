@@ -29,7 +29,10 @@ export async function POST(request: Request) {
       .eq("user_id", user.id);
 
     if (deleteError)
-      return NextResponse.json({ error: "Failed to leave squad" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to leave squad" },
+        { status: 500 },
+      );
 
     const { data: updatedPost, error: fetchError } = await supabase
       .from("squad_posts")
@@ -38,9 +41,15 @@ export async function POST(request: Request) {
       .single();
 
     if (fetchError)
-      return NextResponse.json({ error: "Failed to fetch squad" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to fetch squad" },
+        { status: 500 },
+      );
 
-    return NextResponse.json({ joined: false, current_people: updatedPost.current_people });
+    return NextResponse.json({
+      joined: false,
+      current_people: updatedPost.current_people,
+    });
   }
 
   // Join: trigger checks capacity + increments current_people atomically
@@ -51,11 +60,17 @@ export async function POST(request: Request) {
   if (insertError) {
     if (insertError.message?.includes("squad_full"))
       return NextResponse.json({ error: "已满员" }, { status: 400 });
-    if (insertError.message?.includes("post_not_found") || insertError.code === "23503")
+    if (
+      insertError.message?.includes("post_not_found") ||
+      insertError.code === "23503"
+    )
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     if (insertError.code === "23505")
       return NextResponse.json({ error: "Already joined" }, { status: 409 });
-    return NextResponse.json({ error: "Failed to join squad" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to join squad" },
+      { status: 500 },
+    );
   }
 
   const { data: updatedPost, error: fetchError } = await supabase
@@ -65,7 +80,13 @@ export async function POST(request: Request) {
     .single();
 
   if (fetchError)
-    return NextResponse.json({ error: "Failed to fetch squad" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch squad" },
+      { status: 500 },
+    );
 
-  return NextResponse.json({ joined: true, current_people: updatedPost.current_people });
+  return NextResponse.json({
+    joined: true,
+    current_people: updatedPost.current_people,
+  });
 }

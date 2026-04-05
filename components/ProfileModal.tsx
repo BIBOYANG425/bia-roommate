@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import {
   RoommateProfile,
   SLEEP_OPTIONS,
@@ -210,10 +211,13 @@ export default function ProfileModal({
           </div>
           <div className="flex items-center gap-4 relative">
             {profile.avatar_url ? (
-              <img
+              <Image
                 src={profile.avatar_url}
                 alt={profile.name}
+                width={64}
+                height={64}
                 className="w-16 h-16 object-cover border-[3px] border-white shrink-0"
+                unoptimized
               />
             ) : (
               <div className="w-16 h-16 flex items-center justify-center text-white font-display text-3xl border-[3px] border-white shrink-0">

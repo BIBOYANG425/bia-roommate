@@ -2,6 +2,7 @@
 
 import { SquadPost } from "@/lib/types";
 import { relativeTime } from "@/lib/utils";
+import Image from "next/image";
 
 export const CATEGORY_COLORS: Record<string, string> = {
   拼车: "#2D6A4F",
@@ -40,9 +41,11 @@ export default function SquadCard({
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {post.avatar_url ? (
-            <img
+            <Image
               src={post.avatar_url}
               alt={post.poster_name}
+              width={40}
+              height={40}
               className="w-10 h-10 object-cover border-[3px] border-[var(--black)] shrink-0"
             />
           ) : (
@@ -60,8 +63,13 @@ export default function SquadCard({
             >
               {post.poster_name}
             </p>
-            <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--mid)" }}>
-              {post.school ?? ""}{post.school ? " · " : ""}{relativeTime(post.created_at)}
+            <p
+              className="text-[10px] uppercase tracking-wider"
+              style={{ color: "var(--mid)" }}
+            >
+              {post.school ?? ""}
+              {post.school ? " · " : ""}
+              {relativeTime(post.created_at)}
             </p>
           </div>
         </div>
@@ -89,10 +97,12 @@ export default function SquadCard({
       {post.photos && post.photos.length > 0 && (
         <div className="flex gap-2">
           {post.photos.slice(0, 3).map((url, i) => (
-            <img
+            <Image
               key={i}
               src={url}
-              alt=""
+              alt={`Photo ${i + 1}`}
+              width={80}
+              height={56}
               className="w-20 h-14 object-cover border-[2px] border-[var(--black)]"
             />
           ))}
@@ -102,12 +112,18 @@ export default function SquadCard({
       {/* Meta row */}
       <div className="flex flex-wrap gap-x-3 gap-y-1">
         {post.location && (
-          <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--mid)" }}>
+          <span
+            className="text-[10px] uppercase tracking-wider"
+            style={{ color: "var(--mid)" }}
+          >
             ◎ {post.location}
           </span>
         )}
         {post.deadline && (
-          <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--mid)" }}>
+          <span
+            className="text-[10px] uppercase tracking-wider"
+            style={{ color: "var(--mid)" }}
+          >
             截止 {new Date(post.deadline).toLocaleDateString("zh-CN")}
           </span>
         )}
@@ -125,9 +141,7 @@ export default function SquadCard({
           {post.gender_restriction !== "不限" && (
             <span className="brutal-tag">{post.gender_restriction}</span>
           )}
-          {isFull && (
-            <span className="brutal-tag brutal-tag-filled">已满</span>
-          )}
+          {isFull && <span className="brutal-tag brutal-tag-filled">已满</span>}
         </div>
         <span
           className="font-display text-xs tracking-wider"

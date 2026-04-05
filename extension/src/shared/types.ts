@@ -1,66 +1,17 @@
-// ─── Shared types between extension and BIA web app ───
+// ─── Re-export shared types ───
+export type {
+  SectionTime,
+  TimeSlot,
+  DayOfWeek,
+  Section,
+  Course,
+  RmpRating,
+  SelectedSection,
+} from "../../../shared/course-types";
 
-export interface SectionTime {
-  day: string;
-  start_time: string;
-  end_time: string;
-  location: string;
-}
+import type { Course, RmpRating } from "../../../shared/course-types";
 
-export interface TimeSlot {
-  day: DayOfWeek;
-  startMin: number;
-  endMin: number;
-}
-
-export type DayOfWeek = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
-
-export interface Section {
-  id: string;
-  type: "Lecture" | "Discussion" | "Lab" | "Quiz" | string;
-  number: string;
-  times: SectionTime[];
-  instructor: {
-    firstName: string;
-    lastName: string;
-  };
-  registered: number;
-  capacity: number;
-  isClosed: boolean;
-  isCancelled: boolean;
-  topic?: string;
-  hasDClearance?: boolean;
-  notes?: string;
-  linkCode?: string;
-}
-
-export interface Course {
-  department: string;
-  number: string;
-  title: string;
-  units: string;
-  description: string;
-  sections: Section[];
-  prereqs?: string;
-  restrictions?: string[];
-}
-
-export interface RmpRating {
-  avgRating: number;
-  avgDifficulty: number;
-  numRatings: number;
-  wouldTakeAgainPercent: number;
-  legacyId: number;
-}
-
-export interface SelectedSection {
-  courseId: string;
-  courseTitle: string;
-  units: string;
-  section: Section;
-  colorIndex: number;
-  timeSlots: TimeSlot[];
-}
+// ─── Extension-only types ───
 
 export interface RecommendedCourse {
   department: string;

@@ -162,6 +162,7 @@ export default function CourseSearch({
             <div
               key={`${item.id}-${i}`}
               role="option"
+              aria-selected={false}
               tabIndex={0}
               className="px-4 py-3 text-sm cursor-pointer transition-colors hover:bg-[var(--cream)] focus:bg-[var(--cream)] outline-none"
               style={{

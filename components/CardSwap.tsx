@@ -3,7 +3,13 @@
 import { useState, useEffect, useCallback, Children, ReactNode } from "react";
 
 /* ─── Card child component ─── */
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
+export function Card({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return <div className={className}>{children}</div>;
 }
 
@@ -104,11 +110,12 @@ export default function CardSwap({
               transform: swipingOut
                 ? `translateX(${dragX >= 0 ? 500 : -500}px) rotate(${dragX >= 0 ? 25 : -25}deg) scale(${scale})`
                 : `translateX(${activeX}px) translateY(${yOffset}px) rotate(${activeRotation}deg) scale(${scale})`,
-              transition: isDragging && isTop
-                ? "none"
-                : swipingOut
-                  ? "transform 0.4s ease-in"
-                  : "transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+              transition:
+                isDragging && isTop
+                  ? "none"
+                  : swipingOut
+                    ? "transform 0.4s ease-in"
+                    : "transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
               zIndex: cards.length - depth,
               opacity: depth >= 3 ? 0.5 : 1,
               touchAction: "none",

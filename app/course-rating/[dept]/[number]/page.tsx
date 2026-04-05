@@ -73,6 +73,7 @@ export default function CourseRatingDetailPage() {
   }, [dept, courseNumber]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch sets state in async callback
     fetchData();
   }, [fetchData]);
 
@@ -93,7 +94,7 @@ export default function CourseRatingDetailPage() {
       });
     }
     return Array.from(set).sort();
-  }, [aggregate?.professors, course?.sections]);
+  }, [aggregate, course]);
 
   // Filter reviews by selected professor
   const filteredReviews = selectedProfessor

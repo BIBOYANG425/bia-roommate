@@ -80,10 +80,7 @@ export default function SquadSubmitPage() {
       <main className="min-h-screen">
         <NavTabs />
         <div className="flex items-center justify-center h-96">
-          <p
-            className="font-display text-2xl"
-            style={{ color: "var(--mid)" }}
-          >
+          <p className="font-display text-2xl" style={{ color: "var(--mid)" }}>
             LOADING...
           </p>
         </div>
@@ -263,7 +260,10 @@ export default function SquadSubmitPage() {
             >
               人数上限
             </label>
-            <div className="flex items-center border-[3px] border-[var(--black)]" style={{ background: "var(--cream)" }}>
+            <div
+              className="flex items-center border-[3px] border-[var(--black)]"
+              style={{ background: "var(--cream)" }}
+            >
               <button
                 type="button"
                 onClick={() => setMaxPeople((n) => Math.max(2, n - 1))}

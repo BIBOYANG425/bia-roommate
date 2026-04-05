@@ -64,6 +64,7 @@ export default function ResultsView({
   const [scheduleName, setScheduleName] = useState("");
   const [swappingCourse, setSwappingCourse] = useState<string | null>(null);
   const courseGroupsRef = useRef<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SectionCombo type is scoped inside buildSchedules
     { label: string; isGE: boolean; geTag?: string; combos: any[] }[]
   >([]);
 
@@ -214,7 +215,7 @@ export default function ResultsView({
         rating: number; // lecture instructor rating
       };
 
-      function buildCombos(course: Course, geTag?: string): SectionCombo[] {
+      function buildCombos(course: Course, _geTag?: string): SectionCombo[] {
         let allActive = (course.sections || []).filter((s) => !s.isCancelled);
 
         // Filter out D-clearance sections if preference is set
@@ -512,7 +513,7 @@ export default function ResultsView({
 
       setSchedules(top);
       setActiveIdx(0);
-    } catch (e) {
+    } catch {
       setError("FAILED TO BUILD SCHEDULES");
     } finally {
       setLoading(false);
@@ -554,6 +555,7 @@ export default function ResultsView({
           })),
       );
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SectionCombo slot type
       const hasConflict = newCombo.allSlots.some((newSlot: any) =>
         otherSlots.some(
           (existing) =>
@@ -569,6 +571,7 @@ export default function ResultsView({
       const groupIdx = courseGroupsRef.current.indexOf(group);
       const newSections = [
         ...otherSections,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SectionCombo section type
         ...newCombo.sections.map((sec: any) => ({
           course: newCombo.course,
           section: sec,
@@ -787,8 +790,10 @@ export default function ResultsView({
                           </p>
                           {group.combos
                             .slice(0, 8)
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SectionCombo type scoped in buildSchedules
                             .map((combo: any, ci: number) => {
                               const lec = combo.sections.find(
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Section type scoped in buildSchedules
                                 (sec: any) =>
                                   sec.type.toLowerCase().includes("lecture") ||
                                   !sec.type,
