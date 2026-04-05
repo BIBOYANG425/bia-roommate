@@ -58,7 +58,8 @@ function PlannerContent() {
   const [savedSchedule, setSavedSchedule] = useState<{
     name: string;
     semester: string;
-    schedule_data: { sections: unknown[]; avgRating: number };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- API response shape
+    schedule_data: { sections: any[]; avgRating: number };
   } | null>(null);
   const [savedLoading, setSavedLoading] = useState(false);
 
