@@ -177,11 +177,17 @@ export default function LandingPage() {
           <section className="relative overflow-hidden bg-[#F9FAF7] py-24 sm:py-32 px-6 sm:px-16">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-black/10 to-transparent"></div>
             <div className="max-w-5xl mx-auto">
+              {/* Section heading — above the layout */}
+              <div className="mb-16">
+                <h2 className="heading-serif text-4xl sm:text-5xl mb-3 text-[#171717]" style={{ fontFamily: "var(--font-display-zh)" }}>{t.services.heading[lang]}</h2>
+                <p className="text-[#999] text-sm uppercase tracking-widest">{t.services.subtitle[lang]}</p>
+              </div>
+
               <div className="flex flex-col lg:flex-row gap-16 items-center">
                 {/* Left: Folder visual */}
-                <div className="flex flex-col items-center gap-6 lg:w-2/5">
+                <div className="flex flex-col items-center lg:w-2/5">
                   <Folder
-                    color="#3BAAAA"
+                    color="#71031f"
                     size={3}
                     items={[
                       <img key="p1" src="/previews/roommates.png" alt="Roommate Match" className="w-full h-full object-cover object-top" />,
@@ -189,10 +195,6 @@ export default function LandingPage() {
                       <img key="p3" src="/previews/course-rating.png" alt="Course Reviews" className="w-full h-full object-cover object-top" />,
                     ]}
                   />
-                  <div className="text-center mt-4">
-                    <h2 className="heading-serif text-4xl sm:text-5xl mb-2 text-[#171717]" style={{ fontFamily: "var(--font-display-zh)" }}>{t.services.heading[lang]}</h2>
-                    <p className="text-[#999] text-sm uppercase tracking-widest">{t.services.subtitle[lang]}</p>
-                  </div>
                 </div>
 
                 {/* Right: Service list */}
@@ -206,12 +208,12 @@ export default function LandingPage() {
                         href={hrefs[idx]}
                         className="group flex items-center gap-5 p-4 rounded-xl hover:bg-white hover:shadow-md transition-all duration-200 border border-transparent hover:border-black/5"
                       >
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#A0D7D1] to-[#3BAAAA] flex items-center justify-center text-white text-lg font-bold shrink-0 shadow-sm" style={{ fontFamily: "var(--font-display-zh)" }}>
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B0A2A] to-[#71031f] flex items-center justify-center text-white text-lg font-bold shrink-0 shadow-sm" style={{ fontFamily: "var(--font-display-zh)" }}>
                           {svc.title[lang].charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
-                            <h3 className="text-base font-semibold text-[#171717] group-hover:text-[#3BAAAA] transition-colors" style={{ fontFamily: "var(--font-display-zh)" }}>{svc.title[lang]}</h3>
+                            <h3 className="text-base font-semibold text-[#171717] group-hover:text-[#1F1F29] transition-colors" style={{ fontFamily: "var(--font-display-zh)" }}>{svc.title[lang]}</h3>
                             <span className="text-[10px] text-[#999] uppercase tracking-wider">{svc.sub[lang]}</span>
                           </div>
                           <p className="text-sm text-[#646464] leading-relaxed truncate">{svc.desc[lang]}</p>
