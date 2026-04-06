@@ -5,8 +5,10 @@
 export function corsHeaders(request: Request): Record<string, string> {
   const origin = request.headers.get("origin") || "";
 
+  const allowedExtensionId = process.env.ALLOWED_EXTENSION_ID;
   const isAllowed =
-    origin.startsWith("chrome-extension://") ||
+    (allowedExtensionId &&
+      origin === `chrome-extension://${allowedExtensionId}`) ||
     origin === "https://bia-roommate.vercel.app";
 
   if (!isAllowed) return {};

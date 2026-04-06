@@ -103,6 +103,37 @@ export interface SubletListing {
 export const ROOM_TYPE_OPTIONS = ["单间", "合租", "客厅隔断", "整套"] as const;
 export const BATHROOM_OPTIONS = ["独卫", "共享"] as const;
 export const GENDER_PREF_OPTIONS = ["限男生", "限女生", "男女不限"] as const;
+/* ── Squad Post (找搭子) ── */
+
+export interface SquadPost {
+  id: string;
+  user_id: string | null;
+  poster_name: string;
+  avatar_url: string | null;
+  school: string | null;
+  category: string;
+  content: string;
+  photos: string[] | null;
+  location: string | null;
+  max_people: number;
+  current_people: number;
+  deadline: string | null;
+  gender_restriction: string;
+  contact: string | null;
+  created_at: string;
+}
+
+export const SQUAD_CATEGORIES = [
+  "拼车",
+  "自习",
+  "约会",
+  "健身",
+  "游戏",
+  "其它",
+] as const;
+export type SquadCategory = (typeof SQUAD_CATEGORIES)[number];
+export const SQUAD_GENDER_OPTIONS = ["不限", "仅男生", "仅女生"] as const;
+
 export const AMENITY_OPTIONS = [
   "健身房",
   "游泳池",

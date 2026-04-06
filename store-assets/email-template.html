@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in to BIA</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F2EBD9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #F2EBD9; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="480" cellpadding="0" cellspacing="0" style="max-width: 480px; width: 100%;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #990000; border: 3px solid #1A1410; padding: 28px 32px; text-align: center;">
+              <h1 style="margin: 0; font-family: Impact, 'Helvetica Neue', Helvetica, sans-serif; font-size: 36px; letter-spacing: 0.08em; color: #FFFFFF; text-transform: uppercase;">
+                BIA
+              </h1>
+              <p style="margin: 6px 0 0; font-family: 'Helvetica Neue', Helvetica, sans-serif; font-size: 11px; letter-spacing: 0.15em; color: rgba(255,255,255,0.6); text-transform: uppercase;">
+                ROOMMATE MATCHING &bull; COURSE PLANNER
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="background-color: #FAF6EC; border-left: 3px solid #1A1410; border-right: 3px solid #1A1410; border-bottom: 3px solid #1A1410; padding: 36px 32px;">
+
+              <!-- Title -->
+              <h2 style="margin: 0 0 8px; font-family: Impact, 'Helvetica Neue', Helvetica, sans-serif; font-size: 24px; letter-spacing: 0.06em; color: #1A1410; text-transform: uppercase;">
+                CONFIRM YOUR SIGN-IN
+              </h2>
+
+              <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #8C7E6A;">
+                Click the button below to sign in to BIA with your school email. This link expires in 24 hours.
+              </p>
+
+              <!-- Button -->
+              <table cellpadding="0" cellspacing="0" style="margin: 0 0 24px;">
+                <tr>
+                  <td>
+                    <a href="{{ .ConfirmationURL }}"
+                       target="_blank"
+                       style="display: inline-block; padding: 14px 32px; background-color: #990000; color: #FFFFFF; font-family: Impact, 'Helvetica Neue', Helvetica, sans-serif; font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; border: 3px solid #1A1410; box-shadow: 4px 4px 0 #1A1410;">
+                      SIGN IN TO BIA &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Divider -->
+              <hr style="border: none; border-top: 2px solid #F2EBD9; margin: 24px 0;" />
+
+              <!-- Alt link -->
+              <p style="margin: 0 0 8px; font-family: Impact, 'Helvetica Neue', Helvetica, sans-serif; font-size: 11px; letter-spacing: 0.1em; color: #8C7E6A; text-transform: uppercase;">
+                BUTTON NOT WORKING? COPY THIS LINK:
+              </p>
+              <p style="margin: 0 0 24px; font-size: 12px; line-height: 1.5; color: #990000; word-break: break-all;">
+                {{ .ConfirmationURL }}
+              </p>
+
+              <!-- Security note -->
+              <table cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td style="background-color: rgba(255,204,0,0.12); border: 2px solid #FFCC00; padding: 12px 16px;">
+                    <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #8C7E6A;">
+                      <strong style="color: #1A1410;">DIDN'T REQUEST THIS?</strong><br/>
+                      If you didn't try to sign in to BIA, you can safely ignore this email. No account will be created.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 32px; text-align: center;">
+              <p style="margin: 0 0 4px; font-family: Impact, 'Helvetica Neue', Helvetica, sans-serif; font-size: 10px; letter-spacing: 0.2em; color: #8C7E6A; text-transform: uppercase;">
+                BIA &mdash; BUILT BY STUDENTS, FOR STUDENTS
+              </p>
+              <p style="margin: 0; font-size: 10px; color: #8C7E6A;">
+                USC &bull; UC Berkeley &bull; Stanford
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

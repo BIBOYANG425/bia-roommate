@@ -26,7 +26,10 @@ export default function AggregateRatings({
   reviewCount: number;
 }) {
   return (
-    <div className="border-[3px] border-[var(--black)] p-4" style={{ background: "var(--cream)" }}>
+    <div
+      className="border-[3px] border-[var(--black)] p-4"
+      style={{ background: "var(--cream)" }}
+    >
       <div className="flex items-center justify-between mb-3">
         <span className="font-display text-sm tracking-wider">RATINGS</span>
         <span className="font-mono text-[10px] text-[var(--mid)]">

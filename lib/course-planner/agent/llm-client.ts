@@ -162,7 +162,9 @@ export async function callLLMWithRetry(
  */
 export function extractJSON(text: string, type: "object" | "array"): string {
   // Strip markdown code fences
-  let cleaned = text.replace(/```(?:json)?\s*\n?/g, "").replace(/```\s*$/g, "");
+  const cleaned = text
+    .replace(/```(?:json)?\s*\n?/g, "")
+    .replace(/```\s*$/g, "");
 
   const open = type === "array" ? "[" : "{";
   const close = type === "array" ? "]" : "}";

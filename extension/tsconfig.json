@@ -11,9 +11,9 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "outDir": "dist",
-    "rootDir": ".",
+    "rootDir": "..",
     "types": ["chrome"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "../shared/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

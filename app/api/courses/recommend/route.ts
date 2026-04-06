@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { getRecommendations, RecommendedCourse } from "@/lib/course-planner/recommender";
-import { runAgent, AgentRecommendation } from "@/lib/course-planner/agent";
+import { getRecommendations } from "@/lib/course-planner/recommender";
+import { runAgent } from "@/lib/course-planner/agent";
 import { corsHeaders, handleOptions } from "@/lib/cors";
 
 function filterByLevel<T extends { number: string }>(
@@ -78,14 +78,6 @@ export async function POST(request: NextRequest) {
         console.error(
           "[recommend] Agent mode failed, falling back to free:",
           errMsg,
-        );
-        console.error(
-          "[recommend] LLM provider:",
-          process.env.ANTHROPIC_API_KEY
-            ? "anthropic"
-            : process.env.OPENAI_API_KEY
-              ? "openai"
-              : "nvidia",
         );
         agentFailed = true;
         // Fall through to free mode

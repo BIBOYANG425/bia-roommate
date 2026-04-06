@@ -25,7 +25,9 @@ export async function GET(request: NextRequest) {
   ].slice(0, MAX_COURSES);
 
   if (courseKeys.length === 0) {
-    return NextResponse.json({ aggregates: {} } satisfies AggregatesBatchResponse);
+    return NextResponse.json({
+      aggregates: {},
+    } satisfies AggregatesBatchResponse);
   }
 
   const supabase = await createServerSupabaseClient();
@@ -40,7 +42,9 @@ export async function GET(request: NextRequest) {
     .filter(Boolean) as { dept: string; number: string }[];
 
   if (pairs.length === 0) {
-    return NextResponse.json({ aggregates: {} } satisfies AggregatesBatchResponse);
+    return NextResponse.json({
+      aggregates: {},
+    } satisfies AggregatesBatchResponse);
   }
 
   // Fetch all matching aggregates

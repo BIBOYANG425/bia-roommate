@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();
@@ -8,6 +9,13 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { allowed } = checkRateLimit(`likes:${user.id}`, {
+    limit: 30,
+    windowMs: 60_000,
+  });
+  if (!allowed)
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
   const { profile_id } = await request.json();
   if (!profile_id)

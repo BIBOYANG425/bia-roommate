@@ -1,8 +1,5 @@
 import { NextRequest } from "next/server";
-
-// In-memory cache for autocomplete data per term
-const cache: Record<string, { data: CourseEntry[]; ts: number }> = {};
-const CACHE_TTL = 3600_000; // 1 hour
+import { getCached, setCache } from "@/lib/course-planner/course-cache";
 
 interface CourseEntry {
   fullCourseName: string;
@@ -17,10 +14,9 @@ interface CourseEntry {
 }
 
 async function getCourses(termCode: string): Promise<CourseEntry[]> {
-  const cached = cache[termCode];
-  if (cached && Date.now() - cached.ts < CACHE_TTL) {
-    return cached.data;
-  }
+  const cached = getCached<CourseEntry[]>(termCode);
+  if (cached) return cached;
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 3000);
   let res: Response;
@@ -37,7 +33,7 @@ async function getCourses(termCode: string): Promise<CourseEntry[]> {
   if (!res.ok) return [];
   const data = await res.json();
   const courses = data.courses || [];
-  cache[termCode] = { data: courses, ts: Date.now() };
+  setCache(termCode, courses);
   return courses;
 }
 

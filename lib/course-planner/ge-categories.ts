@@ -7,6 +7,7 @@ export const GE_CATEGORIES = [
   { id: "GE-F", name: "Quantitative Reasoning" },
   { id: "GE-G", name: "Global Perspectives I" },
   { id: "GE-H", name: "Global Perspectives II" },
+  { id: "GESM", name: "GE Seminars" },
 ] as const;
 
 export type GECategoryId = (typeof GE_CATEGORIES)[number]["id"];

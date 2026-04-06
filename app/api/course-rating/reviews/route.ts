@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { reviewSchema } from "@/lib/course-rating/validation";
-import type { CourseReview, CourseAggregate, ReviewsResponse } from "@/lib/course-rating/types";
+import type {
+  CourseReview,
+  CourseAggregate,
+  ReviewsResponse,
+} from "@/lib/course-rating/types";
 
 const REVIEW_COLUMNS =
   "id, dept, course_number, professor, term, difficulty, workload, grading, gpa, comment, created_at";
@@ -61,8 +65,12 @@ export async function GET(request: NextRequest) {
     reviewsResult.status === "rejected" ||
     (reviewsResult.status === "fulfilled" && reviewsResult.value.error)
   ) {
-    console.error("[course-rating] reviews query failed:",
-      reviewsResult.status === "rejected" ? reviewsResult.reason : reviewsResult.value.error);
+    console.error(
+      "[course-rating] reviews query failed:",
+      reviewsResult.status === "rejected"
+        ? reviewsResult.reason
+        : reviewsResult.value.error,
+    );
     return NextResponse.json(
       { error: "Failed to load reviews" },
       { status: 500 },

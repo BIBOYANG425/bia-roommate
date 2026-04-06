@@ -1,0 +1,26 @@
+BIA Course Helper enhances USC's WebReg and Schedule of Classes with smart tools that make course planning faster and easier.
+
+FEATURES:
+
+RateMyProfessors Ratings
+See professor ratings, difficulty scores, and "would take again" percentages directly next to instructor names on WebReg and classes.usc.edu — no more switching between tabs.
+
+Schedule Optimizer
+Reads your course bin from WebReg and builds the best conflict-free schedule automatically. Handles lecture + discussion + lab combos, lets you filter by GE requirements, and shows results in a visual weekly calendar.
+
+Interest-Based Course Discovery
+Don't know what to take? Describe your interests ("Japanese animation, social justice, coding") and get matching USC courses with relevance tags — great for freshmen exploring options.
+
+Time Conflict Highlighting
+Sections with overlapping times are highlighted directly on WebReg so you can spot scheduling conflicts at a glance.
+
+Seat Count Badges
+See how many seats are open vs. total capacity right on each section row, with color-coded indicators for availability.
+
+SETTINGS:
+Toggle each feature on or off independently. Select your target semester. All settings persist across sessions.
+
+PRIVACY:
+BIA Course Helper stores settings and cached data locally on your device using Chrome's storage API. No personal data is collected or transmitted to third parties. The extension only communicates with USC's public course API and RateMyProfessors to fetch course and rating data.
+
+Built by BIA at USC.

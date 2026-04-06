@@ -475,7 +475,7 @@ export default function OnboardingTour({
   onComplete: () => void;
 }) {
   const [step, setStep] = useState(0);
-  const [direction, setDirection] = useState<"next" | "prev">("next");
+  const [, setDirection] = useState<"next" | "prev">("next");
   const [animating, setAnimating] = useState(false);
 
   const total = STEPS.length;

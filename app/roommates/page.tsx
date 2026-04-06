@@ -5,12 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import {
-  RoommateProfile,
-  GENDER_OPTIONS,
-  YEAR_OPTIONS,
-  SCHOOL_OPTIONS,
-} from "@/lib/types";
+import { RoommateProfile, GENDER_OPTIONS, YEAR_OPTIONS } from "@/lib/types";
 import ProfileCard from "@/components/ProfileCard";
 import ProfileModal from "@/components/ProfileModal";
 import SkeletonCard from "@/components/SkeletonCard";
@@ -62,6 +57,7 @@ function HomeContent() {
 
   useEffect(() => {
     if (searchParams.get("submitted") === "true") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time toast on redirect
       setShowToast(true);
       router.replace("/roommates", { scroll: false });
     }
@@ -93,6 +89,7 @@ function HomeContent() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch sets state in async callback
     fetchProfiles();
   }, [fetchProfiles]);
 

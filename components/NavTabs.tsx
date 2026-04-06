@@ -10,6 +10,7 @@ import AuthModal from "./AuthModal";
 const TABS = [
   { href: "/roommates", label: "找室友" },
   { href: "/sublet", label: "转租" },
+  { href: "/squad", label: "找搭子" },
   { href: "/course-planner", label: "选课" },
   { href: "/course-rating", label: "课评" },
   { href: "/usc-group", label: "USC 新生群" },
@@ -31,8 +32,20 @@ export default function NavTabs() {
           className="flex items-center gap-2 px-4 sm:px-6 py-2 border-r-[3px] border-[var(--black)] shrink-0 hover:opacity-80 transition-opacity"
           style={{ background: "var(--cream)" }}
         >
-          <Image src="/logo.png" alt="BIA" width={24} height={24} className="object-contain" style={{ height: "auto" }} />
-          <span className="font-display text-sm sm:text-base tracking-[0.1em]" style={{ color: "var(--black)" }}>BIA</span>
+          <Image
+            src="/logo.png"
+            alt="BIA"
+            width={24}
+            height={24}
+            className="object-contain"
+            style={{ height: "auto" }}
+          />
+          <span
+            className="font-display text-sm sm:text-base tracking-[0.1em]"
+            style={{ color: "var(--black)" }}
+          >
+            BIA
+          </span>
         </Link>
 
         {TABS.map((tab) => {

@@ -22,7 +22,6 @@ import { GE_API_MAP, validateInterpretedQuery } from "./agent/types";
 import {
   getLLMConfig,
   getInterpreterConfig,
-  callLLM,
   callLLMWithRetry,
   extractJSON,
 } from "./agent/llm-client";
@@ -166,7 +165,7 @@ Respond with ONLY valid JSON:
 async function interpret(
   interestText: string,
   config: LLMConfig,
-  thinking: boolean = false,
+  _thinking: boolean = false,
 ): Promise<{ query: InterpretedQuery; reasoning?: string }> {
   // Cap input length to prevent prompt injection / excessive token usage
   const sanitized = interestText.slice(0, 500).replace(/"/g, '\\"');
@@ -260,7 +259,11 @@ async function researchUSCCatalog(
         if (geTag && !existing.geTag) existing.geTag = geTag;
         // Merge section data if the existing entry lacks it (GE API returns stubs without sections)
         const sections = c.sections || [];
-        if (!existing.sections && sections.length > 0 && MULTI_TOPIC_DEPTS.has(dept)) {
+        if (
+          !existing.sections &&
+          sections.length > 0 &&
+          MULTI_TOPIC_DEPTS.has(dept)
+        ) {
           const sectionDetails = sections
             .filter((s: any) => !s.isCancelled && s.name)
             .map((s: any) => {
@@ -516,7 +519,9 @@ async function researchPeerRatings(
   courses: ResearchedCourse[],
   baseUrl: string,
 ): Promise<void> {
-  const courseKeys = courses.map((c) => `${c.department}-${c.number}`).slice(0, 50);
+  const courseKeys = courses
+    .map((c) => `${c.department}-${c.number}`)
+    .slice(0, 50);
   if (courseKeys.length === 0) return;
 
   try {
@@ -704,11 +709,15 @@ async function recommend(
 
     // For GESM/WRIT: show each section as a distinct option with time + instructor
     if (c.sections && c.sections.length > 0) {
-      parts.push(`  *** MULTI-TOPIC COURSE — recommend SPECIFIC SECTIONS below, not the course itself ***`);
+      parts.push(
+        `  *** MULTI-TOPIC COURSE — recommend SPECIFIC SECTIONS below, not the course itself ***`,
+      );
       for (const sec of c.sections.slice(0, 10)) {
         const rmpData = c.instructors.find((i) => i.name === sec.instructor);
         const rmpStr = rmpData?.rating ? ` (${rmpData.rating}/5 RMP)` : "";
-        parts.push(`  SECTION [${sec.sectionId}] "${sec.topic}" — ${sec.time}, ${sec.instructor}${rmpStr}`);
+        parts.push(
+          `  SECTION [${sec.sectionId}] "${sec.topic}" — ${sec.time}, ${sec.instructor}${rmpStr}`,
+        );
       }
     } else if (c.sectionTopics && c.sectionTopics.length > 0) {
       parts.push(`  Section topics: ${c.sectionTopics.join(", ")}`);
@@ -728,7 +737,7 @@ async function recommend(
     }
     if (c.peerRatings && c.peerRatings.reviewCount > 0) {
       parts.push(
-        `  Peer ratings (${c.peerRatings.reviewCount} student reviews): difficulty ${c.peerRatings.avgDifficulty}/5, workload ${c.peerRatings.avgWorkload}/5, grading ${c.peerRatings.avgGrading}/5`
+        `  Peer ratings (${c.peerRatings.reviewCount} student reviews): difficulty ${c.peerRatings.avgDifficulty}/5, workload ${c.peerRatings.avgWorkload}/5, grading ${c.peerRatings.avgGrading}/5`,
       );
     }
     return parts.join("\n");
@@ -781,9 +790,10 @@ ${courseSummaries.join("\n\n")}`;
 
     // For section-level recommendations (GESM/WRIT), use section topic as title
     const isSection = !!rec.sectionId;
-    const displayTitle = isSection && rec.sectionTopic
-      ? rec.sectionTopic
-      : courseData?.title || "";
+    const displayTitle =
+      isSection && rec.sectionTopic
+        ? rec.sectionTopic
+        : courseData?.title || "";
 
     return {
       department: rec.department,
@@ -820,7 +830,10 @@ export async function runAgent(
   baseUrl: string,
   unitsFilter?: string,
 ): Promise<
-  | { recommendations: import("./agent/types").AgentRecommendation[]; mode: "agent" }
+  | {
+      recommendations: import("./agent/types").AgentRecommendation[];
+      mode: "agent";
+    }
   | { error: string; isRejection?: boolean }
 > {
   const config = getLLMConfig();

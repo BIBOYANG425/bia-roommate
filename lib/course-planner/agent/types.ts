@@ -42,9 +42,15 @@ export interface InterpretedQuery {
 
 // Helper: accept null from LLMs and treat as missing (→ default applies)
 const strOrNull = (def: string) =>
-  z.union([z.string(), z.null()]).transform((v) => v ?? def).default(def);
+  z
+    .union([z.string(), z.null()])
+    .transform((v) => v ?? def)
+    .default(def);
 const arrOrNull = (def: string[] = []) =>
-  z.union([z.array(z.string()), z.null()]).transform((v) => v ?? def).default(def);
+  z
+    .union([z.array(z.string()), z.null()])
+    .transform((v) => v ?? def)
+    .default(def);
 
 const CatalogInstructionsSchema = z.object({
   departments: arrOrNull(),
@@ -110,13 +116,19 @@ export function validateInterpretedQuery(raw: unknown): InterpretedQuery {
   const catalog = (obj?.catalogInstructions ?? {}) as Record<string, unknown>;
 
   if (!catalog.departments || !Array.isArray(catalog.departments)) {
-    console.warn("[agent] Zod default applied: catalogInstructions.departments was missing/null");
+    console.warn(
+      "[agent] Zod default applied: catalogInstructions.departments was missing/null",
+    );
   }
   if (!catalog.searchTerms || !Array.isArray(catalog.searchTerms)) {
-    console.warn("[agent] Zod default applied: catalogInstructions.searchTerms was missing/null");
+    console.warn(
+      "[agent] Zod default applied: catalogInstructions.searchTerms was missing/null",
+    );
   }
   if (!catalog.geCategories || !Array.isArray(catalog.geCategories)) {
-    console.warn("[agent] Zod default applied: catalogInstructions.geCategories was missing/null");
+    console.warn(
+      "[agent] Zod default applied: catalogInstructions.geCategories was missing/null",
+    );
   }
 
   return InterpretedQuerySchema.parse(raw) as InterpretedQuery;

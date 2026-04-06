@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { RoommateProfile } from "@/lib/types";
 import {
-  getAvatarColor,
   getLastChar,
   relativeTime,
   schoolAccent,
@@ -56,6 +55,7 @@ export default function ProfileCard({
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- user?.id is the relevant dep, not the whole user object
   }, [user?.id, profile.id]);
 
   const handleLike = useCallback(
@@ -81,7 +81,6 @@ export default function ProfileCard({
     [user, profile.id, likeLoading, onLikeChange],
   );
 
-  const avatarColor = getAvatarColor(profile.name);
   const lastChar = getLastChar(profile.name);
   const accent = schoolAccent(profile.school);
   const cardClass = schoolCardClass(profile.school);
@@ -122,10 +121,13 @@ export default function ProfileCard({
       {/* Header */}
       <div className="flex items-center gap-3 pr-8">
         {profile.avatar_url ? (
-          <img
+          <Image
             src={profile.avatar_url}
             alt={profile.name}
+            width={48}
+            height={48}
             className="w-12 h-12 object-cover border-[3px] border-[var(--black)] shrink-0"
+            unoptimized
           />
         ) : (
           <div

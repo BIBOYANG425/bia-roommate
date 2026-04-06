@@ -173,7 +173,7 @@ function findInstructorCellsTable(): { el: HTMLElement; names: string[] }[] {
 }
 
 function findInstructorCells(
-  _site: string,
+  _site?: string,
 ): { el: HTMLElement; names: string[] }[] {
   // Try WebReg div-based layout first
   const webregResults = findInstructorCellsWebReg();

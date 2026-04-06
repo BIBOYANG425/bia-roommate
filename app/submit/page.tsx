@@ -6,8 +6,9 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import AuthModal from "@/components/AuthModal";
+import { RadioGroup, TagPicker, AvatarUpload } from "@/components/form";
+import { useProfileForm } from "@/hooks/useProfileForm";
 import {
-  VALID_TAGS,
   SLEEP_OPTIONS,
   CLEAN_OPTIONS,
   NOISE_OPTIONS,
@@ -19,114 +20,28 @@ import {
   SCHOOL_OPTIONS,
 } from "@/lib/types";
 
-function RadioGroup({
-  label,
-  options,
-  value,
-  onChange,
-  customizable,
-  customValue,
-  onCustomChange,
-  customPlaceholder,
-}: {
-  label: string;
-  options: readonly string[];
-  value: string;
-  onChange: (v: string) => void;
-  customizable?: boolean;
-  customValue?: string;
-  onCustomChange?: (v: string) => void;
-  customPlaceholder?: string;
-}) {
-  const isCustom = value === "__custom__";
-  return (
-    <div>
-      <label
-        className="font-display text-sm tracking-wider block mb-2"
-        style={{ color: "var(--mid)" }}
-      >
-        {label}
-      </label>
-      <div className="flex flex-wrap gap-2">
-        {options.map((opt) => (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => onChange(value === opt ? "" : opt)}
-            className="brutal-tag cursor-pointer text-xs px-3 py-1.5 transition-colors"
-            style={
-              value === opt
-                ? {
-                    background: "var(--cardinal)",
-                    color: "white",
-                    borderColor: "var(--cardinal)",
-                  }
-                : {}
-            }
-          >
-            {opt}
-          </button>
-        ))}
-        {customizable && (
-          <button
-            type="button"
-            onClick={() => onChange(isCustom ? "" : "__custom__")}
-            className="brutal-tag cursor-pointer text-xs px-3 py-1.5 transition-colors"
-            style={
-              isCustom
-                ? {
-                    background: "var(--gold)",
-                    color: "var(--black)",
-                    borderColor: "var(--black)",
-                  }
-                : { borderStyle: "dashed" }
-            }
-          >
-            CUSTOM
-          </button>
-        )}
-      </div>
-      {isCustom && (
-        <input
-          type="text"
-          value={customValue || ""}
-          onChange={(e) => onCustomChange?.(e.target.value)}
-          placeholder={customPlaceholder || ""}
-          className="brutal-input mt-2"
-        />
-      )}
-    </div>
-  );
-}
-
 export default function SubmitPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    formData,
+    updateField,
+    toggleTag,
+    errors,
+    setError,
+    submitting,
+    setSubmitting,
+    validate,
+    uploadAvatar,
+    buildPayload,
+  } = useProfileForm();
+
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [submittedProfileId, setSubmittedProfileId] = useState<string | null>(
     null,
   );
   const [showAuthModal, setShowAuthModal] = useState(false);
-
-  const [name, setName] = useState("");
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [school, setSchool] = useState("");
-  const [gender, setGender] = useState("");
-  const [major, setMajor] = useState("");
-  const [year, setYear] = useState("");
-  const [enrollmentTerm, setEnrollmentTerm] = useState("");
-  const [contact, setContact] = useState("");
-  const [sleepHabit, setSleepHabit] = useState("");
-  const [customSleep, setCustomSleep] = useState("");
-  const [cleanLevel, setCleanLevel] = useState("");
-  const [noiseLevel, setNoiseLevel] = useState("");
-  const [musicHabit, setMusicHabit] = useState("");
-  const [studyStyle, setStudyStyle] = useState("");
-  const [hobbies, setHobbies] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [bio, setBio] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -147,17 +62,10 @@ export default function SubmitPage() {
     }
   }, [user, router]);
 
-  const toggleTag = (tag: string) => {
-    setTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
-    );
-  };
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      setError("IMAGE TOO LARGE — MAX 2MB");
+  const handleAvatarChange = (file: File | null) => {
+    if (!file) {
+      setAvatarFile(null);
+      setAvatarPreview(null);
       return;
     }
     setAvatarFile(file);
@@ -166,57 +74,25 @@ export default function SubmitPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !contact.trim()) return;
+    if (!validate(["name", "contact"])) return;
 
     setSubmitting(true);
     setError(null);
 
     let avatarUrl: string | null = null;
     if (avatarFile) {
-      const ext = avatarFile.name.split(".").pop();
-      const filePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { data: uploadData, error: uploadErr } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, avatarFile, { cacheControl: "3600", upsert: true });
-      if (uploadErr) {
-        setError("AVATAR UPLOAD FAILED — TRY AGAIN");
+      avatarUrl = await uploadAvatar(avatarFile);
+      if (!avatarUrl) {
         setSubmitting(false);
         return;
       }
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("avatars").getPublicUrl(uploadData.path);
-      avatarUrl = publicUrl;
     }
 
-    const finalSleep =
-      sleepHabit === "__custom__"
-        ? customSleep.trim() || null
-        : sleepHabit || null;
-
-    const formData = {
-      name: name.trim(),
-      avatar_url: avatarUrl,
-      school: school || null,
-      gender: gender || null,
-      major: major.trim() || null,
-      year: year || null,
-      enrollment_term: year === "新生" ? enrollmentTerm || null : null,
-      contact: contact.trim(),
-      sleep_habit: finalSleep,
-      clean_level: cleanLevel || null,
-      noise_level: noiseLevel || null,
-      music_habit: musicHabit || null,
-      study_style: studyStyle || null,
-      hobbies: hobbies.trim() || null,
-      tags: tags.length > 0 ? tags : null,
-      bio: bio.trim() || null,
-      visible: year === "新生",
-    };
+    const payload = buildPayload(avatarUrl);
 
     const { data: inserted, error: err } = await supabase
       .from("roommate_profiles")
-      .insert([{ ...formData, user_id: user?.id ?? null }])
+      .insert([{ ...payload, user_id: user?.id ?? null }])
       .select("id")
       .single();
 
@@ -237,13 +113,18 @@ export default function SubmitPage() {
     setSubmitting(false);
   };
 
-  const canSubmit = name.trim() && contact.trim() && school && !submitting;
+  const canSubmit =
+    formData.name.trim() &&
+    formData.contact.trim() &&
+    formData.school &&
+    !submitting;
   const headerBg =
-    school === "UC Berkeley"
+    formData.school === "UC Berkeley"
       ? "var(--berkeley-blue)"
-      : school === "Stanford"
+      : formData.school === "Stanford"
         ? "var(--stanford-cardinal)"
         : "var(--cardinal)";
+  const accent = headerBg;
 
   // Post-submit interstitial — prompt account creation
   if (submittedProfileId) {
@@ -262,7 +143,11 @@ export default function SubmitPage() {
         .update({ user_id: authUser.id })
         .eq("id", submittedProfileId)
         .is("user_id", null);
-      router.push(error ? "/roommates?submitted=true" : "/roommates?submitted=true&linked=true");
+      router.push(
+        error
+          ? "/roommates?submitted=true"
+          : "/roommates?submitted=true&linked=true",
+      );
     };
 
     return (
@@ -335,7 +220,7 @@ export default function SubmitPage() {
             href="/roommates"
             className="font-display text-xs tracking-[0.2em] text-white/60 hover:text-white mb-4 inline-block"
           >
-            ← BACK
+            &larr; BACK
           </Link>
           <h1 className="font-display text-[48px] sm:text-[64px] text-white leading-[0.85]">
             DROP YOUR
@@ -375,8 +260,8 @@ export default function SubmitPage() {
                 </label>
                 <input
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={formData.name}
+                  onChange={(e) => updateField("name", e.target.value)}
                   placeholder="你的姓名或昵称"
                   className="brutal-input"
                   required
@@ -384,67 +269,12 @@ export default function SubmitPage() {
               </div>
 
               {/* Avatar upload */}
-              <div>
-                <label
-                  className="font-display text-sm tracking-wider block mb-2"
-                  style={{ color: "var(--mid)" }}
-                >
-                  PROFILE PHOTO
-                </label>
-                <div className="flex items-center gap-4">
-                  <label className="cursor-pointer">
-                    <div
-                      className="w-20 h-20 border-[3px] border-[var(--black)] flex items-center justify-center overflow-hidden transition-all hover:shadow-[4px_4px_0_var(--gold)]"
-                      style={{ background: "var(--beige)" }}
-                    >
-                      {avatarPreview ? (
-                        <img
-                          src={avatarPreview}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span
-                          className="font-display text-2xl"
-                          style={{ color: "var(--mid)" }}
-                        >
-                          +
-                        </span>
-                      )}
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarChange}
-                      className="hidden"
-                    />
-                  </label>
-                  <div>
-                    <p
-                      className="text-[10px] uppercase tracking-wider"
-                      style={{ color: "var(--mid)" }}
-                    >
-                      CLICK TO UPLOAD
-                    </p>
-                    <p className="text-[10px]" style={{ color: "var(--mid)" }}>
-                      JPG / PNG — MAX 2MB
-                    </p>
-                    {avatarFile && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAvatarFile(null);
-                          setAvatarPreview(null);
-                        }}
-                        className="text-[10px] uppercase tracking-wider mt-1"
-                        style={{ color: "var(--cardinal)" }}
-                      >
-                        REMOVE
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <AvatarUpload
+                avatarPreview={avatarPreview}
+                hasFile={!!avatarFile}
+                onFileChange={handleAvatarChange}
+                onError={(msg) => setError(msg)}
+              />
 
               <div>
                 <label
@@ -465,10 +295,12 @@ export default function SubmitPage() {
                       <button
                         key={s}
                         type="button"
-                        onClick={() => setSchool(school === s ? "" : s)}
+                        onClick={() =>
+                          updateField("school", formData.school === s ? "" : s)
+                        }
                         className="brutal-tag cursor-pointer text-xs px-3 py-1.5 transition-colors"
                         style={
-                          school === s
+                          formData.school === s
                             ? {
                                 background: color,
                                 color: "white",
@@ -493,8 +325,8 @@ export default function SubmitPage() {
                     GENDER
                   </label>
                   <select
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
+                    value={formData.gender}
+                    onChange={(e) => updateField("gender", e.target.value)}
                     className="brutal-select w-full"
                   >
                     <option value="">—</option>
@@ -513,10 +345,11 @@ export default function SubmitPage() {
                     YEAR
                   </label>
                   <select
-                    value={year}
+                    value={formData.year}
                     onChange={(e) => {
-                      setYear(e.target.value);
-                      if (e.target.value !== "新生") setEnrollmentTerm("");
+                      updateField("year", e.target.value);
+                      if (e.target.value !== "新生")
+                        updateField("enrollmentTerm", "");
                     }}
                     className="brutal-select w-full"
                   >
@@ -530,7 +363,7 @@ export default function SubmitPage() {
                 </div>
               </div>
 
-              {year === "新生" && (
+              {formData.year === "新生" && (
                 <div>
                   <label
                     className="font-display text-sm tracking-wider block mb-2"
@@ -544,11 +377,14 @@ export default function SubmitPage() {
                         key={term}
                         type="button"
                         onClick={() =>
-                          setEnrollmentTerm(enrollmentTerm === term ? "" : term)
+                          updateField(
+                            "enrollmentTerm",
+                            formData.enrollmentTerm === term ? "" : term,
+                          )
                         }
                         className="brutal-tag cursor-pointer text-xs px-4 py-1.5 transition-colors"
                         style={
-                          enrollmentTerm === term
+                          formData.enrollmentTerm === term
                             ? {
                                 background: "var(--gold)",
                                 color: "var(--black)",
@@ -573,8 +409,8 @@ export default function SubmitPage() {
                 </label>
                 <input
                   type="text"
-                  value={major}
-                  onChange={(e) => setMajor(e.target.value)}
+                  value={formData.major}
+                  onChange={(e) => updateField("major", e.target.value)}
                   placeholder="如：Computer Science, Business"
                   className="brutal-input"
                 />
@@ -590,8 +426,8 @@ export default function SubmitPage() {
                 </label>
                 <input
                   type="text"
-                  value={contact}
-                  onChange={(e) => setContact(e.target.value)}
+                  value={formData.contact}
+                  onChange={(e) => updateField("contact", e.target.value)}
                   placeholder="微信号或手机号"
                   className="brutal-input"
                   required
@@ -613,36 +449,41 @@ export default function SubmitPage() {
               <RadioGroup
                 label="SLEEP TIME"
                 options={SLEEP_OPTIONS}
-                value={sleepHabit}
-                onChange={setSleepHabit}
+                value={formData.sleepHabit}
+                onChange={(v) => updateField("sleepHabit", v)}
+                accent={accent}
                 customizable
-                customValue={customSleep}
-                onCustomChange={setCustomSleep}
+                customValue={formData.customSleep}
+                onCustomChange={(v) => updateField("customSleep", v)}
                 customPlaceholder="如：看情况、不固定、1点左右"
               />
               <RadioGroup
                 label="CLEANLINESS"
                 options={CLEAN_OPTIONS}
-                value={cleanLevel}
-                onChange={setCleanLevel}
+                value={formData.cleanLevel}
+                onChange={(v) => updateField("cleanLevel", v)}
+                accent={accent}
               />
               <RadioGroup
                 label="NOISE TOLERANCE"
                 options={NOISE_OPTIONS}
-                value={noiseLevel}
-                onChange={setNoiseLevel}
+                value={formData.noiseLevel}
+                onChange={(v) => updateField("noiseLevel", v)}
+                accent={accent}
               />
               <RadioGroup
                 label="MUSIC / SPEAKERS"
                 options={MUSIC_OPTIONS}
-                value={musicHabit}
-                onChange={setMusicHabit}
+                value={formData.musicHabit}
+                onChange={(v) => updateField("musicHabit", v)}
+                accent={accent}
               />
               <RadioGroup
                 label="STUDY SPOT"
                 options={STUDY_OPTIONS}
-                value={studyStyle}
-                onChange={setStudyStyle}
+                value={formData.studyStyle}
+                onChange={(v) => updateField("studyStyle", v)}
+                accent={accent}
               />
             </div>
           </div>
@@ -658,8 +499,8 @@ export default function SubmitPage() {
             </h2>
             <input
               type="text"
-              value={hobbies}
-              onChange={(e) => setHobbies(e.target.value)}
+              value={formData.hobbies}
+              onChange={(e) => updateField("hobbies", e.target.value)}
               placeholder="如：篮球、摄影、弹吉他、看动漫"
               className="brutal-input"
             />
@@ -674,27 +515,11 @@ export default function SubmitPage() {
             >
               TAGS
             </h2>
-            <div className="flex flex-wrap gap-2">
-              {VALID_TAGS.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleTag(tag)}
-                  className="brutal-tag cursor-pointer text-xs px-3 py-1.5 transition-colors"
-                  style={
-                    tags.includes(tag)
-                      ? {
-                          background: "var(--cardinal)",
-                          color: "white",
-                          borderColor: "var(--cardinal)",
-                        }
-                      : {}
-                  }
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
+            <TagPicker
+              selectedTags={formData.tags}
+              onToggle={toggleTag}
+              accent={accent}
+            />
           </div>
 
           {/* Section 05: Bio */}
@@ -707,8 +532,8 @@ export default function SubmitPage() {
               BIO
             </h2>
             <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
+              value={formData.bio}
+              onChange={(e) => updateField("bio", e.target.value)}
               placeholder="简单介绍一下自己（最多200字）"
               maxLength={200}
               rows={3}
@@ -718,12 +543,12 @@ export default function SubmitPage() {
               className="text-[10px] mt-1 text-right uppercase tracking-wider"
               style={{ color: "var(--mid)" }}
             >
-              {bio.length}/200
+              {formData.bio.length}/200
             </p>
           </div>
 
           {/* Error */}
-          {error && (
+          {errors.general && (
             <div
               className="p-4 border-[3px]"
               style={{
@@ -733,7 +558,7 @@ export default function SubmitPage() {
               }}
             >
               <span className="font-display text-sm tracking-wider">
-                {error}
+                {errors.general}
               </span>
             </div>
           )}

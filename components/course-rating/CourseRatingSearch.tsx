@@ -16,7 +16,10 @@ export default function CourseRatingSearch() {
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(e.target as Node)
+      ) {
         setShowDropdown(false);
       }
     }
@@ -39,12 +42,13 @@ export default function CourseRatingSearch() {
     try {
       const res = await fetch(
         `/api/courses/autocomplete?q=${encodeURIComponent(q)}`,
-        { signal: controller.signal }
+        { signal: controller.signal },
       );
       if (!res.ok) return;
       const data = await res.json();
 
-      let items: { id: string; dept: string; number: string; label: string }[] = [];
+      let items: { id: string; dept: string; number: string; label: string }[] =
+        [];
       if (Array.isArray(data)) {
         items = data
           .map((d: { text?: string } | string) => {
@@ -108,6 +112,7 @@ export default function CourseRatingSearch() {
             <div
               key={`${item.id}-${i}`}
               role="option"
+              aria-selected={false}
               tabIndex={0}
               className="px-4 py-3 font-mono text-sm cursor-pointer transition-colors hover:bg-[var(--cream)] focus:bg-[var(--cream)] outline-none"
               style={{

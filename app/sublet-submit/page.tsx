@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
@@ -24,7 +25,7 @@ function SubletSubmitContent() {
   const [showAuth, setShowAuth] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loadingEdit, setLoadingEdit] = useState(!!editId);
+  const [, setLoadingEdit] = useState(!!editId);
 
   const [title, setTitle] = useState("");
   const [apartmentName, setApartmentName] = useState("");
@@ -187,6 +188,7 @@ function SubletSubmitContent() {
     apartmentName.trim() &&
     address.trim() &&
     rent &&
+    !isNaN(parseInt(rent, 10)) &&
     contact.trim() &&
     posterName.trim() &&
     school &&
@@ -530,9 +532,11 @@ function SubletSubmitContent() {
             <div className="grid grid-cols-3 gap-3 mb-3">
               {existingPhotos.map((src, idx) => (
                 <div key={`existing-${idx}`} className="relative">
-                  <img
+                  <Image
                     src={src}
                     alt={`Existing ${idx + 1}`}
+                    width={200}
+                    height={96}
                     className="w-full h-24 object-cover border-[3px] border-[var(--black)]"
                   />
                   <button
@@ -551,9 +555,12 @@ function SubletSubmitContent() {
               ))}
               {photoPreviews.map((src, idx) => (
                 <div key={idx} className="relative">
-                  <img
+                  <Image
                     src={src}
                     alt={`Photo ${idx + 1}`}
+                    width={200}
+                    height={96}
+                    unoptimized
                     className="w-full h-24 object-cover border-[3px] border-[var(--black)]"
                   />
                   <button

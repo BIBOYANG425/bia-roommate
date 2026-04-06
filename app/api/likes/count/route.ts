@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const MAX_IDS = 100;
 
@@ -24,6 +24,8 @@ export async function GET(request: Request) {
       { status: 400 },
     );
   }
+
+  const supabase = await createServerSupabaseClient();
 
   const { data, error } = await supabase
     .from("profile_likes")
