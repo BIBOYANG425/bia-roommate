@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+:root {
+  --cardinal: #990000;
+  --gold: #FFCC00;
+  --black: #1A1410;
+  --beige: #F2EBD9;
+  --cream: #FAF6EC;
+  --mid: #8C7E6A;
+  --bg: #F5F3EE;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #e8e4de; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+.popup-container {
+  width: 400px;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--black);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+  font-size: 13px;
+  border: 3px solid var(--black);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 8px 8px 0 var(--black);
+}
+.popup-header {
+  padding: 14px 16px 10px;
+  background: var(--cardinal);
+  border-bottom: 3px solid var(--black);
+  display: flex; align-items: baseline; gap: 8px;
+}
+.popup-title { font-size: 18px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 0.03em; }
+.popup-subtitle { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; }
+.popup-tabs { display: flex; border-bottom: 3px solid var(--black); background: var(--cream); }
+.popup-tab {
+  flex: 1; padding: 10px 12px; background: none; border: none;
+  border-right: 2px solid var(--black); color: var(--mid);
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;
+}
+.popup-tab:last-child { border-right: none; }
+.popup-tab.active { background: var(--gold); color: var(--black); }
+.popup-content { flex: 1; padding: 14px 16px; overflow-y: auto; }
+.section-title {
+  font-size: 11px; font-weight: 900; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--mid); margin-bottom: 8px;
+  border-bottom: 2px solid var(--beige); padding-bottom: 4px;
+}
+.setting-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 2px solid var(--beige);
+}
+.setting-label { font-size: 13px; font-weight: 700; }
+.setting-description { font-size: 11px; color: var(--mid); margin-top: 2px; }
+
+.toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; display: inline-block; }
+.toggle-slider {
+  position: absolute; inset: 0; background: var(--beige);
+  border: 2px solid var(--black); border-radius: 10px; cursor: pointer;
+}
+.toggle-slider::after {
+  content: ''; position: absolute; top: 1px; left: 1px;
+  width: 14px; height: 14px; background: var(--black);
+  border-radius: 50%;
+}
+.toggle-slider.checked { background: var(--cardinal); }
+.toggle-slider.checked::after { transform: translateX(16px); background: #fff; }
+
+select {
+  width: 100%; padding: 10px 12px; background: #FAF6EC;
+  border: 3px solid #1A1410; border-radius: 4px; color: #1A1410;
+  font-size: 13px; font-weight: 700; font-family: inherit;
+}
+.link-button {
+  display: inline-block; color: var(--cardinal); font-size: 11px; font-weight: 700;
+  text-decoration: none; text-transform: uppercase; letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--cardinal); padding-bottom: 1px;
+}
+.version { font-size: 10px; color: #8C7E6A; margin-top: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+<div class="popup-container">
+  <div class="popup-header">
+    <span class="popup-title">BIA Course Helper</span>
+    <span class="popup-subtitle">USC</span>
+  </div>
+  <div class="popup-tabs">
+    <div class="popup-tab">Optimizer</div>
+    <div class="popup-tab">Discover</div>
+    <div class="popup-tab active">Settings</div>
+  </div>
+  <div class="popup-content">
+    <p class="section-title">Features</p>
+
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">RMP Ratings</div>
+        <div class="setting-description">Show professor ratings next to names</div>
+      </div>
+      <div class="toggle"><span class="toggle-slider checked"></span></div>
+    </div>
+
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Conflict Highlights</div>
+        <div class="setting-description">Highlight time conflicts on WebReg</div>
+      </div>
+      <div class="toggle"><span class="toggle-slider checked"></span></div>
+    </div>
+
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Seat Counts</div>
+        <div class="setting-description">Show enrollment badges on sections</div>
+      </div>
+      <div class="toggle"><span class="toggle-slider checked"></span></div>
+    </div>
+
+    <p class="section-title" style="margin-top: 16px;">Semester</p>
+    <select>
+      <option>Fall 2026</option>
+    </select>
+
+    <div style="margin-top: 24px; text-align: center;">
+      <a class="link-button">Open BIA Course Planner &rarr;</a>
+      <div class="version">BIA Course Helper v1.0.0</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

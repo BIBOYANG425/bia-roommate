@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+:root {
+  --cardinal: #990000;
+  --gold: #FFCC00;
+  --black: #1A1410;
+  --beige: #F2EBD9;
+  --cream: #FAF6EC;
+  --mid: #8C7E6A;
+  --bg: #F5F3EE;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #e8e4de; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+.popup-container {
+  width: 400px;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--black);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+  font-size: 13px;
+  border: 3px solid var(--black);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 8px 8px 0 var(--black);
+}
+.popup-header {
+  padding: 14px 16px 10px;
+  background: var(--cardinal);
+  border-bottom: 3px solid var(--black);
+  display: flex; align-items: baseline; gap: 8px;
+}
+.popup-title { font-size: 18px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 0.03em; }
+.popup-subtitle { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; }
+.popup-tabs { display: flex; border-bottom: 3px solid var(--black); background: var(--cream); }
+.popup-tab {
+  flex: 1; padding: 10px 12px; background: none; border: none;
+  border-right: 2px solid var(--black); color: var(--mid);
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;
+}
+.popup-tab:last-child { border-right: none; }
+.popup-tab.active { background: var(--gold); color: var(--black); }
+.popup-content { flex: 1; padding: 14px 16px; overflow-y: auto; }
+.section-title {
+  font-size: 11px; font-weight: 900; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--mid); margin-bottom: 8px;
+  border-bottom: 2px solid var(--beige); padding-bottom: 4px;
+}
+.quick-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.quick-tag {
+  padding: 4px 10px; border: 2px solid var(--black); border-radius: 4px;
+  background: var(--cream); color: var(--black);
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.quick-tag.selected { background: var(--cardinal); color: #fff; box-shadow: 2px 2px 0 var(--black); }
+
+.interest-textarea {
+  width: 100%; min-height: 50px; padding: 10px 12px;
+  background: var(--cream); border: 3px solid var(--black); border-radius: 4px;
+  color: var(--black); font-size: 13px; font-family: inherit;
+  resize: vertical; margin-bottom: 10px;
+}
+
+.course-card {
+  background: var(--cream); border: 2px solid var(--black);
+  border-radius: 4px; padding: 10px 12px; margin-bottom: 8px;
+}
+.course-card-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
+}
+.course-card-id { font-size: 13px; font-weight: 900; color: var(--cardinal); text-transform: uppercase; }
+.course-card-title { font-size: 12px; color: var(--black); margin-bottom: 4px; font-weight: 500; }
+.course-card-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--mid); }
+.match-tag {
+  display: inline-block; padding: 2px 8px; background: var(--cardinal);
+  border: 2px solid var(--black); border-radius: 4px;
+  font-size: 10px; font-weight: 700; color: #fff; text-transform: uppercase;
+  margin-right: 4px; margin-top: 4px;
+}
+.ge-tag {
+  display: inline-block; padding: 2px 8px; background: var(--gold);
+  border: 2px solid var(--black); border-radius: 4px;
+  font-size: 10px; font-weight: 800; color: var(--black); text-transform: uppercase;
+}
+.link-button {
+  color: var(--cardinal); font-size: 11px; font-weight: 700;
+  text-decoration: none; text-transform: uppercase; letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--cardinal); padding-bottom: 1px;
+}
+</style>
+</head>
+<body>
+<div class="popup-container">
+  <div class="popup-header">
+    <span class="popup-title">BIA Course Helper</span>
+    <span class="popup-subtitle">USC</span>
+  </div>
+  <div class="popup-tabs">
+    <div class="popup-tab">Optimizer</div>
+    <div class="popup-tab active">Discover</div>
+    <div class="popup-tab">Settings</div>
+  </div>
+  <div class="popup-content">
+    <p class="section-title">What are you interested in?</p>
+    <textarea class="interest-textarea" readonly>japanese animation, social justice, coding</textarea>
+
+    <div class="quick-tags">
+      <span class="quick-tag selected">Animation</span>
+      <span class="quick-tag">Film</span>
+      <span class="quick-tag selected">Coding</span>
+      <span class="quick-tag">AI</span>
+      <span class="quick-tag">Music</span>
+      <span class="quick-tag">Psychology</span>
+      <span class="quick-tag">Business</span>
+      <span class="quick-tag">Art</span>
+      <span class="quick-tag selected">Japanese</span>
+    </div>
+
+    <p class="section-title">Found 3 courses for you</p>
+
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-card-id">CTAN 230</span>
+        <a class="link-button">Open in WebReg</a>
+      </div>
+      <div class="course-card-title">Introduction to Animation</div>
+      <div class="course-card-meta">
+        <span>4 units</span>
+        <span class="ge-tag">GE-G</span>
+      </div>
+      <div>
+        <span class="match-tag">animation</span>
+        <span class="match-tag">japanese</span>
+      </div>
+    </div>
+
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-card-id">CSCI 201</span>
+        <a class="link-button">Open in WebReg</a>
+      </div>
+      <div class="course-card-title">Principles of Software Development</div>
+      <div class="course-card-meta">
+        <span>4 units</span>
+      </div>
+      <div>
+        <span class="match-tag">coding</span>
+      </div>
+    </div>
+
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-card-id">AMST 101</span>
+        <a class="link-button">Open in WebReg</a>
+      </div>
+      <div class="course-card-title">American Popular Culture and Social Justice</div>
+      <div class="course-card-meta">
+        <span>4 units</span>
+        <span class="ge-tag">GE-F</span>
+      </div>
+      <div>
+        <span class="match-tag">social justice</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

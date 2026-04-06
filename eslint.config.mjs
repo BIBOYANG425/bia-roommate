@@ -24,6 +24,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored / non-app directories:
+    "store-assets/**",
+    "extension/**",
   ]),
 ]);
 

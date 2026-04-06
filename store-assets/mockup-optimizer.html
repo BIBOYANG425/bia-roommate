@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+:root {
+  --cardinal: #990000;
+  --gold: #FFCC00;
+  --black: #1A1410;
+  --beige: #F2EBD9;
+  --cream: #FAF6EC;
+  --mid: #8C7E6A;
+  --bg: #F5F3EE;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #e8e4de; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+.popup-container {
+  width: 400px;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--black);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+  font-size: 13px;
+  border: 3px solid var(--black);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 8px 8px 0 var(--black);
+}
+.popup-header {
+  padding: 14px 16px 10px;
+  background: var(--cardinal);
+  border-bottom: 3px solid var(--black);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.popup-title { font-size: 18px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 0.03em; }
+.popup-subtitle { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; }
+.popup-tabs { display: flex; border-bottom: 3px solid var(--black); background: var(--cream); }
+.popup-tab {
+  flex: 1; padding: 10px 12px; background: none; border: none;
+  border-right: 2px solid var(--black); color: var(--mid);
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;
+}
+.popup-tab:last-child { border-right: none; }
+.popup-tab.active { background: var(--gold); color: var(--black); }
+.popup-content { flex: 1; padding: 14px 16px; overflow-y: auto; }
+.section-title {
+  font-size: 11px; font-weight: 900; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--mid); margin-bottom: 8px;
+  border-bottom: 2px solid var(--beige); padding-bottom: 4px;
+}
+
+/* Calendar */
+.mini-calendar {
+  display: grid; grid-template-columns: 28px repeat(5, 1fr);
+  gap: 1px; background: var(--black); border: 2px solid var(--black);
+  border-radius: 4px; margin-bottom: 14px; font-size: 9px;
+}
+.mini-calendar-header {
+  text-align: center; font-weight: 800; color: #fff; padding: 3px 2px;
+  background: var(--black); text-transform: uppercase; font-size: 8px;
+}
+.mini-calendar-time {
+  text-align: right; color: #fff; padding: 1px 3px 1px 0;
+  font-size: 7px; font-weight: 700; background: var(--black);
+}
+.mini-calendar-cell { min-height: 12px; background: var(--cream); }
+.mini-calendar-cell.filled-0 { background: var(--cardinal); }
+.mini-calendar-cell.filled-1 { background: #2d5a27; }
+.mini-calendar-cell.filled-2 { background: #1a4a8a; }
+
+/* Course chips */
+.course-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.course-chip {
+  padding: 4px 10px; border: 2px solid var(--black); border-radius: 4px;
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.course-chip-0 { background: var(--cardinal); color: #fff; }
+.course-chip-1 { background: #2d5a27; color: #fff; }
+.course-chip-2 { background: #1a4a8a; color: #fff; }
+
+.btn-primary {
+  display: block; width: 100%; padding: 12px 16px;
+  background: var(--cardinal); color: #fff;
+  border: 3px solid var(--black); border-radius: 4px;
+  font-size: 14px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.08em; box-shadow: 4px 4px 0 var(--black);
+}
+
+.schedule-info {
+  margin-top: 10px; font-size: 11px; color: var(--mid);
+  text-align: center; font-weight: 700; text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+<div class="popup-container">
+  <div class="popup-header">
+    <span class="popup-title">BIA Course Helper</span>
+    <span class="popup-subtitle">USC</span>
+  </div>
+  <div class="popup-tabs">
+    <div class="popup-tab active">Optimizer</div>
+    <div class="popup-tab">Discover</div>
+    <div class="popup-tab">Settings</div>
+  </div>
+  <div class="popup-content">
+    <p class="section-title">Your Courses</p>
+    <div class="course-chips">
+      <span class="course-chip course-chip-0">CSCI-201</span>
+      <span class="course-chip course-chip-1">MATH-226</span>
+      <span class="course-chip course-chip-2">WRIT-150</span>
+    </div>
+
+    <p class="section-title">Best Schedule</p>
+    <div class="mini-calendar">
+      <div class="mini-calendar-header"></div>
+      <div class="mini-calendar-header">Mon</div>
+      <div class="mini-calendar-header">Tue</div>
+      <div class="mini-calendar-header">Wed</div>
+      <div class="mini-calendar-header">Thu</div>
+      <div class="mini-calendar-header">Fri</div>
+
+      <div class="mini-calendar-time">8am</div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell"></div>
+
+      <div class="mini-calendar-time">9am</div>
+      <div class="mini-calendar-cell filled-0"></div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell filled-0"></div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell"></div>
+
+      <div class="mini-calendar-time">10am</div>
+      <div class="mini-calendar-cell filled-0"></div>
+      <div class="mini-calendar-cell filled-1"></div>
+      <div class="mini-calendar-cell filled-0"></div>
+      <div class="mini-calendar-cell filled-1"></div>
+      <div class="mini-calendar-cell"></div>
+
+      <div class="mini-calendar-time">11am</div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell filled-1"></div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell filled-1"></div>
+      <div class="mini-calendar-cell"></div>
+
+      <div class="mini-calendar-time">12pm</div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell"></div>
+
+      <div class="mini-calendar-time">1pm</div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell filled-2"></div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell filled-2"></div>
+      <div class="mini-calendar-cell"></div>
+
+      <div class="mini-calendar-time">2pm</div>
+      <div class="mini-calendar-cell filled-1"></div>
+      <div class="mini-calendar-cell filled-2"></div>
+      <div class="mini-calendar-cell filled-1"></div>
+      <div class="mini-calendar-cell filled-2"></div>
+      <div class="mini-calendar-cell"></div>
+
+      <div class="mini-calendar-time">3pm</div>
+      <div class="mini-calendar-cell filled-1"></div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell filled-1"></div>
+      <div class="mini-calendar-cell"></div>
+      <div class="mini-calendar-cell"></div>
+    </div>
+
+    <div class="schedule-info">Schedule 1 of 3 &mdash; No conflicts</div>
+
+    <button class="btn-primary" style="margin-top: 12px;">Build Best Schedule</button>
+  </div>
+</div>
+</body>
+</html>

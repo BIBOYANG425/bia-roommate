@@ -5,7 +5,7 @@ import Link from "next/link";
 import ScrollFloat from "@/components/ScrollFloat";
 import GlassSurface from "@/components/GlassSurface";
 import BorderGlow from "@/components/BorderGlow";
-import ScrollStack, { ScrollStackItem } from "@/components/ScrollStack";
+import Folder from "@/components/Folder";
 import { t, type Lang } from "@/lib/i18n";
 
 function ArrowIcon() {
@@ -245,86 +245,62 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ─── 新生服务 — ScrollStack ─── */}
-          <section className="relative bg-[#F9FAF7] pt-24 sm:pt-32 px-6 sm:px-16 pb-8">
+          {/* ─── 新生服务 — Folder ─── */}
+          <section className="relative overflow-hidden bg-[#F9FAF7] py-24 sm:py-32 px-6 sm:px-16">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-black/10 to-transparent"></div>
-            <div className="max-w-4xl mx-auto text-center mb-16">
-              <h2
-                className="heading-serif text-4xl sm:text-5xl mb-2 text-[#171717]"
-                style={{ fontFamily: "var(--font-display-zh)" }}
-              >
-                {t.services.heading[lang]}
-              </h2>
-              <p className="text-[#999] text-sm uppercase tracking-widest mb-4">
-                {t.services.subtitle[lang]}
-              </p>
-              <p className="text-[#646464] text-sm">
-                {t.services.builtBy[lang]}
-              </p>
-            </div>
-            <div className="max-w-3xl mx-auto">
-              <ScrollStack
-                itemDistance={80}
-                itemScale={0.04}
-                itemStackDistance={20}
-                stackPosition="25%"
-                scaleEndPosition="15%"
-                baseScale={0.88}
-                blurAmount={2}
-              >
-                {(() => {
-                  const hrefs = [
-                    "/roommates",
-                    "/course-planner",
-                    "/course-rating",
-                    "/sublet",
-                    "/usc-group",
-                  ];
-                  const previews = [
-                    "/previews/roommates.png",
-                    "/previews/course-planner.png",
-                    "/previews/course-rating.png",
-                    "/previews/sublet.png",
-                    "/previews/usc-group.png",
-                  ];
-                  return t.services.items.map((svc, idx) => (
-                    <ScrollStackItem key={svc.title.en}>
+            <div className="max-w-5xl mx-auto">
+              {/* Section heading — above the layout */}
+              <div className="mb-16">
+                <h2 className="heading-serif text-4xl sm:text-5xl mb-3 text-[#171717]" style={{ fontFamily: "var(--font-display-zh)" }}>{t.services.heading[lang]}</h2>
+                <p className="text-[#999] text-sm uppercase tracking-widest">{t.services.subtitle[lang]}</p>
+              </div>
+
+              <div className="flex flex-col lg:flex-row gap-16 items-center">
+                {/* Left: Folder visual */}
+                <div className="flex flex-col items-center lg:w-2/5">
+                  <Folder
+                    color="#71031f"
+                    size={3}
+                    items={[
+                      <img key="p1" src="/previews/roommates.png" alt="Roommate Match" className="w-full h-full object-cover object-top" />,
+                      <img key="p2" src="/previews/course-planner.png" alt="Course Planner" className="w-full h-full object-cover object-top" />,
+                      <img key="p3" src="/previews/course-rating.png" alt="Course Reviews" className="w-full h-full object-cover object-top" />,
+                    ]}
+                  />
+                </div>
+
+                {/* Right: Service list */}
+                <div className="lg:w-3/5 flex flex-col gap-3">
+                  <p className="text-xs text-[#999] uppercase tracking-widest mb-2">{t.services.available[lang]}</p>
+                  {t.services.items.map((svc, idx) => {
+                    const hrefs = ["/roommates", "/course-planner", "/course-rating", "/sublet", "/usc-group"];
+                    return (
                       <Link
+                        key={svc.title.en}
                         href={hrefs[idx]}
-                        className="block bg-white rounded-2xl overflow-hidden border border-black/8 shadow-lg hover:shadow-xl transition-shadow duration-300"
+                        className="group flex items-center gap-5 p-4 rounded-xl hover:bg-white hover:shadow-md transition-all duration-200 border border-transparent hover:border-black/5"
                       >
-                        <div className="relative w-full h-48 sm:h-56">
-                          <Image
-                            src={previews[idx]}
-                            alt={svc.sub[lang]}
-                            fill
-                            className="object-cover object-top"
-                          />
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B0A2A] to-[#71031f] flex items-center justify-center text-white text-lg font-bold shrink-0 shadow-sm" style={{ fontFamily: "var(--font-display-zh)" }}>
+                          {svc.title[lang].charAt(0)}
                         </div>
-                        <div className="p-6 sm:p-8">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3
-                              className="text-2xl font-semibold text-[#171717]"
-                              style={{ fontFamily: "var(--font-display-zh)" }}
-                            >
-                              {svc.title[lang]}
-                            </h3>
-                            <span className="text-xs text-[#999] uppercase tracking-wider">
-                              {svc.sub[lang]}
-                            </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <h3 className="text-base font-semibold text-[#171717] group-hover:text-[#1F1F29] transition-colors" style={{ fontFamily: "var(--font-display-zh)" }}>{svc.title[lang]}</h3>
+                            <span className="text-[10px] text-[#999] uppercase tracking-wider">{svc.sub[lang]}</span>
                           </div>
-                          <p className="text-[#646464] text-sm leading-relaxed mb-3">
-                            {svc.desc[lang]}
-                          </p>
-                          <span className="text-[#A0D7D1] text-sm font-medium inline-flex items-center gap-1">
-                            {t.services.open[lang]} <ArrowIcon />
-                          </span>
+                          <p className="text-sm text-[#646464] leading-relaxed truncate">{svc.desc[lang]}</p>
+                        </div>
+                        <div className="text-[#A0D7D1] opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                          <ArrowIcon />
                         </div>
                       </Link>
-                    </ScrollStackItem>
-                  ));
-                })()}
-              </ScrollStack>
+                    );
+                  })}
+                  <div className="mt-4 pt-4 border-t border-black/5">
+                    <p className="text-[#999] text-xs">{t.services.builtBy[lang]}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
