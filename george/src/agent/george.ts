@@ -13,6 +13,7 @@ import {
   claimLinkCode,
   generateLinkCode,
 } from '../db/students.js'
+import { extractMemories } from '../jobs/memory-extraction.js'
 import { checkInjection, INJECTION_REJECTIONS } from '../security/injection-filter.js'
 import { checkRateLimit, RATE_LIMIT_RESPONSE } from '../adapters/rate-limiter.js'
 import { log } from '../observability/logger.js'
@@ -132,6 +133,10 @@ export async function processMessage(msg: IncomingMessage): Promise<string> {
       content: response,
       agent: intent,
     })
+
+    // 13. Extract memories in background (non-blocking)
+    const conversationSnippet = `User: ${sanitizedText}\nAssistant: ${response}`
+    extractMemories(studentId, conversationSnippet).catch(() => {})
 
     log('info', 'message_processed', {
       studentId,
