@@ -1,0 +1,64 @@
+import { config } from '../config.js'
+import { processMessage } from '../agent/george.js'
+import { log } from '../observability/logger.js'
+import type { IncomingMessage } from './types.js'
+
+let sdk: any = null
+
+export async function startIMessageAdapter() {
+  if (!config.imessage.apiKey) {
+    log('warn', 'imessage_skip', { reason: 'No IMESSAGE_API_KEY configured' })
+    return
+  }
+
+  try {
+    // @ts-expect-error — package not installed; runtime-only dependency
+    const { SDK } = await import('@photon-ai/advanced-imessage-kit')
+    sdk = SDK({
+      serverUrl: config.imessage.serverUrl,
+      apiKey: config.imessage.apiKey,
+      logLevel: 'info',
+    })
+
+    await sdk.connect()
+    log('info', 'imessage_connected', { server: config.imessage.serverUrl })
+
+    sdk.on('new-message', async (message: {
+      text: string
+      chatGuid: string
+      isFromMe: boolean
+      handle: string
+    }) => {
+      if (message.isFromMe) return
+
+      const incoming: IncomingMessage = {
+        userId: message.handle || message.chatGuid,
+        platform: 'imessage',
+        text: message.text,
+        msgType: 'text',
+        timestamp: Date.now(),
+      }
+
+      try {
+        await sdk.chats.startTyping(message.chatGuid)
+        const response = await processMessage(incoming)
+        await sdk.chats.stopTyping(message.chatGuid)
+        await sdk.messages.sendMessage({ chatGuid: message.chatGuid, message: response })
+      } catch (err) {
+        log('error', 'imessage_error', { error: (err as Error).message })
+        await sdk?.chats?.stopTyping(message.chatGuid).catch(() => {})
+        await sdk?.messages?.sendMessage({
+          chatGuid: message.chatGuid,
+          message: '哎呀，我穿墙的时候卡住了...再试一次？👻',
+        })
+      }
+    })
+  } catch (err) {
+    log('warn', 'imessage_sdk_unavailable', { error: (err as Error).message })
+  }
+}
+
+export async function sendIMessage(chatGuid: string, text: string) {
+  if (!sdk) throw new Error('iMessage SDK not connected')
+  await sdk.messages.sendMessage({ chatGuid, message: text })
+}
