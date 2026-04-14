@@ -1,0 +1,17 @@
+{
+  "fall_2026": {
+    "orientation": { "start": "2026-08-17", "end": "2026-08-21" },
+    "classes_start": "2026-08-24",
+    "fall_break": { "start": "2026-10-15", "end": "2026-10-16" },
+    "thanksgiving": { "start": "2026-11-25", "end": "2026-11-29" },
+    "finals": { "start": "2026-12-07", "end": "2026-12-18" },
+    "classes_end": "2026-12-04"
+  },
+  "spring_2027": {
+    "classes_start": "2027-01-11",
+    "spring_break": { "start": "2027-03-15", "end": "2027-03-21" },
+    "finals": { "start": "2027-05-03", "end": "2027-05-14" },
+    "classes_end": "2027-04-30",
+    "commencement": "2027-05-16"
+  }
+}
