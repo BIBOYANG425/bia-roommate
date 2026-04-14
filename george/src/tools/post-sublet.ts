@@ -6,7 +6,6 @@ registerTool(
   'Post a sublet listing through George.',
   {
     properties: {
-      student_id: { type: 'string', description: 'The student posting' },
       title: { type: 'string', description: 'Listing title' },
       description: { type: 'string', description: 'Description' },
       location: { type: 'string', description: 'Location' },
@@ -15,9 +14,10 @@ registerTool(
       available_to: { type: 'string', description: 'Available until' },
       contact: { type: 'string', description: 'Contact info' },
     },
-    required: ['student_id', 'title', 'price_monthly'],
+    required: ['title', 'price_monthly'],
   },
   async (input) => {
+    if (!input.student_id) return 'No student context available.'
     const { error } = await supabase.from('sublets').insert({
       student_id: input.student_id as string,
       title: input.title as string,

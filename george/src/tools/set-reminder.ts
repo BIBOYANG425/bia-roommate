@@ -7,14 +7,14 @@ registerTool(
   'Set a reminder for a student about an upcoming event.',
   {
     properties: {
-      student_id: { type: 'string', description: 'The student UUID' },
       event_id: { type: 'string', description: 'The event UUID' },
       remind_at: { type: 'string', description: 'When to send reminder (ISO 8601)' },
       platform: { type: 'string', enum: ['wechat', 'imessage'], description: 'Platform to send reminder on' },
     },
-    required: ['student_id', 'event_id', 'remind_at'],
+    required: ['event_id', 'remind_at'],
   },
   async (input) => {
+    if (!input.student_id) return 'No student context available.'
     await supabase.from('event_attendance').upsert({
       student_id: input.student_id as string,
       event_id: input.event_id as string,

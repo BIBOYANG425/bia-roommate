@@ -18,10 +18,11 @@ registerTool(
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(10)
-    if (input.max_price) q = q.lte('price_monthly', input.max_price as number)
+    if (typeof input.max_price === 'number') q = q.lte('price_monthly', input.max_price)
     if (input.location) q = q.ilike('location', `%${input.location as string}%`)
     if (input.available_from) q = q.gte('available_from', input.available_from as string)
-    const { data } = await q
+    const { data, error } = await q
+    if (error) return 'Failed to search sublets.'
     if (!data || data.length === 0) return 'No sublets found.'
     return JSON.stringify(data, null, 2)
   },

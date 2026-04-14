@@ -194,7 +194,7 @@ async function runSubAgent(
     for (const block of response.content) {
       if (block.type === 'tool_use') {
         const input = block.input as Record<string, unknown>
-        if (!input.student_id) input.student_id = context.studentId
+        input.student_id = context.studentId
         if (!input.platform) input.platform = context.platform
 
         const result = await executeTool(block.name, input)

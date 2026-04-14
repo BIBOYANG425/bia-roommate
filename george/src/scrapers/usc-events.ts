@@ -35,7 +35,7 @@ export async function scrapeUSCEvents() {
           .select('id')
           .eq('source_url', event.url || sourceUrl)
           .eq('title', event.title)
-          .single()
+          .maybeSingle()
 
         if (existing) continue
 
