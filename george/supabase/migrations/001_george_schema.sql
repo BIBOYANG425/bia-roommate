@@ -158,6 +158,7 @@ create index idx_students_wechat on students(wechat_open_id);
 create index idx_students_imessage on students(imessage_id);
 create index idx_students_referral on students(referral_code);
 create index idx_students_link_code on students(link_code) where link_code is not null;
+create unique index idx_student_memories_key on student_memories(student_id, key);
 create index idx_student_memories_student on student_memories(student_id, last_referenced_at desc);
 create index idx_event_attendance_student on event_attendance(student_id);
 create index idx_event_attendance_event on event_attendance(event_id);

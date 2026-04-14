@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getClaudeClient } from './llm-providers.js'
 import { classifyIntent, type Intent } from './intent-classifier.js'
 import { getSubAgentPrompt, type SubAgent } from './personality.js'
-import { getToolDefinitions, getToolsByNames, executeTool } from './tool-registry.js'
+import { getToolsByNames, executeTool } from './tool-registry.js'
 import { loadRecentMessages, saveMessage } from '../db/messages.js'
 import {
   resolveStudentId,
@@ -67,37 +67,27 @@ export async function processMessage(msg: IncomingMessage): Promise<string> {
       return `你的账号链接验证码是: ${code}\n在另一个平台上发送这6位数字给我就行！验证码10分钟有效 👻`
     }
 
-    const referralMatch = sanitizedText.match(/暗号\s*[:：]?\s*([A-Z0-9]{6})/i)
-    if (referralMatch) {
-      const student = await getStudentById(studentId)
-      if (student && !student.referred_by) {
-        const { supabase } = await import('../db/client.js')
-        const { data: referrer } = await supabase
-          .from('students')
-          .select('id')
-          .eq('referral_code', referralMatch[1].toUpperCase())
-          .single()
-        if (referrer) {
-          await updateStudent(studentId, { referred_by: referrer.id })
-        }
-      }
-    }
-
-    await saveMessage({
-      studentId,
-      platform: msg.platform,
-      role: 'user',
-      content: sanitizedText,
-    })
-
-    await updateStudent(studentId, { last_active_at: new Date().toISOString() })
-
     const [history, student, memories, referralCount] = await Promise.all([
       loadRecentMessages(studentId),
       getStudentById(studentId),
       loadStudentMemories(studentId),
       getReferralCount(studentId),
+      saveMessage({ studentId, platform: msg.platform, role: 'user', content: sanitizedText }),
+      updateStudent(studentId, { last_active_at: new Date().toISOString() }),
     ])
+
+    const referralMatch = sanitizedText.match(/暗号\s*[:：]?\s*([A-Z0-9]{6})/i)
+    if (referralMatch && student && !student.referred_by) {
+      const { supabase } = await import('../db/client.js')
+      const { data: referrer } = await supabase
+        .from('students')
+        .select('id')
+        .eq('referral_code', referralMatch[1].toUpperCase())
+        .single()
+      if (referrer) {
+        await updateStudent(studentId, { referred_by: referrer.id })
+      }
+    }
 
     const isOnboarding = student && !student.onboarding_complete
 
@@ -134,7 +124,6 @@ export async function processMessage(msg: IncomingMessage): Promise<string> {
       agent: intent,
     })
 
-    // 13. Extract memories in background (non-blocking)
     const conversationSnippet = `User: ${sanitizedText}\nAssistant: ${response}`
     extractMemories(studentId, conversationSnippet).catch(() => {})
 

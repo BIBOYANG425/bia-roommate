@@ -1,8 +1,6 @@
 import { registerTool } from '../agent/tool-registry.js'
 import { config } from '../config.js'
 
-const BASE = () => config.biaRoommate.baseUrl
-
 registerTool(
   'recommend_courses',
   'Get personalized course recommendations based on interests.',
@@ -21,7 +19,7 @@ registerTool(
     if (input.units) body.units = input.units as string
     if (input.level) body.level = input.level as string
 
-    const res = await fetch(`${BASE()}/api/courses/recommend`, {
+    const res = await fetch(`${config.biaRoommate.baseUrl}/api/courses/recommend`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

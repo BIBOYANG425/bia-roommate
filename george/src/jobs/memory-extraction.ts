@@ -39,26 +39,16 @@ Be selective — only extract things worth remembering for future conversations.
     if (memories.length === 0) return
 
     for (const mem of memories) {
-      const { data: existing } = await supabase
-        .from('student_memories')
-        .select('id')
-        .eq('student_id', studentId)
-        .eq('key', mem.key)
-        .single()
-
-      if (existing) {
-        await supabase
-          .from('student_memories')
-          .update({ value: mem.value, last_referenced_at: new Date().toISOString() })
-          .eq('id', existing.id)
-      } else {
-        await supabase.from('student_memories').insert({
+      await supabase.from('student_memories').upsert(
+        {
           student_id: studentId,
           key: mem.key,
           value: mem.value,
           category: mem.category,
-        })
-      }
+          last_referenced_at: new Date().toISOString(),
+        },
+        { onConflict: 'student_id,key' },
+      )
     }
 
     log('info', 'memories_extracted', { studentId, count: memories.length })

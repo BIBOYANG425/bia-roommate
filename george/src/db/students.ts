@@ -72,16 +72,16 @@ export async function claimLinkCode(
   const platformColumn = claimingPlatform === 'wechat' ? 'wechat_open_id' : 'imessage_id'
   const platformValue = claimer[platformColumn]
 
-  await supabase
-    .from('students')
-    .update({ [platformColumn]: platformValue, link_code: null, link_code_expires_at: null })
-    .eq('id', target.id)
-
-  await supabase
-    .from('messages')
-    .update({ student_id: target.id })
-    .eq('student_id', claimingStudentId)
-
+  await Promise.all([
+    supabase
+      .from('students')
+      .update({ [platformColumn]: platformValue, link_code: null, link_code_expires_at: null })
+      .eq('id', target.id),
+    supabase
+      .from('messages')
+      .update({ student_id: target.id })
+      .eq('student_id', claimingStudentId),
+  ])
   await supabase.from('students').delete().eq('id', claimingStudentId)
 
   return { success: true, message: '账号链接成功！现在你的微信和iMessage是同一个George了 👻' }

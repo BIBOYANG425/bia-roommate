@@ -1,17 +1,8 @@
 import { supabase } from '../db/client.js'
 import { callLightweightLLM } from '../agent/llm-providers.js'
+import { sendPlatformMessage } from '../adapters/send-message.js'
 import { config } from '../config.js'
 import { log } from '../observability/logger.js'
-
-async function getSendWeChatMessage() {
-  const { sendWeChatMessage } = await import('../adapters/wechat.js')
-  return sendWeChatMessage
-}
-
-async function getSendIMessage() {
-  const { sendIMessage } = await import('../adapters/imessage.js')
-  return sendIMessage
-}
 
 const MAX_DAILY_PUSHES = 3
 const QUIET_HOURS_START = 22
@@ -91,15 +82,9 @@ export async function matchStudentsToEvents() {
         },
       ], { maxTokens: 100 })
 
-      const platform = student.wechat_open_id ? 'wechat' : 'imessage'
-
-      if (platform === 'wechat' && student.wechat_open_id) {
-        const sendWeChatMessage = await getSendWeChatMessage()
-        await sendWeChatMessage(student.wechat_open_id, message)
-      } else if (student.imessage_id) {
-        const sendIMessage = await getSendIMessage()
-        await sendIMessage(student.imessage_id, message)
-      }
+      const platform = student.wechat_open_id ? 'wechat' as const : 'imessage' as const
+      const platformId = (student.wechat_open_id || student.imessage_id) as string
+      await sendPlatformMessage(platform, platformId, message)
 
       await supabase.from('proactive_log').insert({
         student_id: student.id,
