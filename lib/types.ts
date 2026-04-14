@@ -77,7 +77,7 @@ export const YEAR_OPTIONS = [
 export const ENROLLMENT_OPTIONS = ["Spring", "Fall"] as const;
 export const SCHOOL_OPTIONS = ["USC", "UC Berkeley", "Stanford"] as const;
 
-/* ── Sublet Listing ── */
+/* ── Sublet Listing (table: public.sublets) ── */
 
 export interface SubletListing {
   id: string;
@@ -97,6 +97,8 @@ export interface SubletListing {
   contact: string;
   poster_name: string;
   user_id: string | null;
+  student_id: string | null;
+  status: "active" | "taken" | "expired";
   created_at: string;
 }
 

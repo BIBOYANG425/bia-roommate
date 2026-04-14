@@ -97,7 +97,7 @@ function SubletContent() {
       const to = from + PAGE_SIZE - 1;
 
       const { data, error: err } = await supabase
-        .from("sublet_listings")
+        .from("sublets")
         .select("*")
         .order("created_at", { ascending: false })
         .range(from, to);
