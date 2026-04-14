@@ -1,0 +1,163 @@
+/* George Chat — Dev Test Console */
+
+.gc-page {
+  min-height: 100vh;
+  background: var(--beige);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+}
+
+.gc-header {
+  width: 100%;
+  max-width: 640px;
+  margin-bottom: 16px;
+}
+
+.gc-back {
+  font-family: var(--font-body), monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--mid);
+  text-decoration: none;
+}
+
+.gc-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.gc-title {
+  font-size: 48px;
+  color: var(--black);
+  line-height: 1;
+}
+
+.gc-subtitle {
+  font-family: var(--font-body), monospace;
+  font-size: 11px;
+  color: var(--mid);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.gc-divider {
+  height: 3px;
+  background: var(--black);
+  margin-top: 8px;
+}
+
+.gc-container {
+  width: 100%;
+  max-width: 640px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.gc-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 400px;
+  max-height: calc(100vh - 280px);
+}
+
+.gc-msg-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.gc-msg-row--user {
+  justify-content: flex-end;
+}
+
+.gc-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border: 2px solid var(--black);
+  font-family: var(--font-body), monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.gc-bubble--george {
+  background: var(--cream);
+  color: var(--black);
+}
+
+.gc-bubble--user {
+  background: var(--cardinal);
+  color: white;
+  border-color: var(--cardinal);
+}
+
+.gc-sender {
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cardinal);
+  margin-bottom: 4px;
+}
+
+.gc-input-row {
+  display: flex;
+}
+
+.gc-input {
+  flex: 1;
+  border: none;
+  background: var(--cream);
+  padding: 14px 16px;
+  font-family: var(--font-body), monospace;
+  font-size: 13px;
+  color: var(--black);
+  outline: none;
+  resize: none;
+}
+
+.gc-input::placeholder {
+  color: var(--mid);
+}
+
+.gc-send {
+  border: none;
+  border-left: 3px solid var(--black);
+  background: var(--gold);
+  color: var(--black);
+  font-family: var(--font-display), Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 14px;
+  padding: 14px 24px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.gc-send--disabled {
+  background: var(--beige);
+  cursor: not-allowed;
+}
+
+.gc-footer {
+  width: 100%;
+  max-width: 640px;
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-body), monospace;
+  font-size: 10px;
+  color: var(--mid);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

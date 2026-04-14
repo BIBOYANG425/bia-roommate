@@ -16,7 +16,7 @@ export async function callLightweightLLM(
 
   if (!apiKey) {
     const response = await claude.messages.create({
-      model: 'claude-sonnet-4-5-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: options?.maxTokens || 500,
       system: messages.find((m) => m.role === 'system')?.content,
       messages: messages

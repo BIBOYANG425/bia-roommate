@@ -4,6 +4,7 @@ import cron from 'node-cron'
 import { config } from './config.js'
 import { createWeChatRouter } from './adapters/wechat.js'
 import { startIMessageAdapter } from './adapters/imessage.js'
+import { processMessage } from './agent/george.js'
 import { getStats, log } from './observability/logger.js'
 import { matchStudentsToEvents } from './jobs/proactive.js'
 import { sendPendingReminders } from './jobs/reminder-sender.js'
@@ -56,6 +57,28 @@ function adminAuth(req: express.Request, res: express.Response, next: express.Ne
   if (token !== config.adminToken) return res.status(401).json({ error: 'Unauthorized' })
   next()
 }
+
+// Dev test console endpoint — runs the full agent team end-to-end.
+// Gated by admin token so it isn't open to the public internet.
+app.post('/chat', adminAuth, async (req, res) => {
+  try {
+    const body = req.body as { userId?: string; text?: string; platform?: 'wechat' | 'imessage' }
+    if (!body?.text || typeof body.text !== 'string') {
+      return res.status(400).json({ error: 'text is required' })
+    }
+    const response = await processMessage({
+      userId: body.userId || 'dev-console',
+      platform: body.platform || 'imessage',
+      text: body.text,
+      msgType: 'text',
+      timestamp: Date.now(),
+    })
+    res.json({ response })
+  } catch (err) {
+    log('error', 'chat_endpoint_error', { error: (err as Error).message })
+    res.status(500).json({ error: (err as Error).message })
+  }
+})
 
 app.post('/admin/scrape-instagram', adminAuth, async (req, res) => {
   try {
