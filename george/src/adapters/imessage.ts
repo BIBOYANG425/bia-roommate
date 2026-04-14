@@ -3,7 +3,28 @@ import { processMessage } from '../agent/george.js'
 import { log } from '../observability/logger.js'
 import type { IncomingMessage } from './types.js'
 
-let sdk: any = null
+/** Minimal surface of @photon-ai/advanced-imessage-kit (optional runtime dep, no bundled types). */
+interface IMessageSDK {
+  connect(): Promise<void>
+  on(
+    event: 'new-message',
+    handler: (message: {
+      text: string
+      chatGuid: string
+      isFromMe: boolean
+      handle: string
+    }) => void | Promise<void>,
+  ): void
+  chats: {
+    startTyping(chatGuid: string): Promise<void>
+    stopTyping(chatGuid: string): Promise<void>
+  }
+  messages: {
+    sendMessage(opts: { chatGuid: string; message: string }): Promise<void>
+  }
+}
+
+let sdk: IMessageSDK | null = null
 
 export async function startIMessageAdapter() {
   if (!config.imessage.apiKey) {
@@ -14,16 +35,17 @@ export async function startIMessageAdapter() {
   try {
     // @ts-expect-error — package not installed; runtime-only dependency
     const { SDK } = await import('@photon-ai/advanced-imessage-kit')
-    sdk = SDK({
+    const client: IMessageSDK = SDK({
       serverUrl: config.imessage.serverUrl,
       apiKey: config.imessage.apiKey,
       logLevel: 'info',
     })
+    sdk = client
 
-    await sdk.connect()
+    await client.connect()
     log('info', 'imessage_connected', { server: config.imessage.serverUrl })
 
-    sdk.on('new-message', async (message: {
+    client.on('new-message', async (message: {
       text: string
       chatGuid: string
       isFromMe: boolean
@@ -40,14 +62,14 @@ export async function startIMessageAdapter() {
       }
 
       try {
-        await sdk.chats.startTyping(message.chatGuid)
+        await client.chats.startTyping(message.chatGuid)
         const response = await processMessage(incoming)
-        await sdk.chats.stopTyping(message.chatGuid)
-        await sdk.messages.sendMessage({ chatGuid: message.chatGuid, message: response })
+        await client.chats.stopTyping(message.chatGuid)
+        await client.messages.sendMessage({ chatGuid: message.chatGuid, message: response })
       } catch (err) {
         log('error', 'imessage_error', { error: (err as Error).message })
-        await sdk?.chats?.stopTyping(message.chatGuid).catch(() => {})
-        await sdk?.messages?.sendMessage({
+        await client.chats.stopTyping(message.chatGuid).catch(() => {})
+        await client.messages.sendMessage({
           chatGuid: message.chatGuid,
           message: '哎呀，我穿墙的时候卡住了...再试一次？👻',
         })

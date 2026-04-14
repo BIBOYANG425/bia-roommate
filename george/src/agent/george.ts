@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { getClaudeClient } from './llm-providers.js'
-import { classifyIntent, type Intent } from './intent-classifier.js'
+import { classifyIntent } from './intent-classifier.js'
 import { getSubAgentPrompt, type SubAgent } from './personality.js'
 import { getToolsByNames, executeTool } from './tool-registry.js'
 import { loadRecentMessages, saveMessage } from '../db/messages.js'

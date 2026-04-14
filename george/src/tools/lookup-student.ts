@@ -16,7 +16,13 @@ registerTool(
 
     const student = await getStudentById(studentId)
     if (!student) return 'Student not found.'
-    const { wechat_open_id, imessage_id, link_code, link_code_expires_at, ...safe } = student
+    const {
+      wechat_open_id: _wechat_open_id,
+      imessage_id: _imessage_id,
+      link_code: _link_code,
+      link_code_expires_at: _link_code_expires_at,
+      ...safe
+    } = student
     return JSON.stringify(safe, null, 2)
   },
 )

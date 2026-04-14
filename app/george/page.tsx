@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 
 import './george-chat.css'
 
@@ -99,7 +100,7 @@ export default function GeorgeChatPage() {
     <div className="gc-page">
       {/* Header */}
       <div className="gc-header">
-        <a href="/" className="gc-back">&larr; Back</a>
+        <Link href="/" className="gc-back">&larr; Back</Link>
         <div className="gc-title-row">
           <h1 className="font-display gc-title">GEORGE</h1>
           <span className="gc-subtitle">DEV TEST CONSOLE</span>
