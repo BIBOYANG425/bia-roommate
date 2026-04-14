@@ -16,10 +16,10 @@ registerTool(
   async (input) => {
     const params = new URLSearchParams({ courses: input.courses as string })
     if (input.semester) params.set('semester', input.semester as string)
-    const courseRes = await fetch(`${BASE()}/api/courses/coursebin?${params}`)
+    const courseRes = await fetch(`${BASE()}/api/courses/coursebin?${params}`, { signal: AbortSignal.timeout(10_000) })
     if (!courseRes.ok) return `Schedule lookup failed (${courseRes.status})`
     const courseData = await courseRes.json()
-    const ratingRes = await fetch(`${BASE()}/api/course-rating/aggregates?${params}`)
+    const ratingRes = await fetch(`${BASE()}/api/course-rating/aggregates?${params}`, { signal: AbortSignal.timeout(10_000) })
     const ratingData = ratingRes.ok ? await ratingRes.json() : { aggregates: {} }
     return JSON.stringify({ courses: courseData.courses, ratings: ratingData.aggregates }, null, 2)
   },

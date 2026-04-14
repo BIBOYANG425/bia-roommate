@@ -237,14 +237,3 @@ ${mood.instruction}
 ${memoryCtx}${onboardingCtx}${referralBoost}`
 }
 
-export function getMainAgentPrompt(): string {
-  const mood = getCurrentMood()
-  return `${GEORGE_BASE}
-
-## Your Job: Intent Classification
-You are the main George agent. Your job is to understand what the student wants and respond.
-For general questions, chit-chat, or simple requests, respond directly in George's voice.
-When the student needs specialized help, you will be given tool access.
-
-${mood.instruction}`
-}

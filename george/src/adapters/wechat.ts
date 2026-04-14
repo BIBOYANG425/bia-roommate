@@ -10,7 +10,7 @@ let cachedToken = { token: '', expiresAt: 0 }
 async function getAccessToken(): Promise<string> {
   if (Date.now() < cachedToken.expiresAt) return cachedToken.token
   const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${config.wechat.appId}&secret=${config.wechat.appSecret}`
-  const res = await fetch(url)
+  const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
   const data = (await res.json()) as { access_token: string; expires_in: number }
   if (!data.access_token) {
     log('error', 'wechat_token_error', { response: data })
@@ -35,6 +35,7 @@ async function sendCustomerServiceMessage(openId: string, text: string) {
         msgtype: 'text',
         text: { content: text },
       }),
+      signal: AbortSignal.timeout(10_000),
     },
   )
   if (!res.ok) {
@@ -52,15 +53,17 @@ async function sendResponse(openId: string, text: string) {
 }
 
 const processedMessages = new Map<string, number>()
+
+setInterval(() => {
+  const cutoff = Date.now() - 60_000
+  for (const [key, time] of processedMessages) {
+    if (time < cutoff) processedMessages.delete(key)
+  }
+}, 30_000)
+
 function isDuplicate(msgId: string): boolean {
   if (processedMessages.has(msgId)) return true
   processedMessages.set(msgId, Date.now())
-  if (processedMessages.size > 1000) {
-    const cutoff = Date.now() - 60_000
-    for (const [key, time] of processedMessages) {
-      if (time < cutoff) processedMessages.delete(key)
-    }
-  }
   return false
 }
 

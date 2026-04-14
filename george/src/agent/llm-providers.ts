@@ -43,6 +43,7 @@ export async function callLightweightLLM(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(30_000),
   })
 
   if (!res.ok) {

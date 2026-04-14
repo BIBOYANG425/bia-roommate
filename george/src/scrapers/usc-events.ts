@@ -21,7 +21,7 @@ export async function scrapeUSCEvents() {
 
   for (const sourceUrl of USC_EVENT_SOURCES) {
     try {
-      const res = await fetch(sourceUrl)
+      const res = await fetch(sourceUrl, { signal: AbortSignal.timeout(15_000) })
       if (!res.ok) {
         log('warn', 'usc_scrape_fetch_error', { url: sourceUrl, status: res.status })
         continue

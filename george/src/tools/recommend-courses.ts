@@ -25,6 +25,7 @@ registerTool(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
     })
     if (!res.ok) return `Course recommendation failed (${res.status})`
     const data = await res.json()

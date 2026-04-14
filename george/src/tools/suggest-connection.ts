@@ -39,9 +39,11 @@ registerTool(
         .select('id, name, major, interests')
         .contains('interests', [input.interest as string])
         .neq('id', studentId)
+        .neq('social_visibility', false)
         .limit(5)
       if (!data || data.length === 0) return 'No students found with matching interests.'
-      return JSON.stringify(data, null, 2)
+      const safe = data.map(({ id: _id, ...rest }) => rest)
+      return JSON.stringify(safe, null, 2)
     }
 
     return 'Provide an interest or event_id to find connections.'

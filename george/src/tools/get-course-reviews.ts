@@ -20,7 +20,7 @@ registerTool(
       number: input.number as string,
     })
     if (input.professor) params.set('professor', input.professor as string)
-    const res = await fetch(`${BASE()}/api/course-rating/reviews?${params}`)
+    const res = await fetch(`${BASE()}/api/course-rating/reviews?${params}`, { signal: AbortSignal.timeout(10_000) })
     if (!res.ok) return `Review lookup failed (${res.status})`
     const data = await res.json()
     if (!data.reviews || data.reviews.length === 0) return 'No reviews found.'

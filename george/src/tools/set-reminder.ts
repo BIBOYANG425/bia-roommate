@@ -10,6 +10,7 @@ registerTool(
       student_id: { type: 'string', description: 'The student UUID' },
       event_id: { type: 'string', description: 'The event UUID' },
       remind_at: { type: 'string', description: 'When to send reminder (ISO 8601)' },
+      platform: { type: 'string', enum: ['wechat', 'imessage'], description: 'Platform to send reminder on' },
     },
     required: ['student_id', 'event_id', 'remind_at'],
   },
@@ -24,7 +25,7 @@ registerTool(
       input.student_id as string,
       input.event_id as string,
       input.remind_at as string,
-      'wechat',
+      (input.platform as string) || 'wechat',
     )
     return `Reminder set! George will poke you at ${input.remind_at}. 👻`
   },

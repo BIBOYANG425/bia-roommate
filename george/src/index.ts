@@ -50,7 +50,14 @@ app.get('/stats', async (_req, res) => {
 
 app.use(createWeChatRouter())
 
-app.post('/admin/scrape-instagram', async (req, res) => {
+function adminAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  if (!config.adminToken) return res.status(403).json({ error: 'Admin token not configured' })
+  const token = req.headers.authorization?.replace('Bearer ', '')
+  if (token !== config.adminToken) return res.status(401).json({ error: 'Unauthorized' })
+  next()
+}
+
+app.post('/admin/scrape-instagram', adminAuth, async (req, res) => {
   try {
     const accounts = (req.body as { accounts?: string[] })?.accounts
     await scrapeInstagram(accounts)
@@ -60,7 +67,7 @@ app.post('/admin/scrape-instagram', async (req, res) => {
   }
 })
 
-app.post('/admin/scrape-usc', async (_req, res) => {
+app.post('/admin/scrape-usc', adminAuth, async (_req, res) => {
   try {
     await scrapeUSCEvents()
     res.json({ status: 'ok' })

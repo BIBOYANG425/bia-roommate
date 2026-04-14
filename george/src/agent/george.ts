@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { getClaudeClient } from './llm-providers.js'
 import { classifyIntent, type Intent } from './intent-classifier.js'
-import { getSubAgentPrompt, getMainAgentPrompt, type SubAgent } from './personality.js'
+import { getSubAgentPrompt, type SubAgent } from './personality.js'
 import { getToolDefinitions, getToolsByNames, executeTool } from './tool-registry.js'
 import { loadRecentMessages, saveMessage } from '../db/messages.js'
 import {
@@ -206,6 +206,7 @@ async function runSubAgent(
       if (block.type === 'tool_use') {
         const input = block.input as Record<string, unknown>
         if (!input.student_id) input.student_id = context.studentId
+        if (!input.platform) input.platform = context.platform
 
         const result = await executeTool(block.name, input)
         toolResults.push({

@@ -20,8 +20,10 @@ registerTool(
     if (input.gender) q = q.eq('gender', input.gender as string)
     if (input.year) q = q.eq('year', input.year as string)
     if (input.query) {
-      const query = input.query as string
-      q = q.or(`name.ilike.%${query}%,major.ilike.%${query}%,hobbies.ilike.%${query}%`)
+      const query = (input.query as string).replace(/[%_.*(),]/g, '')
+      if (query.length > 0) {
+        q = q.or(`name.ilike.%${query}%,major.ilike.%${query}%,hobbies.ilike.%${query}%`)
+      }
     }
     const { data } = await q
     if (!data || data.length === 0) return 'No roommate profiles found.'

@@ -35,6 +35,7 @@ export const config = {
   apify: {
     token: process.env.APIFY_TOKEN || '',
   },
+  adminToken: process.env.ADMIN_TOKEN || '',
   port: parseInt(process.env.PORT || '3001'),
   proactive: {
     enabled: process.env.PROACTIVE_ENABLED !== 'false',
