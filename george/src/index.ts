@@ -1,0 +1,140 @@
+import express from 'express'
+import cors from 'cors'
+import cron from 'node-cron'
+import { config } from './config.js'
+import { createWeChatRouter } from './adapters/wechat.js'
+import { startIMessageAdapter } from './adapters/imessage.js'
+import { getStats, log } from './observability/logger.js'
+import { matchStudentsToEvents } from './jobs/proactive.js'
+import { sendPendingReminders } from './jobs/reminder-sender.js'
+import { scrapeInstagram } from './scrapers/instagram.js'
+import { scrapeUSCEvents } from './scrapers/usc-events.js'
+
+// Import ALL 14 tools to register them
+import './tools/search-events.js'
+import './tools/get-event-details.js'
+import './tools/campus-knowledge.js'
+import './tools/lookup-student.js'
+import './tools/search-courses.js'
+import './tools/get-course-reviews.js'
+import './tools/recommend-courses.js'
+import './tools/plan-schedule.js'
+import './tools/search-roommates.js'
+import './tools/search-sublets.js'
+import './tools/post-sublet.js'
+import './tools/set-reminder.js'
+import './tools/suggest-connection.js'
+import './tools/submit-event.js'
+
+const app = express()
+app.use(cors())
+app.use(express.text({ type: 'text/xml' }))
+app.use(express.json())
+
+// ==========================================
+// ROUTES
+// ==========================================
+
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', character: 'George Tirebiter 👻🐕', tools: 14 })
+})
+
+app.get('/stats', async (_req, res) => {
+  try {
+    const stats = await getStats()
+    res.json(stats)
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message })
+  }
+})
+
+app.use(createWeChatRouter())
+
+app.post('/admin/scrape-instagram', async (req, res) => {
+  try {
+    const accounts = (req.body as { accounts?: string[] })?.accounts
+    await scrapeInstagram(accounts)
+    res.json({ status: 'ok' })
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message })
+  }
+})
+
+app.post('/admin/scrape-usc', async (_req, res) => {
+  try {
+    await scrapeUSCEvents()
+    res.json({ status: 'ok' })
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message })
+  }
+})
+
+// ==========================================
+// BACKGROUND JOBS (cron)
+// ==========================================
+
+cron.schedule('0 */3 * * *', () => {
+  matchStudentsToEvents().catch((err) => {
+    log('error', 'proactive_cron_error', { error: err.message })
+  })
+})
+
+cron.schedule('*/5 * * * *', () => {
+  sendPendingReminders().catch((err) => {
+    log('error', 'reminder_cron_error', { error: err.message })
+  })
+})
+
+cron.schedule('0 */4 * * *', () => {
+  scrapeInstagram().catch((err) => {
+    log('error', 'instagram_cron_error', { error: err.message })
+  })
+})
+
+cron.schedule('0 6 * * *', () => {
+  scrapeUSCEvents().catch((err) => {
+    log('error', 'usc_cron_error', { error: err.message })
+  })
+})
+
+// ==========================================
+// PROCESS RESILIENCE
+// ==========================================
+
+process.on('uncaughtException', (err) => {
+  log('error', 'uncaught_exception', { error: err.message, stack: err.stack })
+})
+
+process.on('unhandledRejection', (reason) => {
+  log('error', 'unhandled_rejection', { reason: String(reason) })
+})
+
+function shutdown(signal: string) {
+  log('info', 'shutdown', { signal })
+  process.exit(0)
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'))
+process.on('SIGINT', () => shutdown('SIGINT'))
+
+// ==========================================
+// START
+// ==========================================
+
+app.listen(config.port, () => {
+  log('info', 'server_started', {
+    port: config.port,
+    tools: 14,
+    proactive: config.proactive.enabled,
+    rolloutPct: config.proactive.rolloutPct,
+  })
+  console.log(`\n🐕 George Tirebiter is haunting port ${config.port}...`)
+  console.log(`👻 WeChat: http://localhost:${config.port}/wechat`)
+  console.log(`📊 Stats: http://localhost:${config.port}/stats`)
+  console.log(`🔧 Admin: POST /admin/scrape-instagram, /admin/scrape-usc\n`)
+})
+
+startIMessageAdapter().catch((err) => {
+  log('warn', 'imessage_start_failed', { error: err.message })
+  console.warn('⚠️  iMessage adapter failed to start — George will only haunt WeChat.')
+})
