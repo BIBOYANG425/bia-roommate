@@ -13,6 +13,7 @@ import type {
   ExtensionSettings,
 } from "../shared/types";
 import { DEFAULT_SETTINGS } from "../shared/types";
+import { normalizeSettingsSemester } from "../shared/constants";
 
 // ─── Set up chrome.storage.session access for content scripts ───
 chrome.storage.session.setAccessLevel({
@@ -185,9 +186,14 @@ async function handleRecommend(
 
 async function handleGetSettings(): Promise<BackgroundResponse> {
   const result = await chrome.storage.local.get("settings");
+  const merged = { ...DEFAULT_SETTINGS, ...(result.settings ?? {}) };
+  const settings = normalizeSettingsSemester(merged);
+  if (settings.semester !== merged.semester) {
+    await chrome.storage.local.set({ settings });
+  }
   return {
     type: "SETTINGS_RESULT",
-    settings: { ...DEFAULT_SETTINGS, ...(result.settings ?? {}) },
+    settings,
   };
 }
 
@@ -195,8 +201,9 @@ async function handleSaveSettings(
   settings: ExtensionSettings,
 ): Promise<BackgroundResponse> {
   const merged = { ...DEFAULT_SETTINGS, ...settings };
-  await chrome.storage.local.set({ settings: merged });
-  return { type: "SETTINGS_RESULT", settings: merged };
+  const normalized = normalizeSettingsSemester(merged);
+  await chrome.storage.local.set({ settings: normalized });
+  return { type: "SETTINGS_RESULT", settings: normalized };
 }
 
 // ─── Check storage quota periodically ───

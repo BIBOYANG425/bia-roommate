@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { ExtensionSettings } from "../../shared/types";
 import { DEFAULT_SETTINGS } from "../../shared/types";
+import { EXTENSION_VERSION, SEMESTER_OPTIONS } from "../../shared/constants";
 
 export function Settings() {
   const [settings, setSettings] = useState<ExtensionSettings>(DEFAULT_SETTINGS);
@@ -124,9 +125,11 @@ export function Settings() {
         value={settings.semester}
         onChange={(e) => updateSetting("semester", e.target.value)}
       >
-        <option value="20261">Spring 2026</option>
-        <option value="20262">Summer 2026</option>
-        <option value="20263">Fall 2026</option>
+        {SEMESTER_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
       </select>
 
       {saved && (
@@ -164,7 +167,7 @@ export function Settings() {
             letterSpacing: "0.05em",
           }}
         >
-          BIA Course Helper v1.0.0
+          BIA Course Helper v{EXTENSION_VERSION}
         </div>
       </div>
     </div>

@@ -1,4 +1,34 @@
+import type { ExtensionSettings } from "./types";
+import { DEFAULT_SETTINGS } from "./types";
+
 export const BIA_API_BASE = "https://bia-roommate.vercel.app";
+
+/** Keep in sync with manifest.json and vite built manifest */
+export const EXTENSION_VERSION = "1.0.2";
+
+/** USC term codes: YYYY + 1/2/3 = Spring / Summer / Fall */
+export const SEMESTER_OPTIONS = [
+  { value: "20261", label: "Spring 2026" },
+  { value: "20262", label: "Summer 2026" },
+  { value: "20263", label: "Fall 2026" },
+  { value: "20271", label: "Spring 2027" },
+  { value: "20272", label: "Summer 2027" },
+  { value: "20273", label: "Fall 2027" },
+] as const;
+
+/** Maps stored semester to a known term code (migrates old or invalid values). */
+export function normalizeSemesterCode(value: string): string {
+  return SEMESTER_OPTIONS.some((o) => o.value === value)
+    ? value
+    : DEFAULT_SETTINGS.semester;
+}
+
+export function normalizeSettingsSemester(
+  settings: ExtensionSettings,
+): ExtensionSettings {
+  const semester = normalizeSemesterCode(settings.semester);
+  return semester === settings.semester ? settings : { ...settings, semester };
+}
 
 export const USC_SCHOOL_ID = "U2Nob29sLTEzODE="; // RMP school ID for USC (School-1381)
 
