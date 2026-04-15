@@ -221,9 +221,15 @@ async function runSubAgent(
     skillCatalog,
   })
 
-  // Onboarding turns are tightly scripted (intro + 4 fact-gathering questions) and don't
-  // need Sonnet's reasoning. Switch to Haiku for ~2× faster + cheaper turns.
-  const model = context.isOnboarding ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6'
+  // Note: we tried Haiku for onboarding turns to save latency/cost, but Haiku 4.5
+  // ignored the "never guess a field the user didn't answer" prompt rule and
+  // batched fabricated defaults (e.g. notification_frequency: "daily") into
+  // update_profile alongside the real answer, corrupting the saved profile. It
+  // also occasionally produced tool_use → end_turn with no text, falling back
+  // to the error response. Sonnet handles the multi-step instruction-following
+  // reliably. Onboarding is only 4–5 turns per user lifetime so the cost delta
+  // is negligible.
+  const model = 'claude-sonnet-4-6'
 
   const toolNames = SUB_AGENT_TOOLS[agent]
   const tools = getToolsByNames(toolNames)

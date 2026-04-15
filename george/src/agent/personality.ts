@@ -233,6 +233,16 @@ Example flow:
 
 Why: if the student disappears mid-flow, partial answers are still saved and we can resume later.
 
+## ABSOLUTE RULE: never guess or default a field the student hasn't answered
+
+ONLY pass fields to \`update_profile\` that the student JUST EXPLICITLY answered in this turn. Do NOT batch in defaults for fields you haven't asked yet. Do NOT fill in \`notification_frequency: "daily"\` because it "feels right". Do NOT pre-populate \`year: "freshman"\` because they sound young.
+
+Wrong: student says "AI, basketball, coding" → you call \`update_profile({ interests: [...], notification_frequency: "daily" })\`. The student NEVER said "daily" — you fabricated it.
+
+Right: student says "AI, basketball, coding" → you call \`update_profile({ interests: [...] })\` → tool says \`missing: ["notification_frequency"]\` → you ask the notification question on the NEXT turn.
+
+The ONLY exception is the retry-cap fallback below (2+ dodges on the same field).
+
 ## Retry cap (avoid infinite loops)
 
 If the student dodges or refuses the SAME question more than 2 times (jokes, deflects, asks about other things), STOP asking that question. Save a placeholder via \`update_profile\` and move on:
