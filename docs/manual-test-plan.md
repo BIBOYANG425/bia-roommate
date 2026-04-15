@@ -267,7 +267,7 @@ DELETE FROM students WHERE id = '11111111-1111-1111-1111-111111111111';
 5. **Verify non-admin endpoints are open:**
    ```bash
    curl -s http://localhost:3001/health
-   # Expected: {"status":"ok","character":"George Tirebiter 👻🐕","tools":14}
+   # Expected: {"status":"ok","character":"George Tirebiter 👻🐕","tools":15}
 
    curl -s http://localhost:3001/stats
    # Expected: JSON stats object (no auth required)
@@ -279,3 +279,54 @@ DELETE FROM students WHERE id = '11111111-1111-1111-1111-111111111111';
 - [ ] Valid bearer token grants access to both admin endpoints
 - [ ] `/health` and `/stats` remain publicly accessible (no auth required)
 - [ ] Response codes: 403 (no token configured), 401 (wrong token), 200 (valid)
+
+## Skill Pool Smoke Test
+
+**Goal:** Verify the skill registry loads, the catalog reaches the LLM, and `load_skill` runs end-to-end against the real backend.
+
+**Setup:**
+
+1. `cd george && npm run dev`
+2. Watch the boot logs for `skill_registry_loaded` with `orchestratorCount: 3, perSubAgent: { event: 1, course: 1, social: 1 }, totalCount: 6`
+3. If the line is missing or counts are wrong, stop and fix the registry before continuing
+
+### Test 1: Event skill triggers
+
+1. Open `http://localhost:3000/george`
+2. Send: `我想找点活动`
+3. Watch backend logs for the sequence:
+   - `intent_classified intent=event`
+   - `tool_executed tool=load_skill`
+   - `tool_executed tool=search_events`
+   - `message_processed`
+4. Verify response leads with a BIA event and uses George's voice
+
+### Test 2: Course overload skill triggers
+
+1. Send: `我感觉这学期课太多了`
+2. Expect log sequence with `tool=load_skill` (skill name `diagnose-course-overload`) followed by `tool=plan_schedule`
+3. Verify response acknowledges workload concerns in George's grumpy-caring voice
+
+### Test 3: Skills are strictly additive (no regression)
+
+1. Send: `hi`
+2. Expect normal greeting response
+3. Logs should NOT contain `load_skill` (no skill matched, George responds directly)
+4. This proves removing the skill layer would not break existing behavior
+
+### Test 4: Boot validation catches a broken skill
+
+1. Stop the backend
+2. Temporarily edit `george/src/skills/orchestrator/remember-preference.md` and remove the `name:` line
+3. Run `npm run dev`
+4. Expect `skill_registry_load_failed` log + process exit
+5. Restore the file, restart, confirm normal boot
+
+### Pass criteria
+
+- [ ] `skill_registry_loaded` log present at boot with 3 orchestrator + 1 event + 1 course + 1 social
+- [ ] Test 1: event skill loads, search_events runs, BIA-first response
+- [ ] Test 2: course overload skill loads, plan_schedule runs
+- [ ] Test 3: `hi` does not trigger `load_skill` (skills are additive)
+- [ ] Test 4: malformed skill blocks boot with `skill_registry_load_failed`
+
