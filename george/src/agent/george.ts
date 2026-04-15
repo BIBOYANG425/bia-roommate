@@ -36,7 +36,27 @@ const SUB_AGENT_TOOLS: Record<SubAgent, string[]> = {
   course: ['search_courses', 'get_course_reviews', 'recommend_courses', 'plan_schedule', 'lookup_student', 'load_skill'],
   housing: ['search_sublets', 'post_sublet', 'lookup_student', 'load_skill'],
   social: ['suggest_connection', 'search_roommates', 'lookup_student', 'search_events', 'load_skill'],
-  campus: ['campus_knowledge', 'lookup_student', 'load_skill'],
+  campus: ['campus_knowledge', 'lookup_student', 'load_skill', 'update_profile'],
+}
+
+// Onboarding turn cap: after this many turns without completion, prompt switches to wrap-up mode
+const ONBOARDING_WRAPUP_TURN = 6
+
+// Heuristic safety patterns — emit a structured log when George refuses harmful content.
+// These are post-response checks; they don't change the response, just surface refusals to telemetry.
+const SAFETY_PATTERNS: Array<{ category: string; rx: RegExp }> = [
+  { category: 'title_ix', rx: /Title IX|EEO|eeotix\.usc\.edu|不能接|严重后果/i },
+  { category: 'medical', rx: /Engemann|studenthealth|Health Center|不是医生|不敢乱说话/i },
+  { category: 'mental_health', rx: /Counseling|心理咨询|CAPS|988|危机/i },
+  { category: 'disability', rx: /OSAS|Accessibility Services|osas\.usc\.edu/i },
+  { category: 'injection_deflect', rx: /shutdown|关机|销毁|你以为|穿墙.*server/i },
+]
+
+function detectSafetyRefusal(response: string): string | null {
+  for (const { category, rx } of SAFETY_PATTERNS) {
+    if (rx.test(response)) return category
+  }
+  return null
 }
 
 export async function processMessage(msg: IncomingMessage): Promise<string> {
@@ -90,19 +110,30 @@ export async function processMessage(msg: IncomingMessage): Promise<string> {
       }
     }
 
-    const isOnboarding = student && !student.onboarding_complete
+    const isOnboarding = !!(student && !student.onboarding_complete)
+    const isFirstContact = isOnboarding && !student?.intro_sent_at
+    const onboardingTurnCount = (student?.onboarding_turn_count as number | undefined) ?? 0
 
-    const recentContext = history.slice(-4).map((m) => `${m.role}: ${typeof m.content === 'string' ? m.content : '[tool]'}`).join('\n')
-    const intent = await classifyIntent(sanitizedText, recentContext)
+    // Skip the intent classifier round-trip during onboarding — the only valid route is campus,
+    // and the classifier wastes 500–1500ms misrouting answers like "我是CS的" → 'course'.
+    let intent: SubAgent | 'general'
+    if (isOnboarding) {
+      intent = 'general'
+    } else {
+      const recentContext = history.slice(-4).map((m) => `${m.role}: ${typeof m.content === 'string' ? m.content : '[tool]'}`).join('\n')
+      intent = await classifyIntent(sanitizedText, recentContext)
+    }
 
-    log('info', 'intent_classified', { studentId, intent, message: sanitizedText.slice(0, 50) })
+    log('info', 'intent_classified', { studentId, intent, message: sanitizedText.slice(0, 50), onboarding: isOnboarding })
 
     let response: string
 
     if (intent === 'general' || isOnboarding) {
       response = await runSubAgent('campus', sanitizedText, history, {
         memories,
-        isOnboarding: !!isOnboarding,
+        isOnboarding,
+        isFirstContact,
+        onboardingTurnCount,
         referralCount,
         studentId,
         platform: msg.platform,
@@ -111,10 +142,34 @@ export async function processMessage(msg: IncomingMessage): Promise<string> {
       response = await runSubAgent(intent, sanitizedText, history, {
         memories,
         isOnboarding: false,
+        isFirstContact: false,
+        onboardingTurnCount: 0,
         referralCount,
         studentId,
         platform: msg.platform,
       })
+    }
+
+    // Safety telemetry — keyword-based detection of refusal patterns
+    const safetyCategory = detectSafetyRefusal(response)
+    if (safetyCategory) {
+      log('warn', 'safety_refusal', {
+        studentId,
+        category: safetyCategory,
+        userMessage: sanitizedText.slice(0, 100),
+      })
+    }
+
+    // Onboarding bookkeeping — stamp first-contact intro and bump the turn counter.
+    // Done in a single update to avoid a second round-trip.
+    if (isOnboarding) {
+      const onboardingUpdates: Record<string, unknown> = {
+        onboarding_turn_count: onboardingTurnCount + 1,
+      }
+      if (isFirstContact) onboardingUpdates.intro_sent_at = new Date().toISOString()
+      await updateStudent(studentId, onboardingUpdates).catch((err) =>
+        log('error', 'onboarding_bookkeeping_failed', { error: (err as Error).message }),
+      )
     }
 
     await saveMessage({
@@ -148,6 +203,8 @@ async function runSubAgent(
   context: {
     memories: Array<{ key: string; value: string; category: string }>
     isOnboarding: boolean
+    isFirstContact: boolean
+    onboardingTurnCount: number
     referralCount: number
     studentId: string
     platform: 'wechat' | 'imessage'
@@ -158,9 +215,15 @@ async function runSubAgent(
   const systemPrompt = getSubAgentPrompt(agent, {
     memories: context.memories,
     isOnboarding: context.isOnboarding,
+    isFirstContact: context.isFirstContact,
+    onboardingTurnCount: context.onboardingTurnCount,
     referralCount: context.referralCount,
     skillCatalog,
   })
+
+  // Onboarding turns are tightly scripted (intro + 4 fact-gathering questions) and don't
+  // need Sonnet's reasoning. Switch to Haiku for ~2× faster + cheaper turns.
+  const model = context.isOnboarding ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6'
 
   const toolNames = SUB_AGENT_TOOLS[agent]
   const tools = getToolsByNames(toolNames)
@@ -177,7 +240,7 @@ async function runSubAgent(
     iterations++
 
     const response = await claude.messages.create({
-      model: 'claude-sonnet-4-6',
+      model,
       max_tokens: 1024,
       system: systemPrompt,
       tools: tools.length > 0 ? tools : undefined,

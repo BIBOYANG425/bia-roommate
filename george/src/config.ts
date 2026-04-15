@@ -26,8 +26,7 @@ export const config = {
     appSecret: process.env.WECHAT_APP_SECRET || '',
   },
   imessage: {
-    serverUrl: process.env.IMESSAGE_SERVER_URL || 'http://localhost:1234',
-    apiKey: process.env.IMESSAGE_API_KEY || '',
+    enabled: process.env.IMESSAGE_ENABLED === 'true',
   },
   biaRoommate: {
     baseUrl: process.env.BIA_ROOMMATE_API_URL || 'http://localhost:3000',

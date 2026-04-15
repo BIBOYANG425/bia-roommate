@@ -3,7 +3,7 @@ import cors from 'cors'
 import cron from 'node-cron'
 import { config } from './config.js'
 import { createWeChatRouter } from './adapters/wechat.js'
-import { startIMessageAdapter } from './adapters/imessage.js'
+import { startIMessageAdapter, stopIMessageAdapter } from './adapters/imessage.js'
 import { processMessage } from './agent/george.js'
 import { getStats, log } from './observability/logger.js'
 import { matchStudentsToEvents } from './jobs/proactive.js'
@@ -29,6 +29,7 @@ import './tools/set-reminder.js'
 import './tools/suggest-connection.js'
 import './tools/submit-event.js'
 import './tools/load-skill.js'
+import './tools/update-profile.js'
 
 const app = express()
 app.use(cors())
@@ -40,7 +41,7 @@ app.use(express.json())
 // ==========================================
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', character: 'George Tirebiter 👻🐕', tools: 15 })
+  res.json({ status: 'ok', character: 'George Tirebiter 👻🐕', tools: 16 })
 })
 
 app.get('/stats', async (_req, res) => {
@@ -142,13 +143,20 @@ process.on('unhandledRejection', (reason) => {
   log('error', 'unhandled_rejection', { reason: String(reason) })
 })
 
-function shutdown(signal: string) {
+async function shutdown(signal: string) {
   log('info', 'shutdown', { signal })
+  await stopIMessageAdapter().catch((err) =>
+    log('error', 'imessage_stop_failed', { error: (err as Error).message }),
+  )
   process.exit(0)
 }
 
-process.on('SIGTERM', () => shutdown('SIGTERM'))
-process.on('SIGINT', () => shutdown('SIGINT'))
+process.on('SIGTERM', () => {
+  void shutdown('SIGTERM')
+})
+process.on('SIGINT', () => {
+  void shutdown('SIGINT')
+})
 
 // ==========================================
 // START
@@ -167,7 +175,7 @@ async function startServer() {
   app.listen(config.port, () => {
     log('info', 'server_started', {
       port: config.port,
-      tools: 15,
+      tools: 16,
       proactive: config.proactive.enabled,
       rolloutPct: config.proactive.rolloutPct,
     })
