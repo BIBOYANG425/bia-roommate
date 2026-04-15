@@ -49,7 +49,7 @@ function SubletSubmitContent() {
     if (!editId) return;
     async function loadListing() {
       const { data } = await supabase
-        .from("sublet_listings")
+        .from("sublets")
         .select("*")
         .eq("id", editId)
         .single();
@@ -168,11 +168,11 @@ function SubletSubmitContent() {
 
     const { error: err } = editId
       ? await supabase
-          .from("sublet_listings")
+          .from("sublets")
           .update(formData)
           .eq("id", editId)
           .eq("user_id", user.id)
-      : await supabase.from("sublet_listings").insert([formData]);
+      : await supabase.from("sublets").insert([formData]);
 
     if (err) {
       setError(`SUBMISSION FAILED: ${err.message}`);

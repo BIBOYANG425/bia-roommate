@@ -54,7 +54,7 @@ export function useAccountData() {
               .eq("user_id", user!.id)
               .order("created_at", { ascending: false }),
             supabase
-              .from("sublet_listings")
+              .from("sublets")
               .select("id, title, apartment_name, rent, created_at")
               .eq("user_id", user!.id)
               .order("created_at", { ascending: false }),
@@ -158,7 +158,7 @@ export function useAccountData() {
     const prev = sublets;
     setSublets((s) => s.filter((x) => x.id !== id));
     const { error } = await supabase
-      .from("sublet_listings")
+      .from("sublets")
       .delete()
       .eq("id", id)
       .eq("user_id", user!.id);
