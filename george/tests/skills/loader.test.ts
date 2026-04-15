@@ -20,3 +20,22 @@ describe('parseSkillFile', () => {
     expect(skill.filePath).toBe(path)
   })
 })
+
+describe('parseSkillFile error cases', () => {
+  const cases: Array<{ file: string; expectedError: RegExp }> = [
+    { file: 'invalid/missing-name.md', expectedError: /name.*required/ },
+    { file: 'invalid/wrong-name.md', expectedError: /does not match filename/ },
+    { file: 'invalid/missing-sub-agent.md', expectedError: /sub_agent.*required/ },
+    { file: 'invalid/bad-sub-agent.md', expectedError: /sub_agent must be one of/ },
+    { file: 'invalid/no-frontmatter.md', expectedError: /must start with '---'/ },
+    { file: 'invalid/unclosed-frontmatter.md', expectedError: /missing closing/ },
+    { file: 'invalid/bad-tools.md', expectedError: /tools.*array of strings/ },
+  ]
+
+  for (const { file, expectedError } of cases) {
+    it(`rejects ${file}`, async () => {
+      const path = join(FIXTURES, file)
+      await expect(parseSkillFile(path)).rejects.toThrow(expectedError)
+    })
+  }
+})
