@@ -27,6 +27,8 @@ const eslintConfig = defineConfig([
     // Vendored / non-app directories:
     "store-assets/**",
     "extension/**",
+    // Compiled TypeScript output from the george backend:
+    "george/dist/**",
   ]),
 ]);
 
