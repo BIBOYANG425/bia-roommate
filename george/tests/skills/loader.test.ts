@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-import { parseSkillFile } from '../../src/skills/loader.js'
+import { parseSkillFile, walkSkillsDirectory } from '../../src/skills/loader.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const FIXTURES = join(__dirname, 'fixtures')
@@ -38,4 +38,18 @@ describe('parseSkillFile error cases', () => {
       await expect(parseSkillFile(path)).rejects.toThrow(expectedError)
     })
   }
+})
+
+describe('walkSkillsDirectory', () => {
+  it('walks the orchestrator + sub-agents directories', async () => {
+    const valid = join(FIXTURES, 'valid')
+    const skills = await walkSkillsDirectory(valid)
+    const names = skills.map((s) => s.name).sort()
+    expect(names).toEqual(['remember-preference', 'sample-course-skill', 'sample-event-skill'])
+  })
+
+  it('throws an aggregated error for multiple invalid files', async () => {
+    const invalid = join(FIXTURES, 'invalid-walk')
+    await expect(walkSkillsDirectory(invalid)).rejects.toThrow(/2 skill files failed to load/)
+  })
 })

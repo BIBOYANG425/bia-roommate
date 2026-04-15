@@ -1,5 +1,5 @@
-import { readFile } from 'fs/promises'
-import { basename, extname } from 'path'
+import { readFile, readdir } from 'fs/promises'
+import { basename, extname, join as pathJoin } from 'path'
 import yaml from 'js-yaml'
 import type { Skill, SkillTier } from './types.js'
 import type { SubAgent } from '../agent/personality.js'
@@ -81,4 +81,46 @@ function requireStringArray(value: unknown, field: string, filePath: string): st
     throw new Error(`${filePath}: frontmatter field "${field}" must be an array of strings`)
   }
   return value
+}
+
+export async function walkSkillsDirectory(rootDir: string): Promise<Skill[]> {
+  const files: string[] = []
+  await collectMarkdownFiles(rootDir, files)
+
+  const skills: Skill[] = []
+  const errors: string[] = []
+
+  for (const file of files) {
+    try {
+      skills.push(await parseSkillFile(file))
+    } catch (err) {
+      errors.push((err as Error).message)
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(
+      `${errors.length} skill files failed to load:\n${errors.map((e) => '  - ' + e).join('\n')}`,
+    )
+  }
+
+  return skills
+}
+
+async function collectMarkdownFiles(dir: string, out: string[]): Promise<void> {
+  let entries
+  try {
+    entries = await readdir(dir, { withFileTypes: true })
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return
+    throw err
+  }
+  for (const entry of entries) {
+    const fullPath = pathJoin(dir, entry.name)
+    if (entry.isDirectory()) {
+      await collectMarkdownFiles(fullPath, out)
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      out.push(fullPath)
+    }
+  }
 }
