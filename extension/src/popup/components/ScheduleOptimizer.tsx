@@ -5,6 +5,7 @@ import type {
   TimeSlot,
   DayOfWeek,
 } from "../../shared/types";
+import { DEFAULT_SETTINGS } from "../../shared/types";
 import { COURSE_COLORS, getNextColorIndex } from "../../shared/constants";
 
 // ─── GE categories (same as web app) ───
@@ -352,7 +353,8 @@ export function ScheduleOptimizer() {
 
     try {
       const settings = await chrome.storage.local.get("settings");
-      const semester = settings.settings?.semester || "20263";
+      const semester =
+        settings.settings?.semester ?? DEFAULT_SETTINGS.semester;
       const groups: CourseGroup[] = [];
 
       // Fetch regular courses from course bin

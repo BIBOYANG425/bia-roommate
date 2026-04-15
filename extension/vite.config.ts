@@ -70,10 +70,10 @@ function buildNonModuleEntries(): Plugin {
       const manifest = {
         manifest_version: 3,
         name: "BIA Course Helper",
-        version: "1.0.0",
+        version: "1.0.2",
         description:
           "RMP ratings, schedule optimization, and course discovery for USC students — by BIA",
-        permissions: ["storage", "activeTab"],
+        permissions: ["storage"],
         host_permissions: [
           "https://webreg.usc.edu/*",
           "https://classes.usc.edu/*",

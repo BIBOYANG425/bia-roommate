@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import type { RecommendedCourse } from "../../shared/types";
+import type { ExtensionSettings, RecommendedCourse } from "../../shared/types";
+import { DEFAULT_SETTINGS } from "../../shared/types";
+import { normalizeSemesterCode } from "../../shared/constants";
 
 const QUICK_TAGS = [
   "Animation",
@@ -24,16 +26,30 @@ export function InterestSearch() {
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [semester, setSemester] = useState("20263");
+  const [semester, setSemester] = useState(DEFAULT_SETTINGS.semester);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     chrome.storage.local
       .get("settings")
       .then((stored) => {
-        if (stored.settings?.semester) setSemester(stored.settings.semester);
+        const s = stored.settings as ExtensionSettings | undefined;
+        if (s?.semester) setSemester(normalizeSemesterCode(s.semester));
       })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    function onStorageChange(
+      changes: Record<string, chrome.storage.StorageChange>,
+      area: string,
+    ) {
+      if (area !== "local" || !changes.settings?.newValue) return;
+      const next = changes.settings.newValue as ExtensionSettings;
+      if (next?.semester) setSemester(normalizeSemesterCode(next.semester));
+    }
+    chrome.storage.onChanged.addListener(onStorageChange);
+    return () => chrome.storage.onChanged.removeListener(onStorageChange);
   }, []);
 
   useEffect(() => {
