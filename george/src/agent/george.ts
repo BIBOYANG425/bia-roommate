@@ -3,6 +3,7 @@ import { getClaudeClient } from './llm-providers.js'
 import { classifyIntent } from './intent-classifier.js'
 import { getSubAgentPrompt, type SubAgent } from './personality.js'
 import { getToolsByNames, executeTool } from './tool-registry.js'
+import { getCatalogFor } from '../skills/index.js'
 import { loadRecentMessages, saveMessage } from '../db/messages.js'
 import {
   resolveStudentId,
@@ -31,11 +32,11 @@ const NON_TEXT_RESPONSES: Record<string, string> = {
 }
 
 const SUB_AGENT_TOOLS: Record<SubAgent, string[]> = {
-  event: ['search_events', 'get_event_details', 'set_reminder', 'submit_event', 'suggest_connection', 'lookup_student'],
-  course: ['search_courses', 'get_course_reviews', 'recommend_courses', 'plan_schedule', 'lookup_student'],
-  housing: ['search_sublets', 'post_sublet', 'lookup_student'],
-  social: ['suggest_connection', 'search_roommates', 'lookup_student', 'search_events'],
-  campus: ['campus_knowledge', 'lookup_student'],
+  event: ['search_events', 'get_event_details', 'set_reminder', 'submit_event', 'suggest_connection', 'lookup_student', 'load_skill'],
+  course: ['search_courses', 'get_course_reviews', 'recommend_courses', 'plan_schedule', 'lookup_student', 'load_skill'],
+  housing: ['search_sublets', 'post_sublet', 'lookup_student', 'load_skill'],
+  social: ['suggest_connection', 'search_roommates', 'lookup_student', 'search_events', 'load_skill'],
+  campus: ['campus_knowledge', 'lookup_student', 'load_skill'],
 }
 
 export async function processMessage(msg: IncomingMessage): Promise<string> {
@@ -153,10 +154,12 @@ async function runSubAgent(
   },
 ): Promise<string> {
   const claude = getClaudeClient()
+  const skillCatalog = getCatalogFor(agent)
   const systemPrompt = getSubAgentPrompt(agent, {
     memories: context.memories,
     isOnboarding: context.isOnboarding,
     referralCount: context.referralCount,
+    skillCatalog,
   })
 
   const toolNames = SUB_AGENT_TOOLS[agent]
@@ -167,7 +170,7 @@ async function runSubAgent(
     { role: 'user', content: userMessage },
   ]
 
-  const maxIterations = 8
+  const maxIterations = 12
   let iterations = 0
 
   while (iterations < maxIterations) {
