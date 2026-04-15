@@ -289,20 +289,40 @@ ${lines}\n`
 // (kept in sync with ONBOARDING_WRAPUP_TURN in george.ts)
 const ONBOARDING_WRAPUP_AT = 6
 
-export function getSubAgentPrompt(
+export interface SubAgentPromptContext {
+  memories?: Array<{ key: string; value: string; category: string }>
+  isOnboarding?: boolean
+  isFirstContact?: boolean
+  onboardingTurnCount?: number
+  referralCount?: number
+  skillCatalog?: string
+}
+
+/**
+ * Return the system prompt split into a cacheable static prefix and a per-request
+ * dynamic suffix. The static prefix is stable per (agent, skillCatalog) and is
+ * what we mark with Anthropic `cache_control: ephemeral` in the caller.
+ *
+ * Static: GEORGE_BASE + MISCHIEF + DOMAIN_EXPERTISE + skillCatalog
+ * Dynamic: mood + memories + onboarding context + referral boost
+ */
+export function getSubAgentPromptParts(
   agent: SubAgent,
-  context?: {
-    memories?: Array<{ key: string; value: string; category: string }>
-    isOnboarding?: boolean
-    isFirstContact?: boolean
-    onboardingTurnCount?: number
-    referralCount?: number
-    skillCatalog?: string
-  },
-): string {
-  const mood = getCurrentMood()
+  context?: SubAgentPromptContext,
+): { static: string; dynamic: string } {
   const mischief = MISCHIEF[agent]
   const domain = DOMAIN_EXPERTISE[agent]
+  const skillCatalogSection = context?.skillCatalog ? `\n${context.skillCatalog}\n` : ''
+
+  const staticPrefix = `${GEORGE_BASE}
+
+## ${mischief.level}
+${mischief.instruction}
+
+${domain}
+${skillCatalogSection}`
+
+  const mood = getCurrentMood()
   const memoryCtx = context?.memories ? buildMemoryContext(context.memories) : ''
   const turnCount = context?.onboardingTurnCount ?? 0
   const onboardingCtx = context?.isFirstContact
@@ -320,17 +340,18 @@ export function getSubAgentPrompt(
     referralBoost = '\n## CHAOS MODE\nThis student referred 3+ friends. Be slightly more chaotic and mischievous than normal.\n'
   }
 
-  const skillCatalogSection = context?.skillCatalog ? `\n${context.skillCatalog}\n` : ''
-
-  return `${GEORGE_BASE}
-
-## ${mischief.level}
-${mischief.instruction}
-
-${domain}
-
-## Current Mood
+  const dynamicSuffix = `## Current Mood
 ${mood.instruction}
-${memoryCtx}${onboardingCtx}${referralBoost}${skillCatalogSection}`
+${memoryCtx}${onboardingCtx}${referralBoost}`
+
+  return { static: staticPrefix, dynamic: dynamicSuffix }
+}
+
+export function getSubAgentPrompt(
+  agent: SubAgent,
+  context?: SubAgentPromptContext,
+): string {
+  const { static: staticPrefix, dynamic: dynamicSuffix } = getSubAgentPromptParts(agent, context)
+  return `${staticPrefix}\n${dynamicSuffix}`
 }
 
