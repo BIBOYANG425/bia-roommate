@@ -28,4 +28,15 @@ describe('George personality', () => {
     const prompt = getSubAgentPrompt('event')
     expect(prompt).toContain('BIA')
   })
+  it('appends skill catalog when provided', () => {
+    const catalog = '## Skill Catalog\n- test-skill: Use when testing'
+    const prompt = getSubAgentPrompt('event', { skillCatalog: catalog })
+    expect(prompt).toContain('## Skill Catalog')
+    expect(prompt).toContain('test-skill')
+  })
+
+  it('omits skill catalog section when not provided', () => {
+    const prompt = getSubAgentPrompt('event')
+    expect(prompt).not.toContain('## Skill Catalog')
+  })
 })

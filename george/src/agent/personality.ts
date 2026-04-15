@@ -210,6 +210,7 @@ export function getSubAgentPrompt(
     memories?: Array<{ key: string; value: string; category: string }>
     isOnboarding?: boolean
     referralCount?: number
+    skillCatalog?: string
   },
 ): string {
   const mood = getCurrentMood()
@@ -225,6 +226,8 @@ export function getSubAgentPrompt(
     referralBoost = '\n## CHAOS MODE\nThis student referred 3+ friends. Be slightly more chaotic and mischievous than normal.\n'
   }
 
+  const skillCatalogSection = context?.skillCatalog ? `\n${context.skillCatalog}\n` : ''
+
   return `${GEORGE_BASE}
 
 ## ${mischief.level}
@@ -234,6 +237,6 @@ ${domain}
 
 ## Current Mood
 ${mood.instruction}
-${memoryCtx}${onboardingCtx}${referralBoost}`
+${memoryCtx}${onboardingCtx}${referralBoost}${skillCatalogSection}`
 }
 
