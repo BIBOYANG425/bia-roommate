@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { getClaudeClient } from './llm-providers.js'
 import { classifyIntent } from './intent-classifier.js'
-import { getSubAgentPrompt, type SubAgent } from './personality.js'
+import { getSubAgentPromptParts, type SubAgent } from './personality.js'
 import { getToolsByNames, executeTool } from './tool-registry.js'
 import { getCatalogFor } from '../skills/index.js'
 import { loadRecentMessages, saveMessage } from '../db/messages.js'
@@ -212,7 +212,7 @@ async function runSubAgent(
 ): Promise<string> {
   const claude = getClaudeClient()
   const skillCatalog = getCatalogFor(agent)
-  const systemPrompt = getSubAgentPrompt(agent, {
+  const { static: staticPrefix, dynamic: dynamicSuffix } = getSubAgentPromptParts(agent, {
     memories: context.memories,
     isOnboarding: context.isOnboarding,
     isFirstContact: context.isFirstContact,
@@ -234,8 +234,13 @@ async function runSubAgent(
   const toolNames = SUB_AGENT_TOOLS[agent]
   const tools = getToolsByNames(toolNames)
 
+  // History window: onboarding needs full context for continuity across the 4-field
+  // profile flow. Non-onboarding turns over-fetch — 12 recent messages is plenty
+  // for sub-agent intents while keeping input tokens lean.
+  const historyWindow = context.isOnboarding ? history : history.slice(-12)
+
   const messages: Anthropic.Messages.MessageParam[] = [
-    ...history,
+    ...historyWindow,
     { role: 'user', content: userMessage },
   ]
 
@@ -248,7 +253,11 @@ async function runSubAgent(
     const response = await claude.messages.create({
       model,
       max_tokens: 1024,
-      system: systemPrompt,
+      temperature: 0.8,
+      system: [
+        { type: 'text', text: staticPrefix, cache_control: { type: 'ephemeral' } },
+        { type: 'text', text: dynamicSuffix },
+      ],
       tools: tools.length > 0 ? tools : undefined,
       messages,
     })
