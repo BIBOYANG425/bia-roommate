@@ -31,4 +31,4 @@ setInterval(() => {
   }
 }, WINDOW_MS * 5)
 
-export const RATE_LIMIT_RESPONSE = '你发消息的速度比我穿墙还快！休息一下，一分钟后再来找我 👻'
+export const RATE_LIMIT_RESPONSE = '你发太快了 —— 缓一分钟再来。'

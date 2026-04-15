@@ -92,7 +92,7 @@ export function createWeChatRouter(): Router {
         res.send('success')
         await sendCustomerServiceMessage(
           msg.fromUser,
-          '汪！👻 你居然能看到我？！我是George Tirebiter，USC最有名的幽灵狗🐕\n\n我在这个校园游荡了快80年了，没什么是我不知道的。\n\n想知道最近有什么好活动？发消息问我就行！',
+          '我是 George，BIA (Bridging Internationals Association) 的 AI 伙伴 —— 3,500+ USC 国际学生社群。\n\n找活动、选课、sublet、认识人、campus 攻略都可以问我。直接发消息就行。',
         )
         return
       }
