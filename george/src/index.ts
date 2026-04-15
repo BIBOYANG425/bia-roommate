@@ -10,8 +10,10 @@ import { matchStudentsToEvents } from './jobs/proactive.js'
 import { sendPendingReminders } from './jobs/reminder-sender.js'
 import { scrapeInstagram } from './scrapers/instagram.js'
 import { scrapeUSCEvents } from './scrapers/usc-events.js'
+import { loadAllSkills, getRegistryStats } from './skills/index.js'
+import { getToolDefinitions } from './agent/tool-registry.js'
 
-// Import ALL 14 tools to register them
+// Import ALL 15 tools to register them
 import './tools/search-events.js'
 import './tools/get-event-details.js'
 import './tools/campus-knowledge.js'
@@ -26,6 +28,7 @@ import './tools/post-sublet.js'
 import './tools/set-reminder.js'
 import './tools/suggest-connection.js'
 import './tools/submit-event.js'
+import './tools/load-skill.js'
 
 const app = express()
 app.use(cors())
@@ -37,7 +40,7 @@ app.use(express.json())
 // ==========================================
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', character: 'George Tirebiter 👻🐕', tools: 14 })
+  res.json({ status: 'ok', character: 'George Tirebiter 👻🐕', tools: 15 })
 })
 
 app.get('/stats', async (_req, res) => {
@@ -151,20 +154,36 @@ process.on('SIGINT', () => shutdown('SIGINT'))
 // START
 // ==========================================
 
-app.listen(config.port, () => {
-  log('info', 'server_started', {
-    port: config.port,
-    tools: 14,
-    proactive: config.proactive.enabled,
-    rolloutPct: config.proactive.rolloutPct,
-  })
-  console.log(`\n🐕 George Tirebiter is haunting port ${config.port}...`)
-  console.log(`👻 WeChat: http://localhost:${config.port}/wechat`)
-  console.log(`📊 Stats: http://localhost:${config.port}/stats`)
-  console.log(`🔧 Admin: POST /admin/scrape-instagram, /admin/scrape-usc\n`)
-})
+async function startServer() {
+  try {
+    const toolNames = new Set(getToolDefinitions().map((t) => t.name))
+    await loadAllSkills(toolNames)
+    log('info', 'skill_registry_loaded', getRegistryStats())
+  } catch (err) {
+    log('error', 'skill_registry_load_failed', { error: (err as Error).message })
+    throw err
+  }
 
-startIMessageAdapter().catch((err) => {
-  log('warn', 'imessage_start_failed', { error: err.message })
-  console.warn('⚠️  iMessage adapter failed to start — George will only haunt WeChat.')
+  app.listen(config.port, () => {
+    log('info', 'server_started', {
+      port: config.port,
+      tools: 15,
+      proactive: config.proactive.enabled,
+      rolloutPct: config.proactive.rolloutPct,
+    })
+    console.log(`\n🐕 George Tirebiter is haunting port ${config.port}...`)
+    console.log(`👻 WeChat: http://localhost:${config.port}/wechat`)
+    console.log(`📊 Stats: http://localhost:${config.port}/stats`)
+    console.log(`🔧 Admin: POST /admin/scrape-instagram, /admin/scrape-usc\n`)
+  })
+
+  startIMessageAdapter().catch((err) => {
+    log('warn', 'imessage_start_failed', { error: err.message })
+    console.warn('⚠️  iMessage adapter failed to start — George will only haunt WeChat.')
+  })
+}
+
+startServer().catch((err) => {
+  console.error('Failed to start server:', err)
+  process.exit(1)
 })
