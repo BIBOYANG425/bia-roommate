@@ -1,5 +1,7 @@
 {
   "fall_2026": {
+    "offer_season": { "start": "2026-04-01", "end": "2026-05-31" },
+    "visa_housing_panic": { "start": "2026-06-01", "end": "2026-08-15" },
     "orientation": { "start": "2026-08-17", "end": "2026-08-21" },
     "classes_start": "2026-08-24",
     "fall_break": { "start": "2026-10-15", "end": "2026-10-16" },
@@ -12,6 +14,8 @@
     "spring_break": { "start": "2027-03-15", "end": "2027-03-21" },
     "finals": { "start": "2027-05-03", "end": "2027-05-14" },
     "classes_end": "2027-04-30",
-    "commencement": "2027-05-16"
+    "commencement": "2027-05-16",
+    "offer_season": { "start": "2027-04-01", "end": "2027-05-31" },
+    "visa_housing_panic": { "start": "2027-06-01", "end": "2027-08-15" }
   }
 }

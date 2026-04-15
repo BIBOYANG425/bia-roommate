@@ -39,7 +39,7 @@ export async function startIMessageAdapter() {
         } catch (err) {
           log('error', 'imessage_error', { error: (err as Error).message })
           await sdk!
-            .send(msg.sender, '哎呀，我穿墙的时候卡住了...再试一次？👻')
+            .send(msg.sender, '刚卡了一下，再试一次。')
             .catch(() => {})
         }
       },

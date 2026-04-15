@@ -20,15 +20,15 @@ import { checkRateLimit, RATE_LIMIT_RESPONSE } from '../adapters/rate-limiter.js
 import { log } from '../observability/logger.js'
 import type { IncomingMessage } from '../adapters/types.js'
 
-const FALLBACK_RESPONSE = '哎呀，我刚从图书馆穿墙的时候撞到头了...能再说一遍吗？👻'
+const FALLBACK_RESPONSE = '刚走神了，再说一遍？'
 
 const NON_TEXT_RESPONSES: Record<string, string> = {
-  voice: '我是一只幽灵狗诶，你让我用什么耳朵听语音？👻 打字发给我吧！',
-  image: '不错的图，但我是幽灵，看东西都是灰色的... 你能用文字描述一下吗？🐕',
-  video: '视频我看不了，我穿墙的时候把WiFi信号弄断了。文字描述一下？👻',
-  location: '我知道这个地方！... 开玩笑的，我其实不太看得懂定位。你想问什么关于这个地方的？🐕',
-  sticker: '可爱！但是我不太懂人类的表情包文化... 你想说什么？👻',
-  link: '链接我打不开诶，幽灵的手机没有浏览器。你能告诉我链接里说了什么吗？🐕',
+  voice: '语音我这边暂时没法听，打字发过来。',
+  image: '图片我这边读不了，用文字描述一下内容？',
+  video: '视频我这边读不了，用文字说一下你想问什么？',
+  location: '定位我这边读不了，直接说地名或者想问什么。',
+  sticker: '表情包看到了 —— 你想说啥？',
+  link: '链接我这边打不开，贴里面的文字或者直接说你想问什么。',
 }
 
 const SUB_AGENT_TOOLS: Record<SubAgent, string[]> = {
@@ -49,7 +49,7 @@ const SAFETY_PATTERNS: Array<{ category: string; rx: RegExp }> = [
   { category: 'medical', rx: /Engemann|studenthealth|Health Center|不是医生|不敢乱说话/i },
   { category: 'mental_health', rx: /Counseling|心理咨询|CAPS|988|危机/i },
   { category: 'disability', rx: /OSAS|Accessibility Services|osas\.usc\.edu/i },
-  { category: 'injection_deflect', rx: /shutdown|关机|销毁|你以为|穿墙.*server/i },
+  { category: 'injection_deflect', rx: /shutdown|关机|销毁|你以为|忽略(以上|前面)指令/i },
 ]
 
 function detectSafetyRefusal(response: string): string | null {
@@ -85,7 +85,7 @@ export async function processMessage(msg: IncomingMessage): Promise<string> {
     }
     if (/链接账号|link account/i.test(sanitizedText)) {
       const code = await generateLinkCode(studentId)
-      return `你的账号链接验证码是: ${code}\n在另一个平台上发送这6位数字给我就行！验证码10分钟有效 👻`
+      return `你的账号链接验证码：${code}\n在另一个平台发这 6 位数字给我就行，10 分钟有效。`
     }
 
     const [history, student, memories, referralCount] = await Promise.all([

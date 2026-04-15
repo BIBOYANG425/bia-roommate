@@ -13,6 +13,7 @@ describe('Message processing', () => {
       msgType: 'voice',
       timestamp: Date.now(),
     })
-    expect(result).toContain('幽灵')
+    expect(result).toContain('语音')
+    expect(result).toContain('打字')
   })
 })
