@@ -1,3 +1,10 @@
+// RateMyProfessors badge injector. Scans instructor cells on WebReg, normalizes names
+// ("Last, First" → "First Last", strips titles / TBA), batches up to 50 lookups per
+// API call, and renders color-coded badges. Runs once on page load and re-runs on DOM
+// mutations via MutationObserver. PROCESSED_ATTR guards against re-processing.
+//
+// Header last reviewed: 2026-04-16
+
 import type { RmpRating } from "../shared/types";
 import { getRmpColor } from "../shared/constants";
 

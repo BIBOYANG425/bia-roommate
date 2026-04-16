@@ -1,3 +1,10 @@
+// MV3 service worker. Routes messages from content scripts + popup to backend APIs;
+// manages RMP / course / GE caches with 7-day TTL via StorageCache (cache.ts).
+// Chrome can kill and restart this worker at any time — the cache layer handles
+// persistence across restarts, so avoid module-level in-memory state.
+//
+// Header last reviewed: 2026-04-16
+
 import {
   fetchRmpBatch,
   fetchCoursebinDetails,
