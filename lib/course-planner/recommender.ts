@@ -1,3 +1,10 @@
+// Course recommendation synthesizer. Combines interest-map tokens, RMP ratings,
+// GE coverage, and section availability into a ranked list with match reasons.
+// Orchestrated by lib/course-planner/agent.ts. Owns department / number / GE
+// canonicalization — keep normalization rules here, not in callers.
+//
+// Header last reviewed: 2026-04-16
+
 import {
   tokenize,
   tokenizeRaw,

@@ -1,3 +1,9 @@
+// Interest-to-course matching algorithm. Tokenizes student interest text and scores it
+// against the USC course catalog via weighted token overlap + stop-word filtering.
+// Pure: no IO, no LLM. Called by recommender.ts. Edit here to tune recommendation quality.
+//
+// Header last reviewed: 2026-04-16
+
 // ─── Stop words to remove from interest text ───
 const STOP_WORDS = new Set([
   "i",
