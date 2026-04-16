@@ -1,3 +1,10 @@
+// Content-script orchestrator. Site detection (WebReg vs Schedule of Classes), then
+// invokes the per-feature injectors (RMP badges, seat counters, conflict highlighters).
+// Handles cleanup + re-init on settings toggle. All DOM work lives in sibling files
+// (rmp-injector, seat-counter, conflict-highlighter) — this file only coordinates.
+//
+// Header last reviewed: 2026-04-16
+
 import { injectRmpBadges } from "./rmp-injector";
 import { injectSeatBadges } from "./seat-counter";
 import { readScheduleData } from "./schedule-reader";

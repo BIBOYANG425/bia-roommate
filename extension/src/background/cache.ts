@@ -1,5 +1,9 @@
-// LRU cache backed by chrome.storage.local
-// All state persisted — survives MV3 service worker termination
+// LRU cache backed by chrome.storage.local. Configurable TTL + max entries, with
+// timestamps serialized into each entry for expiry. Survives MV3 service worker
+// termination — all state is persisted. Used by RMP / courses / GE lookups from
+// service-worker.ts.
+//
+// Header last reviewed: 2026-04-16
 
 interface CacheEntry<T> {
   value: T;

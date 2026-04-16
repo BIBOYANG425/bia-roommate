@@ -1,5 +1,11 @@
 "use client";
 
+// React Context store for the course planner. Reducer-based actions for add/remove/reorder
+// sections; derives semester from calendar context. Consumers read via useCoursePlanner().
+// Do not keep planner state locally inside components — always go through this store.
+//
+// Header last reviewed: 2026-04-16
+
 import {
   createContext,
   useContext,

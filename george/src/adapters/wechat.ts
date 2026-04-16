@@ -1,3 +1,10 @@
+// WeChat Official Account adapter. POST /wechat receives XML → signature verify →
+// parse → dedup (60s window) → processMessage(). Access token cached with lazy refresh.
+// Long responses split at 500 chars with 200ms delays between parts. Subscribe events
+// trigger the BIA welcome copy.
+//
+// Header last reviewed: 2026-04-16
+
 import { Router } from 'express'
 import { config } from '../config.js'
 import { parseIncomingXml, verifySignature, splitMessage } from './wechat-xml.js'

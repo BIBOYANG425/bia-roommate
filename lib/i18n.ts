@@ -1,3 +1,9 @@
+// Bilingual (en/zh) translation dictionary for the entire web app.
+// Key-access pattern: t.nav.events[lang]. Single source of truth for user-facing strings.
+// Add new UI copy here before adding it to components.
+//
+// Header last reviewed: 2026-04-16
+
 export type Lang = "en" | "zh";
 
 export const t = {

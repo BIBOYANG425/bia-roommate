@@ -1,3 +1,9 @@
+// LLM dispatch layer. Wraps Anthropic Claude (main) and Kimi/Moonshot (lightweight fallback)
+// behind a unified call signature. Sub-agents use Claude Sonnet 4.6; intent classifier,
+// proactive messages, and memory extraction use Kimi/Haiku. Single point to swap models.
+//
+// Header last reviewed: 2026-04-16
+
 import Anthropic from '@anthropic-ai/sdk'
 import { config } from '../config.js'
 import { log } from '../observability/logger.js'

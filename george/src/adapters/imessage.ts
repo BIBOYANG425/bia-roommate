@@ -1,3 +1,10 @@
+// iMessage adapter (macOS only, via @photon-ai/imessage-kit). startIMessageAdapter()
+// opens a watcher that forwards direct messages into processMessage(). Requires Full Disk
+// Access + signed-in iMessage on the host. If the SDK fails to init, logs a warning and
+// continues — WeChat-only mode still works.
+//
+// Header last reviewed: 2026-04-16
+
 import { IMessageSDK } from '@photon-ai/imessage-kit'
 import { config } from '../config.js'
 import { processMessage } from '../agent/george.js'

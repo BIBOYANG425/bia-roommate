@@ -1,3 +1,10 @@
+// Main message processor. Adapter input → rate-limit → injection filter → student lookup →
+// intent classifier → sub-agent loop (up to 12 tool iterations) → DB save → response send.
+// Non-text messages return playful refusals from NON_TEXT_RESPONSES. Link codes, onboarding
+// state, memory loading, and async memory extraction all dispatch from here.
+//
+// Header last reviewed: 2026-04-16
+
 import Anthropic from '@anthropic-ai/sdk'
 import { getClaudeClient } from './llm-providers.js'
 import { classifyIntent } from './intent-classifier.js'

@@ -1,3 +1,9 @@
+// Intent router. One lightweight LLM call (Kimi/Haiku) tags each incoming message as
+// event / course / housing / social / campus / general. Runs before every sub-agent
+// dispatch; keep it cheap (~50 token budget). Falls back to `general` on ambiguity.
+//
+// Header last reviewed: 2026-04-16
+
 import { callLightweightLLM } from './llm-providers.js'
 import type { SubAgent } from './personality.js'
 
