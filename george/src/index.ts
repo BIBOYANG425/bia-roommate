@@ -1,3 +1,10 @@
+// Express server entry. Registers 16 tools (side-effect imports), mounts WeChat adapter,
+// starts iMessage watcher, boots 4 cron jobs (proactive match / reminders / IG + USC scrapes),
+// and loads the skill registry. Nothing routes through this file at runtime — message flow
+// lives in agent/george.ts; this is wire-up only.
+//
+// Header last reviewed: 2026-04-16
+
 import express from 'express'
 import cors from 'cors'
 import cron from 'node-cron'

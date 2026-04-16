@@ -1,3 +1,10 @@
+// Async job triggered after each message is processed. Kimi/Haiku call extracts personal
+// facts (food_preference / academic_interest / social_preference / mentioned_plan /
+// personal_fact) from the recent transcript into student_memories. Non-blocking — runs
+// after the response is sent. Deduped by (student_id, key) via Supabase upsert.
+//
+// Header last reviewed: 2026-04-16
+
 import { callLightweightLLM } from '../agent/llm-providers.js'
 import { supabase } from '../db/client.js'
 import { log } from '../observability/logger.js'

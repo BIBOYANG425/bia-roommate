@@ -1,3 +1,11 @@
+// Sub-agent persona system. getSubAgentPrompt(intent, ctx) composes the system prompt
+// Claude uses for each domain (event / course / housing / social / campus). Layers:
+// base George identity (BIA senior voice) + per-agent voice calibration + BIA lore +
+// onboarding state + calendar-driven mood (finals=grumpy, orientation=excited, etc.).
+// Edit voice here; don't touch sub-agent callers.
+//
+// Header last reviewed: 2026-04-16
+
 import { readFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'

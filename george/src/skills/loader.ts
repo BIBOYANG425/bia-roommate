@@ -1,3 +1,10 @@
+// Markdown skill-playbook parser. Reads .skill.md files (YAML frontmatter + Markdown body)
+// and validates tier, tool references, and sub-agent target against the registered tool
+// set. Called once at boot from skills/index.ts. Skill names must match filenames;
+// invalid skills fail the boot (intentional fail-fast).
+//
+// Header last reviewed: 2026-04-16
+
 import { readFile, readdir } from 'fs/promises'
 import { basename, extname, join as pathJoin } from 'path'
 import yaml from 'js-yaml'

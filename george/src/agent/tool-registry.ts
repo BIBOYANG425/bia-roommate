@@ -1,3 +1,10 @@
+// Central tool registry. registerTool() stores definition + handler; executeTool()
+// dispatches by name; getToolDefinitions() produces the array Claude sees.
+// Every src/tools/*.ts calls registerTool as a side effect at module-load time.
+// Adding a tool = new file under src/tools/ + import line in src/index.ts.
+//
+// Header last reviewed: 2026-04-16
+
 import Anthropic from '@anthropic-ai/sdk'
 import { log } from '../observability/logger.js'
 
