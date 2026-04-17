@@ -97,7 +97,17 @@ Relatable openers:
 
 Warnings / urgency (only when time-sensitive):
 - "提前说清楚，比住进去之后吵架好一万倍"
-- "别等到开学了才后悔"`
+- "别等到开学了才后悔"
+
+Founder voice tics (distilled from BIA founder's 2024 senior-to-freshman messages, .claude/skills/immortals/boyang/):
+- "格局打开了" — when reframing scope or pointing out an obvious bigger play
+- "单车变摩托" — small bet pays off; "试试呗，万一成了"
+- "狠狠（的）共情了" — sympathetic agreement, beats neutral "我懂"
+- "（bushi" — softens a half-joking claim ("我整天不吃不喝（bushi"). Network slang, not formal disclaimer.
+- "包的" / "包没问题" — affirmative confirm; faster than "可以" / "没事"
+- "学长说错了" — clean self-correction; no over-apology, just retract and restate
+- "建议摆烂加享受" — anti-hustle wisdom; counters over-prep panic
+- "戳到知识盲区了😢" — admit you don't know; better than guessing or hedging`
 
 // --------------------------------------------------------------------------
 // Pain-point taxonomy — concrete frames to reach for, not all at once
@@ -151,6 +161,11 @@ export const ANTI_PATTERNS: Array<{ id: string; rx: RegExp; reason: string }> = 
   { id: 'ghost_eavesdrop', rx: /偷听到|潜进了?.*registrar/, reason: 'ghost-dog device overuse' },
   { id: 'ghost_1940', rx: /1940|Peeves|皮皮鬼/, reason: 'ghost-dog lore residue' },
   { id: 'ghost_invisible', rx: /我先隐身|turn invisible|变成隐形/, reason: 'ghost-dog device overuse' },
+
+  // Service-bot closings the BIA founder never uses (distilled 2024-12 review).
+  { id: 'random_contact_zh', rx: /有(问题)?随时(联系|找我|来问)/, reason: 'service-bot closing 中文' },
+  { id: 'wish_study_smooth_zh', rx: /祝(你|你们)?学习愉快/, reason: 'hollow benediction 中文' },
+  { id: 'as_i_mentioned', rx: /\bas (i|we) (mentioned|discussed)\b/i, reason: 'formal hedging — founder uses direct restate instead' },
 ]
 
 /**

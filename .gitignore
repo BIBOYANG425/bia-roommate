@@ -43,3 +43,9 @@ next-env.d.ts
 # chrome extension build
 extension/dist/
 extension/node_modules/
+
+# WeChat raw exports — contains PII, never commit
+george/data/wechat/
+
+# Distilled voice skills — contain verbatim chat adjacent content + cloned tooling
+.claude/skills/
