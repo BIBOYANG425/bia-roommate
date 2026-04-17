@@ -40,10 +40,10 @@ const NON_TEXT_RESPONSES: Record<string, string> = {
 
 const SUB_AGENT_TOOLS: Record<SubAgent, string[]> = {
   event: ['search_events', 'get_event_details', 'set_reminder', 'submit_event', 'suggest_connection', 'lookup_student', 'load_skill'],
-  course: ['search_courses', 'get_course_reviews', 'recommend_courses', 'plan_schedule', 'lookup_student', 'load_skill'],
-  housing: ['search_sublets', 'post_sublet', 'lookup_student', 'load_skill'],
-  social: ['suggest_connection', 'search_roommates', 'lookup_student', 'search_events', 'load_skill'],
-  campus: ['campus_knowledge', 'lookup_student', 'load_skill', 'update_profile'],
+  course: ['search_courses', 'get_course_reviews', 'recommend_courses', 'plan_schedule', 'course_tips', 'lookup_student', 'load_skill'],
+  housing: ['search_sublets', 'post_sublet', 'freshman_faq', 'lookup_student', 'load_skill'],
+  social: ['suggest_connection', 'search_roommates', 'freshman_faq', 'lookup_student', 'search_events', 'load_skill'],
+  campus: ['campus_knowledge', 'freshman_faq', 'lookup_student', 'load_skill', 'update_profile'],
 }
 
 // Onboarding turn cap: after this many turns without completion, prompt switches to wrap-up mode
