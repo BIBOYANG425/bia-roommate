@@ -151,3 +151,165 @@ export const AMENITY_OPTIONS = [
   "家具齐全",
   "允许宠物",
 ] as const;
+
+/* ── Shipping / 集运 (tables: public.parcels, public.shipments, etc.) ── */
+
+export const PARCEL_STATUS_VALUES = [
+  "expected",
+  "received_cn",
+  "in_transit",
+  "arrived_us",
+  "picked_up",
+  "lost",
+  "returned",
+  "disputed",
+] as const;
+export type ParcelStatus = (typeof PARCEL_STATUS_VALUES)[number];
+
+export const SHIPMENT_STATUS_VALUES = [
+  "forming",
+  "sealed",
+  "departed_cn",
+  "customs",
+  "arrived_us",
+  "pickup_open",
+  "pickup_closed",
+  "archived",
+] as const;
+export type ShipmentStatus = (typeof SHIPMENT_STATUS_VALUES)[number];
+
+export const PARCEL_CATEGORY_OPTIONS = [
+  "电子产品",
+  "服饰",
+  "食品",
+  "日用品",
+  "书籍",
+  "其它",
+] as const;
+export type ParcelCategory = (typeof PARCEL_CATEGORY_OPTIONS)[number];
+
+export const CN_CARRIER_OPTIONS = [
+  "顺丰",
+  "中通",
+  "圆通",
+  "韵达",
+  "申通",
+  "京东",
+  "EMS",
+  "其它",
+] as const;
+
+export interface Parcel {
+  id: string;
+  user_id: string | null;
+  student_id: string | null;
+  member_id: string;
+  tracking_cn: string | null;
+  carrier_cn: string | null;
+  description: string;
+  declared_value_cny: number | null;
+  category: string | null;
+  photos: string[];
+  status: ParcelStatus;
+  warehouse_id: string | null;
+  shipment_id: string | null;
+  received_at: string | null;
+  weight_grams: number | null;
+  dim_cm_l: number | null;
+  dim_cm_w: number | null;
+  dim_cm_h: number | null;
+  notes: string | null;
+  user_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ParcelEvent {
+  id: string;
+  parcel_id: string;
+  from_status: ParcelStatus | null;
+  to_status: ParcelStatus;
+  actor_user_id: string | null;
+  actor_role: "user" | "admin" | "system" | null;
+  note: string | null;
+  payload: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface Shipment {
+  id: string;
+  name: string;
+  status: ShipmentStatus;
+  carrier: string | null;
+  international_tracking: string | null;
+  departed_cn_at: string | null;
+  arrived_us_at: string | null;
+  pickup_location: string | null;
+  pickup_starts_at: string | null;
+  pickup_ends_at: string | null;
+  price_per_kg_cents: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WarehouseAddress {
+  id: string;
+  code: string;
+  display_name: string;
+  recipient_template: string;
+  street: string;
+  city: string;
+  province: string;
+  postal_code: string;
+  phone: string;
+  active: boolean;
+  notes: string | null;
+}
+
+/** Human-facing Chinese labels + styling intent per parcel status. */
+export const PARCEL_STATUS_META: Record<
+  ParcelStatus,
+  { label: string; hint: string; tone: "pending" | "active" | "good" | "bad" }
+> = {
+  expected: {
+    label: "待入库",
+    hint: "仓库还没收到，发货后记得填跟踪号",
+    tone: "pending",
+  },
+  received_cn: {
+    label: "仓库签收",
+    hint: "已签收并上架，等下一批国际段",
+    tone: "active",
+  },
+  in_transit: {
+    label: "国际段运输",
+    hint: "正在飞往美国，一般 7-14 天",
+    tone: "active",
+  },
+  arrived_us: {
+    label: "到达美国",
+    hint: "到了，等 BIA 安排取件",
+    tone: "active",
+  },
+  picked_up: {
+    label: "已取件",
+    hint: "完成",
+    tone: "good",
+  },
+  lost: {
+    label: "丢失",
+    hint: "联系 BIA 运营，我们跟进理赔",
+    tone: "bad",
+  },
+  returned: {
+    label: "退回",
+    hint: "包裹被退回，查看备注",
+    tone: "bad",
+  },
+  disputed: {
+    label: "待核实",
+    hint: "有问题需要沟通，BIA 会联系你",
+    tone: "bad",
+  },
+};

@@ -11,6 +11,7 @@ const TABS = [
   { href: "/roommates", label: "找室友" },
   { href: "/sublet", label: "转租" },
   { href: "/squad", label: "找搭子" },
+  { href: "/shipping", label: "集运" },
   { href: "/course-planner", label: "选课" },
   { href: "/course-rating", label: "课评" },
   { href: "/usc-group", label: "USC 新生群" },
