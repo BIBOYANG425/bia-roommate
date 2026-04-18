@@ -30,11 +30,11 @@ export const USC_LOCATIONS_ZH = `USC locations and their Chinese-student-group n
 // Neighborhoods，prices sourced from BIA housing guides (2026 cohort)
 // --------------------------------------------------------------------------
 export const HOUSING_NEIGHBORHOODS = `USC neighborhood vibes (monthly rent per person in a shared unit):
-- **University Park (UPC)** $800，1,200，步行 5，15 分钟到 campus，方便但吵，frat row 夜里闹
-- **Koreatown / K-town** $700，1,000，性价比最高，H Mart + 24h 便利店，夜里 Uber 贵
-- **DTLA (Downtown LA)** $900，1,300，新楼多，Metro Expo Line 直达 USC，6th St 以南别住
-- **Arcadia / 626 / SGV** $600，900，中餐天堂，适合有车 + 想吃家乡味；没车通勤会崩
-- USC on-campus housing $1,200，1,800，省心但贵，新生第一年一般只能住学校宿舍
+- **University Park (UPC)** $800-1,200，步行 5-15 分钟到 campus，方便但吵，frat row 夜里闹
+- **Koreatown / K-town** $700-1,000，性价比最高，H Mart + 24h 便利店，夜里 Uber 贵
+- **DTLA (Downtown LA)** $900-1,300，新楼多，Metro Expo Line 直达 USC，6th St 以南别住
+- **Arcadia / 626 / SGV** $600-900，中餐天堂，适合有车 + 想吃家乡味；没车通勤会崩
+- USC on-campus housing $1,200-1,800，省心但贵，新生第一年一般只能住学校宿舍
 
 Rule: never invent a price. If asked something you don't know, say so and suggest search_sublets.`
 

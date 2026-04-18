@@ -51,11 +51,14 @@ User asks "Parkside 附近有什么好吃的" in the campus sub agent.
 1. Sub agent calls `find_places_near(origin="Parkside", category="food", radius_km=0.5, mode="walking")`.
 2. Tool normalizes "Parkside" and hits the alias table. Returns lat/lng.
 3. Tool calls Google Places Nearby Search around those coordinates, category food.
-4. Tool picks the top 5 candidates by Places Search rating (not 10). This keeps
-   Distance Matrix cost bounded: 5 elements per call, not 10. Necessary to
-   stay inside the $200/month free credit envelope, see Cost section.
-5. Tool calls Google Distance Matrix on those 5, walking mode. Filters to
-   walkable (<= 15 min), sorts by walking time then rating.
+4. Tool picks the top 5 candidates by Places Search rating. Keeping the
+   candidate count bounded is still a good latency / output-quality choice
+   (fewer, better picks beats a list of 10), though with Google's per-SKU
+   free tiers it is no longer load-bearing for cost. See Cost section.
+5. Tool calls Google Distance Matrix on those 5, walking mode. Uses the same
+   20-min walkability threshold as `travel_time.walkable`: anything over 20
+   min falls out of the list for walking-mode queries. Sorts remaining by
+   walking time then rating.
 6. Tool returns JSON: `[{name, google_rating, travel_minutes, travel_mode, neighborhood}, ...]`.
 7. The sub agent layers in any matching `campus_knowledge.food` rows so BIA
    verified spots get cited first, then fills with Google discoveries.
@@ -81,6 +84,8 @@ Error shapes:
 - `{ error: "need_location", hint: "..." }` when origin or destination cannot be resolved
 - `{ error: "geo_unavailable" }` on timeout, retry failure, or rate limit
 - `{ error: "geo_disabled" }` when `GOOGLE_MAPS_API_KEY` is not set
+- `{ error: "geo_budget_exceeded" }` when the per-student geo-tool budget (see
+  Per-student rate limit) is exhausted for the current hour window
 
 ### find_places_near(origin, category, radius_km, mode)
 
@@ -99,7 +104,8 @@ Output: up to 5 POIs
 - `travel_mode`
 - `neighborhood` (derived from lat/lng and the alias regions)
 
-Error shapes: same set as `travel_time`.
+Error shapes: same set as `travel_time` (`need_location`, `geo_unavailable`,
+`geo_disabled`, `geo_budget_exceeded`).
 
 ## USC alias table
 
@@ -166,23 +172,38 @@ Redis later when we run more than one agent instance.
 
 ## Cost envelope
 
-Google Maps Platform gives us $200 monthly free credit. At current BIA traffic
-(single digit conversations per hour):
+Google Maps Platform billing switched in March 2025 from a blanket $200
+monthly credit to per-SKU monthly free allowances. The SKUs we use:
 
-| API | Unit cost | Projected monthly calls | Monthly cost |
+- **Geocoding API**: 10,000 free / month, then $5 / 1000
+- **Places API Nearby Search (New)**: 5,000 free / month, then $32 / 1000
+- **Compute Route Matrix (Routes API)**: 10,000 elements free / month,
+  then $5 / 1000 elements. Use this instead of the legacy Distance Matrix
+  API; Distance Matrix is deprecated for new projects.
+
+At current BIA traffic (single-digit conversations per hour):
+
+| SKU | Free allowance | Projected monthly usage | Overage |
 |---|---|---|---|
-| Geocoding | $5 / 1000 | 100 (most aliases cached forever) | ~$0.50 |
-| Places Nearby | $32 / 1000 | 3000 | ~$96 |
-| Distance Matrix | $5 / 1000 elements | 15000 elements (5 per call × 3000 calls) | ~$75 |
-| Total | | | ~$172 |
+| Geocoding | 10,000 | ~100 | $0 |
+| Places Nearby | 5,000 | ~3,000 | $0 |
+| Compute Route Matrix | 10,000 elements | ~15,000 elements | ~$25 |
 
-Within free credit, assuming `find_places_near` caps candidates at 5 per call
-(see architecture step 4). If the cap ever moves to 10 the Distance Matrix
-element count doubles and the monthly projection lands around $250, over the
-free credit ceiling. The 5-candidate cap is load-bearing.
+Total projected: **~$25/month overage** on Compute Route Matrix only. The
+earlier `find_places_near` "5-candidate cap for cost reasons" no longer
+applies under per-SKU billing; the cap is still useful for latency and
+output quality but is not load-bearing for cost.
 
-Alert at $150 actual spend on the Google Cloud billing console so we see the
-approach to cliff before hitting it.
+Alert at **$50/month actual spend** (down from the old $150 threshold,
+since total expected overage is ~$25). Anything above that is a traffic
+anomaly worth investigating.
+
+**Migration note**: the Phase 1 plan currently calls the legacy Distance
+Matrix API. Before ship, migrate the client to Routes API's
+`computeRouteMatrix` endpoint. The request shape is slightly different
+(origins / destinations wrap into `routeMatrix` structs, routing preferences
+are named fields rather than query params) but the semantics are identical
+for our use case.
 
 ## Error handling
 
