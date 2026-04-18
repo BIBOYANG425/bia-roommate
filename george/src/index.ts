@@ -196,7 +196,7 @@ async function startServer() {
 
   startIMessageAdapter().catch((err) => {
     log('warn', 'imessage_start_failed', { error: err.message })
-    console.warn('⚠️  iMessage adapter failed to start — George will only haunt WeChat.')
+    console.warn('iMessage adapter failed to start, falling back to WeChat only.')
   })
 }
 

@@ -124,14 +124,42 @@ const RULES: Array<{ id: string; rx: RegExp }> = [
   { id: 'receipt_subscription_renewed', rx: /\byour\s+subscription\s+has\s+been\s+(renewed|charged)/i },
 ]
 
-export function checkAutomatedNoise(text: string, ctx?: { userId?: string; platform?: string }): AutomatedNoiseCheck {
+// Rules that touch personally-sensitive content: OTPs, client portals,
+// receipts. For these we either omit the snippet or redact digits before
+// logging. Anything else (invites, promos, marketplace blasts) is safe to
+// snippet for debugging.
+const SENSITIVE_RULE_PREFIXES = ['otp_', 'portal_', 'receipt_']
+// Rules that specifically carry authentication codes and must not log even a
+// redacted snippet — better to lose some debugging visibility than leak tokens.
+const FULLY_REDACTED_RULE_PREFIXES = ['otp_']
+
+function redactDigits(s: string): string {
+  return s.replace(/\d{2,}/g, '[REDACTED]')
+}
+
+export function checkAutomatedNoise(
+  text: string,
+  ctx?: { userId?: string; platform?: string },
+): AutomatedNoiseCheck {
+  // Defensive coerce: callers should pass a string, but a null/undefined
+  // leaking through should not throw inside the regex engine.
+  const normalized = typeof text === 'string' ? text : ''
+  if (!normalized) return { isNoise: false }
+
   for (const rule of RULES) {
-    if (rule.rx.test(text)) {
+    if (rule.rx.test(normalized)) {
+      const fullyRedacted = FULLY_REDACTED_RULE_PREFIXES.some((p) => rule.id.startsWith(p))
+      const sensitive = SENSITIVE_RULE_PREFIXES.some((p) => rule.id.startsWith(p))
+      const snippet = fullyRedacted
+        ? undefined
+        : sensitive
+          ? redactDigits(normalized.slice(0, 100))
+          : normalized.slice(0, 100)
       log('info', 'automated_message_filtered', {
         rule: rule.id,
         userId: ctx?.userId,
         platform: ctx?.platform,
-        snippet: text.slice(0, 100),
+        ...(snippet !== undefined ? { snippet } : {}),
       })
       return { isNoise: true, rule: rule.id }
     }

@@ -1,15 +1,19 @@
 // WeChat Official Account adapter. POST /wechat receives XML → signature verify →
 // parse → dedup (60s window) → processMessage(). Access token cached with lazy refresh.
-// Long responses split at 500 chars with 200ms delays between parts. Subscribe events
-// trigger the BIA welcome copy.
+// processMessage() returns null when the filter drops third-party noise (meeting
+// invites, OTPs, promo SMS); we silently skip the send in that case. Non-null
+// responses are split on blank-line boundaries into up to 4 chat messages with
+// INTER_MESSAGE_DELAY_MS between parts, matching WeChat's short-burst cadence.
+// Subscribe events trigger the BIA welcome copy.
 //
-// Header last reviewed: 2026-04-16
+// Header last reviewed: 2026-04-18
 
 import { Router } from 'express'
 import { config } from '../config.js'
 import { parseIncomingXml, verifySignature, splitMessage } from './wechat-xml.js'
 import { processMessage } from '../agent/george.js'
 import { log } from '../observability/logger.js'
+import { splitIntoMessages, sleep, INTER_MESSAGE_DELAY_MS } from './split-response.js'
 import type { IncomingMessage } from './types.js'
 
 let cachedToken = { token: '', expiresAt: 0 }
@@ -126,7 +130,6 @@ export function createWeChatRouter(): Router {
       // null response = filtered (automated-message / meeting-invite noise).
       // Silently drop; no reply back to the sender.
       if (response !== null) {
-        const { splitIntoMessages, sleep, INTER_MESSAGE_DELAY_MS } = await import('./split-response.js')
         const parts = splitIntoMessages(response)
         for (let i = 0; i < parts.length; i++) {
           if (i > 0) await sleep(INTER_MESSAGE_DELAY_MS)
