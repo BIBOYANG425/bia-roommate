@@ -51,8 +51,11 @@ User asks "Parkside 附近有什么好吃的" in the campus sub agent.
 1. Sub agent calls `find_places_near(origin="Parkside", category="food", radius_km=0.5, mode="walking")`.
 2. Tool normalizes "Parkside" and hits the alias table. Returns lat/lng.
 3. Tool calls Google Places Nearby Search around those coordinates, category food.
-4. Tool calls Google Distance Matrix for the top 10 candidates, walking mode.
-5. Tool filters to candidates within 15 min walk, sorts by walking time then rating, caps at 5.
+4. Tool picks the top 5 candidates by Places Search rating (not 10). This keeps
+   Distance Matrix cost bounded: 5 elements per call, not 10. Necessary to
+   stay inside the $200/month free credit envelope, see Cost section.
+5. Tool calls Google Distance Matrix on those 5, walking mode. Filters to
+   walkable (<= 15 min), sorts by walking time then rating.
 6. Tool returns JSON: `[{name, google_rating, travel_minutes, travel_mode, neighborhood}, ...]`.
 7. The sub agent layers in any matching `campus_knowledge.food` rows so BIA
    verified spots get cited first, then fills with Google discoveries.
@@ -104,11 +107,20 @@ About 38 entries. Hand curated, versioned in the repo, updated when a student
 uses an unknown alias twice in a week.
 
 Coverage:
-- Dorms: Parkside (A/H), Webb Tower, Gateway, IRC, Pardee Tower, New North, Fluor Tower, CA (Century Apartments), Cardinal Gardens
-- Landmarks: Tommy Trojan, Lyon Center, Leavey, Doheny, Village / McCarthy, Ronald Tutor, Annenberg, Watt Hall, VKC, Bovard, JFF, THH, DMC
+- Dorms: Parkside (cluster anchor at A7, covers PKS / PRB / IRC), Webb Tower, University Gateway, Pardee Tower, New North, Fluor Tower, Cardinal Gardens, Century Apartments
+- Landmarks: Tommy Trojan, Lyon Center, Leavey, Doheny, USC Village / McCarthy, Ronald Tutor, Annenberg, Watt Hall, Bovard, JFF (Fertitta / Fertitta Café), THH (Taper Hall), DMC / VKC / CPA (same building, renamed; "Dr. Joseph Medicine Crow Center for International and Public Affairs", formerly Von KleinSmid Center, PDF code CPA)
 - Anchors: UPC, HSC, Frat Row / 28th St, Jefferson corridor, Figueroa
 - Neighborhoods: K town, DTLA, Arcadia, San Gabriel, Santa Monica, Hollywood, Rowland Heights
 - Transit: Union Station, LAX
+
+**Alias sourcing**: cross-reference the publicly downloadable USC Concept3D PDF
+(`https://assets.concept3d.com/assets/1928/21004_2021_2D_Letter_Map.pdf`) for
+canonical names and grid refs. For each alias, resolve lat/lng via Google
+Geocoding with `"{canonical_name} USC, Los Angeles"` at alias-table creation
+time, cached forever. The PDF is dated 2021-06, so spot-check for post-2021
+renames (the DMC/VKC/CPA case was caught this way). When the founder flags a
+new common student-used alias, add it with one Google Geocoding call and
+commit the new entry.
 
 Entry shape:
 
@@ -128,12 +140,18 @@ canonical and variants. Input sets are small enough that this is fine.
 ## Geocode fallback
 
 On alias miss:
-1. Call Google Geocoding API with `"${input}, Los Angeles, CA"`.
-2. If the result sits within the LA area bounding box (34.00 to 34.35 N,
+1. **Fail closed for short uppercase acronyms** before calling the geocoder.
+   If the input matches `^[A-Z]{2,5}$` (e.g. "MRF", "KAP", "JFF"), do NOT
+   geocode, return `need_location`. Short acronyms geocode to random LA
+   businesses that share letters (e.g. "MRF" might resolve to some random
+   storefront in DTLA) and we have no way to verify. Unknown USC-internal
+   acronyms belong in the alias table, not in Google's index.
+2. Call Google Geocoding API with `"${input}, Los Angeles, CA"`.
+3. If the result sits within the LA area bounding box (34.00 to 34.35 N,
    -118.70 to -118.00 W), cache forever and return.
-3. If the result is outside LA area, return `need_location`. Do not follow a
+4. If the result is outside LA area, return `need_location`. Do not follow a
    geocoder to Boston just because it found a street with the same name.
-4. Both hits and misses are cached. Misses cached shorter (1 day) so we retry
+5. Both hits and misses are cached. Misses cached shorter (1 day) so we retry
    eventually.
 
 ## Caching
@@ -155,15 +173,20 @@ Google Maps Platform gives us $200 monthly free credit. At current BIA traffic
 |---|---|---|---|
 | Geocoding | $5 / 1000 | 100 (most aliases cached forever) | ~$0.50 |
 | Places Nearby | $32 / 1000 | 3000 | ~$96 |
-| Distance Matrix | $5 / 1000 elements | 15000 elements | ~$75 |
+| Distance Matrix | $5 / 1000 elements | 15000 elements (5 per call × 3000 calls) | ~$75 |
 | Total | | | ~$172 |
 
-Within free credit. Alert at $150 actual spend on the Google Cloud billing
-console so we see the approach to cliff before hitting it.
+Within free credit, assuming `find_places_near` caps candidates at 5 per call
+(see architecture step 4). If the cap ever moves to 10 the Distance Matrix
+element count doubles and the monthly projection lands around $250, over the
+free credit ceiling. The 5-candidate cap is load-bearing.
+
+Alert at $150 actual spend on the Google Cloud billing console so we see the
+approach to cliff before hitting it.
 
 ## Error handling
 
-Four distinct error paths, all surface as tool output, never as exceptions:
+Five distinct error paths, all surface as tool output, never as exceptions:
 
 1. `GOOGLE_MAPS_API_KEY` missing: tools return `{ error: "geo_disabled" }` and
    the sub agent falls back to `campus_knowledge` prose retrieval. One startup
@@ -175,18 +198,44 @@ Four distinct error paths, all surface as tool output, never as exceptions:
    抽风了" and falls back to prose.
 4. Billing block or rate limit: `{ error: "geo_unavailable" }` with a dedicated
    log event `google_maps_billing_blocked` so ops can rotate the key.
+5. **Per-student budget exceeded**: `{ error: "geo_budget_exceeded" }`. George
+   falls back to prose. See Per-student rate limit below.
 
-All four error bodies are small so they do not bloat context through the in
+All five error bodies are small so they do not bloat context through the in
 turn tool result loop. `truncateToolResult` (the 1500 char cap already in
 `context-window.ts`) applies.
 
+## Per-student rate limit
+
+The existing `checkRateLimit` in `adapters/rate-limiter.js` caps messages per
+student, but a single message can trigger up to 12 sub-agent iterations,
+each of which may call a geo tool. One student hammering "is X walkable"
+for an hour could burn ~$50 of Google spend without touching the
+per-message limit.
+
+Add a second limiter: per-student per-hour cap on combined geo-tool calls
+(`travel_time` + `find_places_near`). Default 30 calls / hour / student.
+
+Implementation: a small token-bucket keyed on `studentId`, checked inside
+`places.ts` before each Google call. If over budget, return
+`{ error: "geo_budget_exceeded" }` without hitting Google. Log the breach
+once per student per hour (`geo_budget_exceeded_for_student`) so we can
+spot abuse. Bucket is in-process memory; fine at current scale, move to
+Redis if we run multiple agent instances.
+
 ## Prompt changes
 
-`VOICE_CALIBRATION.campus` gets three new hard rules:
+`VOICE_CALIBRATION.campus` gets four new hard rules:
 - Never claim walking distance without calling `travel_time` first. K town,
   626, DTLA are drive only from USC.
 - If origin is not clear from conversation, ask "你在哪边 / 你住哪" before
   calling geo tools. Never default to UPC.
+- **Anaphora on origin**: if the student says "这里 / 这边 / here / my place"
+  and there is no prior location anchor in the conversation, treat origin
+  as unknown and ask. Do not silently assume UPC or the last sender-profile
+  field. If there IS a prior anchor within the last few turns (e.g. student
+  said "我住 Parkside" two messages ago), resolve "here" to that anchor and
+  proceed.
 - After 8pm, recommendations inside the DPS safety circle (8pm to 3am free
   share Lyft zone) get priority. Nightlife outside the zone gets a Lyft nudge.
 
