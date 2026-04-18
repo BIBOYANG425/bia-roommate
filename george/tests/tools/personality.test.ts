@@ -31,11 +31,11 @@ describe('George personality — BIA senior voice', () => {
   })
 
   it('includes sub-agent-specific voice calibration', () => {
-    expect(getSubAgentPrompt('event')).toContain('Voice calibration — Events')
-    expect(getSubAgentPrompt('course')).toContain('Voice calibration — Courses')
-    expect(getSubAgentPrompt('housing')).toContain('Voice calibration — Housing')
-    expect(getSubAgentPrompt('social')).toContain('Voice calibration — Social')
-    expect(getSubAgentPrompt('campus')).toContain('Voice calibration — Campus')
+    expect(getSubAgentPrompt('event')).toContain('Voice calibration: Events')
+    expect(getSubAgentPrompt('course')).toContain('Voice calibration: Courses')
+    expect(getSubAgentPrompt('housing')).toContain('Voice calibration: Housing')
+    expect(getSubAgentPrompt('social')).toContain('Voice calibration: Social')
+    expect(getSubAgentPrompt('campus')).toContain('Voice calibration: Campus')
   })
 
   it('injects the BIA lore pack (neighborhoods, signature phrases, pain points)', () => {
@@ -69,7 +69,7 @@ describe('getSubAgentPromptParts — static / dynamic split', () => {
   it('returns both parts and static includes the cacheable blocks', () => {
     const { static: staticPart, dynamic } = getSubAgentPromptParts('housing')
     expect(staticPart).toContain('George')
-    expect(staticPart).toContain('Voice calibration — Housing')
+    expect(staticPart).toContain('Voice calibration: Housing')
     expect(staticPart).toContain('Koreatown')
     expect(dynamic).toContain('Current context')
   })
