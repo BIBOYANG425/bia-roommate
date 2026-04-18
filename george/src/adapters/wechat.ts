@@ -123,7 +123,16 @@ export function createWeChatRouter(): Router {
       }
 
       const response = await processMessage(incoming)
-      await sendResponse(msg.fromUser, response)
+      // null response = filtered (automated-message / meeting-invite noise).
+      // Silently drop; no reply back to the sender.
+      if (response !== null) {
+        const { splitIntoMessages, sleep, INTER_MESSAGE_DELAY_MS } = await import('./split-response.js')
+        const parts = splitIntoMessages(response)
+        for (let i = 0; i < parts.length; i++) {
+          if (i > 0) await sleep(INTER_MESSAGE_DELAY_MS)
+          await sendResponse(msg.fromUser, parts[i])
+        }
+      }
     } catch (err) {
       log('error', 'wechat_handler_error', { error: (err as Error).message })
     }

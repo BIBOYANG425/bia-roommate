@@ -3,13 +3,23 @@
 // Non-text messages return playful refusals from NON_TEXT_RESPONSES. Link codes, onboarding
 // state, memory loading, and async memory extraction all dispatch from here.
 //
-// Header last reviewed: 2026-04-16
+// Context-window management lives in agent/context-window.ts: history is trimmed to a token
+// budget, dropped-oldest messages are summarized into the dynamic system prompt, and each
+// tool result is capped to prevent in-turn bloat.
+//
+// Header last reviewed: 2026-04-17
 
 import Anthropic from '@anthropic-ai/sdk'
 import { getClaudeClient } from './llm-providers.js'
 import { classifyIntent } from './intent-classifier.js'
 import { getSubAgentPromptParts, type SubAgent } from './personality.js'
 import { getToolsByNames, executeTool } from './tool-registry.js'
+import {
+  trimHistoryToBudget,
+  summarizeDroppedHistory,
+  truncateToolResult,
+  estimateHistoryTokens,
+} from './context-window.js'
 import { getCatalogFor } from '../skills/index.js'
 import { loadRecentMessages, saveMessage } from '../db/messages.js'
 import {
@@ -23,6 +33,7 @@ import {
 } from '../db/students.js'
 import { extractMemories } from '../jobs/memory-extraction.js'
 import { checkInjection, INJECTION_REJECTIONS } from '../security/injection-filter.js'
+import { checkAutomatedNoise } from '../security/automated-message-filter.js'
 import { checkRateLimit, RATE_LIMIT_RESPONSE } from '../adapters/rate-limiter.js'
 import { log } from '../observability/logger.js'
 import type { IncomingMessage } from '../adapters/types.js'
@@ -66,13 +77,21 @@ function detectSafetyRefusal(response: string): string | null {
   return null
 }
 
-export async function processMessage(msg: IncomingMessage): Promise<string> {
+export async function processMessage(msg: IncomingMessage): Promise<string | null> {
   const start = Date.now()
 
   try {
     if (msg.msgType && msg.msgType !== 'text') {
       return NON_TEXT_RESPONSES[msg.msgType] || NON_TEXT_RESPONSES.sticker
     }
+
+    // Third-party automation (meeting invites, OTPs, receipts, marketing blasts)
+    // sometimes leaks into George's inbox via forwarded iMessages or mis-routed
+    // WeChat OA events. Drop them silently — no reply, no student creation, no
+    // onboarding flow. Runs before resolveStudentId so we don't create a row
+    // for a spam sender.
+    const noiseCheck = checkAutomatedNoise(msg.text, { userId: msg.userId, platform: msg.platform })
+    if (noiseCheck.isNoise) return null
 
     const studentId = await resolveStudentId(msg.userId, msg.platform)
 
@@ -241,10 +260,29 @@ async function runSubAgent(
   const toolNames = SUB_AGENT_TOOLS[agent]
   const tools = getToolsByNames(toolNames)
 
-  // History window: onboarding needs full context for continuity across the 4-field
-  // profile flow. Non-onboarding turns over-fetch — 12 recent messages is plenty
-  // for sub-agent intents while keeping input tokens lean.
-  const historyWindow = context.isOnboarding ? history : history.slice(-12)
+  // History window: trim to a token budget, keeping the most recent turns.
+  // Onboarding skips trim-by-budget because the 4-field flow needs every prior
+  // turn for continuity, and it's a short flow (typically < 10 messages).
+  const { kept: historyWindow, dropped } = context.isOnboarding
+    ? { kept: history, dropped: [] as Anthropic.Messages.MessageParam[] }
+    : trimHistoryToBudget(history)
+
+  // When older turns were dropped, summarize them into a short prose block so
+  // George retains facts/preferences the student shared earlier. Injected into
+  // the DYNAMIC system suffix — never into the cached static prefix.
+  let earlierContext: string | null = null
+  if (dropped.length > 0) {
+    earlierContext = await summarizeDroppedHistory(dropped)
+    log('info', 'history_trimmed', {
+      kept: historyWindow.length,
+      dropped: dropped.length,
+      summarized: earlierContext !== null,
+      keptTokensApprox: estimateHistoryTokens(historyWindow),
+    })
+  }
+  const effectiveSuffix = earlierContext
+    ? `${dynamicSuffix}\n\n## EARLIER CONTEXT (prior conversation, summarized)\n${earlierContext}`
+    : dynamicSuffix
 
   const messages: Anthropic.Messages.MessageParam[] = [
     ...historyWindow,
@@ -263,7 +301,7 @@ async function runSubAgent(
       temperature: 0.8,
       system: [
         { type: 'text', text: staticPrefix, cache_control: { type: 'ephemeral' } },
-        { type: 'text', text: dynamicSuffix },
+        { type: 'text', text: effectiveSuffix },
       ],
       tools: tools.length > 0 ? tools : undefined,
       messages,
@@ -285,7 +323,8 @@ async function runSubAgent(
         input.student_id = context.studentId
         if (!input.platform) input.platform = context.platform
 
-        const result = await executeTool(block.name, input)
+        const rawResult = await executeTool(block.name, input)
+        const result = truncateToolResult(rawResult)
         toolResults.push({
           type: 'tool_result',
           tool_use_id: block.id,
