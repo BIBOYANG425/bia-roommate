@@ -1,23 +1,33 @@
 import { supabase } from './client.js'
 import Anthropic from '@anthropic-ai/sdk'
 
+/**
+ * Load the most recent `limit` messages for a student, in chronological order.
+ *
+ * Ascending-ordered limits only return the OLDEST N rows — once a student
+ * passes `limit` lifetime messages the agent would silently freeze on the
+ * opening conversation. We fetch newest-first, then reverse to chronological
+ * for the model's message array.
+ */
 export async function loadRecentMessages(
   studentId: string,
-  limit = 20,
+  limit = 40,
 ): Promise<Anthropic.Messages.MessageParam[]> {
   const { data } = await supabase
     .from('messages')
     .select('role, content')
     .eq('student_id', studentId)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
     .limit(limit)
 
   if (!data || data.length === 0) return []
 
-  return data.map((m) => ({
-    role: m.role as 'user' | 'assistant',
-    content: m.content,
-  }))
+  return data
+    .map((m) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    }))
+    .reverse()
 }
 
 export async function saveMessage(params: {

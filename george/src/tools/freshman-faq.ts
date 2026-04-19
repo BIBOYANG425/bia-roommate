@@ -1,5 +1,5 @@
 import { registerTool } from '../agent/tool-registry.js'
-import { supabase } from '../db/client.js'
+import { searchWithFallback } from './search-helpers.js'
 
 registerTool(
   'freshman_faq',
@@ -18,13 +18,17 @@ registerTool(
     const query = input.query as string
     const category = input.category as string | undefined
 
-    let q = supabase.from('freshman_faq').select('question, answer, category').limit(5)
+    const data = await searchWithFallback<{
+      question: string
+      answer: string
+      category: string
+    }>('freshman_faq', 'question, answer, category', query, {
+      ftsColumn: 'answer',
+      ilikeColumns: ['question', 'answer'],
+      applyFilters: (q) => (category ? q.eq('category', category) : q),
+    })
 
-    if (category) q = q.eq('category', category)
-    q = q.textSearch('answer', query.split(/\s+/).join(' & '), { type: 'plain' })
-
-    const { data, error } = await q
-    if (error || !data || data.length === 0) {
+    if (!data || data.length === 0) {
       return 'No FAQ entries found for that query.'
     }
     return JSON.stringify(data, null, 2)

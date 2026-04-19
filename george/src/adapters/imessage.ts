@@ -9,6 +9,7 @@ import { IMessageSDK } from '@photon-ai/imessage-kit'
 import { config } from '../config.js'
 import { processMessage } from '../agent/george.js'
 import { log } from '../observability/logger.js'
+import { splitIntoMessages, sleep, INTER_MESSAGE_DELAY_MS } from './split-response.js'
 import type { IncomingMessage } from './types.js'
 
 let sdk: IMessageSDK | null = null
@@ -42,7 +43,15 @@ export async function startIMessageAdapter() {
 
         try {
           const response = await processMessage(incoming)
-          await sdk!.send(msg.sender, response)
+          // null response = filtered (automated-message / meeting-invite noise).
+          // Silently drop; no reply back to the sender.
+          if (response !== null) {
+            const parts = splitIntoMessages(response)
+            for (let i = 0; i < parts.length; i++) {
+              if (i > 0) await sleep(INTER_MESSAGE_DELAY_MS)
+              await sdk!.send(msg.sender, parts[i])
+            }
+          }
         } catch (err) {
           log('error', 'imessage_error', { error: (err as Error).message })
           await sdk!

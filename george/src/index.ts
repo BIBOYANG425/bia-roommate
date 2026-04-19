@@ -50,7 +50,7 @@ app.use(express.json())
 // ==========================================
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', character: 'George Tirebiter 👻🐕', tools: 18 })
+  res.json({ status: 'ok', character: 'George — BIA 学长', tools: 18 })
 })
 
 app.get('/stats', async (_req, res) => {
@@ -188,15 +188,15 @@ async function startServer() {
       proactive: config.proactive.enabled,
       rolloutPct: config.proactive.rolloutPct,
     })
-    console.log(`\n🐕 George Tirebiter is haunting port ${config.port}...`)
-    console.log(`👻 WeChat: http://localhost:${config.port}/wechat`)
-    console.log(`📊 Stats: http://localhost:${config.port}/stats`)
-    console.log(`🔧 Admin: POST /admin/scrape-instagram, /admin/scrape-usc\n`)
+    console.log(`\nGeorge (BIA 学长) listening on port ${config.port}`)
+    console.log(`  WeChat : http://localhost:${config.port}/wechat`)
+    console.log(`  Stats  : http://localhost:${config.port}/stats`)
+    console.log(`  Admin  : POST /admin/scrape-instagram, /admin/scrape-usc\n`)
   })
 
   startIMessageAdapter().catch((err) => {
     log('warn', 'imessage_start_failed', { error: err.message })
-    console.warn('⚠️  iMessage adapter failed to start — George will only haunt WeChat.')
+    console.warn('iMessage adapter failed to start, falling back to WeChat only.')
   })
 }
 
