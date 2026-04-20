@@ -21,13 +21,11 @@ interface Props {
 const BUCKETS: {
   key: string;
   label: string;
-  tone: "active" | "good" | "bad";
   test: (s: ParcelStatus) => boolean;
 }[] = [
   {
     key: "active",
     label: "进行中",
-    tone: "active",
     test: (s) =>
       s === "expected" ||
       s === "received_cn" ||
@@ -37,27 +35,14 @@ const BUCKETS: {
   {
     key: "delivered",
     label: "已完成",
-    tone: "good",
     test: (s) => s === "picked_up",
   },
   {
     key: "issues",
     label: "问题件",
-    tone: "bad",
     test: (s) => s === "lost" || s === "returned" || s === "disputed",
   },
 ];
-
-const TONE_BG: Record<"active" | "good" | "bad", string> = {
-  active: "var(--gold)",
-  good: "#1c6f3d",
-  bad: "var(--cardinal)",
-};
-const TONE_FG: Record<"active" | "good" | "bad", string> = {
-  active: "var(--black)",
-  good: "white",
-  bad: "white",
-};
 
 const PACK_OPEN = new Set(["pending", "contacted", "approved"]);
 

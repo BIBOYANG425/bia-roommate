@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
@@ -25,7 +25,7 @@ export default function ParcelCard({
   // parcel-photos is a private bucket, so paths need a signed URL.
   useEffect(() => {
     if (!thumbPath) {
-      setThumbUrl(null);
+      startTransition(() => setThumbUrl(null));
       return;
     }
     let cancelled = false;

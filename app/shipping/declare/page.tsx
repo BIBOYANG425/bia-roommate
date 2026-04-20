@@ -101,11 +101,15 @@ function DeclareParcelContent() {
     })();
   }, [editId, user]);
 
-  // Clean up blob URLs on unmount. Ref-mirrored so the effect captures the
-  // latest array (previous version captured the empty initial value and
-  // leaked any blobs created after mount).
+  // Clean up blob URLs on unmount. Ref-mirrored so the unmount effect
+  // captures the latest array (the naive empty-deps effect would capture
+  // the initial empty value and leak any blobs created after mount).
+  // The mirror happens inside a dep-less effect to satisfy
+  // react-hooks/refs (no ref writes during render).
   const photoPreviewsRef = useRef(photoPreviews);
-  photoPreviewsRef.current = photoPreviews;
+  useEffect(() => {
+    photoPreviewsRef.current = photoPreviews;
+  });
   useEffect(() => {
     return () => photoPreviewsRef.current.forEach(URL.revokeObjectURL);
   }, []);

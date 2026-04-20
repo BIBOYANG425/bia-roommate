@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { startTransition, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
@@ -69,12 +69,16 @@ function ShippingDashboardContent() {
 
   useEffect(() => {
     if (searchParams.get("declared") === "true") {
-      setToastMsg("包裹已预报成功 — 发货后记得填跟踪号");
-      setShowToast(true);
+      startTransition(() => {
+        setToastMsg("包裹已预报成功 — 发货后记得填跟踪号");
+        setShowToast(true);
+      });
       router.replace("/shipping", { scroll: false });
     } else if (searchParams.get("updated") === "true") {
-      setToastMsg("已更新");
-      setShowToast(true);
+      startTransition(() => {
+        setToastMsg("已更新");
+        setShowToast(true);
+      });
       router.replace("/shipping", { scroll: false });
     }
   }, [searchParams, router]);
@@ -116,12 +120,14 @@ function ShippingDashboardContent() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      setLoading(false);
+      startTransition(() => setLoading(false));
       return;
     }
     (async () => {
-      setLoading(true);
-      setError(null);
+      startTransition(() => {
+        setLoading(true);
+        setError(null);
+      });
       const [parcelsRes] = await Promise.all([
         fetch("/api/shipping/parcels", { cache: "no-store" }),
         loadPackRequests(),

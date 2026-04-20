@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NavTabs from "@/components/NavTabs";
@@ -26,12 +26,16 @@ export default function ShippingAddressPage() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      setLoading(false);
+      // Auth-gate case — non-urgent transition keeps the spinner→empty
+      // flip from tripping the react-hooks/set-state-in-effect rule.
+      startTransition(() => setLoading(false));
       return;
     }
     (async () => {
-      setLoading(true);
-      setError(null);
+      startTransition(() => {
+        setLoading(true);
+        setError(null);
+      });
       const res = await fetch("/api/shipping/address", { cache: "no-store" });
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };

@@ -18,8 +18,8 @@ export default function AdminShipmentsPage() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // load() is used for post-create refresh from event handlers.
   const load = async () => {
-    setLoading(true);
     const res = await fetch("/api/admin/shipping/shipments", {
       cache: "no-store",
     });
@@ -27,8 +27,22 @@ export default function AdminShipmentsPage() {
     setLoading(false);
   };
 
+  // Initial fetch — inline with cancelled flag keeps the effect body free
+  // of any synchronously-reachable setState (the lint rule traces through
+  // function calls, so a bare `load()` trips it).
   useEffect(() => {
-    load();
+    let cancelled = false;
+    (async () => {
+      const res = await fetch("/api/admin/shipping/shipments", {
+        cache: "no-store",
+      });
+      if (cancelled) return;
+      if (res.ok) setShipments((await res.json()) as Shipment[]);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const createShipment = async () => {
