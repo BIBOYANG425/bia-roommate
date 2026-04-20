@@ -22,14 +22,33 @@ export async function resolveStudentId(userId: string, platform: 'wechat' | 'ime
 
   if (data) return data.id
 
+  // Race-safe create: two concurrent messages from the same new user both
+  // miss the SELECT above and both try to INSERT. The second one hits the
+  // unique constraint on the platform id column, the insert returns null,
+  // and the old `newStudent!.id` crashed with TypeError. On insert failure
+  // we re-SELECT since the other request presumably created the row.
   const referralCode = Math.random().toString(36).slice(2, 8).toUpperCase()
-  const { data: newStudent } = await supabase
+  const { data: newStudent, error: insertError } = await supabase
     .from('students')
     .insert({ [column]: userId, referral_code: referralCode })
     .select('id')
     .single()
 
-  return newStudent!.id
+  if (newStudent) return newStudent.id
+
+  const { data: recovered } = await supabase
+    .from('students')
+    .select('id')
+    .eq(column, userId)
+    .single()
+
+  if (recovered) return recovered.id
+
+  throw new Error(
+    `resolveStudentId failed for ${platform}:${userId.slice(0, 8)}…: ${
+      insertError?.message ?? 'unknown insert error'
+    }`,
+  )
 }
 
 export async function generateLinkCode(studentId: string): Promise<string> {
