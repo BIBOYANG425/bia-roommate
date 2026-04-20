@@ -7,10 +7,15 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { PARCEL_CATEGORY_OPTIONS, CN_CARRIER_OPTIONS } from "@/lib/types";
+import {
+  PARCEL_CATEGORY_OPTIONS,
+  CN_CARRIER_OPTIONS,
+  SHIPPING_METHOD_VALUES,
+} from "@/lib/types";
 
 const CATEGORY_SET = new Set<string>(PARCEL_CATEGORY_OPTIONS);
 const CARRIER_SET = new Set<string>(CN_CARRIER_OPTIONS);
+const METHOD_SET = new Set<string>(SHIPPING_METHOD_VALUES);
 
 export async function GET() {
   const supabase = await createServerSupabaseClient();
@@ -120,6 +125,17 @@ export async function POST(request: Request) {
   const userNotes =
     typeof body.user_notes === "string" ? body.user_notes.trim() : "";
 
+  const shippingMethod =
+    typeof body.shipping_method === "string"
+      ? body.shipping_method.trim()
+      : "";
+  if (shippingMethod && !METHOD_SET.has(shippingMethod)) {
+    return NextResponse.json(
+      { error: "非法 shipping_method" },
+      { status: 400 },
+    );
+  }
+
   // Bridge: ensure the web-app user has a students row + member_id. The
   // parcel trigger will pick up member_id from students; we also pass
   // student_id explicitly so it doesn't go down the orphan path.
@@ -160,6 +176,7 @@ export async function POST(request: Request) {
       declared_value_cny: declaredValue,
       photos,
       user_notes: userNotes || null,
+      shipping_method: shippingMethod || null,
       warehouse_id: warehouse?.id ?? null,
       // member_id is populated by the ensure_student_member_id trigger
       member_id: "",

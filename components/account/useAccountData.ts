@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
-import { RoommateProfile, SubletListing } from "@/lib/types";
+import {
+  RoommateProfile,
+  SubletListing,
+  type Parcel,
+  type PackRequestWithParcels,
+} from "@/lib/types";
 import type { SavedSchedule } from "./SavedSchedulesList";
 import type { Comment } from "./CommentsList";
 
@@ -18,6 +23,10 @@ export function useAccountData() {
   const [likedProfiles, setLikedProfiles] = useState<RoommateProfile[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [sublets, setSublets] = useState<SubletListing[]>([]);
+  const [parcels, setParcels] = useState<Parcel[]>([]);
+  const [packRequests, setPackRequests] = useState<PackRequestWithParcels[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -31,8 +40,15 @@ export function useAccountData() {
     async function fetchAll() {
       setLoading(true);
       try {
-        const [profileRes, schedulesRes, likesRes, commentsRes, subletsRes] =
-          await Promise.all([
+        const [
+          profileRes,
+          schedulesRes,
+          likesRes,
+          commentsRes,
+          subletsRes,
+          parcelsRes,
+          packRequestsRes,
+        ] = await Promise.all([
             supabase
               .from("roommate_profiles")
               .select("*")
@@ -58,11 +74,24 @@ export function useAccountData() {
               .select("id, title, apartment_name, rent, created_at")
               .eq("user_id", user!.id)
               .order("created_at", { ascending: false }),
+            // Shipping endpoints handle auth + RLS + signed URLs — simpler
+            // than re-implementing here.
+            fetch("/api/shipping/parcels", { cache: "no-store" }),
+            fetch("/api/shipping/pack-requests", { cache: "no-store" }),
           ]);
 
         setProfile((profileRes.data as RoommateProfile | null) || null);
         setSchedules((schedulesRes.data as SavedSchedule[]) || []);
         setSublets((subletsRes.data as SubletListing[]) || []);
+
+        if (parcelsRes.ok) {
+          setParcels((await parcelsRes.json()) as Parcel[]);
+        }
+        if (packRequestsRes.ok) {
+          setPackRequests(
+            (await packRequestsRes.json()) as PackRequestWithParcels[],
+          );
+        }
 
         // Fetch liked profiles and comment profile names in parallel
         const likeIds = likesRes.data?.map(
@@ -185,6 +214,8 @@ export function useAccountData() {
     likedProfiles,
     comments,
     sublets,
+    parcels,
+    packRequests,
     loading,
     loadError,
     handleDeleteComment,

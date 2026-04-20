@@ -5,10 +5,16 @@
 
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { PARCEL_CATEGORY_OPTIONS, CN_CARRIER_OPTIONS } from "@/lib/types";
+import { checkRateLimit } from "@/lib/rate-limit";
+import {
+  PARCEL_CATEGORY_OPTIONS,
+  CN_CARRIER_OPTIONS,
+  SHIPPING_METHOD_VALUES,
+} from "@/lib/types";
 
 const CATEGORY_SET = new Set<string>(PARCEL_CATEGORY_OPTIONS);
 const CARRIER_SET = new Set<string>(CN_CARRIER_OPTIONS);
+const METHOD_SET = new Set<string>(SHIPPING_METHOD_VALUES);
 
 async function requireUser() {
   const supabase = await createServerSupabaseClient();
@@ -70,6 +76,19 @@ export async function PATCH(
   const ctx = await requireUser();
   if (ctx.error) return ctx.error;
   const { supabase, user } = ctx;
+
+  // 30 edits per user per hour — generous for a legitimate re-entry of
+  // tracking numbers / photo adjustments, blunt enough to stop loops.
+  const rl = checkRateLimit(`parcel:patch:${user.id}`, {
+    limit: 30,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "修改过于频繁，请稍后再试。" },
+      { status: 429 },
+    );
+  }
 
   // Enforce "expected only" at the API layer (RLS also enforces this).
   const { data: existing, error: fetchErr } = await supabase
@@ -146,6 +165,20 @@ export async function PATCH(
   if (body.user_notes !== undefined) {
     const v = typeof body.user_notes === "string" ? body.user_notes.trim() : "";
     patch.user_notes = v || null;
+  }
+
+  if (body.shipping_method !== undefined) {
+    const v =
+      typeof body.shipping_method === "string"
+        ? body.shipping_method.trim()
+        : "";
+    if (v && !METHOD_SET.has(v)) {
+      return NextResponse.json(
+        { error: "非法 shipping_method" },
+        { status: 400 },
+      );
+    }
+    patch.shipping_method = v || null;
   }
 
   if (Object.keys(patch).length === 0) {

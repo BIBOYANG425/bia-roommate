@@ -9,6 +9,8 @@ import {
   NOISE_OPTIONS,
   MUSIC_OPTIONS,
   STUDY_OPTIONS,
+  CONTACT_PLATFORM_META,
+  type ContactChannel,
 } from "@/lib/types";
 import {
   getLastChar,
@@ -244,8 +246,13 @@ export default function ProfileModal({
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Contact — prominent with copy */}
-          <CopyContactBox contact={profile.contact} gold={gold} />
+          {/* Contact — prominent with copy. Prefer structured channels; fall
+              back to the legacy single-string `contact` for old rows. */}
+          {profile.contact_channels && profile.contact_channels.length > 0 ? (
+            <ContactChannelList channels={profile.contact_channels} gold={gold} />
+          ) : (
+            <CopyContactBox contact={profile.contact} gold={gold} />
+          )}
 
           {/* Tags */}
           {profile.tags && profile.tags.length > 0 && (
@@ -386,5 +393,73 @@ function CopyContactBox({ contact, gold }: { contact: string; gold: string }) {
         {copied ? "COPIED!" : "COPY"}
       </button>
     </div>
+  );
+}
+
+function ContactChannelList({
+  channels,
+  gold,
+}: {
+  channels: ContactChannel[];
+  gold: string;
+}) {
+  return (
+    <div
+      className="p-4 border-[3px] border-[var(--black)]"
+      style={{ background: gold }}
+    >
+      <p
+        className="text-[10px] uppercase tracking-wider font-display mb-2"
+        style={{ color: "var(--black)" }}
+      >
+        CONTACT
+      </p>
+      <ul className="space-y-2">
+        {channels.map((c, i) => (
+          <ContactChannelRow key={i} channel={c} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ContactChannelRow({ channel }: { channel: ContactChannel }) {
+  const [copied, setCopied] = useState(false);
+  const meta =
+    CONTACT_PLATFORM_META[channel.platform] ?? CONTACT_PLATFORM_META.other;
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(channel.value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [channel.value]);
+
+  return (
+    <li className="flex items-center gap-3">
+      <span className="text-xl shrink-0" aria-hidden>
+        {meta.icon}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p
+          className="text-[10px] uppercase tracking-wider font-display"
+          style={{ color: "var(--black)", opacity: 0.7 }}
+        >
+          {meta.label}
+        </p>
+        <p
+          className="font-display text-base truncate"
+          style={{ color: "var(--black)" }}
+        >
+          {channel.value}
+        </p>
+      </div>
+      <button
+        onClick={handleCopy}
+        className="font-display text-[10px] tracking-wider px-3 py-1.5 border-[2px] border-[var(--black)] hover:bg-white transition-colors shrink-0"
+        style={{ background: copied ? "white" : "transparent" }}
+      >
+        {copied ? "COPIED!" : "COPY"}
+      </button>
+    </li>
   );
 }

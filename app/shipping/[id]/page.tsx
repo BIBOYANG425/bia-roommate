@@ -7,11 +7,20 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import ParcelStatusPill from "@/components/ParcelStatusPill";
+import PickupInstructionsCard from "@/components/PickupInstructionsCard";
+import ShippingContactsCard from "@/components/ShippingContactsCard";
+import StatusProgress from "@/components/StatusProgress";
+import {
+  PARCEL_STEPS,
+  PARCEL_BRANCH_STATUSES,
+} from "@/lib/admin/parcel-status";
 import {
   PARCEL_STATUS_META,
+  SHIPPING_METHOD_META,
   type Parcel,
   type ParcelEvent,
   type Shipment,
+  type ShippingContact,
 } from "@/lib/types";
 import { relativeTime } from "@/lib/utils";
 
@@ -24,9 +33,20 @@ export default function ParcelDetailPage() {
   const [events, setEvents] = useState<ParcelEvent[]>([]);
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [contacts, setContacts] = useState<ShippingContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/shipping/routes");
+      if (res.ok) {
+        const data = (await res.json()) as { contacts: ShippingContact[] };
+        setContacts(data.contacts ?? []);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -175,6 +195,35 @@ export default function ParcelDetailPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+        {/* Status stepper */}
+        <section
+          className="brutal-container p-5"
+          style={{ background: "var(--cream)" }}
+        >
+          <h2
+            className="font-display text-lg tracking-[0.15em] mb-3"
+            style={{ color: "var(--black)" }}
+          >
+            PROGRESS
+          </h2>
+          <StatusProgress
+            steps={PARCEL_STEPS.map((k) => ({
+              key: k,
+              label: PARCEL_STATUS_META[k].label,
+            }))}
+            current={parcel.status}
+            branches={PARCEL_BRANCH_STATUSES.map((k) => ({
+              key: k,
+              label: PARCEL_STATUS_META[k].label,
+            }))}
+          />
+        </section>
+
+        {/* Pickup instructions (arrived_us only) */}
+        {parcel.status === "arrived_us" && (
+          <PickupInstructionsCard shipment={shipment} />
+        )}
+
         {/* Photos */}
         {photoUrls.length > 0 && (
           <section
@@ -215,6 +264,12 @@ export default function ParcelDetailPage() {
             DETAILS
           </h2>
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-3 text-sm">
+            {parcel.shipping_method && (
+              <Fact
+                label="运输方式"
+                value={`${SHIPPING_METHOD_META[parcel.shipping_method].icon} ${SHIPPING_METHOD_META[parcel.shipping_method].label}`}
+              />
+            )}
             {parcel.category && (
               <Fact label="分类" value={parcel.category} />
             )}
@@ -390,6 +445,8 @@ export default function ParcelDetailPage() {
             返回列表
           </Link>
         </section>
+
+        {contacts.length > 0 && <ShippingContactsCard contacts={contacts} />}
       </div>
     </main>
   );

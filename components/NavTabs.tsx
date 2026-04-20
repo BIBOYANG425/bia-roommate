@@ -19,7 +19,7 @@ const TABS = [
 
 export default function NavTabs() {
   const pathname = usePathname();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, isAdmin, signOut } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
 
   return (
@@ -71,6 +71,19 @@ export default function NavTabs() {
 
         {/* Auth indicator — right side */}
         <div className="ml-auto px-4 flex items-center gap-2 sm:gap-3">
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="font-display text-[11px] tracking-wider px-3 py-1 border-[2px] border-[var(--black)] transition-colors hover:bg-[var(--cardinal)] hover:text-white whitespace-nowrap"
+              style={
+                pathname.startsWith("/admin")
+                  ? { background: "var(--cardinal)", color: "white" }
+                  : { color: "var(--black)" }
+              }
+            >
+              ADMIN
+            </Link>
+          )}
           {!loading &&
             (user ? (
               <>

@@ -1,3 +1,69 @@
+/* ── Contact channels (WeChat / Instagram / etc.) ── */
+
+export const CONTACT_PLATFORM_VALUES = [
+  "wechat",
+  "instagram",
+  "xiaohongshu",
+  "weibo",
+  "email",
+  "phone",
+  "other",
+] as const;
+export type ContactPlatform = (typeof CONTACT_PLATFORM_VALUES)[number];
+
+export const CONTACT_PLATFORM_META: Record<
+  ContactPlatform,
+  { label: string; labelEn: string; icon: string; placeholder: string }
+> = {
+  wechat: {
+    label: "微信",
+    labelEn: "WeChat",
+    icon: "💬",
+    placeholder: "微信号",
+  },
+  instagram: {
+    label: "Instagram",
+    labelEn: "Instagram",
+    icon: "📷",
+    placeholder: "@handle",
+  },
+  xiaohongshu: {
+    label: "小红书",
+    labelEn: "Xiaohongshu",
+    icon: "📕",
+    placeholder: "小红书号",
+  },
+  weibo: {
+    label: "微博",
+    labelEn: "Weibo",
+    icon: "🔔",
+    placeholder: "微博昵称",
+  },
+  email: {
+    label: "邮箱",
+    labelEn: "Email",
+    icon: "✉️",
+    placeholder: "you@example.com",
+  },
+  phone: {
+    label: "电话",
+    labelEn: "Phone",
+    icon: "📞",
+    placeholder: "+1 123 456 7890",
+  },
+  other: {
+    label: "其他",
+    labelEn: "Other",
+    icon: "🔗",
+    placeholder: "Discord / Line / Telegram...",
+  },
+};
+
+export interface ContactChannel {
+  platform: ContactPlatform;
+  value: string;
+}
+
 export interface RoommateProfile {
   id: string;
   name: string;
@@ -6,7 +72,10 @@ export interface RoommateProfile {
   major: string | null;
   year: "新生" | "大一" | "大二" | "大三" | "大四" | "研究生" | null;
   enrollment_term: "Spring" | "Fall" | null;
+  /** Legacy single-string contact; kept in sync with first entry of contact_channels. */
   contact: string;
+  /** Structured contact channels; preferred over `contact` for reads. */
+  contact_channels: ContactChannel[];
   sleep_habit: string | null;
   clean_level: "随意" | "一般" | "较整洁" | "超级整洁" | null;
   noise_level: "要绝对安静" | "偏安静" | "无所谓" | "热闹都行" | null;
@@ -154,6 +223,168 @@ export const AMENITY_OPTIONS = [
 
 /* ── Shipping / 集运 (tables: public.parcels, public.shipments, etc.) ── */
 
+export const SHIPPING_METHOD_VALUES = ["sea", "air", "sensitive"] as const;
+export type ShippingMethod = (typeof SHIPPING_METHOD_VALUES)[number];
+
+// Display order for UI surfaces (ScheduleCard, admin list). DB rows may come
+// back in a different order; consumers that care about ordering should sort
+// by this.
+export const SHIPPING_METHOD_ORDER: Record<ShippingMethod, number> = {
+  sea: 0,
+  air: 1,
+  sensitive: 2,
+};
+
+export const SHIPPING_METHOD_META: Record<
+  ShippingMethod,
+  { label: string; labelEn: string; icon: string }
+> = {
+  sea: { label: "海运专线", labelEn: "Sea Freight", icon: "🚢" },
+  air: { label: "空运急件", labelEn: "Air Freight", icon: "✈️" },
+  sensitive: {
+    label: "敏感货专线",
+    labelEn: "Sensitive Freight",
+    icon: "⚡",
+  },
+};
+
+export interface ShippingRoute {
+  id: string;
+  method: ShippingMethod;
+  label: string;
+  price_per_kg_cny: number | null;
+  next_departure_date: string | null;
+  estimated_arrival_date: string | null;
+  transit_days_estimate: number | null;
+  cutoff_note: string | null;
+  notes: string | null;
+  /** Human-readable cadence shown under the countdown (e.g. "每周发车"). */
+  frequency_label: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export const SHIPMENT_REQUEST_STATUS_VALUES = [
+  "pending",
+  "contacted",
+  "scheduled",
+  "declined",
+  "completed",
+] as const;
+export type ShipmentRequestStatus =
+  (typeof SHIPMENT_REQUEST_STATUS_VALUES)[number];
+
+export const SHIPMENT_REQUEST_STATUS_LABELS: Record<
+  ShipmentRequestStatus,
+  string
+> = {
+  pending: "待处理",
+  contacted: "已联系",
+  scheduled: "已排期",
+  declined: "已拒绝",
+  completed: "已完成",
+};
+
+/** Public history entry for /api/shipping/history — one row per closed batch. */
+export interface ShipmentHistoryEntry {
+  id: string;
+  name: string;
+  status: ShipmentStatus;
+  departed_cn_at: string | null;
+  arrived_us_at: string | null;
+  carrier: string | null;
+  total_weight_grams: number;
+  parcel_count: number;
+  /** Rounded days between departed_cn_at and arrived_us_at, null if either is missing. */
+  transit_days: number | null;
+  /** Most-common shipping_method across the batch's parcels; null if none are tagged. */
+  dominant_method: ShippingMethod | null;
+}
+
+/* ── Pack Requests (user-initiated consolidation) ── */
+
+export const PACK_REQUEST_STATUS_VALUES = [
+  "pending",
+  "contacted",
+  "approved",
+  "packed",
+  "shipped",
+  "declined",
+  "cancelled",
+] as const;
+export type PackRequestStatus = (typeof PACK_REQUEST_STATUS_VALUES)[number];
+
+export const PACK_REQUEST_STATUS_LABELS: Record<PackRequestStatus, string> = {
+  pending: "待处理",
+  contacted: "已联系",
+  approved: "已排入批次",
+  packed: "已打包",
+  shipped: "已发出",
+  declined: "已拒绝",
+  cancelled: "已取消",
+};
+
+export interface PackRequest {
+  id: string;
+  user_id: string | null;
+  student_id: string | null;
+  member_id: string | null;
+  preferred_method: ShippingMethod | null;
+  urgency_note: string | null;
+  contact: string | null;
+  user_note: string | null;
+  status: PackRequestStatus;
+  admin_note: string | null;
+  shipment_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PackRequestWithParcels extends PackRequest {
+  parcels: Pick<
+    Parcel,
+    "id" | "member_id" | "description" | "status" | "shipping_method" | "weight_grams" | "photos"
+  >[];
+}
+
+export interface ShipmentRequest {
+  id: string;
+  user_id: string | null;
+  student_id: string | null;
+  member_id: string | null;
+  description: string;
+  expected_weight_grams: number | null;
+  preferred_method: ShippingMethod | null;
+  urgency_note: string | null;
+  contact: string | null;
+  status: ShipmentRequestStatus;
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const SHIPPING_CONTACT_TYPES = [
+  "wechat_group",
+  "wechat_personal",
+  "email",
+  "george_bot",
+] as const;
+export type ShippingContactType = (typeof SHIPPING_CONTACT_TYPES)[number];
+
+export interface ShippingContact {
+  id: string;
+  type: ShippingContactType;
+  value: string;
+  label: string;
+  label_en: string | null;
+  qr_code_url: string | null;
+  display_order: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export const PARCEL_STATUS_VALUES = [
   "expected",
   "received_cn",
@@ -220,6 +451,7 @@ export interface Parcel {
   dim_cm_h: number | null;
   notes: string | null;
   user_notes: string | null;
+  shipping_method: ShippingMethod | null;
   created_at: string;
   updated_at: string;
 }

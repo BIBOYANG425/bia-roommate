@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import AuthModal from "@/components/AuthModal";
+import ShippingMethodPicker from "@/components/ShippingMethodPicker";
 import {
   PARCEL_CATEGORY_OPTIONS,
   CN_CARRIER_OPTIONS,
   type Parcel,
+  type ShippingMethod,
+  type ShippingRoute,
 } from "@/lib/types";
 
 const MAX_PHOTOS = 6;
@@ -27,6 +30,10 @@ function DeclareParcelContent() {
   const [error, setError] = useState<string | null>(null);
   const [loadingExisting, setLoadingExisting] = useState(!!editId);
 
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod | null>(
+    null,
+  );
+  const [routes, setRoutes] = useState<ShippingRoute[]>([]);
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<string>("");
   const [carrier, setCarrier] = useState<string>("");
@@ -35,8 +42,23 @@ function DeclareParcelContent() {
   const [userNotes, setUserNotes] = useState("");
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  // existingPhotos stores storage paths (submitted back on save). existingPhotoUrls
+  // holds signed display URLs for the private parcel-photos bucket; the two arrays
+  // stay index-aligned.
   const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
+  const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]);
   const [prohibitedAck, setProhibitedAck] = useState(false);
+
+  // Fetch routes for price/schedule hints (public, no auth needed)
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/shipping/routes");
+      if (res.ok) {
+        const data = (await res.json()) as { routes: ShippingRoute[] };
+        setRoutes(data.routes);
+      }
+    })();
+  }, []);
 
   // Load existing parcel into form if ?edit=<id>
   useEffect(() => {
@@ -53,6 +75,7 @@ function DeclareParcelContent() {
       if (p.status !== "expected") {
         setError("包裹已入库，不能再修改");
       }
+      setShippingMethod(p.shipping_method ?? null);
       setDescription(p.description ?? "");
       setCategory(p.category ?? "");
       setCarrier(p.carrier_cn ?? "");
@@ -61,16 +84,30 @@ function DeclareParcelContent() {
         p.declared_value_cny !== null ? String(p.declared_value_cny) : "",
       );
       setUserNotes(p.user_notes ?? "");
-      setExistingPhotos(p.photos ?? []);
+      const paths = p.photos ?? [];
+      setExistingPhotos(paths);
+      if (paths.length > 0) {
+        const { data: signed } = await supabase.storage
+          .from("parcel-photos")
+          .createSignedUrls(paths, 60 * 60);
+        setExistingPhotoUrls(
+          (signed ?? []).map(
+            (s: { signedUrl: string | null }) => s?.signedUrl ?? "",
+          ),
+        );
+      }
       setProhibitedAck(true); // they already acknowledged when declaring
       setLoadingExisting(false);
     })();
   }, [editId, user]);
 
-  // Clean up blob URLs on unmount
+  // Clean up blob URLs on unmount. Ref-mirrored so the effect captures the
+  // latest array (previous version captured the empty initial value and
+  // leaked any blobs created after mount).
+  const photoPreviewsRef = useRef(photoPreviews);
+  photoPreviewsRef.current = photoPreviews;
   useEffect(() => {
-    return () => photoPreviews.forEach(URL.revokeObjectURL);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => photoPreviewsRef.current.forEach(URL.revokeObjectURL);
   }, []);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,8 +150,6 @@ function DeclareParcelContent() {
         .from("parcel-photos")
         .upload(path, file, { cacheControl: "3600", upsert: false });
       if (uploadErr) throw uploadErr;
-      // Private bucket — store the storage path. UI re-fetches signed URLs
-      // when rendering. getPublicUrl would work but the bucket is private.
       uploaded.push(path);
     }
     return uploaded;
@@ -149,6 +184,7 @@ function DeclareParcelContent() {
       declared_value_cny: declaredValue.trim() || null,
       user_notes: userNotes.trim() || null,
       photos: [...existingPhotos, ...newPhotoPaths],
+      shipping_method: shippingMethod || null,
     };
 
     const res = editId
@@ -212,9 +248,31 @@ function DeclareParcelContent() {
           onSubmit={handleSubmit}
           className="brutal-container p-6 sm:p-8 space-y-8"
         >
-          {/* 01 — What's inside */}
+          {/* 01 — Shipping method */}
           <div className="relative">
             <span className="section-number text-[80px]">01</span>
+            <h2
+              className="font-display text-[32px] mb-6 border-b-[3px] border-[var(--black)] pb-2"
+              style={{ color: "var(--black)" }}
+            >
+              SHIPPING METHOD
+              <span
+                className="block text-base tracking-wider mt-1"
+                style={{ color: "var(--mid)" }}
+              >
+                运输方式
+              </span>
+            </h2>
+            <ShippingMethodPicker
+              value={shippingMethod}
+              onChange={setShippingMethod}
+              routes={routes}
+            />
+          </div>
+
+          {/* 02 — What's inside */}
+          <div className="relative">
+            <span className="section-number text-[80px]">02</span>
             <h2
               className="font-display text-[32px] mb-6 border-b-[3px] border-[var(--black)] pb-2"
               style={{ color: "var(--black)" }}
@@ -304,9 +362,9 @@ function DeclareParcelContent() {
             </div>
           </div>
 
-          {/* 02 — Domestic tracking */}
+          {/* 03 — Domestic tracking */}
           <div className="relative">
-            <span className="section-number text-[80px]">02</span>
+            <span className="section-number text-[80px]">03</span>
             <h2
               className="font-display text-[32px] mb-6 border-b-[3px] border-[var(--black)] pb-2"
               style={{ color: "var(--black)" }}
@@ -366,9 +424,9 @@ function DeclareParcelContent() {
             </div>
           </div>
 
-          {/* 03 — Photos */}
+          {/* 04 — Photos */}
           <div className="relative">
-            <span className="section-number text-[80px]">03</span>
+            <span className="section-number text-[80px]">04</span>
             <h2
               className="font-display text-[32px] mb-6 border-b-[3px] border-[var(--black)] pb-2"
               style={{ color: "var(--black)" }}
@@ -380,10 +438,10 @@ function DeclareParcelContent() {
             </p>
 
             <div className="grid grid-cols-3 gap-3 mb-3">
-              {existingPhotos.map((src, idx) => (
+              {existingPhotos.map((_path, idx) => (
                 <div key={`existing-${idx}`} className="relative">
                   <Image
-                    src={src}
+                    src={existingPhotoUrls[idx] ?? ""}
                     alt={`Photo ${idx + 1}`}
                     width={200}
                     height={96}
@@ -392,11 +450,14 @@ function DeclareParcelContent() {
                   />
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
                       setExistingPhotos((prev) =>
                         prev.filter((_, i) => i !== idx),
-                      )
-                    }
+                      );
+                      setExistingPhotoUrls((prev) =>
+                        prev.filter((_, i) => i !== idx),
+                      );
+                    }}
                     className="absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center border-[2px] border-[var(--black)] font-display text-[10px] hover:bg-[var(--gold)] transition-colors"
                     style={{ background: "var(--cream)" }}
                   >
@@ -456,9 +517,9 @@ function DeclareParcelContent() {
             </p>
           </div>
 
-          {/* 04 — Notes */}
+          {/* 05 — Notes */}
           <div className="relative">
-            <span className="section-number text-[80px]">04</span>
+            <span className="section-number text-[80px]">05</span>
             <h2
               className="font-display text-[32px] mb-6 border-b-[3px] border-[var(--black)] pb-2"
               style={{ color: "var(--black)" }}
@@ -489,9 +550,9 @@ function DeclareParcelContent() {
             </div>
           </div>
 
-          {/* 05 — Prohibited items ack */}
+          {/* 06 — Prohibited items ack */}
           <div className="relative">
-            <span className="section-number text-[80px]">05</span>
+            <span className="section-number text-[80px]">06</span>
             <h2
               className="font-display text-[32px] mb-6 border-b-[3px] border-[var(--black)] pb-2"
               style={{ color: "var(--black)" }}
@@ -499,24 +560,50 @@ function DeclareParcelContent() {
               合规确认
             </h2>
 
-            <div
-              className="p-4 border-[3px] border-[var(--black)] mb-3"
-              style={{ background: "var(--beige)" }}
-            >
-              <p className="text-xs mb-2" style={{ color: "var(--black)" }}>
-                国际运输不允许：
-              </p>
-              <ul
-                className="text-xs list-disc pl-5 space-y-1"
-                style={{ color: "var(--mid)" }}
+            {shippingMethod === "sensitive" ? (
+              <div
+                className="p-4 border-[3px] border-[var(--black)] mb-3"
+                style={{ background: "var(--gold)" }}
               >
-                <li>锂电池 / 含电池的电子产品（充电宝、蓝牙耳机单独邮寄也不行）</li>
-                <li>液体（化妆水、酒精、香水）</li>
-                <li>粉末 / 食品（不同线路有限制，请先问）</li>
-                <li>明火 / 易燃（打火机、喷雾）</li>
-                <li>仿冒 / 违禁物品</li>
-              </ul>
-            </div>
+                <p className="text-xs mb-2" style={{ color: "var(--black)" }}>
+                  敏感货专线<strong>可以收</strong>：
+                </p>
+                <ul
+                  className="text-xs list-disc pl-5 space-y-1 mb-3"
+                  style={{ color: "var(--black)" }}
+                >
+                  <li>含电池的电子产品（充电宝、蓝牙耳机、手机等）</li>
+                  <li>化妆品 / 液体（化妆水、香水、乳液）</li>
+                  <li>粉末类（蛋白粉、咖啡粉等）</li>
+                  <li>其他需特殊申报的物品</li>
+                </ul>
+                <p className="text-[11px]" style={{ color: "var(--black)" }}>
+                  仍<strong>不允许</strong>：明火 / 易燃物（打火机、喷雾）、仿冒 / 违禁物品。
+                </p>
+              </div>
+            ) : (
+              <div
+                className="p-4 border-[3px] border-[var(--black)] mb-3"
+                style={{ background: "var(--beige)" }}
+              >
+                <p className="text-xs mb-2" style={{ color: "var(--black)" }}>
+                  普通专线不允许：
+                </p>
+                <ul
+                  className="text-xs list-disc pl-5 space-y-1 mb-3"
+                  style={{ color: "var(--mid)" }}
+                >
+                  <li>锂电池 / 含电池的电子产品（充电宝、蓝牙耳机单独邮寄也不行）</li>
+                  <li>液体（化妆水、酒精、香水）</li>
+                  <li>粉末 / 食品（不同线路有限制，请先问）</li>
+                  <li>明火 / 易燃（打火机、喷雾）</li>
+                  <li>仿冒 / 违禁物品</li>
+                </ul>
+                <p className="text-[11px]" style={{ color: "var(--mid)" }}>
+                  含电池电子 / 化妆品 / 粉末请改选「敏感货专线」。
+                </p>
+              </div>
+            )}
 
             <label className="flex items-start gap-3 cursor-pointer">
               <input
@@ -526,7 +613,15 @@ function DeclareParcelContent() {
                 className="mt-1"
               />
               <span className="text-xs" style={{ color: "var(--black)" }}>
-                我确认包裹<strong>不含</strong>上述禁运物品。如仓库发现违禁品，可能被退回或销毁，BIA 不承担损失。
+                {shippingMethod === "sensitive" ? (
+                  <>
+                    我确认已选对专线，且包裹<strong>不含</strong>明火 / 易燃 / 违禁物品。
+                  </>
+                ) : (
+                  <>
+                    我确认包裹<strong>不含</strong>上述禁运物品。如仓库发现违禁品，可能被退回或销毁，BIA 不承担损失。
+                  </>
+                )}
               </span>
             </label>
           </div>
