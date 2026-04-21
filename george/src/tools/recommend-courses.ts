@@ -14,7 +14,7 @@ registerTool(
     required: ['interests'],
   },
   async (input) => {
-    const body: Record<string, string> = { interests: input.interests as string }
+    const body: Record<string, string> = { interests: input.interests as string, mode: 'free' }
     if (input.semester) body.semester = input.semester as string
     if (input.units) body.units = input.units as string
     if (input.level) body.level = input.level as string
@@ -23,7 +23,7 @@ registerTool(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(20_000),
     })
     if (!res.ok) return `Course recommendation failed (${res.status})`
     const data = await res.json()

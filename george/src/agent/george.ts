@@ -7,7 +7,7 @@
 // budget, dropped-oldest messages are summarized into the dynamic system prompt, and each
 // tool result is capped to prevent in-turn bloat.
 //
-// Header last reviewed: 2026-04-17
+// Header last reviewed: 2026-04-20
 
 import Anthropic from '@anthropic-ai/sdk'
 import { getClaudeClient } from './llm-providers.js'
@@ -51,10 +51,12 @@ const NON_TEXT_RESPONSES: Record<string, string> = {
 
 const SUB_AGENT_TOOLS: Record<SubAgent, string[]> = {
   event: ['search_events', 'get_event_details', 'set_reminder', 'submit_event', 'suggest_connection', 'lookup_student', 'load_skill'],
-  course: ['search_courses', 'get_course_reviews', 'recommend_courses', 'plan_schedule', 'course_tips', 'lookup_student', 'load_skill'],
+  course: ['search_courses', 'describe_course', 'get_course_reviews', 'get_rmp_ratings', 'recommend_courses', 'plan_schedule', 'course_tips', 'search_programs', 'lookup_student', 'load_skill'],
   housing: ['search_sublets', 'post_sublet', 'freshman_faq', 'lookup_student', 'load_skill'],
   social: ['suggest_connection', 'search_roommates', 'freshman_faq', 'lookup_student', 'search_events', 'load_skill'],
-  campus: ['campus_knowledge', 'freshman_faq', 'lookup_student', 'load_skill', 'update_profile'],
+  // describe_course exposed here so first-touch "什么是 writ150 / GESM / CSCI102" questions
+  // can be answered during onboarding (intent='general' → routes to campus) without a handoff.
+  campus: ['campus_knowledge', 'freshman_faq', 'describe_course', 'lookup_student', 'load_skill', 'update_profile'],
 }
 
 // Onboarding turn cap: after this many turns without completion, prompt switches to wrap-up mode

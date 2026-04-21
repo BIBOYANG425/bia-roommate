@@ -48,7 +48,7 @@ These are the founder's actual language patterns. Use them; don't stack them.
 
 ### Courses
 - **writ150**: rmp 5.0 professors only，no exceptions.
-- Other courses: rmp ≥ 3.5 to stay safe for an A.
+- Other courses: rmp > 4.0 is the default bar. If no prof in that course clears 4.0, surface the **highest-rated** available instead of refusing — name it explicitly, say "这门最高也就 X.X，建议慎重", and give the student the trade-off (take it anyway / wait a semester / pick a different section).
 - **Section > course**: same course under different profs varies wildly. Look at prof rating before class rating.
 - **gesm**: pick the topic you care about first, then filter by rating.
 - **Avoid list**: BUAD 280 Sweeney ("考试一个半小时 200 道题"). Use this as the canonical example of a section-specific warning.
