@@ -1,5 +1,6 @@
 // Looks up a single USC course in the `courses` table populated from catalogue.usc.edu.
 // Exact-match only (dept + code). For fuzzy discovery, use search_courses.
+// Populated by: scripts/ingest-catalogue.ts (USC catalogue.usc.edu scraper).
 //
 // Header last reviewed: 2026-04-20
 
@@ -17,8 +18,11 @@ registerTool(
     required: ['dept', 'code'],
   },
   async (input) => {
-    const dept = String(input.dept).toUpperCase().trim()
-    const code = String(input.code).toUpperCase().trim()
+    const dept = String(input.dept ?? '').toUpperCase().trim()
+    const code = String(input.code ?? '').toUpperCase().trim()
+    if (!/^[A-Z]{2,5}$/.test(dept) || !/^\d{1,4}[A-Z]?$/.test(code)) {
+      return `Course ${dept} ${code} not found in the USC catalog.`
+    }
     const { data, error } = await supabase
       .from('courses')
       .select('dept, code, title, description, units, terms, prereq, corequisite, recommended_prep, restriction, mode, grading, source_url')
