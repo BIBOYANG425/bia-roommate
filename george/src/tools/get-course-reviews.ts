@@ -39,10 +39,9 @@ registerTool(
     const nameList = Array.from(names).slice(0, 50)
     if (nameList.length > 0) {
       try {
-        const rmpRes = await fetch(`${config.biaRoommate.baseUrl}/api/rmp/batch`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ names: nameList }),
+        // bia-roommate /api/rmp/batch is GET with ?names=a,b,c — not POST.
+        const qs = new URLSearchParams({ names: nameList.join(',') })
+        const rmpRes = await fetch(`${config.biaRoommate.baseUrl}/api/rmp/batch?${qs.toString()}`, {
           signal: AbortSignal.timeout(15_000),
         })
         if (rmpRes.ok) {

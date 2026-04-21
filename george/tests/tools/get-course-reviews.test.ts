@@ -56,12 +56,13 @@ describe('get_course_reviews tool (BIA + RMP merge)', () => {
     expect(parsed.rmp['Jane Doe'].avgRating).toBe(4.5)
     expect(parsed.rmp['John Smith'].avgRating).toBe(3.8)
 
-    // Verify the RMP call was made with deduplicated names.
+    // Verify the RMP call was made as GET with deduplicated names in the query string.
     const rmpCall = fetchMock.mock.calls.find((c) => String(c[0]).includes('/api/rmp/batch'))
     expect(rmpCall).toBeDefined()
-    const body = JSON.parse((rmpCall![1] as { body: string }).body)
-    expect(body.names).toEqual(expect.arrayContaining(['Jane Doe', 'John Smith']))
-    expect(body.names.length).toBe(2)
+    const rmpUrl = String(rmpCall![0])
+    // GET — no body, name list encoded as comma-separated query param.
+    expect((rmpCall![1] as RequestInit | undefined)?.method).toBeUndefined()
+    expect(rmpUrl).toMatch(/names=[^&]*Jane\+Doe[^&]*John\+Smith|names=[^&]*John\+Smith[^&]*Jane\+Doe/)
   })
 
   it('skips RMP call when no instructors are present', async () => {

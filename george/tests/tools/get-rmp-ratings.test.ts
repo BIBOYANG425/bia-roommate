@@ -37,12 +37,25 @@ describe('get_rmp_ratings tool', () => {
   it('returns batch response on success', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ 'Jane Doe': { avgRating: 4.7, avgDifficulty: 3.1, numRatings: 22, wouldTakeAgainPercent: 93 } }),
+      json: async () => ({ ratings: { 'Jane Doe': { avgRating: 4.7, avgDifficulty: 3.1, numRatings: 22, wouldTakeAgainPercent: 93 } } }),
     })
     const { executeTool } = await import('../../src/agent/tool-registry.js')
     const result = await executeTool('get_rmp_ratings', { names: ['Jane Doe'] })
     expect(result).toContain('Jane Doe')
     expect(result).toContain('4.7')
+  })
+
+  it('calls /api/rmp/batch as GET with comma-separated names query string', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ ratings: {} }) })
+    const { executeTool } = await import('../../src/agent/tool-registry.js')
+    await executeTool('get_rmp_ratings', { names: ['Jane Doe', 'John Smith'] })
+    expect(fetchMock).toHaveBeenCalledOnce()
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit | undefined]
+    expect(url).toContain('/api/rmp/batch?')
+    // GET: no method set is also acceptable
+    expect(init?.method).toBeUndefined()
+    // Names encoded as comma-separated in query
+    expect(url).toContain('names=Jane+Doe%2CJohn+Smith')
   })
 
   it('returns lookup-failed on non-ok response', async () => {

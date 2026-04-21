@@ -25,10 +25,10 @@ registerTool(
     if (names.length === 0) return 'Error: names must be a non-empty array of instructor names.'
     if (names.length > 50) return 'Error: at most 50 names per call.'
 
-    const res = await fetch(`${config.biaRoommate.baseUrl}/api/rmp/batch`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ names }),
+    // bia-roommate's /api/rmp/batch is GET with comma-separated ?names= query param,
+    // not a POST body. Response shape: { ratings: { <name>: {...} | null } }.
+    const qs = new URLSearchParams({ names: names.join(',') })
+    const res = await fetch(`${config.biaRoommate.baseUrl}/api/rmp/batch?${qs.toString()}`, {
       signal: AbortSignal.timeout(15_000),
     })
     if (!res.ok) return `RMP batch lookup failed (${res.status})`
