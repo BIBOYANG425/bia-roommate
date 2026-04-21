@@ -79,6 +79,12 @@ const POPULAR_COURSES = [
 
 type Tab = "recent" | "top-rated" | "curated";
 
+type CourseCardMeta = { title?: string; units?: string };
+
+function courseMetaKey(dept: string, number: string) {
+  return `${dept}-${number}`;
+}
+
 export default function CourseRatingPage() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("recent");
@@ -87,6 +93,7 @@ export default function CourseRatingPage() {
   const [lists, setLists] = useState<CourseList[]>([]);
   const [loading, setLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [cardMeta, setCardMeta] = useState<Record<string, CourseCardMeta>>({});
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- loading state for tab data fetch
@@ -111,6 +118,62 @@ export default function CourseRatingPage() {
         .finally(() => setLoading(false));
     }
   }, [tab]);
+
+  // Enrich listing cards with USC catalog title + units (aggregates only store ratings).
+  useEffect(() => {
+    if (tab !== "recent" && tab !== "top-rated") {
+      return;
+    }
+    const list = tab === "recent" ? recent : topRated;
+    if (list.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadMeta() {
+      const results = await Promise.all(
+        list.map(async (agg) => {
+          const key = courseMetaKey(agg.dept, agg.course_number);
+          try {
+            const r = await fetch(
+              `/api/courses/${encodeURIComponent(agg.dept)}/${encodeURIComponent(agg.course_number)}`,
+            );
+            if (!r.ok) return { key, meta: null as CourseCardMeta | null };
+            const d = (await r.json()) as {
+              title?: string;
+              units?: string;
+            };
+            const title = (d.title || "").trim();
+            const units = (d.units || "").trim();
+            if (!title && !units) return { key, meta: null };
+            return {
+              key,
+              meta: {
+                ...(title ? { title } : {}),
+                ...(units ? { units } : {}),
+              },
+            };
+          } catch {
+            return { key, meta: null as CourseCardMeta | null };
+          }
+        }),
+      );
+
+      if (cancelled) return;
+
+      const next: Record<string, CourseCardMeta> = {};
+      for (const { key, meta } of results) {
+        if (meta) next[key] = meta;
+      }
+      setCardMeta(next);
+    }
+
+    loadMeta();
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, recent, topRated]);
 
   return (
     <main className="min-h-screen" style={{ background: "#F5F3EE" }}>
@@ -143,27 +206,36 @@ export default function CourseRatingPage() {
           <CourseRatingSearch />
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex gap-2 mb-6">
-          {[
-            { key: "recent" as Tab, label: "最近评价" },
-            { key: "top-rated" as Tab, label: "热门推荐" },
-            { key: "curated" as Tab, label: "推荐课单" },
-          ].map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className="px-4 py-2 text-sm font-display tracking-wider border-[2px] transition-all"
-              style={{
-                borderColor: "var(--black)",
-                background: tab === t.key ? "var(--cardinal)" : "white",
-                color: tab === t.key ? "white" : "var(--black)",
-                borderRadius: "20px",
-              }}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* Tab switcher + full rankings */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: "recent" as Tab, label: "最近评价" },
+              { key: "top-rated" as Tab, label: "热门推荐" },
+              { key: "curated" as Tab, label: "推荐课单" },
+            ].map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className="px-4 py-2 text-sm font-display tracking-wider border-[2px] transition-all"
+                style={{
+                  borderColor: "var(--black)",
+                  background: tab === t.key ? "var(--cardinal)" : "white",
+                  color: tab === t.key ? "white" : "var(--black)",
+                  borderRadius: "20px",
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <Link
+            href="/course-rating/rankings"
+            className="font-display text-xs tracking-wider px-4 py-2 border-[2px] border-[var(--black)] bg-white hover:bg-[var(--cream)] transition-colors shrink-0 text-center"
+            style={{ color: "var(--cardinal)", borderRadius: "20px" }}
+          >
+            全部排行 →
+          </Link>
         </div>
 
         {/* Content */}
@@ -200,6 +272,8 @@ export default function CourseRatingPage() {
                 <CourseRatingCard
                   key={`${agg.dept}-${agg.course_number}`}
                   aggregate={agg}
+                  title={cardMeta[courseMetaKey(agg.dept, agg.course_number)]?.title}
+                  units={cardMeta[courseMetaKey(agg.dept, agg.course_number)]?.units}
                 />
               ))}
             </div>

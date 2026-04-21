@@ -48,3 +48,18 @@ export interface ReviewsResponse {
 export interface AggregatesBatchResponse {
   aggregates: Record<string, CourseAggregate | null>;
 }
+
+export type CourseRankingSort =
+  | "grading"
+  | "recent"
+  | "reviews"
+  | "difficulty"
+  | "workload";
+
+export interface RankingsResponse {
+  rows: CourseAggregate[];
+  total: number;
+  page: number;
+  pageSize: number;
+  sort: CourseRankingSort;
+}

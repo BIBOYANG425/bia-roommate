@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getCurrentSemesterCode } from "@/lib/course-planner/semester";
 import { getCached, setCache } from "@/lib/course-planner/course-cache";
+import { courseMatchesQuery } from "@/lib/courses/autocomplete-suggestion";
 
 const SEMESTER_RE = /^20\d{2}[1-3]$/;
 
@@ -51,14 +52,8 @@ export async function GET(request: NextRequest) {
       setCache(semester, courses);
     }
 
-    // Filter and transform to SearchResult format
-    const query = q.toUpperCase();
     const matches = courses
-      .filter((c) => {
-        const courseName = c.fullCourseName?.toUpperCase() || "";
-        const title = c.name?.toUpperCase() || "";
-        return courseName.includes(query) || title.includes(query);
-      })
+      .filter((c) => courseMatchesQuery(c.fullCourseName, c.name, q))
       .slice(0, 20)
       .map((c) => ({
         department: c.scheduledCourseCode?.prefix || "",

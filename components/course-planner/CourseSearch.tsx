@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { parseAutocompleteSuggestion } from "@/lib/courses/autocomplete-suggestion";
 
 interface CourseSearchProps {
   onSelect: (id: string, label: string) => void;
@@ -69,12 +70,16 @@ export default function CourseSearch({
         let items: { id: string; label: string }[] = [];
         if (Array.isArray(data)) {
           items = data
-            .map((d: { text?: string } | string) => {
+            .map((d: { text?: string; dept?: string; number?: string } | string) => {
+              const parsed = parseAutocompleteSuggestion(d);
+              if (parsed) {
+                return {
+                  id: `${parsed.dept}-${parsed.number}`,
+                  label: parsed.label,
+                };
+              }
               const text = typeof d === "string" ? d : d.text || "";
               if (!text) return null;
-              const match = text.match(/^([A-Z]+-\d+[A-Z]?)\s+(.+)$/i);
-              if (match) return { id: match[1], label: text };
-              // Only accept GE-style IDs (e.g. "GE-A"), skip department-only entries
               const geMatch = text.match(/^(GE-[A-H])\b/i);
               if (geMatch) return { id: geMatch[1].toUpperCase(), label: text };
               return null;
