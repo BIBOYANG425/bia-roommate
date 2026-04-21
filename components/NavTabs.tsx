@@ -11,6 +11,7 @@ const TABS = [
   { href: "/roommates", label: "找室友" },
   { href: "/sublet", label: "转租" },
   { href: "/squad", label: "找搭子" },
+  { href: "/shipping", label: "集运" },
   { href: "/course-planner", label: "选课" },
   { href: "/course-rating", label: "课评" },
   { href: "/usc-group", label: "USC 新生群" },
@@ -18,7 +19,7 @@ const TABS = [
 
 export default function NavTabs() {
   const pathname = usePathname();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, isAdmin, signOut } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
 
   return (
@@ -70,6 +71,19 @@ export default function NavTabs() {
 
         {/* Auth indicator — right side */}
         <div className="ml-auto px-4 flex items-center gap-2 sm:gap-3">
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="font-display text-[11px] tracking-wider px-3 py-1 border-[2px] border-[var(--black)] transition-colors hover:bg-[var(--cardinal)] hover:text-white whitespace-nowrap"
+              style={
+                pathname.startsWith("/admin")
+                  ? { background: "var(--cardinal)", color: "white" }
+                  : { color: "var(--black)" }
+              }
+            >
+              ADMIN
+            </Link>
+          )}
           {!loading &&
             (user ? (
               <>

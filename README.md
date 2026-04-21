@@ -318,6 +318,10 @@ Incoming message (WeChat / iMessage)
 |----------|----------|-------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes (shipping admin) | Service-role key. Required for `/api/shipping/admin/*` routes. Never exposed to the client — see `lib/supabase/admin.ts` |
+| `ADMIN_EMAILS` | Yes (shipping admin) | Comma-separated lowercased emails allowed to access `/shipping/admin/*`. Example: `ops@bia.org,warehouse@bia.org` |
+| `GEORGE_URL` | Yes (shipping admin) | Base URL of the George backend, e.g. `http://localhost:3001` in dev. Used to enqueue WeChat/iMessage notifications on parcel state transitions |
+| `GEORGE_ADMIN_TOKEN` | Yes (shipping admin) | Must match George's `ADMIN_TOKEN`. Sent as `Authorization: Bearer …` when the web app calls `POST /admin/enqueue-notification` |
 
 ### George (`george/.env`)
 

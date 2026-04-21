@@ -16,6 +16,7 @@ import AuthModal from "./AuthModal";
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
   signUp: (
     email: string,
     password: string,
@@ -30,6 +31,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   loading: true,
+  isAdmin: false,
   signUp: async () => ({ error: "Not initialized" }),
   signIn: async () => ({ error: "Not initialized" }),
   signOut: async () => {},
@@ -42,7 +44,27 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showReauth, setShowReauth] = useState(false);
+
+  // Fetch admin flag whenever the user changes. Cheap endpoint; ADMIN_EMAILS
+  // is server-only so we can't compute this client-side.
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const res = await fetch("/api/admin/me", { cache: "no-store" });
+      if (!res.ok || cancelled) return;
+      const data = (await res.json()) as { isAdmin: boolean };
+      if (!cancelled) setIsAdmin(data.isAdmin);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
@@ -111,7 +133,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{ user, loading, isAdmin, signUp, signIn, signOut }}
+    >
       {children}
       <AuthModal
         isOpen={showReauth}

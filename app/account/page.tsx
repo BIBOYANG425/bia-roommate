@@ -8,6 +8,7 @@ import SubletsList from "@/components/account/SubletsList";
 import SavedSchedulesList from "@/components/account/SavedSchedulesList";
 import LikedProfiles from "@/components/account/LikedProfiles";
 import CommentsList from "@/components/account/CommentsList";
+import ShippingSummary from "@/components/account/ShippingSummary";
 import { useAccountData } from "@/components/account/useAccountData";
 
 export default function AccountPage() {
@@ -20,6 +21,8 @@ export default function AccountPage() {
     likedProfiles,
     comments,
     sublets,
+    parcels,
+    packRequests,
     loading,
     loadError,
     handleDeleteComment,
@@ -29,6 +32,7 @@ export default function AccountPage() {
   } = useAccountData();
 
   const [sections, setSections] = useState<Record<string, boolean>>({
+    shipping: true,
     sublets: true,
     saved: true,
     liked: true,
@@ -97,6 +101,18 @@ export default function AccountPage() {
         </div>
       ) : (
         <div className="space-y-3">
+          <CollapsibleSection
+            title="YOUR SHIPPING"
+            count={parcels.length}
+            open={!!sections.shipping}
+            onToggle={() => toggleSection("shipping")}
+          >
+            <ShippingSummary
+              parcels={parcels}
+              packRequests={packRequests}
+            />
+          </CollapsibleSection>
+
           <CollapsibleSection
             title="YOUR SUBLETS"
             count={sublets.length}

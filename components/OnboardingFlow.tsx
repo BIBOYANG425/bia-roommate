@@ -16,6 +16,10 @@ import {
   SCHOOL_OPTIONS,
   YEAR_OPTIONS,
   ENROLLMENT_OPTIONS,
+  CONTACT_PLATFORM_VALUES,
+  CONTACT_PLATFORM_META,
+  type ContactChannel,
+  type ContactPlatform,
 } from "@/lib/types";
 import { schoolAccent } from "@/lib/utils";
 
@@ -44,11 +48,16 @@ export default function OnboardingFlow() {
     setSubmitting,
     setForm,
     buildPayload,
+    uploadAvatar,
+    addContactChannel,
+    updateContactChannel,
+    removeContactChannel,
   } = useProfileForm({ maxTags: 6 });
 
   const [step, setStep] = useState(1);
   const [existingId, setExistingId] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   /* ── Redirect if not authenticated ── */
   useEffect(() => {
@@ -71,6 +80,15 @@ export default function OnboardingFlow() {
 
       if (data) {
         setExistingId(data.id);
+        // Prefer structured channels; fall back to wrapping the old `contact`
+        // text as a single "other" channel so edit mode never starts empty.
+        const channels: ContactChannel[] = Array.isArray(data.contact_channels)
+          ? data.contact_channels
+          : [];
+        const fallbackChannels =
+          channels.length === 0 && data.contact
+            ? [{ platform: "other" as ContactPlatform, value: data.contact }]
+            : channels;
         setForm({
           name: data.name || "",
           school: data.school || "",
@@ -81,6 +99,7 @@ export default function OnboardingFlow() {
           avatarUrl: data.avatar_url || "",
           bio: data.bio || "",
           contact: data.contact || "",
+          contactChannels: fallbackChannels,
           tags: data.tags || [],
           sleepHabit: data.sleep_habit || "",
           customSleep: "",
@@ -107,8 +126,22 @@ export default function OnboardingFlow() {
         formData.year !== "" &&
         formData.major.trim() !== ""
       );
-    if (step === 2) return formData.contact.trim() !== "";
+    if (step === 2)
+      return formData.contactChannels.some((c) => c.value.trim() !== "");
     return true;
+  }
+
+  async function handleAvatarFile(file: File) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError("AVATAR 最大 5MB");
+      return;
+    }
+    setError(null);
+    setAvatarUploading(true);
+    const url = await uploadAvatar(file);
+    setAvatarUploading(false);
+    if (url) updateField("avatarUrl", url);
   }
 
   /* ── Submit ── */
@@ -374,36 +407,89 @@ export default function OnboardingFlow() {
                 Let others get to know you.
               </p>
 
-              {/* Avatar URL */}
+              {/* Avatar upload */}
               <div>
                 <label
                   className="font-display text-xs tracking-wider block mb-2"
                   style={{ color: "var(--black)" }}
                 >
-                  AVATAR URL
+                  AVATAR
                 </label>
-                <input
-                  type="text"
-                  className="brutal-input"
-                  placeholder="Paste image URL"
-                  value={formData.avatarUrl}
-                  onChange={(e) => updateField("avatarUrl", e.target.value)}
-                />
-                {formData.avatarUrl && (
-                  <div className="mt-3">
+                <div className="flex items-start gap-3">
+                  {formData.avatarUrl ? (
                     <Image
                       src={formData.avatarUrl}
                       alt="Avatar preview"
-                      width={64}
-                      height={64}
-                      className="w-16 h-16 object-cover border-[3px] border-[var(--black)]"
+                      width={72}
+                      height={72}
+                      className="w-18 h-18 object-cover border-[3px] border-[var(--black)] shrink-0"
+                      style={{ width: 72, height: 72 }}
                       unoptimized
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
                       }}
                     />
+                  ) : (
+                    <div
+                      className="shrink-0 border-[3px] border-dashed border-[var(--black)] flex items-center justify-center font-display text-xs tracking-wider"
+                      style={{
+                        width: 72,
+                        height: 72,
+                        background: "var(--beige)",
+                        color: "var(--mid)",
+                      }}
+                    >
+                      EMPTY
+                    </div>
+                  )}
+                  <div className="flex-1 flex flex-col gap-2">
+                    <label className="cursor-pointer">
+                      <span
+                        className="brutal-btn inline-block text-xs"
+                        style={{
+                          background: avatarUploading
+                            ? "var(--beige)"
+                            : "var(--cardinal)",
+                          color: avatarUploading ? "var(--mid)" : "white",
+                          cursor: avatarUploading ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        {avatarUploading
+                          ? "上传中..."
+                          : formData.avatarUrl
+                            ? "REPLACE"
+                            : "UPLOAD IMAGE"}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        className="hidden"
+                        disabled={avatarUploading}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleAvatarFile(f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    {formData.avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => updateField("avatarUrl", "")}
+                        className="font-display text-[10px] tracking-wider underline text-left"
+                        style={{ color: "var(--mid)" }}
+                      >
+                        移除
+                      </button>
+                    )}
+                    <p
+                      className="text-[10px]"
+                      style={{ color: "var(--mid)" }}
+                    >
+                      PNG / JPG / WEBP / GIF · 最大 5MB
+                    </p>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Bio */}
@@ -437,7 +523,7 @@ export default function OnboardingFlow() {
                 </div>
               </div>
 
-              {/* Contact */}
+              {/* Contact channels */}
               <div>
                 <label
                   className="font-display text-xs tracking-wider block mb-2"
@@ -445,13 +531,98 @@ export default function OnboardingFlow() {
                 >
                   CONTACT <span style={{ color: "var(--cardinal)" }}>*</span>
                 </label>
-                <input
-                  type="text"
-                  className="brutal-input"
-                  placeholder="WeChat / Instagram / Email"
-                  value={formData.contact}
-                  onChange={(e) => updateField("contact", e.target.value)}
-                />
+                <p
+                  className="text-[11px] mb-2"
+                  style={{ color: "var(--mid)" }}
+                >
+                  添加一个或多个联系方式，至少留一个。
+                </p>
+
+                {formData.contactChannels.length === 0 && (
+                  <p
+                    className="text-[11px] mb-2"
+                    style={{ color: "var(--cardinal)" }}
+                  >
+                    还没添加联系方式 — 从下面选一个平台
+                  </p>
+                )}
+
+                <div className="space-y-3 mb-3">
+                  {formData.contactChannels.map((ch, i) => {
+                    const meta = CONTACT_PLATFORM_META[ch.platform];
+                    return (
+                      <div
+                        key={i}
+                        className="flex flex-col sm:flex-row gap-2 sm:items-stretch"
+                      >
+                        {/* Platform picker — fixed width on desktop, full width
+                            on mobile. Inline style beats brutal-input's width:100%. */}
+                        <select
+                          value={ch.platform}
+                          onChange={(e) =>
+                            updateContactChannel(i, {
+                              platform: e.target.value as ContactPlatform,
+                            })
+                          }
+                          className="brutal-input"
+                          style={{ flex: "0 0 9.5rem" }}
+                        >
+                          {CONTACT_PLATFORM_VALUES.map((p) => (
+                            <option key={p} value={p}>
+                              {CONTACT_PLATFORM_META[p].icon}{" "}
+                              {CONTACT_PLATFORM_META[p].label}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="flex gap-2 flex-1 min-w-0">
+                          <input
+                            type="text"
+                            className="brutal-input"
+                            style={{ flex: "1 1 auto", minWidth: 0 }}
+                            placeholder={meta.placeholder}
+                            value={ch.value}
+                            onChange={(e) =>
+                              updateContactChannel(i, {
+                                value: e.target.value,
+                              })
+                            }
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeContactChannel(i)}
+                            className="border-[3px] border-[var(--black)] font-display text-sm hover:bg-[var(--cardinal)] hover:text-white transition-colors"
+                            style={{
+                              flex: "0 0 2.5rem",
+                              background: "var(--cream)",
+                            }}
+                            aria-label="删除"
+                          >
+                            X
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {CONTACT_PLATFORM_VALUES.filter(
+                    (p) =>
+                      !formData.contactChannels.some((c) => c.platform === p),
+                  ).map((p) => {
+                    const meta = CONTACT_PLATFORM_META[p];
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => addContactChannel(p)}
+                        className="brutal-tag cursor-pointer text-xs px-3 py-1.5 transition-colors hover:bg-[var(--gold)]"
+                      >
+                        + {meta.icon} {meta.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}

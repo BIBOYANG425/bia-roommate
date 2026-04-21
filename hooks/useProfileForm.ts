@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import type { ContactChannel, ContactPlatform } from "@/lib/types";
 
 export interface ProfileFormData {
   name: string;
@@ -10,7 +11,10 @@ export interface ProfileFormData {
   major: string;
   year: string;
   enrollmentTerm: string;
+  /** Legacy single text; kept in sync with first contactChannels entry on save. */
   contact: string;
+  /** Structured contact channels — primary source of truth. */
+  contactChannels: ContactChannel[];
   sleepHabit: string;
   customSleep: string;
   cleanLevel: string;
@@ -31,6 +35,7 @@ export const INITIAL_PROFILE_FORM: ProfileFormData = {
   year: "",
   enrollmentTerm: "",
   contact: "",
+  contactChannels: [],
   sleepHabit: "",
   customSleep: "",
   cleanLevel: "",
@@ -88,13 +93,41 @@ export function useProfileForm(options: UseProfileFormOptions = {}) {
 
   /** Validate that required fields are filled. Returns true if valid. */
   function validate(requiredFields?: (keyof ProfileFormData)[]): boolean {
-    const required = requiredFields ?? ["name", "contact"];
+    const required = requiredFields ?? ["name"];
     for (const key of required) {
       const val = formData[key];
       if (typeof val === "string" && !val.trim()) return false;
     }
+    // At least one non-empty contact channel is required.
+    if (!formData.contactChannels.some((c) => c.value.trim())) return false;
     return true;
   }
+
+  const addContactChannel = useCallback((platform: ContactPlatform) => {
+    setFormData((prev) => ({
+      ...prev,
+      contactChannels: [...prev.contactChannels, { platform, value: "" }],
+    }));
+  }, []);
+
+  const updateContactChannel = useCallback(
+    (idx: number, patch: Partial<ContactChannel>) => {
+      setFormData((prev) => ({
+        ...prev,
+        contactChannels: prev.contactChannels.map((c, i) =>
+          i === idx ? { ...c, ...patch } : c,
+        ),
+      }));
+    },
+    [],
+  );
+
+  const removeContactChannel = useCallback((idx: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      contactChannels: prev.contactChannels.filter((_, i) => i !== idx),
+    }));
+  }, []);
 
   /** Upload an avatar File to Supabase storage. Returns the public URL or null. */
   async function uploadAvatar(file: File): Promise<string | null> {
@@ -121,6 +154,17 @@ export function useProfileForm(options: UseProfileFormOptions = {}) {
         ? formData.customSleep.trim() || null
         : formData.sleepHabit || null;
 
+    // Strip empty-value channels before persisting.
+    const channels = formData.contactChannels
+      .map((c) => ({ ...c, value: c.value.trim() }))
+      .filter((c) => c.value.length > 0);
+
+    // `contact` stays for backward-compat readers. Pack the channels as a
+    // "label: value" list so old cards still show something meaningful.
+    const contactText = channels
+      .map((c) => `${c.platform}: ${c.value}`)
+      .join(" · ");
+
     return {
       name: formData.name.trim(),
       avatar_url: avatarUrl || formData.avatarUrl.trim() || null,
@@ -130,7 +174,8 @@ export function useProfileForm(options: UseProfileFormOptions = {}) {
       year: formData.year || null,
       enrollment_term:
         formData.year === "新生" ? formData.enrollmentTerm || null : null,
-      contact: formData.contact.trim(),
+      contact: contactText || formData.contact.trim(),
+      contact_channels: channels,
       sleep_habit: finalSleep,
       clean_level: formData.cleanLevel || null,
       noise_level: formData.noiseLevel || null,
@@ -155,5 +200,8 @@ export function useProfileForm(options: UseProfileFormOptions = {}) {
     validate,
     uploadAvatar,
     buildPayload,
+    addContactChannel,
+    updateContactChannel,
+    removeContactChannel,
   };
 }
