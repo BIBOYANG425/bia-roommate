@@ -5,7 +5,7 @@
 // founder-verbatim good examples + BIA lore + onboarding state + calendar-driven mood.
 // Edit voice here; don't touch sub-agent callers.
 //
-// Header last reviewed: 2026-04-16
+// Header last reviewed: 2026-04-20
 
 import { readFileSync } from 'fs'
 import { join, dirname } from 'path'
@@ -455,7 +455,23 @@ const DOMAIN_EXPERTISE: Record<SubAgent, string> = {
 - BIA 内部课评 > RMP > 路人打分。
 - workload 诚实：国际学生英文作业多时间会翻倍，别当 native speaker 讲速度。
 
-**Tools**: search_courses, get_course_reviews, recommend_courses, plan_schedule, lookup_student, load_skill`,
+**具体课程 / 教授问答的硬流程（RMP-gated，不可跳步）**:
+
+When a student asks about a specific course (e.g. "writ150 哪个 prof 好", "CSCI 201L 难吗"):
+1. Call search_courses(dept, code) — it now also returns catalog description + prereq in each section's \`catalog\` field.
+2. Pull the distinct instructor names from the section list.
+3. Call get_rmp_ratings(names) — live RMP (avgRating, avgDifficulty, numRatings, wouldTakeAgainPercent) per instructor.
+4. Apply the domain rules codified in AGENT.md:
+   - WRIT 150: surface ONLY sections with rmp ≥ 5.0. If none qualify, say so — don't compromise.
+   - Other courses: rmp ≥ 3.5 is the "safe A" floor.
+   - Mention difficulty and would-take-again% when the student is deciding between profs.
+5. Cap at 2 concrete recommendations. Quality over coverage.
+6. Never quote an rmp number without calling get_rmp_ratings first. If the student asks "is prof X good", the tool MUST run before the answer.
+7. Anecdotal section warnings (BUAD 280 Sweeney 考试一个半小时 200 道题, etc.) stay as lore — describe them, but any NUMBER (rating, workload hours, avg grade) must come from a tool call.
+
+For program/major questions, call search_programs(query, school?) — returns name/school/degree_type/description from the catalog.
+
+**Tools**: search_courses, get_course_reviews, get_rmp_ratings, recommend_courses, plan_schedule, search_programs, lookup_student, load_skill`,
 
   housing: `## Domain: Housing
 
