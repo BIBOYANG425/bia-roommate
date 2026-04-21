@@ -66,31 +66,35 @@ function CourseRankingsContent() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-
     const sp = new URLSearchParams();
     sp.set("sort", sort);
     sp.set("page", String(page));
     sp.set("pageSize", "48");
+    const qs = sp.toString();
 
-    fetch(`/api/course-rating/rankings?${sp.toString()}`)
-      .then(async (r) => {
-        if (!r.ok) throw new Error("Failed to load");
-        return r.json() as Promise<RankingsResponse>;
-      })
-      .then((data) => {
-        if (!cancelled) setPayload(data);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError("Could not load rankings.");
-          setPayload(null);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setError(null);
+
+      fetch(`/api/course-rating/rankings?${qs}`)
+        .then(async (r) => {
+          if (!r.ok) throw new Error("Failed to load");
+          return r.json() as Promise<RankingsResponse>;
+        })
+        .then((data) => {
+          if (!cancelled) setPayload(data);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setError("Could not load rankings.");
+            setPayload(null);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    });
 
     return () => {
       cancelled = true;
@@ -102,7 +106,7 @@ function CourseRankingsContent() {
   useEffect(() => {
     const list = payload?.rows;
     if (!list || list.length === 0) {
-      setRowMeta({});
+      queueMicrotask(() => setRowMeta({}));
       return;
     }
     const courses = list;
