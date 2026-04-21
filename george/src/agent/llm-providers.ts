@@ -2,7 +2,7 @@
 // behind a unified call signature. Sub-agents use Claude Sonnet 4.6; intent classifier,
 // proactive messages, and memory extraction use Kimi/Haiku. Single point to swap models.
 //
-// Header last reviewed: 2026-04-16
+// Header last reviewed: 2026-04-20
 
 import Anthropic from '@anthropic-ai/sdk'
 import { config } from '../config.js'
@@ -42,7 +42,7 @@ export async function callLightweightLLM(
     body.response_format = { type: 'json_object' }
   }
 
-  const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
+  const res = await fetch(`${config.kimi.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

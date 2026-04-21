@@ -14,6 +14,7 @@ export const config = {
   },
   kimi: {
     apiKey: process.env.KIMI_API_KEY || '',
+    baseUrl: process.env.KIMI_BASE_URL || 'https://api.moonshot.cn/v1',
   },
   supabase: {
     url: required('SUPABASE_URL'),
