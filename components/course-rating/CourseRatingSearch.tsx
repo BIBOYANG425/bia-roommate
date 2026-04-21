@@ -2,6 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import {
+  parseAutocompleteSuggestion,
+  parseDirectCourseInput,
+} from "@/lib/courses/autocomplete-suggestion";
 
 export default function CourseRatingSearch() {
   const router = useRouter();
@@ -51,19 +55,15 @@ export default function CourseRatingSearch() {
         [];
       if (Array.isArray(data)) {
         items = data
-          .map((d: { text?: string } | string) => {
-            const text = typeof d === "string" ? d : d.text || "";
-            if (!text) return null;
-            const match = text.match(/^([A-Z]+)-(\d+[A-Z]*)\s+(.+)$/i);
-            if (match) {
-              return {
-                id: `${match[1]}-${match[2]}`,
-                dept: match[1].toUpperCase(),
-                number: match[2],
-                label: text,
-              };
-            }
-            return null;
+          .map((d: { text?: string; dept?: string; number?: string } | string) => {
+            const parsed = parseAutocompleteSuggestion(d);
+            if (!parsed) return null;
+            return {
+              id: `${parsed.dept}-${parsed.number}`,
+              dept: parsed.dept,
+              number: parsed.number,
+              label: parsed.label,
+            };
           })
           .filter(Boolean) as typeof items;
       }
@@ -88,14 +88,34 @@ export default function CourseRatingSearch() {
     setShowDropdown(false);
   }
 
+  function tryNavigateFromInput(raw: string) {
+    const direct = parseDirectCourseInput(raw);
+    if (direct) {
+      router.push(`/course-rating/${direct.dept}/${direct.number}`);
+      setInput("");
+      setSuggestions([]);
+      setShowDropdown(false);
+    }
+  }
+
   return (
     <div ref={wrapperRef} className="relative">
       <input
         type="text"
-        placeholder='搜索课程 (e.g. "CSCI 104", "MATH 225")'
+        placeholder='搜索课程 (e.g. "CSCI 104", "PSYC 100", "MPGU 120A")'
         value={input}
         onChange={(e) => handleInput(e.target.value)}
         onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            if (suggestions[0]) {
+              handleSelect(suggestions[0]);
+            } else {
+              tryNavigateFromInput(input);
+            }
+          }
+        }}
         className="brutal-input w-full"
       />
 

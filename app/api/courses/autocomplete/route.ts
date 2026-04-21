@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getCached, setCache } from "@/lib/course-planner/course-cache";
+import { courseMatchesQuery } from "@/lib/courses/autocomplete-suggestion";
 
 interface CourseEntry {
   fullCourseName: string;
@@ -59,18 +60,22 @@ export async function GET(request: NextRequest) {
       return Response.json([]);
     }
 
-    // Filter by query (case-insensitive)
-    const query = q.toUpperCase();
     const matches = courses
-      .filter((c) => {
-        const courseName = c.fullCourseName?.toUpperCase() || "";
-        const title = c.name?.toUpperCase() || "";
-        return courseName.includes(query) || title.includes(query);
-      })
+      .filter((c) =>
+        courseMatchesQuery(c.fullCourseName, c.name, q),
+      )
       .slice(0, 10)
-      .map((c) => ({
-        text: `${c.scheduledCourseCode?.courseHyphen || c.fullCourseName} ${c.name || ""}`.trim(),
-      }));
+      .map((c) => {
+        const prefix = c.scheduledCourseCode?.prefix || "";
+        const number =
+          (c.scheduledCourseCode?.number || "") +
+          (c.scheduledCourseCode?.suffix || "");
+        return {
+          text: `${c.scheduledCourseCode?.courseHyphen || c.fullCourseName} ${c.name || ""}`.trim(),
+          dept: prefix,
+          number,
+        };
+      });
 
     return Response.json(matches, {
       headers: { "Cache-Control": "public, s-maxage=3600" },

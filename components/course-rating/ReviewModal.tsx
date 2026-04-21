@@ -2,6 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import ReviewForm from "./ReviewForm";
+import {
+  parseAutocompleteSuggestion,
+  parseDirectCourseInput,
+} from "@/lib/courses/autocomplete-suggestion";
 
 export default function ReviewModal({ onClose }: { onClose: () => void }) {
   const [selectedCourse, setSelectedCourse] = useState<{
@@ -13,7 +17,13 @@ export default function ReviewModal({ onClose }: { onClose: () => void }) {
   // Search state
   const [input, setInput] = useState("");
   const [suggestions, setSuggestions] = useState<
-    { id: string; dept: string; number: string; label: string; title: string }[]
+    {
+      id: string;
+      dept: string;
+      number: string;
+      label: string;
+      title: string;
+    }[]
   >([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [professors, setProfessors] = useState<string[]>([]);
@@ -97,20 +107,16 @@ export default function ReviewModal({ onClose }: { onClose: () => void }) {
       }[] = [];
       if (Array.isArray(data)) {
         items = data
-          .map((d: { text?: string } | string) => {
-            const text = typeof d === "string" ? d : d.text || "";
-            if (!text) return null;
-            const match = text.match(/^([A-Z]+)-(\d+[A-Z]*)\s+(.+)$/i);
-            if (match) {
-              return {
-                id: `${match[1]}-${match[2]}`,
-                dept: match[1].toUpperCase(),
-                number: match[2],
-                label: text,
-                title: match[3],
-              };
-            }
-            return null;
+          .map((d: { text?: string; dept?: string; number?: string } | string) => {
+            const parsed = parseAutocompleteSuggestion(d);
+            if (!parsed) return null;
+            return {
+              id: `${parsed.dept}-${parsed.number}`,
+              dept: parsed.dept,
+              number: parsed.number,
+              label: parsed.label,
+              title: parsed.title || "",
+            };
           })
           .filter(Boolean) as typeof items;
       }
@@ -161,10 +167,34 @@ export default function ReviewModal({ onClose }: { onClose: () => void }) {
             >
               <input
                 type="text"
-                placeholder='搜索课程 (e.g. "CSCI 104", "MATH 225")'
+                placeholder='搜索课程 (e.g. "PSYC 100", "MPGU 120A")'
                 value={input}
                 onChange={(e) => handleInput(e.target.value)}
                 onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  if (suggestions[0]) {
+                    const item = suggestions[0];
+                    setSelectedCourse({
+                      dept: item.dept,
+                      number: item.number,
+                      title: item.title,
+                    });
+                    setShowDropdown(false);
+                    return;
+                  }
+                  const direct = parseDirectCourseInput(input);
+                  if (direct) {
+                    setSelectedCourse({
+                      dept: direct.dept,
+                      number: direct.number,
+                      title: "",
+                    });
+                    setInput("");
+                    setSuggestions([]);
+                  }
+                }}
                 className="brutal-input w-full"
                 autoFocus
               />

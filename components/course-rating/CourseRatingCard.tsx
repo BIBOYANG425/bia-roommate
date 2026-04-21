@@ -19,11 +19,14 @@ function gradingColor(v: number) {
 export default function CourseRatingCard({
   aggregate,
   title,
+  units,
 }: {
   aggregate: CourseAggregate;
   title?: string;
+  units?: string;
 }) {
   const code = `${aggregate.dept} ${aggregate.course_number}`;
+  const profPreview = aggregate.professors?.filter(Boolean) ?? [];
 
   return (
     <Link
@@ -31,13 +34,20 @@ export default function CourseRatingCard({
       className="brutal-card cursor-pointer flex flex-col"
     >
       <div className="p-4 flex flex-col gap-2 flex-1">
-        {/* Course code */}
-        <span
-          className="font-display text-xl"
-          style={{ color: "var(--cardinal)" }}
-        >
-          {code}
-        </span>
+        {/* Course code + units */}
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span
+            className="font-display text-xl"
+            style={{ color: "var(--cardinal)" }}
+          >
+            {code}
+          </span>
+          {units && (
+            <span className="brutal-tag brutal-tag-gold text-[9px]">
+              {units} units
+            </span>
+          )}
+        </div>
 
         {/* Title */}
         {title && (
@@ -46,6 +56,16 @@ export default function CourseRatingCard({
             style={{ color: "var(--black)" }}
           >
             {title}
+          </p>
+        )}
+
+        {profPreview.length > 0 && (
+          <p
+            className="font-mono text-[10px] leading-snug text-[var(--mid)] line-clamp-2"
+            title={profPreview.join(", ")}
+          >
+            {profPreview.slice(0, 3).join(" · ")}
+            {profPreview.length > 3 ? " · …" : ""}
           </p>
         )}
 
