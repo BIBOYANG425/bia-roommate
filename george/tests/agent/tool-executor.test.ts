@@ -100,4 +100,60 @@ describe('executeToolUseBlocks', () => {
     expect(results).toHaveLength(1)
     expect(results[0].tool_use_id).toBe('t')
   })
+
+  it('runs tool_use blocks concurrently rather than sequentially', async () => {
+    const TOOL_DURATION_MS = 400
+    registerTool('slow_concurrent_a', 'slow a', {}, async () => {
+      await new Promise((r) => setTimeout(r, TOOL_DURATION_MS))
+      return 'A'
+    })
+    registerTool('slow_concurrent_b', 'slow b', {}, async () => {
+      await new Promise((r) => setTimeout(r, TOOL_DURATION_MS))
+      return 'B'
+    })
+    registerTool('slow_concurrent_c', 'slow c', {}, async () => {
+      await new Promise((r) => setTimeout(r, TOOL_DURATION_MS))
+      return 'C'
+    })
+
+    const blocks = [
+      toolUse('t1', 'slow_concurrent_a'),
+      toolUse('t2', 'slow_concurrent_b'),
+      toolUse('t3', 'slow_concurrent_c'),
+    ] as Anthropic.Messages.ContentBlock[]
+
+    const start = Date.now()
+    const results = await executeToolUseBlocks(blocks, {
+      studentId: 's',
+      platform: 'imessage',
+    })
+    const elapsed = Date.now() - start
+
+    // Sequential execution would take 3 * TOOL_DURATION_MS (1200ms). Concurrent
+    // execution should take ~TOOL_DURATION_MS (400ms). Cap at 2x the single-call
+    // duration to leave headroom for slow CI without masking a regression to serial.
+    expect(elapsed).toBeLessThan(TOOL_DURATION_MS * 2)
+    expect(results.map((r) => r.content)).toEqual(['A', 'B', 'C'])
+  })
+
+  it('returns an error string when a tool handler rejects, without losing siblings', async () => {
+    registerTool('ok_tool', 'ok', {}, async () => 'OK')
+    registerTool('boom_tool', 'boom', {}, async () => {
+      throw new Error('kaboom')
+    })
+
+    const blocks = [
+      toolUse('t1', 'ok_tool'),
+      toolUse('t2', 'boom_tool'),
+    ] as Anthropic.Messages.ContentBlock[]
+
+    const results = await executeToolUseBlocks(blocks, {
+      studentId: 's',
+      platform: 'imessage',
+    })
+
+    expect(results).toHaveLength(2)
+    expect(results[0].content).toBe('OK')
+    expect(typeof results[1].content === 'string' && results[1].content).toMatch(/boom_tool|kaboom|failed/i)
+  })
 })

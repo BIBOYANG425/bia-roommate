@@ -1,12 +1,13 @@
 // Runs every tool_use block from an assistant response and returns tool_result
 // blocks in the same order as the tool_use blocks. Anthropic's API requires
 // tool_result ordering to match tool_use ordering in the subsequent user turn,
-// so whatever execution strategy we pick, the returned array stays 1:1 with
-// the input.
+// so the returned array stays 1:1 with the input even though the underlying
+// tool calls run in parallel.
 
 import Anthropic from '@anthropic-ai/sdk'
 import { executeTool } from './tool-registry.js'
 import { truncateToolResult } from './context-window.js'
+import { log } from '../observability/logger.js'
 
 export interface ToolBatchContext {
   studentId: string
@@ -22,20 +23,31 @@ export async function executeToolUseBlocks(
   )
   if (toolUses.length === 0) return []
 
-  const results: Anthropic.Messages.ToolResultBlockParam[] = []
+  const batchStart = Date.now()
+  const settled = await Promise.allSettled(
+    toolUses.map((block) => {
+      const input = block.input as Record<string, unknown>
+      input.student_id = context.studentId
+      if (!input.platform) input.platform = context.platform
+      return executeTool(block.name, input)
+    }),
+  )
 
-  for (const block of toolUses) {
-    const input = block.input as Record<string, unknown>
-    input.student_id = context.studentId
-    if (!input.platform) input.platform = context.platform
+  log('info', 'parallel_tool_batch', {
+    count: toolUses.length,
+    durationMs: Date.now() - batchStart,
+  })
 
-    const raw = await executeTool(block.name, input)
-    results.push({
+  return toolUses.map((block, i) => {
+    const settledResult = settled[i]
+    const raw =
+      settledResult.status === 'fulfilled'
+        ? settledResult.value
+        : `Tool ${block.name} failed: ${(settledResult.reason as Error).message ?? String(settledResult.reason)}`
+    return {
       type: 'tool_result',
       tool_use_id: block.id,
       content: truncateToolResult(raw),
-    })
-  }
-
-  return results
+    }
+  })
 }
