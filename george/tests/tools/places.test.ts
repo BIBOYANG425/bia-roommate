@@ -156,4 +156,28 @@ describe('travel_time', () => {
     })
     expect(JSON.parse(result)).toMatchObject({ error: 'geo_disabled' })
   })
+
+  it('REGRESSION: K-town from Frat Row is NOT walkable', async () => {
+    // The original bug: George told a student K-town was walkable from
+    // Frat Row. Real walking time is ~75 min (5.8 km). walkable MUST be
+    // false regardless of mode because it exceeds the 20-min threshold.
+    vi.doMock('../../src/services/google-maps.js', () => ({
+      geocode: vi.fn(),
+      distanceMatrix: vi.fn(async () => [[{ minutes: 75, km: 5.8 }]]),
+      GeoError: FakeGeoError,
+    }))
+    vi.doMock('../../src/services/geo-rate-limit.js', () => ({
+      checkGeoBudget: vi.fn(() => true),
+    }))
+    const execute = await loadTool('travel_time')
+    const result = await execute('travel_time', {
+      from: 'Frat Row',
+      to: 'K-town',
+      mode: 'walking',
+      student_id: 's1',
+    })
+    const parsed = JSON.parse(result)
+    expect(parsed.walkable).toBe(false)
+    expect(parsed.minutes).toBeGreaterThan(20)
+  })
 })
