@@ -80,3 +80,83 @@ describe('geocode', () => {
     await expect(geocode('anywhere')).rejects.toMatchObject({ code: 'geo_disabled' })
   })
 })
+
+describe('distanceMatrix', () => {
+  it('returns minutes and km for a single origin + destination', async () => {
+    const { distanceMatrix } = await import('../../src/services/google-maps.js')
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          status: 'OK',
+          rows: [
+            {
+              elements: [
+                {
+                  status: 'OK',
+                  duration: { value: 1200 },
+                  distance: { value: 1600 },
+                },
+              ],
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    )
+    const result = await distanceMatrix(
+      [{ lat: 34.02, lng: -118.28 }],
+      [{ lat: 34.06, lng: -118.30 }],
+      'walking',
+    )
+    expect(result).toEqual([[{ minutes: 20, km: 1.6 }]])
+  })
+
+  it('returns null for unreachable element', async () => {
+    const { distanceMatrix } = await import('../../src/services/google-maps.js')
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          status: 'OK',
+          rows: [{ elements: [{ status: 'ZERO_RESULTS' }] }],
+        }),
+        { status: 200 },
+      ),
+    )
+    const result = await distanceMatrix(
+      [{ lat: 34.02, lng: -118.28 }],
+      [{ lat: 34.06, lng: -118.30 }],
+      'walking',
+    )
+    expect(result).toEqual([[null]])
+  })
+
+  it('caches identical matrix calls', async () => {
+    const { distanceMatrix } = await import('../../src/services/google-maps.js')
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          status: 'OK',
+          rows: [
+            {
+              elements: [
+                { status: 'OK', duration: { value: 60 }, distance: { value: 80 } },
+              ],
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    )
+    await distanceMatrix(
+      [{ lat: 34.02, lng: -118.28 }],
+      [{ lat: 34.03, lng: -118.29 }],
+      'walking',
+    )
+    await distanceMatrix(
+      [{ lat: 34.02, lng: -118.28 }],
+      [{ lat: 34.03, lng: -118.29 }],
+      'walking',
+    )
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+  })
+})

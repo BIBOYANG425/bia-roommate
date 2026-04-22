@@ -97,5 +97,54 @@ export async function geocode(query: string): Promise<{ lat: number; lng: number
   return loc
 }
 
-// Exported for Task 4 (distanceMatrix) and Phase 2 (placesNearby).
+type LatLng = { lat: number; lng: number }
+type Mode = 'walking' | 'driving' | 'transit' | 'bicycling'
+export type MatrixElement = { minutes: number; km: number } | null
+
+function llKey(p: LatLng): string {
+  return `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`
+}
+
+export async function distanceMatrix(
+  origins: LatLng[],
+  destinations: LatLng[],
+  mode: Mode,
+): Promise<MatrixElement[][]> {
+  const cacheKey = `matrix|${mode}|${origins.map(llKey).join(';')}|${destinations.map(llKey).join(';')}`
+  const cached = apiCache.get(cacheKey) as MatrixElement[][] | undefined
+  if (cached) return cached
+
+  const key = requireKey()
+  const o = origins.map(llKey).join('|')
+  const d = destinations.map(llKey).join('|')
+  const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${o}&destinations=${d}&mode=${mode}&key=${key}`
+  const res = await fetchWithRetry(url)
+  const data = (await res.json()) as {
+    status: string
+    rows: Array<{
+      elements: Array<{
+        status: string
+        duration?: { value: number }
+        distance?: { value: number }
+      }>
+    }>
+  }
+  if (data.status !== 'OK') {
+    throw new GeoError('geo_unavailable', `matrix status ${data.status}`)
+  }
+
+  const matrix: MatrixElement[][] = data.rows.map((row) =>
+    row.elements.map((el) => {
+      if (el.status !== 'OK' || !el.duration || !el.distance) return null
+      return {
+        minutes: Math.round(el.duration.value / 60),
+        km: Math.round((el.distance.value / 1000) * 10) / 10,
+      }
+    }),
+  )
+  apiCache.set(cacheKey, matrix)
+  return matrix
+}
+
+// Exported for Task 5 (rate limiter) and Phase 2 (placesNearby).
 export const _internal = { apiCache, fetchWithRetry, requireKey, geocodeCache }
