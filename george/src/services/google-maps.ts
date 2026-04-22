@@ -15,11 +15,14 @@ const GEOCODE_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days (Google ToS cap)
 const API_TTL_MS = 60 * 60 * 1000 // 1 hour
 const TIMEOUT_MS = 3000
 
-const geocodeCache = new LRUCache<string, { lat: number; lng: number } | null>({
+// Cache slots wrap the value so the `null` ("known miss") case still
+// satisfies lru-cache's `V extends {}` constraint under TS 6.
+type GeoCacheSlot = { coords: { lat: number; lng: number } | null }
+const geocodeCache = new LRUCache<string, GeoCacheSlot>({
   max: 500,
   ttl: GEOCODE_TTL_MS,
 })
-const apiCache = new LRUCache<string, unknown>({ max: 1000, ttl: API_TTL_MS })
+const apiCache = new LRUCache<string, object>({ max: 1000, ttl: API_TTL_MS })
 
 export class GeoError extends Error {
   constructor(
@@ -67,9 +70,8 @@ async function fetchWithRetry(url: string, init?: RequestInit): Promise<Response
 
 export async function geocode(query: string): Promise<{ lat: number; lng: number } | null> {
   const cacheKey = query.toLowerCase().trim()
-  if (geocodeCache.has(cacheKey)) {
-    return geocodeCache.get(cacheKey) as { lat: number; lng: number } | null
-  }
+  const hit = geocodeCache.get(cacheKey)
+  if (hit) return hit.coords
 
   const key = requireKey()
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${key}`
@@ -79,7 +81,7 @@ export async function geocode(query: string): Promise<{ lat: number; lng: number
     results: Array<{ geometry: { location: { lat: number; lng: number } } }>
   }
   if (data.status !== 'OK' || !data.results[0]) {
-    geocodeCache.set(cacheKey, null, { ttl: 24 * 60 * 60 * 1000 })
+    geocodeCache.set(cacheKey, { coords: null }, { ttl: 24 * 60 * 60 * 1000 })
     return null
   }
   const { lat, lng } = data.results[0].geometry.location
@@ -89,11 +91,11 @@ export async function geocode(query: string): Promise<{ lat: number; lng: number
     lng < LA_BBOX.west ||
     lng > LA_BBOX.east
   ) {
-    geocodeCache.set(cacheKey, null, { ttl: 24 * 60 * 60 * 1000 })
+    geocodeCache.set(cacheKey, { coords: null }, { ttl: 24 * 60 * 60 * 1000 })
     return null
   }
   const loc = { lat, lng }
-  geocodeCache.set(cacheKey, loc)
+  geocodeCache.set(cacheKey, { coords: loc })
   return loc
 }
 
