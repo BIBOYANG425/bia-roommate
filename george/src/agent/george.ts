@@ -224,7 +224,7 @@ export async function processMessage(msg: IncomingMessage): Promise<string | nul
   }
 }
 
-async function runSubAgent(
+export async function runSubAgent(
   agent: SubAgent,
   userMessage: string,
   history: Anthropic.Messages.MessageParam[],
