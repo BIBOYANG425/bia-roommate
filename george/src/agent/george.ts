@@ -13,11 +13,11 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getClaudeClient } from './llm-providers.js'
 import { classifyIntent } from './intent-classifier.js'
 import { getSubAgentPromptParts, type SubAgent } from './personality.js'
-import { getToolsByNames, executeTool } from './tool-registry.js'
+import { getToolsByNames } from './tool-registry.js'
+import { executeToolUseBlocks } from './tool-executor.js'
 import {
   trimHistoryToBudget,
   summarizeDroppedHistory,
-  truncateToolResult,
   estimateHistoryTokens,
 } from './context-window.js'
 import { getCatalogFor } from '../skills/index.js'
@@ -224,7 +224,7 @@ export async function processMessage(msg: IncomingMessage): Promise<string | nul
   }
 }
 
-async function runSubAgent(
+export async function runSubAgent(
   agent: SubAgent,
   userMessage: string,
   history: Anthropic.Messages.MessageParam[],
@@ -318,22 +318,10 @@ async function runSubAgent(
 
     messages.push({ role: 'assistant', content: response.content })
 
-    const toolResults: Anthropic.Messages.ToolResultBlockParam[] = []
-    for (const block of response.content) {
-      if (block.type === 'tool_use') {
-        const input = block.input as Record<string, unknown>
-        input.student_id = context.studentId
-        if (!input.platform) input.platform = context.platform
-
-        const rawResult = await executeTool(block.name, input)
-        const result = truncateToolResult(rawResult)
-        toolResults.push({
-          type: 'tool_result',
-          tool_use_id: block.id,
-          content: result,
-        })
-      }
-    }
+    const toolResults = await executeToolUseBlocks(response.content, {
+      studentId: context.studentId,
+      platform: context.platform,
+    })
 
     messages.push({ role: 'user', content: toolResults })
   }
