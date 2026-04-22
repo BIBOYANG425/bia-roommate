@@ -49,14 +49,14 @@ const NON_TEXT_RESPONSES: Record<string, string> = {
   link: '链接我这边打不开，贴里面的文字或者直接说你想问什么。',
 }
 
-const SUB_AGENT_TOOLS: Record<SubAgent, string[]> = {
-  event: ['search_events', 'get_event_details', 'set_reminder', 'submit_event', 'suggest_connection', 'lookup_student', 'load_skill'],
+export const SUB_AGENT_TOOLS: Record<SubAgent, string[]> = {
+  event: ['search_events', 'get_event_details', 'set_reminder', 'submit_event', 'suggest_connection', 'travel_time', 'lookup_student', 'load_skill'],
   course: ['search_courses', 'describe_course', 'get_course_reviews', 'get_rmp_ratings', 'recommend_courses', 'plan_schedule', 'course_tips', 'search_programs', 'lookup_student', 'load_skill'],
-  housing: ['search_sublets', 'post_sublet', 'freshman_faq', 'lookup_student', 'load_skill'],
+  housing: ['search_sublets', 'post_sublet', 'freshman_faq', 'travel_time', 'lookup_student', 'load_skill'],
   social: ['suggest_connection', 'search_roommates', 'freshman_faq', 'lookup_student', 'search_events', 'load_skill'],
   // describe_course exposed here so first-touch "什么是 writ150 / GESM / CSCI102" questions
   // can be answered during onboarding (intent='general' → routes to campus) without a handoff.
-  campus: ['campus_knowledge', 'freshman_faq', 'describe_course', 'lookup_student', 'load_skill', 'update_profile'],
+  campus: ['campus_knowledge', 'freshman_faq', 'describe_course', 'travel_time', 'lookup_student', 'load_skill', 'update_profile'],
 }
 
 // Onboarding turn cap: after this many turns without completion, prompt switches to wrap-up mode

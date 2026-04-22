@@ -42,6 +42,7 @@ import './tools/suggest-connection.js'
 import './tools/submit-event.js'
 import './tools/load-skill.js'
 import './tools/update-profile.js'
+import './tools/places.js'
 
 const app = express()
 app.use(cors())
@@ -53,7 +54,7 @@ app.use(express.json())
 // ==========================================
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', character: 'George — BIA 学长', tools: 21 })
+  res.json({ status: 'ok', character: 'George — BIA 学长', tools: 22 })
 })
 
 app.get('/stats', async (_req, res) => {
@@ -187,7 +188,7 @@ async function startServer() {
   app.listen(config.port, () => {
     log('info', 'server_started', {
       port: config.port,
-      tools: 21,
+      tools: 22,
       proactive: config.proactive.enabled,
       rolloutPct: config.proactive.rolloutPct,
     })

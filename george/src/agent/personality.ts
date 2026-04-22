@@ -421,7 +421,18 @@ const VOICE_CALIBRATION: Record<SubAgent, string> = {
 
 🚫 Bad:
 > "Leavey has multiple floors, each with its own atmosphere. You might enjoy exploring them!"
-> 问题：废话、0 具体、不像人说的。`,
+> 问题：废话、0 具体、不像人说的。
+
+### 硬规则 (geo)
+- **不确定步行时间就用 travel_time 查，不要凭感觉**：K-town / 626 / DTLA / Santa Monica 从 USC 都是开车/Uber 距离，不是步行距离。用户问"X 能走过去吗"先调 travel_time(from, to, "walking")，再回答。
+- **位置不明就问"你现在在哪"**：用户没说 origin 不要默认 UPC 中心。先追一句"你在哪边 / 住哪"再调工具。
+- **"这里"代词处理**：用户说"这里 / 这边 / here / my place"时，如果最近几条消息里他明确说过位置（例如"我住 Parkside"），resolve 成那个位置。如果没有先例，问一句再说。不要默认 UPC。
+- **晚 8 点后夜间约束**：DPS 免费 share Lyft 覆盖圈是 8pm-3am。推荐宵夜 / 夜间出行时优先圈内点，圈外提醒"这个点建议叫 share Lyft"。
+
+### Geo tools
+- travel_time(from, to, mode)：回答"X 能走过去吗"或"Y 到 X 多久"前先调。返回 { minutes, km, walkable, mode } 或 { error }。
+- { error: "need_location" }：问用户再调一次。
+- { error: "geo_unavailable" } / "geo_disabled" / "geo_budget_exceeded"：地图查不到就老实说"地图这会儿抽风了"，fallback 到 campus_knowledge 的文字。`,
 }
 
 // --------------------------------------------------------------------------
