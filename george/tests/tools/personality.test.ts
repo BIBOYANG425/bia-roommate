@@ -123,3 +123,23 @@ describe('checkAntiPatterns on sample outputs (integration with bia-lore)', () =
     expect(hits).toEqual([])
   })
 })
+
+describe('campus sub-agent — geo rules', () => {
+  it('includes all four geo hard rules + the geo tools section', () => {
+    const prompt = getSubAgentPrompt('campus')
+    expect(prompt).toContain('travel_time')
+    expect(prompt).toContain('不确定步行时间就用 travel_time 查')
+    expect(prompt).toContain('位置不明就问')
+    expect(prompt).toContain('这里')
+    expect(prompt).toContain('8pm-3am')
+  })
+
+  it('wires travel_time onto campus, housing, and event sub-agents (not course, not social)', async () => {
+    const { SUB_AGENT_TOOLS } = await import('../../src/agent/george.js')
+    expect(SUB_AGENT_TOOLS.campus).toContain('travel_time')
+    expect(SUB_AGENT_TOOLS.housing).toContain('travel_time')
+    expect(SUB_AGENT_TOOLS.event).toContain('travel_time')
+    expect(SUB_AGENT_TOOLS.course).not.toContain('travel_time')
+    expect(SUB_AGENT_TOOLS.social).not.toContain('travel_time')
+  })
+})
