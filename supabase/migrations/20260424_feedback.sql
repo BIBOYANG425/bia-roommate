@@ -10,12 +10,21 @@ CREATE TABLE IF NOT EXISTS feedback (
   email text,
   path text,
   user_agent text,
-  user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL
+  user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  -- sha256 of client IP (no raw IPs stored). Used for rate-limit + dedupe
+  -- of anonymous submissions. Optional — null when no client IP header
+  -- is available (e.g., direct edge calls).
+  ip_hash text
 );
 
 -- ─── Indexes ───
 CREATE INDEX idx_feedback_created_at ON feedback (created_at DESC);
 CREATE INDEX idx_feedback_category ON feedback (category);
+-- Composite index supports rate-limit and dedupe queries that filter by
+-- ip_hash and recency.
+CREATE INDEX idx_feedback_ip_hash_created_at
+  ON feedback (ip_hash, created_at DESC)
+  WHERE ip_hash IS NOT NULL;
 
 -- ─── RLS Policies ───
 ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
