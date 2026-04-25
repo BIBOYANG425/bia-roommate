@@ -115,7 +115,7 @@ export default function FeedbackButton() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Send feedback"
+          aria-labelledby="feedback-title"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
           }}
@@ -141,9 +141,12 @@ export default function FeedbackButton() {
             }}
           >
             <div className="flex items-center justify-between mb-4">
-              <p className="font-display tracking-wider text-base">
+              <h2
+                id="feedback-title"
+                className="font-display tracking-wider text-base"
+              >
                 SEND FEEDBACK
-              </p>
+              </h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
