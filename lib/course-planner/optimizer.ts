@@ -55,20 +55,25 @@ export function optimizeSchedule({
   let explored = 0;
   let iterations = 0;
 
-  // Pre-compute: for each course, get viable sections sorted by RMP rating
-  // Deprioritize closed (reserved/restricted) and full sections but still include them
+  // Pre-compute: for each course, get viable sections sorted by RMP rating.
+  // Hard-exclude cancelled and truly full sections (registered >= capacity).
+  // Keep "closed registration" sections (isClosed but seats remain) — they
+  // can still be reached via d-clearance, waitlist, or off-cycle adds — but
+  // penalize them so the optimizer prefers genuinely open ones.
   const courseSections = courses.map((course) => {
     const courseId = `${course.department}-${course.number}`;
     return {
       course,
       courseId,
       sections: [...(course.sections || [])]
-        .filter((s) => !s.isCancelled)
+        .filter((s) => {
+          if (s.isCancelled) return false;
+          if (s.capacity > 0 && s.registered >= s.capacity) return false;
+          return true;
+        })
         .map((s) => {
           let score = getRmpScore(s, rmpCache);
-          // Penalize full sections (registered >= capacity)
-          if (s.capacity > 0 && s.registered >= s.capacity) score -= 1.0;
-          // Penalize closed sections (reserved/restricted registration)
+          // Penalize closed-registration sections (reserved/restricted)
           if (s.isClosed) score -= 0.5;
           return { section: s, slots: parseSectionTimes(s.times), score };
         })

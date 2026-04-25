@@ -21,9 +21,12 @@ export default function SectionRow({
 }: SectionRowProps) {
   const time = section.times[0];
   const isTBA = !time || !time.start_time || time.day?.toUpperCase() === "TBA";
-  const isClosed = section.isClosed || section.isCancelled;
   const isFull =
-    !isClosed && section.registered >= section.capacity && section.capacity > 0;
+    section.capacity > 0 && section.registered >= section.capacity;
+  // "Closed registration" — admin-closed but seats may remain (d-clearance,
+  // waitlist, etc.). When a section is both closed and full, show FULL.
+  const isClosedReg = section.isClosed && !isFull && !section.isCancelled;
+  const dim = section.isCancelled || isFull || isClosedReg;
 
   return (
     <div
@@ -33,10 +36,10 @@ export default function SectionRow({
       style={{
         background: isSelected
           ? "var(--gold)"
-          : isClosed || isFull
+          : dim
             ? "var(--beige)"
             : "var(--cream)",
-        opacity: isClosed ? 0.6 : isFull ? 0.75 : 1,
+        opacity: section.isCancelled ? 0.6 : isFull ? 0.75 : isClosedReg ? 0.85 : 1,
       }}
       onClick={onToggle}
     >
@@ -127,7 +130,7 @@ export default function SectionRow({
       </span>
 
       {/* Status */}
-      {isClosed && (
+      {section.isCancelled ? (
         <span
           className="brutal-tag"
           style={{
@@ -136,17 +139,28 @@ export default function SectionRow({
             fontSize: "9px",
           }}
         >
-          {section.isCancelled ? "CANCELLED" : "CLOSED"}
+          CANCELLED
         </span>
-      )}
-      {isFull && (
+      ) : isFull ? (
         <span
           className="brutal-tag"
           style={{ background: "var(--mid)", color: "white", fontSize: "9px" }}
         >
           FULL
         </span>
-      )}
+      ) : isClosedReg ? (
+        <span
+          className="brutal-tag"
+          style={{
+            background: "var(--cardinal)",
+            color: "white",
+            fontSize: "9px",
+          }}
+          title="Registration closed for this section. Seats may still be available via d-clearance or waitlist."
+        >
+          CLOSED REG
+        </span>
+      ) : null}
 
       {/* Conflict */}
       {hasConflict && !isSelected && (
