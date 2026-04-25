@@ -180,6 +180,31 @@ Integration test for `scrapeInstagram`:
 No real APIFY calls in tests. Real smoke test is deferred to Bob running
 `POST /admin/scrape-instagram` once `APIFY_TOKEN` is set in prod env.
 
+## Risks accepted
+
+Three issues this iteration accepts; revisit if they bite:
+
+1. **Apify single point of failure.** If `apify/instagram-scraper` breaks
+   when Instagram ships anti-scrape changes, the pipeline goes dark with
+   no internal fallback. Graceful-degrade keeps the rest of George
+   running. Long-term mitigation if outages recur: RSS or manual
+   submission backfill.
+
+2. **Instagram CDN URLs expire.** `displayUrl` passes through unchanged;
+   IG rotates these on a weeks-to-months window so older events end up
+   with broken thumbnails. Acceptable for v1 (stale image on a past
+   event is low-impact). If users complain, re-host to Supabase storage
+   at insert time.
+
+3. **No content moderation on captions.** Frat / Troy Labs / SEP captions
+   regularly contain Venmo handles, phone numbers, and party context
+   that doesn't belong in a surfaced event card. Direct publish
+   (`status='active'`) sends whatever the LLM accepts straight to users.
+   Two-line mitigation: regex-strip phone / Venmo / email from the
+   description inside `validatePost` before insert. Heavier moderation
+   (review queue) deferred to the same follow-up as LLM false-positive
+   handling.
+
 ## Not doing (YAGNI)
 
 - Pending-review workflow (chose direct publish)
