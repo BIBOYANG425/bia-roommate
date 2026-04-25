@@ -906,11 +906,11 @@ export default function ResultsView({
                     {timeDisplay} |{" "}
                     {s.section.isCancelled
                       ? "CANCELLED"
-                      : s.section.isClosed
-                        ? "CLOSED"
-                        : s.section.capacity > 0 &&
-                            s.section.registered >= s.section.capacity
-                          ? "FULL"
+                      : s.section.capacity > 0 &&
+                          s.section.registered >= s.section.capacity
+                        ? "FULL"
+                        : s.section.isClosed
+                          ? `CLOSED REG · ${s.section.registered}/${s.section.capacity} seats`
                           : `${s.section.registered}/${s.section.capacity} seats`}
                   </p>
 

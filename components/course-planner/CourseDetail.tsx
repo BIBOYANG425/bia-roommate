@@ -23,9 +23,14 @@ export default function CourseDetail() {
       .map((s) => s.section.id),
   );
 
-  // Group sections by type
+  // Group sections by type. Hide truly full sections (capacity reached) so
+  // students don't waste time picking them. Keep "closed registration"
+  // sections visible — they may still be reachable via d-clearance or waitlist.
   const groups: Record<string, Section[]> = {};
   for (const sec of course.sections || []) {
+    if (sec.capacity > 0 && sec.registered >= sec.capacity && !sec.isCancelled) {
+      continue;
+    }
     const type = sec.type || "Other";
     if (!groups[type]) groups[type] = [];
     groups[type].push(sec);

@@ -154,9 +154,12 @@ export default function SavedScheduleView({
 
               <p className="text-sm mb-2" style={{ color: "var(--mid)" }}>
                 {timeDisplay} |{" "}
-                {s.section.isClosed
-                  ? "CLOSED"
-                  : `${s.section.registered}/${s.section.capacity} seats`}
+                {s.section.capacity > 0 &&
+                s.section.registered >= s.section.capacity
+                  ? "FULL"
+                  : s.section.isClosed
+                    ? `CLOSED REG · ${s.section.registered}/${s.section.capacity} seats`
+                    : `${s.section.registered}/${s.section.capacity} seats`}
               </p>
 
               {instructorName && (

@@ -74,7 +74,11 @@ function buildCombos(course: Course): SectionCombo[] {
   > = {};
 
   for (const s of course.sections || []) {
-    if (s.isCancelled || s.isClosed) continue;
+    if (s.isCancelled) continue;
+    // Exclude truly full sections (no seats). Keep "closed registration"
+    // sections (isClosed but seats remain) — user may still get in via
+    // d-clearance, waitlist, or off-cycle add.
+    if (s.capacity > 0 && s.registered >= s.capacity) continue;
     const slots = parseSectionTimes(s.times);
     // Keep sections even if TBA — they may be quizzes
     const type = (s.type || "Lecture").toLowerCase();
@@ -668,6 +672,22 @@ export function ScheduleOptimizer() {
                         }
                       >
                         D-CLR
+                      </span>
+                    )}
+                    {sec.section.isClosed && (
+                      <span
+                        style={{
+                          marginLeft: 4,
+                          padding: "1px 4px",
+                          background: "#990000",
+                          color: "#fff",
+                          fontWeight: 700,
+                          fontSize: 9,
+                          letterSpacing: "0.05em",
+                        }}
+                        title="Registration is closed for this section. Seats may still be available via d-clearance or waitlist."
+                      >
+                        CLOSED REG
                       </span>
                     )}
                   </span>
