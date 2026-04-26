@@ -10,6 +10,18 @@
 
 ---
 
+## CEO review amendment (2026-04-25)
+
+`/plan-ceo-review` surfaced two changes from the original plan:
+
+1. **Finding #1 (CRITICAL — fixed in this plan)**: `proactive.ts` only matches events with `created_at >= now - 6h` and runs every 3h. Weekly IG cron means events are visible to the matcher for ~6 hours per week. **Fix**: at the end of `scrapeInstagram`, if any events were inserted, fire `matchStudentsToEvents()` directly so the fresh batch gets one push window before the 6h gate closes. Wired in Task 4. No new task; ~5 lines impl + ~10 lines test.
+
+2. **Finding #2 (HIGH — pending Bob's WeChat reply)**: Frat IG accounts are likely the wrong wedge for the international-student user base; cultural orgs (CSSA / KSA / JSA / etc.) and pre-pro clubs (Marshall consulting / finance / pre-med) over-index on relevance. Cyrus is asking Bob to revise the account list. Until Bob replies, **Task 2 ships only Troy Labs + SEP (2 accounts) as a thin slice**. The frat list in `ig-accounts.ts` stays empty `frats: []`. When Bob's reply arrives, a separate small commit fills in either revised cultural-org accounts or the original frat list — no rewrite of Task 2 needed.
+
+Findings #3 (caption-only LLM extraction) and #4 (direct publish risk) are deferred to TODOs after 4 weeks of real LLM accuracy data.
+
+---
+
 ## Workspace
 
 - Worktree: `/Users/cyrusgu/Desktop/bia-worktrees/instagram-scraper-impl`
@@ -151,11 +163,13 @@ git commit -m "chore(instagram): add apify-client dep + document APIFY_TOKEN + u
 
 ---
 
-### Task 2: Hard-coded account list (`ig-accounts.ts`)
+### Task 2: Hard-coded account list (`ig-accounts.ts`) — thin slice
 
 **Files:**
 - Create: `george/src/scrapers/ig-accounts.ts`
 - Create: `george/tests/scrapers/ig-accounts.test.ts`
+
+**Important — read the CEO review amendment above before starting.** This task ships only Troy Labs + SEP. The `frats: []` group is intentionally empty pending Bob's reply on the wedge question. A follow-up commit (after Bob's WeChat reply) fills in either the revised cultural-org accounts or the original frat list.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -203,36 +217,20 @@ Create `george/src/scrapers/ig-accounts.ts`:
 // Adding/removing a handle is intentionally a code change — see the design
 // spec's "Non goals" section for why.
 //
-// Header last reviewed: 2026-04-22
+// Currently a thin slice: only Troy Labs + SEP. The frats group is intentionally
+// empty pending Bob's WeChat reply on the wedge question (see CEO review
+// amendment at the top of this plan, 2026-04-25). A small follow-up commit
+// fills in the revised cultural-org or frat handles once Bob confirms.
+//
+// Header last reviewed: 2026-04-25
 
 export const IG_ACCOUNTS = {
-  // USC Interfraternity Council chapters (Row frats). Bob's 2026-04-22 list;
-  // verify by reading https://greeklife.usc.edu/ifc/ before adding more.
-  frats: [
-    'sigma_chi_usc',
-    'uscphidelt',
-    'usc_sae',
-    'kappasigmausc',
-    'usc_pike',
-    'sigmanuusc',
-    'usc_betas',
-    'usc_atomega',
-    'usc_deltachi',
-    'uscsigep',
-    'uscphikaps',
-    'usczbt',
-    'usc_lambdachi',
-    'uscdke',
-    'uscdeltsig',
-    'uscapd',
-    'usc_tke',
-    'uscphigam',
-    'uscphipsi',
-    'uscfiji',
-  ],
-  // Troy Labs — USC's student-run venture studio. Single account.
+  // PENDING Bob's wedge confirmation. Either reverts to the 20-frat IFC list
+  // or gets replaced with cultural-org / pre-pro accounts (CSSA, KSA, etc.).
+  frats: [] as string[],
+  // Troy Labs — USC's student-run venture studio.
   troyLabs: ['troylabsusc'],
-  // SEP — Spark SC / Student Entrepreneur Program. Single account.
+  // SEP — Spark SC / Student Entrepreneur Program.
   sep: ['sparksc'],
 } as const
 
@@ -244,8 +242,6 @@ export function flattenHandles(): string[] {
   ]
 }
 ```
-
-The exact handle strings are a best-guess transcription of the IFC chapter list. If you discover an incorrect handle during implementation, fix it in this commit — don't defer. If you can't verify a handle without making a real IG request, leave it in and note the uncertainty in a follow-up issue (do not remove a Bob-specified group).
 
 - [ ] **Step 4: Run the test — expect pass**
 
@@ -512,7 +508,7 @@ git commit -m "feat(instagram): validatePost — isEvent + title length + date w
 
 ---
 
-### Task 4: Rewrite `scrapeInstagram` — happy path
+### Task 4: Rewrite `scrapeInstagram` — happy path + post-scrape matcher trigger
 
 **Files:**
 - Modify: `george/src/scrapers/instagram.ts` (full rewrite)
@@ -557,6 +553,12 @@ vi.mock('../../src/agent/llm-providers.js', () => ({
   callLightweightLLM: llmMock,
 }))
 
+// Mock the proactive matcher (CEO review Finding #1: scrape now triggers it directly)
+const matchStudentsMock = vi.fn().mockResolvedValue(undefined)
+vi.mock('../../src/jobs/proactive.js', () => ({
+  matchStudentsToEvents: matchStudentsMock,
+}))
+
 // Mock supabase
 const maybeSingleMock = vi.fn()
 const insertMock = vi.fn()
@@ -590,6 +592,7 @@ beforeEach(() => {
   maybeSingleMock.mockReset()
   insertMock.mockReset()
   logMock.mockReset()
+  matchStudentsMock.mockClear()
   // Default: APIFY_TOKEN is set, nothing is pre-existing
   process.env.APIFY_TOKEN = 'test-apify-token'
   maybeSingleMock.mockResolvedValue({ data: null })
@@ -632,7 +635,7 @@ describe('scrapeInstagram — happy path', () => {
     const callArg = actorCallMock.mock.calls[0][0]
     expect(callArg.resultsLimit).toBe(3)
     expect(Array.isArray(callArg.username)).toBe(true)
-    expect(callArg.username.length).toBeGreaterThan(10) // frats + 2
+    expect(callArg.username.length).toBeGreaterThan(0) // thin slice: troyLabs + sep until Bob's reply
 
     // One insert (the valid event), none for the cute-dog post
     expect(insertMock).toHaveBeenCalledTimes(1)
@@ -646,6 +649,24 @@ describe('scrapeInstagram — happy path', () => {
       image_url: 'https://cdn/1.jpg',
       status: 'active',
     })
+
+    // Post-scrape matcher fires once because at least one event was inserted
+    expect(matchStudentsMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('does NOT fire the matcher when zero events are inserted', async () => {
+    datasetListItemsMock.mockResolvedValueOnce({
+      items: [
+        { caption: 'just a meme', displayUrl: 'https://cdn/x.jpg', url: 'https://ig/p/x', ownerUsername: 'sparksc' },
+      ],
+    })
+    llmMock.mockResolvedValueOnce(JSON.stringify({ isEvent: false, title: '', date: null, category: 'other' }))
+
+    const { scrapeInstagram } = await import('../../src/scrapers/instagram.js')
+    await scrapeInstagram()
+
+    expect(insertMock).not.toHaveBeenCalled()
+    expect(matchStudentsMock).not.toHaveBeenCalled()
   })
 })
 ```
@@ -677,6 +698,7 @@ import { ApifyClient } from 'apify-client'
 import { callLightweightLLM } from '../agent/llm-providers.js'
 import { config } from '../config.js'
 import { supabase } from '../db/client.js'
+import { matchStudentsToEvents } from '../jobs/proactive.js'
 import { log } from '../observability/logger.js'
 import { flattenHandles } from './ig-accounts.js'
 import { validatePost } from './instagram-validate.js'
@@ -790,6 +812,19 @@ export async function scrapeInstagram(): Promise<void> {
     llm_rejected,
     validation_rejected,
   })
+
+  // CEO review Finding #1: proactive matcher only sees events with
+  // created_at >= now-6h. Without this direct call, the freshly inserted
+  // batch would only be visible for ~6h once a week. Fire it now while
+  // the events are fresh. Wrapped in try/catch so a matcher failure does
+  // not poison a successful scrape.
+  if (events_inserted > 0) {
+    try {
+      await matchStudentsToEvents()
+    } catch (err) {
+      log('warn', 'instagram_post_scrape_match_failed', { error: (err as Error).message })
+    }
+  }
 }
 ```
 
@@ -813,7 +848,7 @@ cd george && npx tsc --noEmit && ANTHROPIC_API_KEY=test SUPABASE_URL=http://x SU
 
 ```bash
 git add george/src/scrapers/instagram.ts george/src/index.ts george/tests/scrapers/instagram.test.ts
-git commit -m "refactor(instagram): rewrite scraper — new actor + resultsLimit=3 + validatePost wiring"
+git commit -m "refactor(instagram): rewrite scraper — new actor + resultsLimit=3 + validatePost + post-scrape matcher"
 ```
 
 ---
