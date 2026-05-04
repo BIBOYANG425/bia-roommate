@@ -56,6 +56,23 @@ beforeEach(() => {
   actorCallMock.mockResolvedValue({ defaultDatasetId: 'ds-1' })
 })
 
+describe('scrapeInstagram — dedup', () => {
+  it('skips posts whose source_url already exists in the events table', async () => {
+    datasetListItemsMock.mockResolvedValueOnce({
+      items: [
+        { caption: 'Career Mixer', displayUrl: 'https://cdn/3.jpg', url: 'https://ig/p/dup', ownerUsername: 'sparksc' },
+      ],
+    })
+    maybeSingleMock.mockResolvedValueOnce({ data: { id: 'existing-id' } })
+
+    const { scrapeInstagram } = await import('../../src/scrapers/instagram.js')
+    await scrapeInstagram()
+
+    expect(llmMock).not.toHaveBeenCalled()
+    expect(insertMock).not.toHaveBeenCalled()
+  })
+})
+
 describe('scrapeInstagram — happy path', () => {
   it('inserts one event row per valid post, skips invalid, uses resultsLimit=3', async () => {
     datasetListItemsMock.mockResolvedValueOnce({

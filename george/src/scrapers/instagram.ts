@@ -88,6 +88,15 @@ export async function scrapeInstagram(): Promise<void> {
     for (const post of items as ApifyPost[]) {
       candidates++
 
+      if (post.url) {
+        const { data: existing } = await supabase
+          .from('events')
+          .select('id')
+          .eq('source_url', post.url)
+          .maybeSingle()
+        if (existing) continue
+      }
+
       const llmOut = await extractEventFromPost(post)
       if (llmOut === null) {
         llm_rejected++
