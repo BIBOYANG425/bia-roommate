@@ -40,7 +40,6 @@ export async function scrapeInstagram(accounts?: string[]) {
   log('info', 'instagram_scrape_start', { accounts: handles.length })
 
   try {
-    // @ts-expect-error — package not installed; runtime-only dependency
     const { ApifyClient } = await import('apify-client')
     const apify = new ApifyClient({ token: config.apify.token })
 
