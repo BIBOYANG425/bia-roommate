@@ -10,6 +10,103 @@
 
 ---
 
+## Eng review amendment (2026-05-03)
+
+`/plan-eng-review` surfaced six findings that require plan edits. They supersede the
+original task bodies where they conflict; tasks below have been updated in-place
+where straightforward, otherwise read this section as authoritative.
+
+### Finding A + C + D (combined): cron time, timezone, matcher-call seam
+
+The CEO review's matcher-call fix (Finding #1) was added inside `scrapeInstagram`,
+but `proactive.ts` has a quiet-hours guard `hour >= 22 || hour < 8` (server local).
+With cron at `0 0 * * 1`, server local hour is 0 → quiet hours → matcher returns
+without doing anything. The fix is null. Compounding: `node-cron` here is invoked
+without a timezone option, so "server local" depends on the host's `TZ` env (not
+pinned in this repo).
+
+Three corrections (all in `george/src/index.ts`, not `scrapers/instagram.ts`):
+1. Move the cron expression to an active hour: `0 12 * * 1` with explicit
+   `{ timezone: 'America/Los_Angeles' }` (Mon 12:00 PT, lunchtime).
+2. Move the `await matchStudentsToEvents()` call **out of `scrapeInstagram`** and
+   into the cron handler in `index.ts`, so the scraper module stops importing
+   `jobs/proactive.ts`. Keeps `scrapers/` as pure data-pull, decouples from `jobs/`.
+   Also means the admin endpoint `/admin/scrape-instagram` does NOT trigger pushes
+   (correct — admin scrapes are smoke tests, shouldn't blast students).
+3. Drop the `matchStudentsToEvents` import + post-scrape call from
+   `scrapers/instagram.ts` (revert that piece of the CEO amendment) AND drop the
+   proactive mock + matcher assertions from `tests/scrapers/instagram.test.ts`.
+
+Net effect on Tasks: Task 4 simpler (no proactive mock, no matcher import);
+Task 8 grows (cron change + timezone + matcher call all in the cron handler).
+
+### Finding B: dedup is racy without a UNIQUE index
+
+`supabase/migrations/` does not contain the `events` table create statement
+(it lives in prod but isn't checked into this repo). We can't tell whether
+`source_url` has a UNIQUE index. Without one, two concurrent scrapes (cron +
+admin endpoint) can both miss-then-insert and produce duplicate rows.
+
+**New Task 1.5**: write a migration
+`supabase/migrations/{date}_events_source_url_unique.sql` with:
+
+```sql
+CREATE UNIQUE INDEX IF NOT EXISTS events_source_url_unique
+  ON public.events (source_url)
+  WHERE source_url IS NOT NULL;
+```
+
+Partial index (`WHERE source_url IS NOT NULL`) is intentional: USC events feed
+sometimes has null source_url, and we don't want to break those. Also amend
+Task 4 insert path to check `result.error` and log a warn (skipping unique-
+violation `23505`, which is the expected race resolution).
+
+### Finding F + Bob's PII request: validatePost hardening
+
+Task 3 amendments:
+- Use `title.trim().length` for the length check (5 spaces should not pass).
+- Add a new helper `stripContactInfo(description: string | null): string | null`
+  in `instagram-validate.ts` that strips phone numbers, Venmo handles, and email
+  addresses from the description. This is `fix/geo-rate-limit-and-ig-spec`'s
+  Risks-accepted item #3 (open branch by Bob, not yet merged); the design-spec
+  amendment lives at HEAD of that branch and explicitly asks the implementer to
+  add this two-line regex sweep.
+- `validatePost` calls `stripContactInfo` on the description before returning
+  the validated event.
+
+Three regexes, applied in order, each replaces match with `[contact removed]`:
+- Phone: `/\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/g`
+- Venmo: `/\b(?:venmo|@venmo)\s*[:@]?\s*[\w-]+/gi`
+- Email: `/\b[\w.-]+@[\w-]+\.[\w.-]+\b/g`
+
+Add 4 unit tests (one per regex + one combined).
+
+### Finding H: 4 more integration test cases
+
+Add to `tests/scrapers/instagram.test.ts` (extend Task 7 — graceful-degrade test
+file already exists by then):
+1. APIFY actor `call()` rejects → log `instagram_unavailable` warn, no insert.
+2. Supabase `insert` returns `{ error: { code: '23505' } }` (unique violation) →
+   silent skip (expected race resolution), no warn.
+3. Supabase `insert` returns `{ error: { code: '99999' } }` (unexpected) →
+   log warn `instagram_insert_failed`.
+4. Post with no `url` field → dedup query skipped, LLM still called, insert
+   still attempted (source_url is null in row).
+
+### Finding E: deployment platform — STILL pending Bob
+
+Vercel-style hosts will time out the admin endpoint when scrape takes 30s-3min.
+Fly/Railway/VM are fine. Bob hasn't said. Plan keeps the synchronous admin
+handler. If Bob says Vercel later, follow-up commit converts to 202+background.
+Tracked as a TODO in the smoke-test runbook (Task 9).
+
+### Wedge question (CEO Finding #2): STILL pending Bob
+
+Plan still ships thin slice (Troy Labs + SEP, `frats: []`). When Bob's WeChat
+reply arrives, a tiny follow-up commit fills `frats: [...]` with the chosen list.
+
+---
+
 ## CEO review amendment (2026-04-25)
 
 `/plan-ceo-review` surfaced two changes from the original plan:
