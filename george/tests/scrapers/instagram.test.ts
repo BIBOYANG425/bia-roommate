@@ -56,6 +56,50 @@ beforeEach(() => {
   actorCallMock.mockResolvedValue({ defaultDatasetId: 'ds-1' })
 })
 
+describe('scrapeInstagram — structured counters', () => {
+  it('logs instagram_scrape_done with the expected counter shape', async () => {
+    datasetListItemsMock.mockResolvedValueOnce({
+      items: [
+        { caption: 'Formal', displayUrl: 'https://cdn/a.jpg', url: 'https://ig/p/a', ownerUsername: 'troylabsusc' },
+        { caption: 'Cute pic', displayUrl: 'https://cdn/b.jpg', url: 'https://ig/p/b', ownerUsername: 'troylabsusc' },
+        { caption: 'Dated wrong', displayUrl: 'https://cdn/c.jpg', url: 'https://ig/p/c', ownerUsername: 'troylabsusc' },
+      ],
+    })
+
+    llmMock
+      .mockResolvedValueOnce(JSON.stringify({
+        isEvent: true,
+        title: 'Founders Lunch',
+        description: 'Lunch',
+        date: daysFromNow(10),
+        location: 'Founders',
+        category: 'career',
+      }))
+      .mockResolvedValueOnce(JSON.stringify({ isEvent: false, title: '', date: null, category: 'other' }))
+      .mockResolvedValueOnce(JSON.stringify({
+        isEvent: true,
+        title: 'Past-date event',
+        description: 'x',
+        date: daysFromNow(-5),
+        location: 'x',
+        category: 'social',
+      }))
+
+    const { scrapeInstagram } = await import('../../src/scrapers/instagram.js')
+    await scrapeInstagram()
+
+    const doneCall = logMock.mock.calls.find((c) => c[1] === 'instagram_scrape_done')
+    expect(doneCall).toBeDefined()
+    expect(doneCall![2]).toMatchObject({
+      scraped: 3,
+      candidates: 3,
+      events_inserted: 1,
+      llm_rejected: 1,
+      validation_rejected: 1,
+    })
+  })
+})
+
 describe('scrapeInstagram — dedup', () => {
   it('skips posts whose source_url already exists in the events table', async () => {
     datasetListItemsMock.mockResolvedValueOnce({
