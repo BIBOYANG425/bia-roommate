@@ -97,10 +97,9 @@ app.post('/chat', adminAuth, async (req, res) => {
   }
 })
 
-app.post('/admin/scrape-instagram', adminAuth, async (req, res) => {
+app.post('/admin/scrape-instagram', adminAuth, async (_req, res) => {
   try {
-    const accounts = (req.body as { accounts?: string[] })?.accounts
-    await scrapeInstagram(accounts)
+    await scrapeInstagram()
     res.json({ status: 'ok' })
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
