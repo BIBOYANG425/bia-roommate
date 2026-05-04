@@ -56,6 +56,134 @@ beforeEach(() => {
   actorCallMock.mockResolvedValue({ defaultDatasetId: 'ds-1' })
 })
 
+describe('scrapeInstagram — graceful degrade', () => {
+  it('logs instagram_unavailable and returns when APIFY_TOKEN is empty', async () => {
+    process.env.APIFY_TOKEN = ''
+    vi.resetModules()
+
+    const { scrapeInstagram } = await import('../../src/scrapers/instagram.js')
+    await scrapeInstagram()
+
+    expect(actorCallMock).not.toHaveBeenCalled()
+    expect(insertMock).not.toHaveBeenCalled()
+    const warnCall = logMock.mock.calls.find(
+      (c) => c[0] === 'warn' && c[1] === 'instagram_unavailable',
+    )
+    expect(warnCall).toBeDefined()
+  })
+
+  it('logs instagram_unavailable and returns when the apify actor call rejects', async () => {
+    actorCallMock.mockRejectedValueOnce(new Error('apify network down'))
+
+    const { scrapeInstagram } = await import('../../src/scrapers/instagram.js')
+    await scrapeInstagram()
+
+    expect(insertMock).not.toHaveBeenCalled()
+    const warnCall = logMock.mock.calls.find(
+      (c) => c[0] === 'warn' && c[1] === 'instagram_unavailable',
+    )
+    expect(warnCall).toBeDefined()
+    expect(warnCall![2]).toMatchObject({ error: 'apify network down' })
+  })
+})
+
+describe('scrapeInstagram — insert error handling', () => {
+  it('silently skips a unique-violation (23505) — expected race resolution', async () => {
+    datasetListItemsMock.mockResolvedValueOnce({
+      items: [
+        { caption: 'Mixer', displayUrl: 'https://cdn/q.jpg', url: 'https://ig/p/q', ownerUsername: 'sparksc' },
+      ],
+    })
+    llmMock.mockResolvedValueOnce(JSON.stringify({
+      isEvent: true,
+      title: 'Spring Mixer',
+      description: 'Free pizza',
+      date: daysFromNow(7),
+      location: 'TCC',
+      category: 'social',
+    }))
+    insertMock.mockResolvedValueOnce({ error: { code: '23505', message: 'duplicate key' } })
+
+    const { scrapeInstagram } = await import('../../src/scrapers/instagram.js')
+    await scrapeInstagram()
+
+    const warnCall = logMock.mock.calls.find(
+      (c) => c[0] === 'warn' && c[1] === 'instagram_insert_failed',
+    )
+    expect(warnCall).toBeUndefined()
+    const doneCall = logMock.mock.calls.find((c) => c[1] === 'instagram_scrape_done')
+    expect(doneCall![2]).toMatchObject({ events_inserted: 0 })
+  })
+
+  it('logs instagram_insert_failed warn on unexpected supabase errors', async () => {
+    datasetListItemsMock.mockResolvedValueOnce({
+      items: [
+        { caption: 'Talk', displayUrl: 'https://cdn/r.jpg', url: 'https://ig/p/r', ownerUsername: 'sparksc' },
+      ],
+    })
+    llmMock.mockResolvedValueOnce(JSON.stringify({
+      isEvent: true,
+      title: 'Founders Talk',
+      description: 'Demos',
+      date: daysFromNow(14),
+      location: 'Founders',
+      category: 'career',
+    }))
+    insertMock.mockResolvedValueOnce({ error: { code: '99999', message: 'something broke' } })
+
+    const { scrapeInstagram } = await import('../../src/scrapers/instagram.js')
+    await scrapeInstagram()
+
+    const warnCall = logMock.mock.calls.find(
+      (c) => c[0] === 'warn' && c[1] === 'instagram_insert_failed',
+    )
+    expect(warnCall).toBeDefined()
+    expect(warnCall![2]).toMatchObject({ code: '99999' })
+  })
+})
+
+describe('scrapeInstagram — LLM and post edge cases', () => {
+  it('counts a post as llm_rejected when LLM returns malformed JSON', async () => {
+    datasetListItemsMock.mockResolvedValueOnce({
+      items: [
+        { caption: 'whatever', displayUrl: 'https://cdn/m.jpg', url: 'https://ig/p/m', ownerUsername: 'troylabsusc' },
+      ],
+    })
+    llmMock.mockResolvedValueOnce('not-json-at-all{{{')
+
+    const { scrapeInstagram } = await import('../../src/scrapers/instagram.js')
+    await scrapeInstagram()
+
+    expect(insertMock).not.toHaveBeenCalled()
+    const doneCall = logMock.mock.calls.find((c) => c[1] === 'instagram_scrape_done')
+    expect(doneCall![2]).toMatchObject({ llm_rejected: 1, validation_rejected: 0, events_inserted: 0 })
+  })
+
+  it('skips dedup query when post.url is missing but still tries LLM + insert', async () => {
+    datasetListItemsMock.mockResolvedValueOnce({
+      items: [
+        { caption: 'no url', displayUrl: 'https://cdn/n.jpg', ownerUsername: 'sparksc' },
+      ],
+    })
+    llmMock.mockResolvedValueOnce(JSON.stringify({
+      isEvent: true,
+      title: 'No-URL Event',
+      description: 'edge case',
+      date: daysFromNow(5),
+      location: 'somewhere',
+      category: 'other',
+    }))
+
+    const { scrapeInstagram } = await import('../../src/scrapers/instagram.js')
+    await scrapeInstagram()
+
+    expect(maybeSingleMock).not.toHaveBeenCalled()
+    expect(insertMock).toHaveBeenCalledTimes(1)
+    const row = insertMock.mock.calls[0][0]
+    expect(row.source_url).toBeUndefined()
+  })
+})
+
 describe('scrapeInstagram — structured counters', () => {
   it('logs instagram_scrape_done with the expected counter shape', async () => {
     datasetListItemsMock.mockResolvedValueOnce({
