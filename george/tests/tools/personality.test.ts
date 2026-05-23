@@ -38,6 +38,18 @@ describe('George personality — BIA senior voice', () => {
     expect(getSubAgentPrompt('campus')).toContain('Voice calibration: Campus')
   })
 
+  it('course voice enforces "ask before recommend" for open-ended questions', () => {
+    // Phase 3.1: course sub-agent must NOT recommend blindly when key facts
+    // (year / major / GE gap / units) are unknown. The hard rule + the
+    // get_student_academic_state directive both need to be present in the
+    // prompt for the LLM to follow the discipline.
+    const prompt = getSubAgentPrompt('course')
+    expect(prompt).toContain('先问后答的硬流程')
+    expect(prompt).toContain('get_student_academic_state')
+    expect(prompt).toMatch(/year|大几/)
+    expect(prompt).toMatch(/GE/)
+  })
+
   it('injects the BIA lore pack (neighborhoods, signature phrases, pain points)', () => {
     const prompt = getSubAgentPrompt('housing')
     expect(prompt).toContain('别让室友变室敌')

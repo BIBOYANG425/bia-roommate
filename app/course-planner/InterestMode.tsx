@@ -253,28 +253,12 @@ export default function InterestMode({
                         </div>
                       )}
 
-                      {/* Community highlights with source labels */}
+                      {/* Community highlights — structured, source-tagged. Reddit
+                          highlights are clickable so users can verify the source. */}
                       {agentData.communityHighlights.slice(0, 3).map((h, j) => {
-                        const isRMP =
-                          h.startsWith("Best prof:") ||
-                          h.toLowerCase().includes("rmp");
-                        const isReddit =
-                          h.toLowerCase().includes("reddit") ||
-                          h.startsWith("r/");
-                        const sourceLabel = isRMP
-                          ? "RMP"
-                          : isReddit
-                            ? "REDDIT"
-                            : "COMMUNITY";
-                        const sourceColor = isRMP
-                          ? "#2E7D32"
-                          : isReddit
-                            ? "#FF4500"
-                            : "var(--mid)";
-                        // Strip redundant "Reddit:" or "RMP:" prefix from the text itself
-                        const cleanText = h
-                          .replace(/^(Reddit|RMP|r\/USC):\s*/i, "")
-                          .trim();
+                        const isReddit = h.source === "reddit";
+                        const sourceLabel = isReddit ? "REDDIT" : "RMP";
+                        const sourceColor = isReddit ? "#FF4500" : "#2E7D32";
 
                         return (
                           <div key={j} className="flex items-start gap-1.5">
@@ -288,12 +272,27 @@ export default function InterestMode({
                             >
                               {sourceLabel}
                             </span>
-                            <span
-                              className="text-[11px]"
-                              style={{ color: "var(--mid)" }}
-                            >
-                              &ldquo;{cleanText}&rdquo;
-                            </span>
+                            {isReddit && h.url ? (
+                              <a
+                                href={h.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[11px]"
+                                style={{
+                                  color: "var(--mid)",
+                                  textDecoration: "underline",
+                                }}
+                              >
+                                &ldquo;{h.quote}&rdquo;
+                              </a>
+                            ) : (
+                              <span
+                                className="text-[11px]"
+                                style={{ color: "var(--mid)" }}
+                              >
+                                &ldquo;{h.quote}&rdquo;
+                              </span>
+                            )}
                           </div>
                         );
                       })}

@@ -9,6 +9,7 @@ import InterestInput from "@/components/course-planner/InterestInput";
 import type { SchedulePrefs } from "./page";
 import type { RecommendedCourse } from "@/lib/course-planner/recommender";
 import type { AgentRecommendation } from "@/lib/course-planner/agent";
+import type { IntakeConstraints } from "@/lib/course-planner/agent/types";
 
 type ManualInterestMode = "manual" | "interest";
 
@@ -33,6 +34,7 @@ interface ManualSearchProps {
     units: string | null,
     thinking: boolean,
     level: string | null,
+    intake: IntakeConstraints,
   ) => void;
 }
 

@@ -5,6 +5,22 @@
 
 import { z } from "zod";
 
+// ─── Interpreter Input: structured intake from the UI ───
+
+/** Hard constraints captured via chips/toggles in the planner UI. Unlike the
+ * freeform interests string, these are reliable signals — when set, they
+ * override anything the LLM interpreter would infer. Null/empty = "not specified". */
+export interface IntakeConstraints {
+  year: "freshman" | "soph" | "junior" | "senior" | "grad" | null;
+  geNeeded: string[]; // ["GE-A", "GE-C", ...]
+  /** Minimum RMP rating floor a course's best prof must meet to be recommended. */
+  profRatingFloor: number | null;
+}
+
+export function emptyIntakeConstraints(): IntakeConstraints {
+  return { year: null, geNeeded: [], profRatingFloor: null };
+}
+
 // ─── Interpreter Output ───
 
 export interface InterpretedQuery {
@@ -36,6 +52,10 @@ export interface InterpretedQuery {
     preferences: string[];
     dealbreakers: string[];
   };
+
+  /** Echo of the UI-provided constraints (post-merge with any LLM inferences).
+   * Downstream code reads this for filtering and recommender context. */
+  studentConstraints: IntakeConstraints;
 }
 
 // ─── Zod schema for validating LLM interpreter output ───
@@ -107,6 +127,24 @@ const InterpretedQuerySchema = z.object({
     preferences: [],
     dealbreakers: [],
   })),
+  // studentConstraints isn't part of LLM output — interpret() merges it from UI
+  // intake post-parse. Default empty so back-compat callers still work.
+  studentConstraints: z
+    .object({
+      year: z
+        .union([
+          z.literal("freshman"),
+          z.literal("soph"),
+          z.literal("junior"),
+          z.literal("senior"),
+          z.literal("grad"),
+        ])
+        .nullable()
+        .default(null),
+      geNeeded: z.array(z.string()).default([]),
+      profRatingFloor: z.number().nullable().default(null),
+    })
+    .default(() => ({ year: null, geNeeded: [], profRatingFloor: null })),
 });
 
 /** Validate and apply safe defaults to raw LLM interpreter output.
@@ -144,6 +182,17 @@ export interface SectionDetail {
   time: string;
 }
 
+/** A real Reddit post with its source URL — required for any highlight referencing Reddit. */
+export interface RedditPost {
+  title: string;
+  url: string;
+  score: number;
+}
+
+/** Why a course may have no Reddit highlights — surfaced to the recommender LLM so it
+ * doesn't fabricate quotes when data was simply unavailable. */
+export type RedditDataStatus = "fetched" | "unavailable" | "no_matches";
+
 export interface ResearchedCourse {
   department: string;
   number: string;
@@ -157,7 +206,13 @@ export interface ResearchedCourse {
     numRatings?: number;
     wouldTakeAgain?: number;
   }[];
+  /** Mixed bag — historically holds the RMP "Best prof: ..." one-liner.
+   * Reddit titles no longer flow here; see `redditPosts`. */
   communityInsights: string[];
+  /** Reddit posts that mention this course (or its keywords), with source URLs. */
+  redditPosts: RedditPost[];
+  /** Tracks whether Reddit research actually returned data for this course. */
+  redditDataStatus: RedditDataStatus;
   peerRatings?: {
     avgDifficulty: number;
     avgWorkload: number;
@@ -172,6 +227,17 @@ export interface ResearchedCourse {
 
 // ─── Recommendation Output ───
 
+/** Source of a community highlight. Reddit highlights MUST carry a verifiable URL. */
+export type CommunityHighlightSource = "reddit" | "rmp";
+
+export interface CommunityHighlight {
+  source: CommunityHighlightSource;
+  quote: string;
+  /** Required for Reddit, omitted for RMP. UI uses presence-of-url to decide
+   * whether to render as a clickable anchor. */
+  url?: string;
+}
+
 export interface AgentRecommendation {
   department: string;
   number: string;
@@ -183,7 +249,7 @@ export interface AgentRecommendation {
   geTag?: string;
   topInstructor?: { name: string; rating: number };
   suggestedInstructor?: string;
-  communityHighlights: string[];
+  communityHighlights: CommunityHighlight[];
   peerRatings?: {
     avgDifficulty: number;
     avgWorkload: number;

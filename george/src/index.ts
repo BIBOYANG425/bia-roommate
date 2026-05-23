@@ -20,13 +20,14 @@ import { scrapeUSCEvents } from './scrapers/usc-events.js'
 import { loadAllSkills, getRegistryStats } from './skills/index.js'
 import { getToolDefinitions } from './agent/tool-registry.js'
 
-// Import ALL 21 tools to register them
+// Import ALL tools to register them
 import './tools/search-events.js'
 import './tools/get-event-details.js'
 import './tools/campus-knowledge.js'
 import './tools/freshman-faq.js'
 import './tools/course-tips.js'
 import './tools/lookup-student.js'
+import './tools/get-student-academic-state.js'
 import './tools/search-courses.js'
 import './tools/describe-course.js'
 import './tools/get-course-reviews.js'
