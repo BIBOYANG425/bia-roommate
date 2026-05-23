@@ -1,4 +1,4 @@
-// Express server entry. Registers 21 tools (side-effect imports), mounts WeChat adapter,
+// Express server entry. Registers 23 tools (side-effect imports), mounts WeChat adapter,
 // starts iMessage watcher, boots 4 cron jobs (proactive match / reminders / IG + USC scrapes),
 // and loads the skill registry. Nothing routes through this file at runtime — message flow
 // lives in agent/george.ts; this is wire-up only.
@@ -20,13 +20,14 @@ import { scrapeUSCEvents } from './scrapers/usc-events.js'
 import { loadAllSkills, getRegistryStats } from './skills/index.js'
 import { getToolDefinitions } from './agent/tool-registry.js'
 
-// Import ALL 21 tools to register them
+// Import ALL tools to register them
 import './tools/search-events.js'
 import './tools/get-event-details.js'
 import './tools/campus-knowledge.js'
 import './tools/freshman-faq.js'
 import './tools/course-tips.js'
 import './tools/lookup-student.js'
+import './tools/get-student-academic-state.js'
 import './tools/search-courses.js'
 import './tools/describe-course.js'
 import './tools/get-course-reviews.js'
@@ -54,7 +55,7 @@ app.use(express.json())
 // ==========================================
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', character: 'George — BIA 学长', tools: 22 })
+  res.json({ status: 'ok', character: 'George — BIA 学长', tools: 23 })
 })
 
 app.get('/stats', async (_req, res) => {
@@ -205,7 +206,7 @@ async function startServer() {
   app.listen(config.port, () => {
     log('info', 'server_started', {
       port: config.port,
-      tools: 22,
+      tools: 23,
       proactive: config.proactive.enabled,
       rolloutPct: config.proactive.rolloutPct,
     })

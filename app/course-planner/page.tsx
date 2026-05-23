@@ -7,6 +7,10 @@ import SavedScheduleView from "@/components/course-planner/SavedScheduleView";
 import { ScheduleProvider, usePlanner } from "@/lib/course-planner/store";
 import type { RecommendedCourse } from "@/lib/course-planner/recommender";
 import type { AgentRecommendation } from "@/lib/course-planner/agent";
+import {
+  emptyIntakeConstraints,
+  type IntakeConstraints,
+} from "@/lib/course-planner/agent/types";
 import PlannerHeader from "./PlannerHeader";
 import ManualSearch from "./ManualSearch";
 import InterestMode from "./InterestMode";
@@ -50,6 +54,7 @@ function PlannerContent() {
     units: string | null;
     thinking: boolean;
     level: string | null;
+    intake: IntakeConstraints;
   } | null>(null);
   const [showTour, setShowTour] = useState(false);
 
@@ -139,8 +144,9 @@ function PlannerContent() {
       units: string | null,
       thinking: boolean,
       level: string | null,
+      intake: IntakeConstraints = emptyIntakeConstraints(),
     ) => {
-      setAgentQuery({ interests, units, thinking, level });
+      setAgentQuery({ interests, units, thinking, level, intake });
       setMode("agentChat");
     },
     [],
@@ -222,6 +228,7 @@ function PlannerContent() {
             unitsFilter={agentQuery.units}
             levelFilter={agentQuery.level}
             thinking={agentQuery.thinking}
+            intake={agentQuery.intake}
             onResults={handleAgentResults}
             onBack={() => setMode("interest")}
           />

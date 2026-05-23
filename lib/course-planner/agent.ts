@@ -17,14 +17,20 @@ import type {
   ResearchedCourse,
   LLMConfig,
   SectionDetail,
+  IntakeConstraints,
 } from "./agent/types";
-import { GE_API_MAP, validateInterpretedQuery } from "./agent/types";
+import {
+  GE_API_MAP,
+  validateInterpretedQuery,
+  emptyIntakeConstraints,
+} from "./agent/types";
 import {
   getLLMConfig,
   getInterpreterConfig,
   callLLMWithRetry,
   extractJSON,
 } from "./agent/llm-client";
+import { sanitizeCommunityHighlights } from "./agent/sanitize";
 
 // ─── Re-exports for backward compatibility ───
 
@@ -166,13 +172,21 @@ async function interpret(
   interestText: string,
   config: LLMConfig,
   _thinking: boolean = false,
+  intake: IntakeConstraints = emptyIntakeConstraints(),
 ): Promise<{ query: InterpretedQuery; reasoning?: string }> {
   // Cap input length to prevent prompt injection / excessive token usage
   const sanitized = interestText.slice(0, 500).replace(/"/g, '\\"');
   const interpreterConfig = getInterpreterConfig() || config;
+
+  // Inject UI-captured constraints into the interpreter context so its
+  // inferred catalog/RMP instructions stay consistent with what the user
+  // already told us through chips. We still merge UI values authoritatively
+  // post-parse below — the prompt context is just a hint.
+  const intakeHint = renderIntakeHint(intake);
+
   const result = await callLLMWithRetry(
     SYSTEM_PROMPT_INTERPRETER,
-    `Student says: "${sanitized}"`,
+    `Student says: "${sanitized}"${intakeHint}`,
     interpreterConfig,
     {
       maxTokens: 1500,
@@ -191,7 +205,48 @@ async function interpret(
   }
   const query = validateInterpretedQuery(raw);
 
+  // UI constraints are authoritative — they came from explicit user clicks.
+  // Override the LLM's inferences where UI provided a concrete value.
+  mergeIntakeIntoQuery(query, intake);
+
   return { query, reasoning: result.reasoning };
+}
+
+function renderIntakeHint(intake: IntakeConstraints): string {
+  const parts: string[] = [];
+  if (intake.year) parts.push(`year=${intake.year}`);
+  if (intake.geNeeded.length > 0)
+    parts.push(`GE_needed=${intake.geNeeded.join(",")}`);
+  if (intake.profRatingFloor !== null)
+    parts.push(`min_prof_rating=${intake.profRatingFloor}`);
+  if (parts.length === 0) return "";
+  return `\n\nUI intake constraints (already locked by the student via the form — your inferences must respect these): ${parts.join("; ")}`;
+}
+
+function mergeIntakeIntoQuery(
+  query: InterpretedQuery,
+  intake: IntakeConstraints,
+): void {
+  query.studentConstraints = { ...intake };
+
+  // GE chips override any GE category the LLM guessed at.
+  if (intake.geNeeded.length > 0) {
+    query.catalogInstructions.geCategories = [...intake.geNeeded];
+  }
+
+  // Prof rating floor seeds the RMP filter if the LLM didn't pick a stricter one.
+  if (intake.profRatingFloor !== null) {
+    const llmFloor = parseFloat(query.rmpInstructions.minimumRating);
+    if (!Number.isFinite(llmFloor) || llmFloor < intake.profRatingFloor) {
+      query.rmpInstructions.minimumRating = intake.profRatingFloor.toFixed(1);
+    }
+  }
+
+  // Year goes into the student profile so the recommender can lean on it
+  // (e.g. freshmen want GE-friendly courses; juniors care about prereqs).
+  if (intake.year && !query.studentProfile.preferences.includes(intake.year)) {
+    query.studentProfile.preferences.push(intake.year);
+  }
 }
 
 // ─── Layer 2: Research Agents ───
@@ -356,6 +411,8 @@ async function researchUSCCatalog(
       description: c.description || "",
       instructors,
       communityInsights: [],
+      redditPosts: [],
+      redditDataStatus: "fetched",
       geTag,
       sectionTopics: sectionTopics.length > 0 ? sectionTopics : undefined,
       sections: sectionDetails,
@@ -551,12 +608,22 @@ async function researchPeerRatings(
 }
 
 // Agent 2c: Reddit — follows redditInstructions
+//
+// Anti-fabrication design: every entry in c.redditPosts carries an `url` that
+// can be verified by the user. If Reddit fails, we set redditDataStatus to
+// 'unavailable' so the recommender prompt can tell the LLM "no data" — without
+// that signal, the LLM has historically synthesized plausible-sounding quotes.
 async function researchReddit(
   courses: ResearchedCourse[],
   instructions: InterpretedQuery["redditInstructions"],
 ): Promise<void> {
   const queries = instructions.searchQueries.slice(0, 6);
-  if (queries.length === 0) return;
+  if (queries.length === 0) {
+    for (const c of courses) c.redditDataStatus = "unavailable";
+    return;
+  }
+
+  let anyQuerySucceeded = false;
 
   const searches = queries.map(async (term) => {
     try {
@@ -567,61 +634,75 @@ async function researchReddit(
           signal: AbortSignal.timeout(8000),
         },
       );
-      if (!res.ok) return [];
+      if (!res.ok) {
+        console.warn(
+          `[agent] researchReddit: non-OK response ${res.status} for query "${term}"`,
+        );
+        return [];
+      }
+      anyQuerySucceeded = true;
       const data = await res.json();
       const posts = data?.data?.children || [];
-      return posts.map((p: any) => ({
-        title: p.data?.title || "",
-        selftext: (p.data?.selftext || "").slice(0, 500),
-        score: p.data?.score || 0,
-        numComments: p.data?.num_comments || 0,
-      }));
-    } catch {
+      return posts.map((p: any) => {
+        const permalink = p.data?.permalink || "";
+        return {
+          title: (p.data?.title as string) || "",
+          selftext: ((p.data?.selftext as string) || "").slice(0, 500),
+          score: (p.data?.score as number) || 0,
+          numComments: (p.data?.num_comments as number) || 0,
+          url: permalink ? `https://www.reddit.com${permalink}` : "",
+        };
+      });
+    } catch (err) {
+      console.warn(
+        `[agent] researchReddit: query "${term}" threw`,
+        (err as Error).message,
+      );
       return [];
     }
   });
 
   const results = await Promise.all(searches);
 
+  // Match posts to courses by exact course code presence in title or body.
   for (const posts of results) {
     for (const post of posts) {
       if (post.score < 1) continue;
+      if (!post.url) continue; // never store an insight we can't link to
       const text = `${post.title} ${post.selftext}`.toUpperCase();
 
       for (const c of courses) {
         const courseCode = `${c.department} ${c.number}`.toUpperCase();
         const courseCodeSmashed = `${c.department}${c.number}`.toUpperCase();
         if (text.includes(courseCode) || text.includes(courseCodeSmashed)) {
-          const insight = post.title.slice(0, 150);
           if (
-            c.communityInsights.length < 4 &&
-            !c.communityInsights.includes(insight)
+            c.redditPosts.length < 4 &&
+            !c.redditPosts.some((p) => p.url === post.url)
           ) {
-            c.communityInsights.push(insight);
+            c.redditPosts.push({
+              title: post.title.slice(0, 200),
+              url: post.url,
+              score: post.score,
+            });
           }
         }
       }
     }
   }
 
-  const generalInsights: string[] = [];
-  const lookForUpper = instructions.lookFor.toUpperCase();
-  const lookForWords = lookForUpper.split(/\s+/).filter((w) => w.length > 3);
-
-  for (const posts of results) {
-    for (const post of posts) {
-      if (post.score < 3) continue;
-      const titleUpper = post.title.toUpperCase();
-      if (lookForWords.some((w) => titleUpper.includes(w))) {
-        generalInsights.push(post.title.slice(0, 150));
-      }
-    }
-  }
-
+  // Stamp each course's status:
+  // - all queries failed → 'unavailable' (LLM should NOT cite Reddit)
+  // - some queries returned data but this course got 0 matches → 'no_matches'
+  // - matches found → 'fetched'
+  //
+  // We deliberately do NOT inject generic posts into unmatched courses anymore.
+  // That fallback (previous behavior) was the main "Reddit quote feels random"
+  // failure mode: a post mentioning topic X got attached to course Y because
+  // it shared a keyword in `instructions.lookFor`.
   for (const c of courses) {
-    if (c.communityInsights.length === 0 && generalInsights.length > 0) {
-      c.communityInsights.push(generalInsights[0]);
-    }
+    if (!anyQuerySucceeded) c.redditDataStatus = "unavailable";
+    else if (c.redditPosts.length === 0) c.redditDataStatus = "no_matches";
+    else c.redditDataStatus = "fetched";
   }
 }
 
@@ -632,7 +713,7 @@ const SYSTEM_PROMPT_RECOMMENDER = `You are a USC course recommendation engine. A
 You receive:
 1. What the student said (raw input)
 2. What the interpreter understood (interests, preferences, dealbreakers)
-3. Research data (courses with descriptions, professor ratings, Reddit discussions)
+3. Research data (courses with descriptions, professor ratings, optional Reddit discussions)
 
 RANKING RULES:
 - Match the student's actual intent, not just keywords. "Fun" means engaging professor + interesting content. "Easy" means low difficulty + light workload.
@@ -641,7 +722,7 @@ RANKING RULES:
 - RMP difficulty below 2.5 = easy. Above 3.5 = hard. Consider this when student asks for "easy".
 - "Would take again" percentage above 80% is a strong signal.
 - GE fulfillment is a bonus for freshmen.
-- Prefer courses with community evidence (Reddit mentions, high RMP review count) over unknowns.
+- When community evidence IS PROVIDED, prefer courses with such evidence. **Absence of community evidence is not a negative signal — many good courses simply have no Reddit discussion.**
 - When student asks for specific units (e.g. "2 units"), only recommend courses with those units.
 - If the student asked for a SPECIFIC course prefix (like GESM, WRIT 340), ONLY recommend courses matching that prefix. Do not suggest unrelated courses.
 
@@ -661,18 +742,28 @@ SUGGESTED LECTURER:
 - If no professor data is available, omit the suggestedInstructor field.
 
 HARD CONSTRAINTS:
-- Only recommend courses from the provided research data
-- Do not invent courses or section IDs
-- Max 15 recommendations
-- relevanceScore is 0-10
+- Only recommend courses from the provided research data.
+- Do not invent courses or section IDs.
+- Max 15 recommendations.
+- relevanceScore is 0-10.
+
+COMMUNITY HIGHLIGHTS — STRICT ANTI-FABRICATION RULES:
+- "communityHighlights" MUST be an array, possibly empty.
+- Each item MUST be an object of the form: { "source": "reddit" | "rmp", "quote": "<verbatim text from the provided data>", "url": "<reddit post URL, REQUIRED when source is reddit>" }.
+- For Reddit highlights: the "quote" MUST be copied verbatim from a "Reddit: [URL] \"...\"" line in this course's RESEARCH DATA, and the "url" MUST be the exact URL shown in brackets on that same line. NEVER invent a quote. NEVER invent a URL. NEVER paraphrase a Reddit post you did not receive.
+- If a course summary says "Reddit: (data unavailable for this query)" or "Reddit: (no posts mentioning this course found)", set communityHighlights to [] for that course. Do NOT cite Reddit for it under any circumstances.
+- "RMP highlight: ..." lines may be reflected as a {"source":"rmp","quote":"..."} entry (no url needed); this is optional.
+- If you cannot produce a real, verifiable Reddit highlight from the provided data, set communityHighlights to []. An empty array is correct and expected; a fabricated one is a critical failure.
 
 Respond with ONLY a JSON array:
 [{
   "department": "COMM",
   "number": "150",
   "relevanceScore": 9.2,
-  "matchReasons": ["Sports media focus", "Professor rated 4.5/5", "Students say it's fun and easy"],
-  "communityHighlights": ["Reddit: 'Best 2-unit class I took at USC'"],
+  "matchReasons": ["Sports media focus", "Professor rated 4.5/5"],
+  "communityHighlights": [
+    { "source": "reddit", "quote": "Best 2-unit class I took at USC", "url": "https://www.reddit.com/r/USC/comments/abc123/..." }
+  ],
   "aiReasoning": "This course directly covers sports media with an engaging professor rated 4.5 on RMP.",
   "suggestedInstructor": "Prof. John Smith — 4.5/5, easy grader, 92% would take again"
 },
@@ -732,8 +823,23 @@ async function recommend(
       const rmpStr = rmpParts.length > 0 ? ` (${rmpParts.join(", ")})` : "";
       parts.push(`  Prof: ${inst.name}${rmpStr}`);
     }
+    // RMP "Best prof: ..." one-liners live in communityInsights (NOT Reddit).
+    // We label them explicitly so the recommender can't accidentally tag them as Reddit.
     for (const insight of c.communityInsights.slice(0, 2)) {
-      parts.push(`  Reddit: "${insight.slice(0, 100)}"`);
+      parts.push(`  RMP highlight: "${insight.slice(0, 120)}"`);
+    }
+    // Reddit posts: only emit when we actually have data with verifiable URLs.
+    // The unavailable / no_matches markers tell the LLM "do not cite Reddit here".
+    if (c.redditDataStatus === "unavailable") {
+      parts.push(`  Reddit: (data unavailable for this query)`);
+    } else if (c.redditDataStatus === "no_matches") {
+      parts.push(`  Reddit: (no posts mentioning this course found)`);
+    } else {
+      for (const post of c.redditPosts.slice(0, 2)) {
+        parts.push(
+          `  Reddit: [${post.url}] "${post.title.slice(0, 150)}"`,
+        );
+      }
     }
     if (c.peerRatings && c.peerRatings.reviewCount > 0) {
       parts.push(
@@ -795,6 +901,11 @@ ${courseSummaries.join("\n\n")}`;
         ? rec.sectionTopic
         : courseData?.title || "";
 
+    const safeHighlights = sanitizeCommunityHighlights(
+      rec.communityHighlights,
+      courseData,
+    );
+
     return {
       department: rec.department,
       number: rec.number,
@@ -808,8 +919,7 @@ ${courseSummaries.join("\n\n")}`;
         ? { name: topInstructor.name, rating: topInstructor.rating }
         : undefined,
       suggestedInstructor: rec.suggestedInstructor || undefined,
-      communityHighlights:
-        rec.communityHighlights || courseData?.communityInsights || [],
+      communityHighlights: safeHighlights,
       aiReasoning: rec.aiReasoning || "",
       sectionTopics: courseData?.sectionTopics,
       sectionId: rec.sectionId || undefined,
@@ -829,6 +939,7 @@ export async function runAgent(
   semester: string,
   baseUrl: string,
   unitsFilter?: string,
+  intake: IntakeConstraints = emptyIntakeConstraints(),
 ): Promise<
   | {
       recommendations: import("./agent/types").AgentRecommendation[];
@@ -841,7 +952,7 @@ export async function runAgent(
     return { error: "No LLM API key configured" };
   }
 
-  const { query } = await interpret(interestText, config);
+  const { query } = await interpret(interestText, config, false, intake);
 
   if (!query.isValid) {
     return {
@@ -896,6 +1007,7 @@ export async function runAgentStreaming(
   unitsFilter: string | undefined,
   thinking: boolean,
   emit: (event: import("./agent/types").AgentEvent) => void,
+  intake: IntakeConstraints = emptyIntakeConstraints(),
 ): Promise<void> {
   const config = getLLMConfig();
   if (!config) {
@@ -910,7 +1022,7 @@ export async function runAgentStreaming(
 
   let query: InterpretedQuery;
   try {
-    const interpreted = await interpret(interestText, config, thinking);
+    const interpreted = await interpret(interestText, config, thinking, intake);
     query = interpreted.query;
     if (interpreted.reasoning) {
       emit({
@@ -1020,13 +1132,18 @@ export async function runAgentStreaming(
       });
     }),
     researchReddit(catalogCourses, query.redditInstructions).then(() => {
-      const withInsights = catalogCourses.filter(
-        (c) => c.communityInsights.length > 0,
+      const withPosts = catalogCourses.filter(
+        (c) => c.redditPosts.length > 0,
+      );
+      const allUnavailable = catalogCourses.every(
+        (c) => c.redditDataStatus === "unavailable",
       );
       emit({
         type: "research_done",
         source: "reddit",
-        message: `${withInsights.length} courses have student discussions`,
+        message: allUnavailable
+          ? "Reddit unavailable — recommendations will not cite community posts"
+          : `${withPosts.length} courses have student discussions on r/USC`,
       });
     }),
     researchPeerRatings(catalogCourses, baseUrl),

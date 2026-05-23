@@ -7,7 +7,7 @@
 // budget, dropped-oldest messages are summarized into the dynamic system prompt, and each
 // tool result is capped to prevent in-turn bloat.
 //
-// Header last reviewed: 2026-04-20
+// Header last reviewed: 2026-05-22
 
 import Anthropic from '@anthropic-ai/sdk'
 import { getClaudeClient } from './llm-providers.js'
@@ -51,7 +51,7 @@ const NON_TEXT_RESPONSES: Record<string, string> = {
 
 export const SUB_AGENT_TOOLS: Record<SubAgent, string[]> = {
   event: ['search_events', 'get_event_details', 'set_reminder', 'submit_event', 'suggest_connection', 'travel_time', 'lookup_student', 'load_skill'],
-  course: ['search_courses', 'describe_course', 'get_course_reviews', 'get_rmp_ratings', 'recommend_courses', 'plan_schedule', 'course_tips', 'search_programs', 'lookup_student', 'load_skill'],
+  course: ['get_student_academic_state', 'search_courses', 'describe_course', 'get_course_reviews', 'get_rmp_ratings', 'recommend_courses', 'plan_schedule', 'course_tips', 'search_programs', 'lookup_student', 'load_skill'],
   housing: ['search_sublets', 'post_sublet', 'freshman_faq', 'travel_time', 'lookup_student', 'load_skill'],
   social: ['suggest_connection', 'search_roommates', 'freshman_faq', 'lookup_student', 'search_events', 'load_skill'],
   // describe_course exposed here so first-touch "什么是 writ150 / GESM / CSCI102" questions

@@ -5,6 +5,7 @@ import type {
   AgentRecommendation,
   AgentEvent,
 } from "@/lib/course-planner/agent";
+import type { IntakeConstraints } from "@/lib/course-planner/agent/types";
 
 interface ChatMessage {
   id: string;
@@ -22,6 +23,8 @@ interface AgentChatProps {
   unitsFilter: string | null;
   levelFilter: string | null;
   thinking: boolean;
+  /** UI-captured hard constraints (year, GE needed, prof rating floor). */
+  intake: IntakeConstraints;
   onResults: (results: AgentRecommendation[]) => void;
   onBack: () => void;
 }
@@ -324,11 +327,9 @@ function CourseCard({
                 </span>
               </div>
               {rec.communityHighlights.map((h, j) => {
-                const isRMP =
-                  h.startsWith("Best prof:") || h.toLowerCase().includes("rmp");
-                const cleanText = h
-                  .replace(/^(Reddit|RMP|r\/USC):\s*/i, "")
-                  .trim();
+                const isReddit = h.source === "reddit";
+                const labelColor = isReddit ? "#FF4500" : "#2E7D32";
+                const label = isReddit ? "[Reddit]" : "[RMP]";
                 return (
                   <p
                     key={j}
@@ -337,11 +338,22 @@ function CourseCard({
                   >
                     <span
                       className="text-[9px] font-display"
-                      style={{ color: isRMP ? "#2E7D32" : "#FF4500" }}
+                      style={{ color: labelColor }}
                     >
-                      {isRMP ? "[RMP]" : "[Reddit]"}
+                      {label}
                     </span>{" "}
-                    &ldquo;{cleanText}&rdquo;
+                    {isReddit && h.url ? (
+                      <a
+                        href={h.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ textDecoration: "underline" }}
+                      >
+                        &ldquo;{h.quote}&rdquo;
+                      </a>
+                    ) : (
+                      <>&ldquo;{h.quote}&rdquo;</>
+                    )}
                   </p>
                 );
               })}
@@ -439,6 +451,7 @@ export default function AgentChat({
   unitsFilter,
   levelFilter,
   thinking,
+  intake,
   onResults,
   onBack,
 }: AgentChatProps) {
@@ -480,6 +493,7 @@ export default function AgentChat({
             units: unitsFilter,
             level: levelFilter,
             thinking,
+            intake,
           }),
           signal: controller.signal,
         });
@@ -586,6 +600,7 @@ export default function AgentChat({
     unitsFilter,
     levelFilter,
     thinking,
+    intake,
     addMessage,
     onResults,
   ]);

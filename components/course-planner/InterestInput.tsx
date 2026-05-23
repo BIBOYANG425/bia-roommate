@@ -3,6 +3,35 @@
 import { useState, useRef, useEffect } from "react";
 import type { RecommendedCourse } from "@/lib/course-planner/recommender";
 import type { AgentRecommendation } from "@/lib/course-planner/agent";
+import type { IntakeConstraints } from "@/lib/course-planner/agent/types";
+
+type Year = NonNullable<IntakeConstraints["year"]>;
+
+const YEAR_OPTIONS: Array<{ value: Year; label: string }> = [
+  { value: "freshman", label: "FRESHMAN" },
+  { value: "soph", label: "SOPHOMORE" },
+  { value: "junior", label: "JUNIOR" },
+  { value: "senior", label: "SENIOR" },
+  { value: "grad", label: "GRAD" },
+];
+
+const GE_OPTIONS = [
+  { value: "GE-A", label: "A · ARTS" },
+  { value: "GE-B", label: "B · HUM" },
+  { value: "GE-C", label: "C · SOCIAL" },
+  { value: "GE-D", label: "D · LIFE" },
+  { value: "GE-E", label: "E · PHYS" },
+  { value: "GE-F", label: "F · QUANT" },
+  { value: "GE-G", label: "G · GP I" },
+  { value: "GE-H", label: "H · GP II" },
+];
+
+const PROF_BAR_OPTIONS: Array<{ value: number | null; label: string }> = [
+  { value: null, label: "ANY" },
+  { value: 3.5, label: "3.5+" },
+  { value: 4.0, label: "4.0+" },
+  { value: 5.0, label: "5.0 (writ150)" },
+];
 
 const QUICK_TAGS = [
   "Animation",
@@ -35,6 +64,7 @@ interface InterestInputProps {
     units: string | null,
     thinking: boolean,
     level: string | null,
+    intake: IntakeConstraints,
   ) => void;
 }
 
@@ -51,6 +81,11 @@ export default function InterestInput({
   const [levelFilter, setLevelFilter] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState<"auto" | "free">("auto");
   const [thinkingMode, setThinkingMode] = useState(false);
+  // Hard-constraint chips (Phase 2.1) — these are the structured intake the
+  // interpreter trusts over its own LLM guesses.
+  const [year, setYear] = useState<Year | null>(null);
+  const [geNeeded, setGeNeeded] = useState<string[]>([]);
+  const [profRatingFloor, setProfRatingFloor] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -69,9 +104,13 @@ export default function InterestInput({
       return;
     }
 
-    // AI mode → launch agent chat interface
+    // AI mode → launch agent chat interface, passing all UI-captured constraints.
     if (searchMode === "auto" && onAgentSearch) {
-      onAgentSearch(input.trim(), unitsFilter, thinkingMode, levelFilter);
+      onAgentSearch(input.trim(), unitsFilter, thinkingMode, levelFilter, {
+        year,
+        geNeeded,
+        profRatingFloor,
+      });
       return;
     }
 
@@ -230,6 +269,123 @@ export default function InterestInput({
             </button>
           );
         })}
+      </div>
+
+      {/* ── Year of study (hard intake constraint) ── */}
+      <div className="mb-4">
+        <span
+          className="text-xs font-display tracking-wider mr-2"
+          style={{ color: "var(--mid)" }}
+        >
+          YEAR:
+        </span>
+        <div className="inline-flex gap-2 flex-wrap">
+          <button
+            onClick={() => setYear(null)}
+            disabled={loading}
+            aria-pressed={year === null}
+            className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
+            style={{
+              borderColor: "var(--beige)",
+              background: year === null ? "var(--cardinal)" : "white",
+              color: year === null ? "white" : "var(--black)",
+              borderRadius: "20px",
+              opacity: loading ? 0.5 : 1,
+            }}
+          >
+            ANY
+          </button>
+          {YEAR_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setYear(year === opt.value ? null : opt.value)}
+              disabled={loading}
+              aria-pressed={year === opt.value}
+              className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
+              style={{
+                borderColor: "var(--beige)",
+                background: year === opt.value ? "var(--cardinal)" : "white",
+                color: year === opt.value ? "white" : "var(--black)",
+                borderRadius: "20px",
+                opacity: loading ? 0.5 : 1,
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── GE needed (multi-select; overrides any LLM-inferred GE category) ── */}
+      <div className="mb-4">
+        <span
+          className="text-xs font-display tracking-wider mr-2"
+          style={{ color: "var(--mid)" }}
+        >
+          GE NEEDED:
+        </span>
+        <div className="inline-flex gap-2 flex-wrap">
+          {GE_OPTIONS.map((opt) => {
+            const selected = geNeeded.includes(opt.value);
+            return (
+              <button
+                key={opt.value}
+                onClick={() =>
+                  setGeNeeded((prev) =>
+                    selected
+                      ? prev.filter((g) => g !== opt.value)
+                      : [...prev, opt.value],
+                  )
+                }
+                disabled={loading}
+                aria-pressed={selected}
+                className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
+                style={{
+                  borderColor: "var(--beige)",
+                  background: selected ? "var(--cardinal)" : "white",
+                  color: selected ? "white" : "var(--black)",
+                  borderRadius: "20px",
+                  opacity: loading ? 0.5 : 1,
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Professor rating floor (RMP bar) ── */}
+      <div className="mb-4">
+        <span
+          className="text-xs font-display tracking-wider mr-2"
+          style={{ color: "var(--mid)" }}
+        >
+          PROF BAR:
+        </span>
+        <div className="inline-flex gap-2 flex-wrap">
+          {PROF_BAR_OPTIONS.map((opt) => {
+            const selected = profRatingFloor === opt.value;
+            return (
+              <button
+                key={opt.label}
+                onClick={() => setProfRatingFloor(opt.value)}
+                disabled={loading}
+                aria-pressed={selected}
+                className="px-3 py-1 text-xs font-display tracking-wider border-[1.5px] transition-all"
+                style={{
+                  borderColor: "var(--beige)",
+                  background: selected ? "var(--cardinal)" : "white",
+                  color: selected ? "white" : "var(--black)",
+                  borderRadius: "20px",
+                  opacity: loading ? 0.5 : 1,
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Units filter */}
