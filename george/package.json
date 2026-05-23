@@ -22,6 +22,7 @@
     "@anthropic-ai/sdk": "^0.88.0",
     "@photon-ai/imessage-kit": "^2.1.2",
     "@supabase/supabase-js": "^2.103.0",
+    "apify-client": "^2.14.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
