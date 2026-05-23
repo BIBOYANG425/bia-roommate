@@ -97,10 +97,9 @@ app.post('/chat', adminAuth, async (req, res) => {
   }
 })
 
-app.post('/admin/scrape-instagram', adminAuth, async (req, res) => {
+app.post('/admin/scrape-instagram', adminAuth, async (_req, res) => {
   try {
-    const accounts = (req.body as { accounts?: string[] })?.accounts
-    await scrapeInstagram(accounts)
+    await scrapeInstagram()
     res.json({ status: 'ok' })
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
@@ -132,11 +131,29 @@ cron.schedule('*/5 * * * *', () => {
   })
 })
 
-cron.schedule('0 */4 * * *', () => {
-  scrapeInstagram().catch((err) => {
-    log('error', 'instagram_cron_error', { error: err.message })
-  })
-})
+// Weekly: Mon 12:00 PT (lunchtime). Picked so that:
+//   - it lands inside proactive.ts's active window (hour 8-21 LA local), so the
+//     immediate matchStudentsToEvents() call below actually runs (eng review
+//     2026-05-03 finding A: prior 0 0 * * 1 hit quiet hours and the matcher
+//     became dead code)
+//   - APIFY Starter $5/mo budget assumes weekly cadence
+// Explicit LA timezone so behaviour does not change with the host's TZ env
+// (eng review finding C).
+cron.schedule(
+  '0 12 * * 1',
+  async () => {
+    try {
+      await scrapeInstagram()
+      // Inline matcher trigger: proactive cron only sees events with
+      // created_at >= now-6h, so without this push the freshly inserted IG
+      // batch would be invisible until next week (finding D).
+      await matchStudentsToEvents()
+    } catch (err) {
+      log('error', 'instagram_cron_error', { error: (err as Error).message })
+    }
+  },
+  { timezone: 'America/Los_Angeles' },
+)
 
 cron.schedule('0 6 * * *', () => {
   scrapeUSCEvents().catch((err) => {
