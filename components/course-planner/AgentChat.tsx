@@ -5,7 +5,10 @@ import type {
   AgentRecommendation,
   AgentEvent,
 } from "@/lib/course-planner/agent";
-import type { IntakeConstraints } from "@/lib/course-planner/agent/types";
+import type {
+  ClarifyingQuestion,
+  IntakeConstraints,
+} from "@/lib/course-planner/agent/types";
 
 interface ChatMessage {
   id: string;
@@ -461,6 +464,14 @@ export default function AgentChat({
   const [selectedCourses, setSelectedCourses] = useState<Set<string>>(
     new Set(),
   );
+  // Phase 2.3 clarification flow — when the interpreter judges input vague,
+  // the SSE emits a `clarification` event and we surface chips. The user's
+  // answers get folded back into `activeInterests` and the stream re-fires.
+  const [activeInterests, setActiveInterests] = useState(interests);
+  const [clarification, setClarification] = useState<{
+    questions: ClarifyingQuestion[];
+    answers: Record<string, string[]>;
+  } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -488,7 +499,7 @@ export default function AgentChat({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            interests,
+            interests: activeInterests,
             semester,
             units: unitsFilter,
             level: levelFilter,
@@ -500,7 +511,7 @@ export default function AgentChat({
 
         if (!res.ok) {
           const errData = await res.json().catch(() => null);
-          setError(errData?.error || "Failed to start AI search");
+          setError(formatStreamError(res.status, errData?.error));
           return;
         }
 
@@ -574,6 +585,16 @@ export default function AgentChat({
                   setResults(event.data);
                   onResults(event.data);
                   break;
+                case "clarification": {
+                  // Render chip-row follow-up and STOP this stream. The user
+                  // will pick chips and we'll start a new stream with the
+                  // augmented interests below.
+                  const seed: Record<string, string[]> = {};
+                  for (const q of event.questions) seed[q.key] = [];
+                  setClarification({ questions: event.questions, answers: seed });
+                  controller.abort();
+                  return;
+                }
                 case "error":
                   setError(event.message);
                   break;
@@ -595,7 +616,7 @@ export default function AgentChat({
       controller.abort();
     };
   }, [
-    interests,
+    activeInterests,
     semester,
     unitsFilter,
     levelFilter,
@@ -604,6 +625,46 @@ export default function AgentChat({
     addMessage,
     onResults,
   ]);
+
+  // If the parent feeds us a wholly new query (user went back and re-searched),
+  // sync our local activeInterests so the stream re-fires.
+  useEffect(() => {
+    setActiveInterests(interests);
+    setClarification(null);
+    setMessages([]);
+    setResults(null);
+    setError(null);
+  }, [interests]);
+
+  function toggleChip(qKey: string, chip: string, multi?: boolean) {
+    setClarification((prev) => {
+      if (!prev) return prev;
+      const current = prev.answers[qKey] ?? [];
+      const next = multi
+        ? current.includes(chip)
+          ? current.filter((c) => c !== chip)
+          : [...current, chip]
+        : current.includes(chip)
+          ? []
+          : [chip];
+      return { ...prev, answers: { ...prev.answers, [qKey]: next } };
+    });
+  }
+
+  function submitClarification() {
+    if (!clarification) return;
+    const parts: string[] = [];
+    for (const q of clarification.questions) {
+      const picks = clarification.answers[q.key] ?? [];
+      if (picks.length > 0) parts.push(`${q.label} ${picks.join(", ")}`);
+    }
+    if (parts.length === 0) return;
+    const augmented = `${interests}. ${parts.join(". ")}`;
+    setMessages([]);
+    setError(null);
+    setClarification(null);
+    setActiveInterests(augmented);
+  }
 
   function toggleCourse(id: string) {
     setSelectedCourses((prev) => {
@@ -712,8 +773,81 @@ export default function AgentChat({
           </div>
         ))}
 
+        {/* Clarification chips — shown when the interpreter judged the input
+            too vague. User taps to refine, then we re-fire the stream. */}
+        {clarification && (
+          <div
+            className="px-4 py-3 border-[2px] text-xs space-y-3"
+            style={{
+              borderColor: "var(--black)",
+              background: "color-mix(in srgb, var(--cardinal) 6%, white)",
+              borderRadius: "8px",
+            }}
+          >
+            <div
+              className="font-display text-[11px] tracking-wider"
+              style={{ color: "var(--cardinal)" }}
+            >
+              QUICK CHECK BEFORE WE SEARCH
+            </div>
+            {clarification.questions.map((q) => (
+              <div key={q.key} className="space-y-1.5">
+                <div
+                  className="text-[12px]"
+                  style={{ color: "var(--black)" }}
+                >
+                  {q.label}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {q.chips.map((chip) => {
+                    const selected = (
+                      clarification.answers[q.key] ?? []
+                    ).includes(chip);
+                    return (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => toggleChip(q.key, chip, q.multi)}
+                        className="px-2.5 py-1 text-[11px] border-[1.5px] transition"
+                        style={{
+                          borderColor: selected
+                            ? "var(--cardinal)"
+                            : "var(--black)",
+                          background: selected
+                            ? "var(--cardinal)"
+                            : "white",
+                          color: selected ? "white" : "var(--black)",
+                          borderRadius: "16px",
+                        }}
+                      >
+                        {chip}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={submitClarification}
+              disabled={Object.values(clarification.answers).every(
+                (a) => a.length === 0,
+              )}
+              className="font-display text-[11px] tracking-wider px-3 py-1.5 border-[2px] disabled:opacity-40"
+              style={{
+                borderColor: "var(--cardinal)",
+                background: "var(--cardinal)",
+                color: "white",
+                borderRadius: "4px",
+              }}
+            >
+              SEARCH WITH THESE →
+            </button>
+          </div>
+        )}
+
         {/* Loading indicator when no results yet and no error */}
-        {!results && !error && messages.length > 0 && (
+        {!results && !error && !clarification && messages.length > 0 && (
           <div className="flex items-center gap-2 py-2 px-1">
             <div className="flex gap-1">
               <span
@@ -856,4 +990,30 @@ function formatInterpretation(data: {
   return parts.length > 0
     ? `Got it! Here's what I understood:\n${parts.join("\n")}`
     : "Understood your request. Searching now...";
+}
+
+/** Map HTTP status → user-facing message. The previous one-size-fits-all
+ *  "Failed to start AI search" told users nothing actionable — 401 looks the
+ *  same as 503 looks the same as a network timeout. This branching gives the
+ *  user a hint about whether to retry, fix their input, or ping support. */
+function formatStreamError(status: number, fallback?: string): string {
+  if (status === 400) {
+    return (
+      fallback ||
+      "Your request looks off — try describing topics or courses you're interested in."
+    );
+  }
+  if (status === 401 || status === 403) {
+    return "You need to sign in to use the AI course planner.";
+  }
+  if (status === 429) {
+    return "Too many AI searches in a short window — give it a minute and try again.";
+  }
+  if (status === 503) {
+    return "The AI search isn't configured or is temporarily unavailable. Try again in a bit.";
+  }
+  if (status >= 500) {
+    return "Our agent hit a glitch on the way to USC's catalog. Refresh and try again.";
+  }
+  return fallback || `Couldn't start the AI search (HTTP ${status}).`;
 }

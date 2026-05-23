@@ -37,15 +37,24 @@ function parseIntake(raw: any): IntakeConstraints {
     out.year = raw.year as IntakeConstraints["year"];
   }
   if (Array.isArray(raw.geNeeded)) {
+    // Cap BEFORE filtering so a malicious client can't OOM us with a giant
+    // array. The whitelist filter then drops anything that isn't a known GE.
     out.geNeeded = raw.geNeeded
-      .filter((g: unknown) => typeof g === "string" && VALID_GE.has(g))
-      .slice(0, 8);
+      .slice(0, 8)
+      .filter((g: unknown): g is string => typeof g === "string" && VALID_GE.has(g));
   }
-  if (typeof raw.profRatingFloor === "number" && raw.profRatingFloor >= 0) {
+  if (
+    typeof raw.profRatingFloor === "number" &&
+    Number.isFinite(raw.profRatingFloor) &&
+    raw.profRatingFloor >= 0
+  ) {
     out.profRatingFloor = Math.min(5, raw.profRatingFloor);
   }
   return out;
 }
+
+// Exported for unit tests; not part of the route's runtime API.
+export const __test = { parseIntake };
 
 export async function OPTIONS(request: NextRequest) {
   return handleOptions(request) ?? new Response(null, { status: 204 });

@@ -1,9 +1,10 @@
-// Express server entry. Registers 23 tools (side-effect imports), mounts WeChat adapter,
-// starts iMessage watcher, boots 4 cron jobs (proactive match / reminders / IG + USC scrapes),
-// and loads the skill registry. Nothing routes through this file at runtime — message flow
-// lives in agent/george.ts; this is wire-up only.
+// Express server entry. Registers tools (side-effect imports — count is reported
+// at startup via getToolDefinitions().length), mounts WeChat adapter, starts
+// iMessage watcher, boots 4 cron jobs (proactive match / reminders / IG + USC
+// scrapes), and loads the skill registry. Nothing routes through this file at
+// runtime — message flow lives in agent/george.ts; this is wire-up only.
 //
-// Header last reviewed: 2026-04-20
+// Header last reviewed: 2026-05-22
 
 import express from 'express'
 import cors from 'cors'
@@ -55,7 +56,11 @@ app.use(express.json())
 // ==========================================
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', character: 'George — BIA 学长', tools: 23 })
+  res.json({
+    status: 'ok',
+    character: 'George — BIA 学长',
+    tools: getToolDefinitions().length,
+  })
 })
 
 app.get('/stats', async (_req, res) => {
@@ -206,7 +211,7 @@ async function startServer() {
   app.listen(config.port, () => {
     log('info', 'server_started', {
       port: config.port,
-      tools: 23,
+      tools: getToolDefinitions().length,
       proactive: config.proactive.enabled,
       rolloutPct: config.proactive.rolloutPct,
     })

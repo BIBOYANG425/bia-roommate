@@ -57,6 +57,30 @@ Course-planning intake (extract these whenever the student mentions them — the
 - prof_bar: minimum acceptable RMP rating. key = "default", value = "4.0" / "3.5" / "5.0".
 - time_preference: when the student does/doesn't want class. key = "default", value = natural-language window (e.g. "no class before 10am").
 
+CRITICAL: a single student message often packs facts for 3–4 categories. Extract ALL of them in one pass — do not stop at the first match.
+
+Multi-category examples (each input → multiple output rows):
+
+Input: "我大二 CS major，上学期修过 CSCI 104 和 Math 225，这学期想选 4 门课，GE 还差 C 和 D"
+Output:
+[
+  {"key":"year","value":"sophomore","category":"personal_fact"},
+  {"key":"major","value":"CS","category":"personal_fact"},
+  {"key":"CSCI 104","value":"completed","category":"completed_course"},
+  {"key":"MATH 225","value":"completed","category":"completed_course"},
+  {"key":"default","value":"4 courses","category":"units_preference"},
+  {"key":"GE-C","value":"in progress","category":"ge_completed"},
+  {"key":"GE-D","value":"in progress","category":"ge_completed"}
+]
+
+Input: "I'm a junior, don't want morning classes, only take profs rated 4.0+"
+Output:
+[
+  {"key":"year","value":"junior","category":"personal_fact"},
+  {"key":"default","value":"no class before 10am","category":"time_preference"},
+  {"key":"default","value":"4.0","category":"prof_bar"}
+]
+
 If nothing notable, return empty array [].
 Be selective — only extract things worth remembering for future conversations.`,
         },

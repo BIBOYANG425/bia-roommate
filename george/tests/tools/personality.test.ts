@@ -1,3 +1,12 @@
+// Stub env vars BEFORE any module load. The dynamic `import('../../src/agent/george.js')`
+// in the geo-rules suite (line ~149) pulls in config.ts → llm-providers.ts which
+// throw if these are missing. Without these stubs the whole file goes red on a
+// machine that hasn't exported the real keys (CI, fresh checkouts, sandboxes).
+process.env.ANTHROPIC_API_KEY ||= 'test-key'
+process.env.SUPABASE_URL ||= 'http://localhost'
+process.env.SUPABASE_ANON_KEY ||= 'test-key'
+process.env.SUPABASE_SERVICE_ROLE_KEY ||= 'test-key'
+
 import { describe, it, expect } from 'vitest'
 import {
   getSubAgentPrompt,

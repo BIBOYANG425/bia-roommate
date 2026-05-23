@@ -139,6 +139,39 @@ USC department codes:
 
 IMPORTANT: If the student mentions a specific course code or prefix you don't recognize (e.g., "GESM", "NSCI", "CORE"), still add it to searchTerms. Don't ignore unknown codes.
 
+CLARIFICATION GATE (Phase 2.3):
+Before committing to a full research cycle (which costs an LLM call across catalog/RMP/Reddit), check if the input is too vague to act on. If ALL of the following are true:
+  - the input has ≤6 meaningful words (excluding filler like "a", "the", "class", "course")
+  - the input mentions NO department/prefix (no "CSCI", "WRIT 340", "GESM", etc.)
+  - the input mentions NO GE category (no "GE-A".."GE-H", no "humanities" / "sciences" / "writing" hint)
+  - the input mentions NO specific topic or theme (no "AI", "film", "psychology", "sports", "media", etc.)
+then set:
+  "needsClarification": true,
+  "clarifyingQuestions": [
+    {"key": "...", "label": "...", "chips": ["...", "...", "..."]}
+  ]
+…and the other fields can stay at their defaults — research will not run.
+
+You may emit at most 2 clarifying questions. The most useful first question is almost always direction/theme. The second (optional) can be vibe (easy vs challenging) or format (lecture vs seminar).
+
+Clarification examples (BOTH the YES branch and the NO branch):
+
+Input: "what should I take" → needsClarification: true
+  clarifyingQuestions: [
+    {"key": "theme", "label": "What direction interests you?", "chips": ["Tech / Data", "Business", "Film / Media", "Humanities / Language", "Science / Health", "Surprise me"]},
+    {"key": "vibe", "label": "What kind of class do you want?", "chips": ["Easy GE filler", "Challenging but interesting", "Mostly to fulfill major", "Fun / chill"]}
+  ]
+
+Input: "easy class" → needsClarification: true
+  clarifyingQuestions: [
+    {"key": "theme", "label": "Easy class about what?", "chips": ["Arts", "Humanities", "Social science", "Business", "Surprise me"]}
+  ]
+
+Input: "AI and machine learning" → needsClarification: false   (theme is clear → run full research)
+Input: "writ150 with rmp 5.0 prof" → needsClarification: false  (prefix + constraint clear)
+Input: "easy GE-C" → needsClarification: false                  (GE category is concrete)
+Input: "fun sports media class" → needsClarification: false     (theme + vibe both present)
+
 Respond with ONLY valid JSON:
 {
   "isValid": true,
@@ -278,7 +311,14 @@ async function researchUSCCatalog(
   function shouldInclude(num: string, units: string): boolean {
     const numVal = parseInt(num, 10);
     if (maxLevel < 999 && numVal >= maxLevel) return false;
-    if (wantedUnits && units && units !== wantedUnits) return false;
+    // Compare units numerically — USC catalog sometimes returns "4.0" while
+    // chip values are "4". String equality drops valid matches; parseFloat
+    // normalizes both sides.
+    if (wantedUnits && units) {
+      const u = parseFloat(units);
+      const w = parseFloat(wantedUnits);
+      if (Number.isFinite(u) && Number.isFinite(w) && u !== w) return false;
+    }
     return true;
   }
 
@@ -781,6 +821,12 @@ Respond with ONLY a JSON array:
   "suggestedInstructor": "Prof. Jane Doe — 4.2/5, practical assignments"
 }]`;
 
+/** Max courses the recommender LLM sees in one prompt. Keeps token cost
+ *  predictable. When the catalog returns more than this, the overflow is
+ *  surfaced via research_done's `total` field so the UI can tell the user
+ *  "we ranked the top N of M candidates" instead of silently dropping them. */
+export const RECOMMENDER_INPUT_CAP = 40;
+
 async function recommend(
   interestText: string,
   query: InterpretedQuery,
@@ -791,7 +837,7 @@ async function recommend(
   recommendations: import("./agent/types").AgentRecommendation[];
   reasoning?: string;
 }> {
-  const courseSummaries = courses.slice(0, 40).map((c) => {
+  const courseSummaries = courses.slice(0, RECOMMENDER_INPUT_CAP).map((c) => {
     const parts = [
       `${c.department} ${c.number}: ${c.title} (${c.units} units)`,
     ];
@@ -1049,6 +1095,21 @@ export async function runAgentStreaming(
     return;
   }
 
+  // Phase 2.3 clarification gate. When the interpreter judges the input
+  // ambiguous, emit a chip-row question to the UI and stop — researchers
+  // wouldn't produce anything useful from "what should I take" anyway.
+  if (
+    query.needsClarification &&
+    query.clarifyingQuestions &&
+    query.clarifyingQuestions.length > 0
+  ) {
+    emit({
+      type: "clarification",
+      questions: query.clarifyingQuestions,
+    });
+    return;
+  }
+
   const profile = query.studentProfile;
   emit({
     type: "interpreted",
@@ -1097,10 +1158,17 @@ export async function runAgentStreaming(
     return;
   }
 
+  const submitted = Math.min(catalogCourses.length, RECOMMENDER_INPUT_CAP);
+  const overflowNote =
+    catalogCourses.length > RECOMMENDER_INPUT_CAP
+      ? ` (ranking top ${submitted})`
+      : "";
   emit({
     type: "research_done",
     source: "catalog",
-    message: `Found ${catalogCourses.length} candidate courses`,
+    message: `Found ${catalogCourses.length} candidate courses${overflowNote}`,
+    submitted,
+    total: catalogCourses.length,
   });
 
   emit({
@@ -1192,3 +1260,10 @@ export async function runAgentStreaming(
 
   emit({ type: "results", data: recommendations });
 }
+
+// Internal helpers exposed for unit tests only. Do NOT import from app code.
+export const __test = {
+  researchReddit,
+  recommend,
+  RECOMMENDER_INPUT_CAP,
+};

@@ -34,10 +34,17 @@ export function sanitizeCommunityHighlights(
   courseData: ResearchedCourse | undefined,
 ): CommunityHighlight[] {
   if (!Array.isArray(raw)) return [];
+  // URLs are compared case-insensitively. Reddit permalinks are technically
+  // case-sensitive at the comment ID level, but Reddit and most clients
+  // canonicalize to lowercase, so an LLM that lowercases (or uppercases) a
+  // valid URL should still match a real fetched post. Without this, a
+  // lowercase echo of a mixed-case permalink gets dropped as "unverified".
   const validRedditUrls = new Set(
-    (courseData?.redditPosts ?? []).map((p) => p.url),
+    (courseData?.redditPosts ?? []).map((p) => p.url.toLowerCase()),
   );
   const out: CommunityHighlight[] = [];
+  const courseLabel =
+    courseData ? `${courseData.department} ${courseData.number}` : "(unknown course)";
 
   for (const item of raw) {
     if (typeof item !== "object" || item === null) continue;
@@ -50,17 +57,19 @@ export function sanitizeCommunityHighlights(
     if (source === "reddit") {
       if (!url) {
         console.warn(
-          "[agent] Dropped reddit highlight without URL:",
+          "[agent] Dropped reddit highlight without URL for",
+          courseLabel,
+          "-",
           quote.slice(0, 80),
         );
         continue;
       }
-      if (!validRedditUrls.has(url)) {
+      if (!validRedditUrls.has(url.toLowerCase())) {
         console.warn(
-          "[agent] Dropped reddit highlight with unverified URL:",
+          "[agent] Dropped reddit highlight with unverified URL for",
+          courseLabel,
+          "-",
           url,
-          "for",
-          `${courseData?.department} ${courseData?.number}`,
         );
         continue;
       }
