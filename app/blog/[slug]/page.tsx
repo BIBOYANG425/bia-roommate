@@ -62,13 +62,20 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
 
-  console.log("[blog/[slug]] body.slug=", JSON.stringify(slug));
-  console.log("[blog/[slug]] body.slugLen=", slug.length);
-  console.log("[blog/[slug]] body.slugHex=", Buffer.from(slug).toString("hex"));
-  console.log("[blog/[slug]] body.articleFound=", !!article);
-  console.log("[blog/[slug]] body.articleId=", article?.id ?? "null");
-
-  if (!article) notFound();
+  // Temporary: surface state in the HTML so curl can see it without log truncation.
+  if (!article) {
+    return (
+      <main style={{ padding: 24, fontFamily: "monospace" }}>
+        <h1>DEBUG: article not found</h1>
+        <pre>{JSON.stringify({
+          slug,
+          slugLen: slug.length,
+          slugHex: Buffer.from(slug).toString("hex"),
+          articleFound: false,
+        }, null, 2)}</pre>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#F9FAF7] text-[#171717]">
