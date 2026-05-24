@@ -6,6 +6,7 @@ import ScrollFloat from "@/components/ScrollFloat";
 import GlassSurface from "@/components/GlassSurface";
 import BorderGlow from "@/components/BorderGlow";
 import Folder from "@/components/Folder";
+import { BlogPreview } from "@/components/BlogPreview";
 import { t, type Lang } from "@/lib/i18n";
 
 function ArrowIcon() {
@@ -407,64 +408,11 @@ export default function LandingPage() {
           </section>
 
           {/* ─── Blog/Articles ─── */}
-          <section className="py-24 sm:py-32 px-6 sm:px-16 max-w-7xl mx-auto">
-            <h2 className="heading-serif text-4xl sm:text-5xl mb-12 text-[#171717]">
-              {t.blog.heading[lang]}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-8">
-              {[
-                {
-                  href: "#",
-                  tilt: "-2deg",
-                  offset: "0px",
-                  image: "/blog-mihoyo.jpg",
-                  idx: 0,
-                },
-                {
-                  href: "#",
-                  tilt: "1.5deg",
-                  offset: "-8px",
-                  image: "/blog-yc-china.jpg",
-                  idx: 1,
-                },
-                {
-                  href: "/usc-group",
-                  tilt: "-1deg",
-                  offset: "4px",
-                  image: "/blog-class-2030.jpg",
-                  idx: 2,
-                },
-              ].map((post) => (
-                <Link
-                  key={post.idx}
-                  href={post.href}
-                  className="group flex flex-col tilted-card"
-                  style={
-                    {
-                      "--tilt": post.tilt,
-                      "--offset": post.offset,
-                      transform: `rotate(var(--tilt)) translateY(var(--offset))`,
-                    } as React.CSSProperties
-                  }
-                >
-                  <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 mb-6 border border-black/5 shadow-lg">
-                    <Image
-                      src={post.image}
-                      alt={t.blog.posts[post.idx][lang]}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
-                    />
-                  </div>
-                  <h3 className="text-2xl font-medium text-[#2C2C2C] mb-3 group-hover:text-[#A0D7D1] transition-colors heading-serif leading-snug">
-                    {t.blog.posts[post.idx][lang]}
-                  </h3>
-                  <p className="text-sm text-[#A0D7D1] font-medium tracking-wide mt-auto uppercase">
-                    {t.blog.byline[lang]}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          </section>
+          <BlogPreview
+            lang={lang}
+            heading={t.blog.heading[lang]}
+            byline={t.blog.byline[lang]}
+          />
 
           {/* ─── CTA/Closing ─── */}
           <section className="py-32 px-6 text-center border-t border-black/5 bg-[#FEFFFC] rounded-b-[2rem]">
