@@ -33,13 +33,11 @@ export async function generateMetadata({
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
 
-  console.log("[blog/[slug]] metadata", {
-    slug,
-    slugLen: slug.length,
-    slugHex: Buffer.from(slug).toString("hex"),
-    articleFound: !!article,
-    articleId: article?.id,
-  });
+  console.log("[blog/[slug]] meta.slug=", JSON.stringify(slug));
+  console.log("[blog/[slug]] meta.slugLen=", slug.length);
+  console.log("[blog/[slug]] meta.slugHex=", Buffer.from(slug).toString("hex"));
+  console.log("[blog/[slug]] meta.articleFound=", !!article);
+  console.log("[blog/[slug]] meta.articleId=", article?.id ?? "null");
 
   if (!article) {
     return {
@@ -64,14 +62,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
 
-  console.log("[blog/[slug]] page body", {
-    slug,
-    slugLen: slug.length,
-    slugHex: Buffer.from(slug).toString("hex"),
-    articleFound: !!article,
-    articleId: article?.id,
-    articleStatus: article?.status,
-  });
+  console.log("[blog/[slug]] body.slug=", JSON.stringify(slug));
+  console.log("[blog/[slug]] body.slugLen=", slug.length);
+  console.log("[blog/[slug]] body.slugHex=", Buffer.from(slug).toString("hex"));
+  console.log("[blog/[slug]] body.articleFound=", !!article);
+  console.log("[blog/[slug]] body.articleId=", article?.id ?? "null");
 
   if (!article) notFound();
 
