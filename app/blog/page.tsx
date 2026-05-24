@@ -2,7 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { getPublishedArticles } from "@/lib/articles";
 
-export const revalidate = 60;
+// Render at request time so CI's placeholder Supabase env doesn't trip
+// build-time prerender. Production response is still cheap (one anon
+// query) and the public client memoizes the connection.
+export const dynamic = "force-dynamic";
 
 function formatDate(value: string | null) {
   if (!value) return "";

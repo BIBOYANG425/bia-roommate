@@ -5,7 +5,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getArticleBySlug } from "@/lib/articles";
 
-export const revalidate = 60;
+// Render at request time so CI's placeholder Supabase env doesn't trip
+// build-time prerender. Production response is fast — one anon query
+// against an indexed `slug` column.
+export const dynamic = "force-dynamic";
 
 interface ArticlePageProps {
   params: Promise<{ slug: string }>;
