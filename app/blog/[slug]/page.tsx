@@ -33,6 +33,14 @@ export async function generateMetadata({
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
 
+  console.log("[blog/[slug]] metadata", {
+    slug,
+    slugLen: slug.length,
+    slugHex: Buffer.from(slug).toString("hex"),
+    articleFound: !!article,
+    articleId: article?.id,
+  });
+
   if (!article) {
     return {
       title: "Not found · BIA Blog",
@@ -55,6 +63,15 @@ export async function generateMetadata({
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
+
+  console.log("[blog/[slug]] page body", {
+    slug,
+    slugLen: slug.length,
+    slugHex: Buffer.from(slug).toString("hex"),
+    articleFound: !!article,
+    articleId: article?.id,
+    articleStatus: article?.status,
+  });
 
   if (!article) notFound();
 
