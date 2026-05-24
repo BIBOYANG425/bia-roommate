@@ -53,10 +53,16 @@ export async function getPublishedArticles(): Promise<
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
+  // Next.js 16 dynamic segments deliver URL-encoded path params (e.g. CJK
+  // slugs arrive as "bia-%E6%89%8B%E7%BB%98..." not "bia-手绘食记..."). The
+  // DB stores decoded UTF-8, so we have to decode before querying.
+  let decoded = slug;
+  try { decoded = decodeURIComponent(slug); } catch { /* keep raw on malformed input */ }
+
   const { data, error } = await articlesClient()
     .from("articles")
     .select(ARTICLE_DETAIL_SELECT)
-    .eq("slug", slug)
+    .eq("slug", decoded)
     .eq("status", "published")
     .maybeSingle();
 
