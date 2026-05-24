@@ -36,3 +36,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+// re-trigger ci
