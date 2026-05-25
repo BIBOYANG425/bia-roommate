@@ -7,6 +7,11 @@ import type { IntakeConstraints } from "@/lib/course-planner/agent/types";
 
 type Year = NonNullable<IntakeConstraints["year"]>;
 
+// `value` is the API contract (freshman / soph / junior / senior / grad —
+// matches `IntakeConstraints["year"]` and the server-side VALID_YEARS
+// whitelist). `label` is display text — uppercase here for the brutalist
+// display font, and the indirection is what lets us localize later by
+// translating labels only. Don't unify them.
 const YEAR_OPTIONS: Array<{ value: Year; label: string }> = [
   { value: "freshman", label: "FRESHMAN" },
   { value: "soph", label: "SOPHOMORE" },

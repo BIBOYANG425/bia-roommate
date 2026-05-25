@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest'
 
+// Stub required env vars BEFORE config.ts loads — get-course-reviews.ts
+// imports config which throws on missing keys.
+process.env.ANTHROPIC_API_KEY ||= 'test-key'
+process.env.SUPABASE_URL ||= 'http://localhost'
+process.env.SUPABASE_ANON_KEY ||= 'test-key'
+process.env.SUPABASE_SERVICE_ROLE_KEY ||= 'test-key'
+
 const fetchMock = vi.fn()
 // @ts-expect-error override the global for hermetic tests
 globalThis.fetch = fetchMock

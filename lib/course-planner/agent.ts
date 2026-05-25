@@ -450,7 +450,7 @@ async function researchUSCCatalog(
       units,
       description: c.description || "",
       instructors,
-      communityInsights: [],
+      rmpHighlights: [],
       redditPosts: [],
       redditDataStatus: "fetched",
       geTag,
@@ -603,7 +603,7 @@ async function researchRMP(
           bestProf.wouldTakeAgain && bestProf.wouldTakeAgain > 0
             ? `, ${bestProf.wouldTakeAgain}% would take again`
             : "";
-        c.communityInsights.unshift(
+        c.rmpHighlights.unshift(
           `Best prof: ${bestProf.name} — ${bestProf.rating}/5 RMP${diffStr}${wtaStr}`,
         );
       }
@@ -869,9 +869,9 @@ async function recommend(
       const rmpStr = rmpParts.length > 0 ? ` (${rmpParts.join(", ")})` : "";
       parts.push(`  Prof: ${inst.name}${rmpStr}`);
     }
-    // RMP "Best prof: ..." one-liners live in communityInsights (NOT Reddit).
+    // RMP "Best prof: ..." one-liners live in rmpHighlights (NOT Reddit).
     // We label them explicitly so the recommender can't accidentally tag them as Reddit.
-    for (const insight of c.communityInsights.slice(0, 2)) {
+    for (const insight of c.rmpHighlights.slice(0, 2)) {
       parts.push(`  RMP highlight: "${insight.slice(0, 120)}"`);
     }
     // Reddit posts: only emit when we actually have data with verifiable URLs.
@@ -928,7 +928,17 @@ ${courseSummaries.join("\n\n")}`;
   try {
     ranked = JSON.parse(jsonStr) as any[];
   } catch {
-    throw new Error("Failed to parse recommendations as JSON");
+    // Detect mid-stream truncation by looking for an unterminated last
+    // recommendation. The LLM hit max_tokens before closing the JSON array.
+    // Surface this distinctly so the UI can suggest "retry without thinking
+    // mode" or "narrow your query" instead of generic failure.
+    const looksTruncated =
+      jsonStr.includes("{") && !jsonStr.trim().endsWith("]");
+    throw new Error(
+      looksTruncated
+        ? "Recommender output was truncated before completing the recommendation list — try a more specific query or disable deep-thinking mode."
+        : "Recommender returned malformed JSON — this is usually transient, please retry.",
+    );
   }
 
   const recommendations = ranked.slice(0, 15).map((rec: any) => {
@@ -1242,9 +1252,13 @@ export async function runAgentStreaming(
       });
     }
   } catch (err) {
+    // Pass through the recommender's already-distinguished message (truncated
+    // vs malformed JSON vs upstream timeout) rather than wrapping it in a
+    // generic "Recommendation failed:" prefix that buried the real signal.
+    const raw = (err as Error).message || "Unknown error";
     emit({
       type: "error",
-      message: `Recommendation failed: ${(err as Error).message}`,
+      message: raw,
     });
     return;
   }

@@ -338,7 +338,8 @@ const VOICE_CALIBRATION: Record<SubAgent, string> = {
 - **评价类问题（"writ150 哪个 prof 好"、"CSCI 270 难吗"）不走这个流程**，直接走下面的 RMP-gated 流程答。
 
 **硬规则（founder-verified）**:
-- writ150 必须选 rmp 5.0 教授；普通课 rmp > 4.0 才稳 A。
+- writ150 选 prof 用 RMP 阶梯：优先 ≥ 4.8（≥10 评价）、其次 ≥ 4.5；如果整门课都没人到 4.5，推最高那位 + 明说"这门最高也就 X.X，writ150 这种课一般得 4.8+ 才稳"。**别用单一 5.0 硬阈值**，RMP 5.0 多数是 ≤3 条评价的小样本，可能误导。
+- 普通课 rmp > 4.0 才稳 A。
 - 如果整门课 prof 都没 > 4.0，就推最高那位，明说"这门最高也就 X.X"，把选择权+风险告诉用户，不要因为没有完美 prof 就拒答。
 - section 比课本身重要，看 prof rating > 看课分。
 - 诚实说难: "教授凶狠险恶就有 final，教授人美心善就没有"。
@@ -493,7 +494,12 @@ When a student asks about a specific course (e.g. "writ150 哪个 prof 好", "CS
 2. Pull the distinct instructor names from the section list.
 3. Call get_rmp_ratings(names) — live RMP (avgRating, avgDifficulty, numRatings, wouldTakeAgainPercent) per instructor.
 4. Apply the domain rules codified in AGENT.md:
-   - WRIT 150: surface ONLY sections with rmp ≥ 5.0. If none qualify, say so — don't compromise.
+   - WRIT 150 tier (founder-verified ladder, NOT a single 5.0 cutoff —
+     RMP 5.0 is usually a ≤3-review small sample and misleads):
+       a) Prefer sections with avgRating ≥ 4.8 AND numRatings ≥ 10.
+       b) If none, fall back to avgRating ≥ 4.5 (any sample size).
+       c) If none clear 4.5, name the highest-rated prof but say so
+          plainly: "这门最高也就 X.X，writ150 一般要 4.8+ 才稳，要不要等下学期？"
    - Other courses: rmp > 4.0 is the default bar. If NO prof in that course clears 4.0, recommend the HIGHEST-rated prof available; name them explicitly, state the ceiling ("这门最高也就 X.X"), and flag the trade-off — don't refuse to answer just because no prof is perfect.
    - Mention difficulty and would-take-again% when the student is deciding between profs.
 5. Cap at 2 concrete recommendations. Quality over coverage.
