@@ -16,8 +16,14 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          registry-url: https://npm.pkg.github.com
+          scope: "@biboyang425"
 
       - run: npm ci
+        env:
+          # PAT with read:packages, configured as a repo secret. Without this
+          # the @biboyang425/bia-shared install is unauthenticated and fails.
+          NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
       - run: npm run lint
       - run: npx tsc --noEmit
       - run: npm run build
@@ -34,8 +40,12 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          registry-url: https://npm.pkg.github.com
+          scope: "@biboyang425"
 
       - run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
       - run: npm test
 
   extension:

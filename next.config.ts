@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // @biboyang425/bia-shared ships raw .ts files (no build step). Next.js
+  // doesn't compile node_modules by default; transpilePackages tells it to.
+  transpilePackages: ["@biboyang425/bia-shared"],
+
   images: {
     remotePatterns: [
       {
