@@ -52,6 +52,26 @@ registerTool(
       }
     }
 
-    return JSON.stringify({ bia_reviews: data, rmp }, null, 2)
+    // Surface a freshness signal so George can hedge confidently:
+    // "based on reviews from ~3 months ago" vs presenting stale data as live.
+    // Derived from the newest review's created_at — no API change needed.
+    let reviews_freshest_at: string | null = null
+    if (Array.isArray(data.reviews)) {
+      let newest = 0
+      for (const r of data.reviews) {
+        const ts = (r as { created_at?: unknown })?.created_at
+        if (typeof ts === 'string') {
+          const ms = Date.parse(ts)
+          if (Number.isFinite(ms) && ms > newest) newest = ms
+        }
+      }
+      if (newest > 0) reviews_freshest_at = new Date(newest).toISOString()
+    }
+
+    return JSON.stringify(
+      { bia_reviews: data, rmp, reviews_freshest_at },
+      null,
+      2,
+    )
   },
 )

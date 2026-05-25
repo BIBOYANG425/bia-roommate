@@ -19,7 +19,7 @@ export function buildCourse(
     units: "4",
     description: "Intro DS course",
     instructors: [],
-    communityInsights: [],
+    rmpHighlights: [],
     redditPosts: [],
     redditDataStatus: "fetched",
     ...overrides,

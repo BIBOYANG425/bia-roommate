@@ -235,9 +235,10 @@ export interface ResearchedCourse {
     numRatings?: number;
     wouldTakeAgain?: number;
   }[];
-  /** Mixed bag — historically holds the RMP "Best prof: ..." one-liner.
-   * Reddit titles no longer flow here; see `redditPosts`. */
-  communityInsights: string[];
+  /** RMP "Best prof: ..." one-liners, one per course max. Previously named
+   * `communityInsights` — the old name suggested it might hold Reddit data,
+   * which it never does (Reddit lives in `redditPosts`). */
+  rmpHighlights: string[];
   /** Reddit posts that mention this course (or its keywords), with source URLs. */
   redditPosts: RedditPost[];
   /** Tracks whether Reddit research actually returned data for this course. */
