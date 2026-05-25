@@ -33,6 +33,10 @@ const PROF_BAR_OPTIONS: Array<{ value: number | null; label: string }> = [
   { value: 5.0, label: "5.0 (writ150)" },
 ];
 
+// sessionStorage key for chip persistence — namespaced so it can't collide
+// with anything else this app might save on the same origin.
+const INTAKE_STORAGE_KEY = "bia.coursePlanner.intake.v1";
+
 const QUICK_TAGS = [
   "Animation",
   "Film",
@@ -82,11 +86,63 @@ export default function InterestInput({
   const [searchMode, setSearchMode] = useState<"auto" | "free">("auto");
   const [thinkingMode, setThinkingMode] = useState(false);
   // Hard-constraint chips (Phase 2.1) — these are the structured intake the
-  // interpreter trusts over its own LLM guesses.
+  // interpreter trusts over its own LLM guesses. Phase 2 polish: persist to
+  // sessionStorage so a page refresh doesn't lose what the user just picked.
   const [year, setYear] = useState<Year | null>(null);
   const [geNeeded, setGeNeeded] = useState<string[]>([]);
   const [profRatingFloor, setProfRatingFloor] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Restore chip state on mount. Validate every field — sessionStorage is
+  // user-controllable so we don't trust the shape, only the whitelist values.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem(INTAKE_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<{
+        year: string;
+        geNeeded: string[];
+        profRatingFloor: number;
+      }>;
+      const validYears = YEAR_OPTIONS.map((y) => y.value);
+      if (parsed.year && validYears.includes(parsed.year as Year)) {
+        setYear(parsed.year as Year);
+      }
+      if (Array.isArray(parsed.geNeeded)) {
+        const validGE = new Set(GE_OPTIONS.map((g) => g.value));
+        setGeNeeded(parsed.geNeeded.filter((g) => validGE.has(g)).slice(0, 8));
+      }
+      if (
+        typeof parsed.profRatingFloor === "number" &&
+        Number.isFinite(parsed.profRatingFloor) &&
+        parsed.profRatingFloor >= 0 &&
+        parsed.profRatingFloor <= 5
+      ) {
+        setProfRatingFloor(parsed.profRatingFloor);
+      }
+    } catch {
+      // Corrupt or stale shape — silently ignore.
+    }
+  }, []);
+
+  // Persist on change. Skip the initial mount where state still reflects
+  // defaults; only write once the user actually touches a chip.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (year === null && geNeeded.length === 0 && profRatingFloor === null) {
+      window.sessionStorage.removeItem(INTAKE_STORAGE_KEY);
+      return;
+    }
+    try {
+      window.sessionStorage.setItem(
+        INTAKE_STORAGE_KEY,
+        JSON.stringify({ year, geNeeded, profRatingFloor }),
+      );
+    } catch {
+      // Quota or private mode — non-fatal.
+    }
+  }, [year, geNeeded, profRatingFloor]);
 
   useEffect(() => {
     return () => {
