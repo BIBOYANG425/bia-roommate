@@ -284,14 +284,37 @@ function mergeIntakeIntoQuery(
 
 // ─── Layer 2: Research Agents ───
 
+// Year-aware course-level ceilings. A freshman seeing 400-level courses is
+// almost always noise — they don't have prereqs and the recommender wastes
+// tokens ranking them. Senior+ caps off at undergrad (≤499) to avoid grad
+// seminars unless the student explicitly opted into "grad". Returns +Infinity
+// for "no extra ceiling" so it composes with the existing courseLevel filter.
+function yearCeiling(year: IntakeConstraints["year"]): number {
+  switch (year) {
+    case "freshman":
+      return 400; // strictly below 400-level
+    case "soph":
+      return 500;
+    case "junior":
+    case "senior":
+      return 600; // includes 500-level for ambitious undergrads
+    case "grad":
+    case null:
+    default:
+      return Infinity;
+  }
+}
+
 // Agent 2a: USC Course Catalog — follows catalogInstructions
 async function researchUSCCatalog(
   instructions: InterpretedQuery["catalogInstructions"],
   semester: string,
   baseUrl: string,
+  year: IntakeConstraints["year"] = null,
 ): Promise<ResearchedCourse[]> {
   const courses: ResearchedCourse[] = [];
   const seen = new Set<string>();
+  const yearCap = yearCeiling(year);
 
   const wantedUnits =
     instructions.unitsPreference !== "any"
@@ -311,6 +334,10 @@ async function researchUSCCatalog(
   function shouldInclude(num: string, units: string): boolean {
     const numVal = parseInt(num, 10);
     if (maxLevel < 999 && numVal >= maxLevel) return false;
+    // Year-aware ceiling: freshmen don't need 400-level shown, etc. Keeps the
+    // recommender prompt focused and saves tokens on courses the student
+    // either can't take (no prereqs) or shouldn't (grad seminars).
+    if (Number.isFinite(numVal) && numVal >= yearCap) return false;
     // Compare units numerically — USC catalog sometimes returns "4.0" while
     // chip values are "4". String equality drops valid matches; parseFloat
     // normalizes both sides.
@@ -1022,6 +1049,7 @@ export async function runAgent(
     query.catalogInstructions,
     semester,
     baseUrl,
+    query.studentConstraints.year,
   );
 
   if (catalogCourses.length === 0) {
@@ -1150,6 +1178,7 @@ export async function runAgentStreaming(
       query.catalogInstructions,
       semester,
       baseUrl,
+      query.studentConstraints.year,
     );
   } catch (err) {
     emit({
@@ -1279,5 +1308,10 @@ export async function runAgentStreaming(
 export const __test = {
   researchReddit,
   recommend,
+  interpret,
+  researchUSCCatalog,
+  researchRMP,
+  researchPeerRatings,
+  yearCeiling,
   RECOMMENDER_INPUT_CAP,
 };

@@ -157,6 +157,14 @@ export default function InterestInput({
 
   const UNIT_OPTIONS = ["1", "2", "3", "4"];
 
+  // Double-click debounce. AI-mode handoff is fire-and-forget (no awaited
+  // fetch in this function) so without a guard a frantic double-click would
+  // call onAgentSearch twice → parent's setAgentQuery would settle the second
+  // call's args but the first one's SSE stream had already started (gets
+  // aborted on remount, but momentarily ran). 600ms is plenty for React to
+  // unmount InterestInput and mount AgentChat.
+  const lastSubmitRef = useRef(0);
+
   async function handleSearch() {
     if (input.trim().length < 2) {
       setError(
@@ -164,6 +172,10 @@ export default function InterestInput({
       );
       return;
     }
+
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 600) return;
+    lastSubmitRef.current = now;
 
     // AI mode → launch agent chat interface, passing all UI-captured constraints.
     if (searchMode === "auto" && onAgentSearch) {
