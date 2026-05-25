@@ -6,9 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { __test } from "@/app/api/courses/agent-stream/route";
-
-const { parseIntake } = __test;
+import { parseIntake } from "@/app/api/courses/agent-stream/intake";
 
 describe("parseIntake — happy path", () => {
   it("accepts a fully valid intake", () => {
