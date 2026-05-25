@@ -23,9 +23,29 @@ export function emptyIntakeConstraints(): IntakeConstraints {
 
 // ─── Interpreter Output ───
 
+/** A single follow-up question the interpreter wants answered before it'll
+ *  spend an LLM-research turn. UI renders each as a row of chips; the user
+ *  taps one (or many, if `multi`) and we re-submit the augmented query. */
+export interface ClarifyingQuestion {
+  /** Stable key like "theme" / "vibe" — used internally; not shown to user. */
+  key: string;
+  /** Short prompt text (≤60 chars), shown above the chip row. */
+  label: string;
+  /** 3–6 chip options. */
+  chips: string[];
+  /** Allow multi-select. Default single-select. */
+  multi?: boolean;
+}
+
 export interface InterpretedQuery {
   isValid: boolean;
   rejection?: string;
+
+  /** When true, the interpreter judged the input too vague to commit a full
+   *  research cycle to. Downstream code MUST emit a `clarification` event
+   *  with `clarifyingQuestions` and stop instead of running researchers. */
+  needsClarification?: boolean;
+  clarifyingQuestions?: ClarifyingQuestion[];
 
   catalogInstructions: {
     departments: string[];
@@ -100,9 +120,18 @@ const StudentProfileSchema = z.object({
   dealbreakers: arrOrNull(),
 });
 
+const ClarifyingQuestionSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  chips: z.array(z.string()).min(2).max(8),
+  multi: z.boolean().optional(),
+});
+
 const InterpretedQuerySchema = z.object({
   isValid: z.boolean(),
   rejection: z.string().optional(),
+  needsClarification: z.boolean().optional(),
+  clarifyingQuestions: z.array(ClarifyingQuestionSchema).max(2).optional(),
   catalogInstructions: CatalogInstructionsSchema.default(() => ({
     departments: [],
     geCategories: [],
@@ -206,9 +235,10 @@ export interface ResearchedCourse {
     numRatings?: number;
     wouldTakeAgain?: number;
   }[];
-  /** Mixed bag — historically holds the RMP "Best prof: ..." one-liner.
-   * Reddit titles no longer flow here; see `redditPosts`. */
-  communityInsights: string[];
+  /** RMP "Best prof: ..." one-liners, one per course max. Previously named
+   * `communityInsights` — the old name suggested it might hold Reddit data,
+   * which it never does (Reddit lives in `redditPosts`). */
+  rmpHighlights: string[];
   /** Reddit posts that mention this course (or its keywords), with source URLs. */
   redditPosts: RedditPost[];
   /** Tracks whether Reddit research actually returned data for this course. */
@@ -289,9 +319,14 @@ export type AgentEvent =
       type: "research_done";
       source: "catalog" | "rmp" | "reddit";
       message: string;
+      /** For catalog: how many courses passed to the recommender (capped). */
+      submitted?: number;
+      /** For catalog: how many total candidates we found before capping. */
+      total?: number;
     }
   | { type: "recommending"; message: string }
   | { type: "results"; data: AgentRecommendation[] }
+  | { type: "clarification"; questions: ClarifyingQuestion[] }
   | { type: "error"; message: string; isRejection?: boolean };
 
 // ─── LLM Provider Config ───

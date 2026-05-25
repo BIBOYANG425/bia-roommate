@@ -1,51 +1,7 @@
 import { NextRequest } from "next/server";
 import { runAgentStreaming, type AgentEvent } from "@/lib/course-planner/agent";
-import {
-  emptyIntakeConstraints,
-  type IntakeConstraints,
-} from "@/lib/course-planner/agent/types";
 import { corsHeaders, handleOptions } from "@/lib/cors";
-
-const VALID_YEARS: Array<IntakeConstraints["year"]> = [
-  "freshman",
-  "soph",
-  "junior",
-  "senior",
-  "grad",
-];
-
-const VALID_GE = new Set([
-  "GE-A",
-  "GE-B",
-  "GE-C",
-  "GE-D",
-  "GE-E",
-  "GE-F",
-  "GE-G",
-  "GE-H",
-]);
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- raw JSON body
-function parseIntake(raw: any): IntakeConstraints {
-  const out = emptyIntakeConstraints();
-  if (!raw || typeof raw !== "object") return out;
-
-  if (
-    typeof raw.year === "string" &&
-    (VALID_YEARS as string[]).includes(raw.year)
-  ) {
-    out.year = raw.year as IntakeConstraints["year"];
-  }
-  if (Array.isArray(raw.geNeeded)) {
-    out.geNeeded = raw.geNeeded
-      .filter((g: unknown) => typeof g === "string" && VALID_GE.has(g))
-      .slice(0, 8);
-  }
-  if (typeof raw.profRatingFloor === "number" && raw.profRatingFloor >= 0) {
-    out.profRatingFloor = Math.min(5, raw.profRatingFloor);
-  }
-  return out;
-}
+import { parseIntake } from "./intake";
 
 export async function OPTIONS(request: NextRequest) {
   return handleOptions(request) ?? new Response(null, { status: 204 });

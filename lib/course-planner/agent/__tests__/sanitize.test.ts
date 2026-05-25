@@ -12,7 +12,7 @@ function buildCourse(
     units: "4",
     description: "",
     instructors: [],
-    communityInsights: [],
+    rmpHighlights: [],
     redditPosts: [],
     redditDataStatus: "fetched",
     ...overrides,

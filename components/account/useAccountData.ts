@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+// Use the lazy Proxy export so module evaluation never touches env vars.
+// The previous `const supabase = createBrowserSupabaseClient()` at the top
+// level crashed Next.js prerender for /account (env vars aren't bound in the
+// Vercel build environment), failing the preview deployment despite the page
+// being "use client".
+import { supabase } from "@/lib/supabase/client";
 import {
   RoommateProfile,
   SubletListing,
@@ -12,8 +17,6 @@ import {
 } from "@/lib/types";
 import type { SavedSchedule } from "./SavedSchedulesList";
 import type { Comment } from "./CommentsList";
-
-const supabase = createBrowserSupabaseClient();
 
 export function useAccountData() {
   const { user, loading: authLoading } = useAuth();
