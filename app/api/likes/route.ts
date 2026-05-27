@@ -1,43 +1,35 @@
 import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { authedHandler } from "@/lib/api/authed-handler";
+import { likeToggleSchema } from "@/lib/schemas/likes";
 
-export async function POST(request: Request) {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const POST = authedHandler({
+  schema: likeToggleSchema,
+  rateLimit: { key: "likes", limit: 30, windowMs: 60_000 },
+  handler: async ({ user, supabase, body }) => {
+    const { profile_id } = body;
 
-  const { allowed } = checkRateLimit(`likes:${user.id}`, {
-    limit: 30,
-    windowMs: 60_000,
-  });
-  if (!allowed)
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-
-  const { profile_id } = await request.json();
-  if (!profile_id)
-    return NextResponse.json({ error: "Missing profile_id" }, { status: 400 });
-
-  const { error } = await supabase
-    .from("profile_likes")
-    .insert({ user_id: user.id, profile_id });
-
-  if (error?.code === "23505") {
-    // Already liked — unlike
-    const { error: deleteError } = await supabase
+    const { error } = await supabase
       .from("profile_likes")
-      .delete()
-      .eq("user_id", user.id)
-      .eq("profile_id", profile_id);
-    if (deleteError)
-      return NextResponse.json({ error: deleteError.message }, { status: 500 });
-    return NextResponse.json({ liked: false });
-  }
+      .insert({ user_id: user.id, profile_id });
 
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ liked: true });
-}
+    if (error?.code === "23505") {
+      const { error: deleteError } = await supabase
+        .from("profile_likes")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("profile_id", profile_id);
+      if (deleteError) {
+        return NextResponse.json(
+          { error: deleteError.message },
+          { status: 500 },
+        );
+      }
+      return NextResponse.json({ liked: false });
+    }
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ liked: true });
+  },
+});

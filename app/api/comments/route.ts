@@ -1,61 +1,43 @@
 import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { authedHandler } from "@/lib/api/authed-handler";
+import {
+  commentCreateSchema,
+  commentDeleteSchema,
+} from "@/lib/schemas/comments";
 
-export async function POST(request: Request) {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const POST = authedHandler({
+  schema: commentCreateSchema,
+  rateLimit: { key: "comments", limit: 10, windowMs: 60_000 },
+  handler: async ({ user, supabase, body }) => {
+    const { profile_id, content } = body;
 
-  const { allowed } = checkRateLimit(`comments:${user.id}`, {
-    limit: 10,
-    windowMs: 60_000,
-  });
-  if (!allowed)
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    const { data, error } = await supabase
+      .from("profile_comments")
+      .insert({ user_id: user.id, profile_id, content })
+      .select("id, content, created_at")
+      .single();
 
-  const { profile_id, content } = await request.json();
-  if (!profile_id || !content?.trim()) {
-    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-  }
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(data);
+  },
+});
 
-  const { data, error } = await supabase
-    .from("profile_comments")
-    .insert({ user_id: user.id, profile_id, content: content.trim() })
-    .select("id, content, created_at")
-    .single();
+export const DELETE = authedHandler({
+  schema: commentDeleteSchema,
+  handler: async ({ user, supabase, body }) => {
+    const { id } = body;
 
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
-}
+    const { error } = await supabase
+      .from("profile_comments")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
 
-export async function DELETE(request: Request) {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { id } = await request.json();
-  if (!id || typeof id !== "string") {
-    return NextResponse.json(
-      { error: "Missing or invalid id" },
-      { status: 400 },
-    );
-  }
-
-  const { error } = await supabase
-    .from("profile_comments")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ deleted: true });
-}
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ deleted: true });
+  },
+});
