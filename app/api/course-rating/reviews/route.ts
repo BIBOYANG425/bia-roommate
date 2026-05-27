@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { authedHandler } from "@/lib/api/authed-handler";
 import { reviewSchema } from "@/lib/course-rating/validation";
 import type {
   CourseReview,
@@ -10,6 +11,8 @@ import type {
 const REVIEW_COLUMNS =
   "id, dept, course_number, professor, term, difficulty, workload, grading, gpa, comment, created_at";
 
+// GET is intentionally NOT wrapped with authedHandler — it serves anonymous
+// readers and only uses the user identity to flag `isOwn` on results.
 export async function GET(request: NextRequest) {
   const dept = request.nextUrl.searchParams.get("dept")?.toUpperCase();
   const number = request.nextUrl.searchParams.get("number");
@@ -24,12 +27,10 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createServerSupabaseClient();
 
-  // Check if user is logged in (for isOwn flag)
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Fetch reviews and aggregate in parallel
   let reviewQuery = supabase
     .from("course_reviews")
     .select(REVIEW_COLUMNS)
@@ -60,7 +61,6 @@ export async function GET(request: NextRequest) {
       : Promise.resolve({ data: [] }),
   ]);
 
-  // Check for failures
   if (
     reviewsResult.status === "rejected" ||
     (reviewsResult.status === "fulfilled" && reviewsResult.value.error)
@@ -108,95 +108,70 @@ export async function GET(request: NextRequest) {
   });
 }
 
-export async function POST(request: Request) {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const POST = authedHandler({
+  schema: reviewSchema,
+  // Rate limit stays DB-based (count last hour) — the in-memory checkRateLimit
+  // can't tell us "did this user post 10 reviews across cold starts".
+  handler: async ({ user, supabase, body }) => {
+    const { count } = await supabase
+      .from("course_reviews")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("created_at", new Date(Date.now() - 3600000).toISOString());
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const parsed = reviewSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0]?.message || "Invalid input" },
-      { status: 400 },
-    );
-  }
-
-  // Rate limit: max 10 reviews per hour
-  const { count } = await supabase
-    .from("course_reviews")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .gte("created_at", new Date(Date.now() - 3600000).toISOString());
-
-  if (count && count >= 10) {
-    return NextResponse.json(
-      { error: "Too many reviews. Try again later." },
-      { status: 429 },
-    );
-  }
-
-  const { data, error } = await supabase
-    .from("course_reviews")
-    .insert({ user_id: user.id, ...parsed.data })
-    .select("id, created_at")
-    .single();
-
-  if (error) {
-    if (error.code === "23505") {
+    if (count && count >= 10) {
       return NextResponse.json(
-        { error: "You already reviewed this course for this term" },
-        { status: 409 },
+        { error: "Too many reviews. Try again later." },
+        { status: 429 },
       );
     }
-    console.error("[course-rating] POST error:", error);
-    return NextResponse.json(
-      { error: "Failed to submit review" },
-      { status: 500 },
-    );
-  }
 
-  return NextResponse.json(data);
-}
+    const { data, error } = await supabase
+      .from("course_reviews")
+      .insert({ user_id: user.id, ...body })
+      .select("id, created_at")
+      .single();
 
-export async function DELETE(request: NextRequest) {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: "You already reviewed this course for this term" },
+          { status: 409 },
+        );
+      }
+      console.error("[course-rating] POST error:", error);
+      return NextResponse.json(
+        { error: "Failed to submit review" },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json(data);
+  },
+});
 
-  const id = request.nextUrl.searchParams.get("id");
-  if (!id) {
-    return NextResponse.json(
-      { error: "Missing id parameter" },
-      { status: 400 },
-    );
-  }
+export const DELETE = authedHandler({
+  handler: async ({ user, supabase, request }) => {
+    const id = new URL(request.url).searchParams.get("id");
+    if (!id) {
+      return NextResponse.json(
+        { error: "Missing id parameter" },
+        { status: 400 },
+      );
+    }
 
-  const { error } = await supabase
-    .from("course_reviews")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+    const { error } = await supabase
+      .from("course_reviews")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
 
-  if (error) {
-    console.error("[course-rating] DELETE error:", error);
-    return NextResponse.json(
-      { error: "Failed to delete review" },
-      { status: 500 },
-    );
-  }
-
-  return NextResponse.json({ deleted: true });
-}
+    if (error) {
+      console.error("[course-rating] DELETE error:", error);
+      return NextResponse.json(
+        { error: "Failed to delete review" },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({ deleted: true });
+  },
+});
