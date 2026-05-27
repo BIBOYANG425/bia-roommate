@@ -43,6 +43,10 @@ function makeRequest(method: string, body?: unknown): Request {
   return new Request("http://localhost/api/test", init);
 }
 
+// Next.js 16 always passes a routeCtx, even on non-dynamic routes (with
+// empty params). Tests mirror that.
+const emptyCtx = { params: Promise.resolve({} as Record<string, never>) };
+
 beforeEach(() => {
   vi.clearAllMocks();
   getUser.mockResolvedValue({ data: { user: fakeUser } });
@@ -59,7 +63,7 @@ describe("authedHandler", () => {
     const handler = authedHandler({
       handler: async () => new Response("never"),
     });
-    const res = await handler(makeRequest("POST", { a: 1 }));
+    const res = await handler(makeRequest("POST", { a: 1 }), emptyCtx);
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: "Unauthorized" });
   });
@@ -71,7 +75,7 @@ describe("authedHandler", () => {
       rateLimit: { key: "test", limit: 5, windowMs: 60_000 },
       handler: async () => new Response("never"),
     });
-    const res = await handler(makeRequest("POST", { a: 1 }));
+    const res = await handler(makeRequest("POST", { a: 1 }), emptyCtx);
     expect(res.status).toBe(429);
     expect(res.headers.get("Retry-After")).not.toBeNull();
     expect(checkRateLimit).toHaveBeenCalledWith(
@@ -85,20 +89,52 @@ describe("authedHandler", () => {
       schema: z.object({ name: z.string() }),
       handler: async () => new Response("never"),
     });
-    const res = await handler(makeRequest("POST", "{not-json"));
+    const res = await handler(makeRequest("POST", "{not-json"), emptyCtx);
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({ error: "Invalid JSON" });
   });
 
-  it("400 on schema validation failure", async () => {
+  it("400 on schema validation failure — hoists first zod message into error", async () => {
     const handler = authedHandler({
-      schema: z.object({ name: z.string() }),
+      schema: z.object({
+        name: z.string({ message: "Name must be a string" }),
+      }),
       handler: async () => new Response("never"),
     });
-    const res = await handler(makeRequest("POST", { name: 42 }));
+    const res = await handler(makeRequest("POST", { name: 42 }), emptyCtx);
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.error).toBe("Invalid request body");
+    // First zod issue message hoisted into `error` so frontends showing
+    // `data.error` see something actionable (not "Invalid request body").
+    expect(json.error).toBe("Name must be a string");
+    expect(json.issues).toBeDefined();
+  });
+
+  it("400 with regex refine message — hoisted verbatim", async () => {
+    const handler = authedHandler({
+      schema: z.object({
+        term: z
+          .string()
+          .regex(/^(Fall|Spring) \d{4}$/, "Must be like 'Fall 2025'"),
+      }),
+      handler: async () => new Response("never"),
+    });
+    const res = await handler(makeRequest("POST", { term: "junk" }), emptyCtx);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe("Must be like 'Fall 2025'");
+  });
+
+  it("empty body on DELETE with schema → schema validates null (no 'Invalid JSON')", async () => {
+    const handler = authedHandler({
+      schema: z.object({ id: z.string() }),
+      handler: async () => new Response("never"),
+    });
+    const res = await handler(makeRequest("DELETE"), emptyCtx);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    // Should produce a field-specific schema error, NOT generic "Invalid JSON".
+    expect(json.error).not.toBe("Invalid JSON");
     expect(json.issues).toBeDefined();
   });
 
@@ -109,7 +145,7 @@ describe("authedHandler", () => {
         return Response.json({ name: body.name, uid: user.id });
       },
     });
-    const res = await handler(makeRequest("POST", { name: "alice" }));
+    const res = await handler(makeRequest("POST", { name: "alice" }), emptyCtx);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ name: "alice", uid: "user-123" });
   });
@@ -119,7 +155,7 @@ describe("authedHandler", () => {
       schema: z.object({ name: z.string() }), // schema present but GET ignores
       handler: async ({ body }) => Response.json({ got: body }),
     });
-    const res = await handler(makeRequest("GET"));
+    const res = await handler(makeRequest("GET"), emptyCtx);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ got: null });
   });
@@ -130,7 +166,7 @@ describe("authedHandler", () => {
         throw new Error("boom");
       },
     });
-    const res = await handler(makeRequest("POST", { a: 1 }));
+    const res = await handler(makeRequest("POST", { a: 1 }), emptyCtx);
     expect(res.status).toBe(500);
     expect(await res.json()).toEqual({ error: "Internal server error" });
   });
@@ -157,7 +193,7 @@ describe("adminHandler", () => {
     const handler = adminHandler({
       handler: async () => new Response("never"),
     });
-    const res = await handler(makeRequest("POST", { a: 1 }));
+    const res = await handler(makeRequest("POST", { a: 1 }), emptyCtx);
     expect(res.status).toBe(403);
   });
 
@@ -173,7 +209,7 @@ describe("adminHandler", () => {
         });
       },
     });
-    const res = await handler(makeRequest("POST", { x: 7 }));
+    const res = await handler(makeRequest("POST", { x: 7 }), emptyCtx);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       uid: "user-123",
@@ -193,7 +229,7 @@ describe("adminHandler", () => {
       rateLimit: { key: "admin-test", limit: 1, windowMs: 1000 },
       handler: async () => new Response("never"),
     });
-    const res = await handler(makeRequest("POST", { a: 1 }));
+    const res = await handler(makeRequest("POST", { a: 1 }), emptyCtx);
     expect(res.status).toBe(429);
   });
 });

@@ -61,7 +61,11 @@ type AdminOpts<S extends z.ZodTypeAny | undefined, P> = CommonOpts<S> & {
   handler: (ctx: AdminCtx<S, P>) => Promise<Response>;
 };
 
-type RouteContext<P> = { params: Promise<P> } | undefined;
+// Next.js 16 enforces a strict route handler signature via the auto-generated
+// types in .next/types/. The second arg is { params: Promise<...> } and must
+// be REQUIRED (no `| undefined`) for both dynamic and non-dynamic routes —
+// Next.js passes an empty-params object for non-dynamic routes.
+type RouteContext<P> = { params: Promise<P> };
 
 function rateLimitResponse(rl: RateLimitResult, message?: string): Response {
   const retryAfterSec = Math.max(
@@ -88,24 +92,37 @@ async function parseBody(
   if (!schema || request.method === "GET" || request.method === "HEAD") {
     return { ok: true, data: null };
   }
-  let raw: unknown;
-  try {
-    raw = await request.json();
-  } catch {
-    return {
-      ok: false,
-      response: NextResponse.json({ error: "Invalid JSON" }, { status: 400 }),
-    };
+  // Treat missing/empty body as `null` so the schema gets a chance to produce
+  // a field-specific 400 (e.g. "profile_id is required") instead of the user
+  // seeing "Invalid JSON" when the schema validation would have been clearer.
+  let raw: unknown = null;
+  const text = await request.text();
+  if (text.trim() !== "") {
+    try {
+      raw = JSON.parse(text);
+    } catch {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Invalid JSON" }, { status: 400 }),
+      };
+    }
   }
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
+    // Hoist the first zod issue message into `error` so frontends that read
+    // `data.error` still see something actionable (e.g. "Term cannot be more
+    // than one year in the future") instead of a generic envelope. Keep the
+    // full `issues` for richer client handling.
+    const flat = parsed.error.flatten();
+    const firstFieldError = Object.values(flat.fieldErrors)
+      .flat()
+      .find((m): m is string => typeof m === "string");
+    const firstFormError = flat.formErrors[0];
+    const message = firstFieldError ?? firstFormError ?? "Invalid request body";
     return {
       ok: false,
       response: NextResponse.json(
-        {
-          error: "Invalid request body",
-          issues: parsed.error.flatten(),
-        },
+        { error: message, issues: flat },
         { status: 400 },
       ),
     };
@@ -125,7 +142,6 @@ function runRateLimit(
 }
 
 async function resolveParams<P>(routeCtx: RouteContext<P>): Promise<P> {
-  if (!routeCtx) return {} as P;
   return await routeCtx.params;
 }
 
@@ -139,7 +155,7 @@ export function authedHandler<
 >(opts: AuthedOpts<S, P>) {
   return async (
     request: Request,
-    routeCtx?: RouteContext<P>,
+    routeCtx: RouteContext<P>,
   ): Promise<Response> => {
     const supabase = await createServerSupabaseClient();
     const {
@@ -187,7 +203,7 @@ export function adminHandler<
 >(opts: AdminOpts<S, P>) {
   return async (
     request: Request,
-    routeCtx?: RouteContext<P>,
+    routeCtx: RouteContext<P>,
   ): Promise<Response> => {
     const gate = await requireAdmin();
     if (gate.error) return gate.error;
