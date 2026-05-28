@@ -93,6 +93,18 @@ export default function LandingPage() {
                   >
                     {t.nav.freshmanServices[lang]}
                   </Link>
+                  <Link href="/blog" className="link-hover py-3 px-1">
+                    {t.nav.blog[lang]}
+                  </Link>
+                  <Link
+                    href="/george"
+                    className="link-hover py-3 px-1 inline-flex items-center gap-1"
+                  >
+                    {t.nav.george[lang]}
+                    <span aria-hidden className="text-base leading-none">
+                      👻
+                    </span>
+                  </Link>
                   <Link href="/join" className="link-hover py-3 px-1">
                     {t.nav.joinUs[lang]}
                   </Link>

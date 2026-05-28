@@ -25,18 +25,20 @@ interface ChatMessage {
   content: string;
 }
 
+// User-facing message returned (as a normal 200 reply) whenever the backend
+// is unreachable or returns an error. Keeps George in character instead of
+// surfacing a raw 502 to the chat UI. Bilingual to match the iMessage voice.
+const SERVICE_UNAVAILABLE_MESSAGE =
+  "汪... 我现在正在调教中 👻🐕\n\nGeorge is currently being fine-tuned. The team is sharpening my replies and rolling out new tools. Try me again in a few minutes — I'll be right back.";
+
 export async function POST(req: NextRequest) {
   const backendUrl = process.env.GEORGE_BACKEND_URL;
   const adminToken = process.env.GEORGE_ADMIN_TOKEN;
 
+  // If env vars aren't configured we treat that the same as "backend down"
+  // for the user — they shouldn't see infra errors.
   if (!backendUrl || !adminToken) {
-    return NextResponse.json(
-      {
-        error:
-          "GEORGE_BACKEND_URL or GEORGE_ADMIN_TOKEN not configured on the server",
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ response: SERVICE_UNAVAILABLE_MESSAGE });
   }
 
   const body = (await req.json()) as {
@@ -67,22 +69,24 @@ export async function POST(req: NextRequest) {
         text: message,
       }),
     });
-  } catch (err) {
-    const m = err instanceof Error ? err.message : "fetch failed";
-    return NextResponse.json(
-      { error: `george backend unreachable: ${m}` },
-      { status: 502 },
-    );
+  } catch {
+    // Network failure means the Mac is asleep, cloudflared restarted,
+    // or the tunnel hostname rotated. Show the fine-tuning message.
+    return NextResponse.json({ response: SERVICE_UNAVAILABLE_MESSAGE });
   }
 
   if (!res.ok) {
-    const errText = await res.text();
-    return NextResponse.json(
-      { error: `george backend ${res.status}: ${errText.slice(0, 200)}` },
-      { status: 502 },
-    );
+    // Backend reachable but errored (most often 5xx from the Express
+    // backend or a 502 from Cloudflare). Same friendly message.
+    return NextResponse.json({ response: SERVICE_UNAVAILABLE_MESSAGE });
   }
 
   const data = (await res.json()) as { response?: string; error?: string };
-  return NextResponse.json({ response: data.response ?? data.error ?? "" });
+  // If the backend returned an empty response or an error string, treat
+  // that as "service hiccup" rather than show empty bubbles.
+  const reply = data.response ?? data.error ?? "";
+  if (!reply.trim()) {
+    return NextResponse.json({ response: SERVICE_UNAVAILABLE_MESSAGE });
+  }
+  return NextResponse.json({ response: reply });
 }

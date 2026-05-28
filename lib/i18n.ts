@@ -11,6 +11,8 @@ export const t = {
     about: { en: "About", zh: "关于我们" },
     events: { en: "Events", zh: "活动" },
     freshmanServices: { en: "新生服务", zh: "新生服务" },
+    blog: { en: "Blog", zh: "博客" },
+    george: { en: "George", zh: "George" },
     joinUs: { en: "Join Us", zh: "加入我们" },
   },
   hero: {
