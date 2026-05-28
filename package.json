@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.99.0",
     "@biboyang425/bia-shared": "^0.2.2",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.100.0",
