@@ -138,16 +138,16 @@ export default function GeorgePage() {
             <h1 className="heading-serif text-5xl sm:text-6xl md:text-7xl leading-[0.95] mb-6 text-[#171717]">
               Meet George.
               <br />
-              <span className="text-[#8B0A2A]">USC's ghost dog,</span> now in AI.
+              <span className="text-[#8B0A2A]">USC’s ghost dog,</span> now in AI.
             </h1>
             <p className="text-lg sm:text-xl text-[#3F3F46] leading-relaxed max-w-xl mb-8">
-              George Tirebiter has wandered USC since the 1940s. He's still the
+              George Tirebiter has wandered USC since the 1940s. He’s still the
               same campus ghost dog. Now you can actually ask him things.
             </p>
             <p className="text-base text-[#52525B] leading-relaxed max-w-xl mb-10">
               Events, courses, housing, social connections, and campus life
-              tips. Ask him anything, in plain English. He'll answer like a
-              friend who's been here a while.
+              tips. Ask him anything, in plain English. He’ll answer like a
+              friend who’s been here a while.
             </p>
             <div className="flex flex-wrap items-center gap-4">
               <Link
@@ -257,7 +257,7 @@ export default function GeorgePage() {
             Try saying something like this.
           </h2>
           <p className="text-lg text-[#6B7280] leading-relaxed">
-            Plain English works. You don't need to phrase anything in a special
+            Plain English works. You don’t need to phrase anything in a special
             way.
           </p>
         </div>
@@ -275,7 +275,7 @@ export default function GeorgePage() {
                 Q{(i + 1).toString().padStart(2, "0")}
               </div>
               <p className="text-base text-[#171717] leading-snug font-medium">
-                "{prompt}"
+                “{prompt}”
               </p>
             </div>
           ))}
@@ -304,7 +304,7 @@ export default function GeorgePage() {
             </h2>
             <p className="text-lg text-white/60 leading-relaxed">
               Web and iMessage are in private beta today. WeChat opens next.
-              Sign up for the waitlist and we'll let you in as fast as we can.
+              Sign up for the waitlist and we’ll let you in as fast as we can.
             </p>
           </div>
 
@@ -383,8 +383,8 @@ export default function GeorgePage() {
               </p>
               <p>
                 He remembers what you mention over time. Tell him your major and
-                interests once, and he'll stop asking. Tell him your sleep
-                habits and he'll filter roommate matches accordingly.
+                interests once, and he’ll stop asking. Tell him your sleep
+                habits and he’ll filter roommate matches accordingly.
               </p>
             </div>
           </div>
@@ -400,7 +400,7 @@ export default function GeorgePage() {
           </h2>
           <p className="text-lg sm:text-xl text-white/70 mb-12 max-w-xl mx-auto leading-relaxed">
             Hop into the web preview to try George today, or join the waitlist
-            and we'll text you when iMessage opens up.
+            and we’ll text you when iMessage opens up.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
