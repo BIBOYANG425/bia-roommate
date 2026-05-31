@@ -8,10 +8,26 @@ import { PARCEL_STATUS_VALUES, type ParcelStatus } from "@/lib/types";
 
 export const GET = adminHandler({
   handler: async ({ adminSupabase }) => {
-    const [parcelsRes, shipmentsRes, usersRes] = await Promise.all([
+    const [
+      parcelsRes,
+      shipmentsRes,
+      usersRes,
+      pendingPackRes,
+      pendingRequestRes,
+    ] = await Promise.all([
       adminSupabase.from("parcels").select("status"),
       adminSupabase.from("shipments").select("status"),
       adminSupabase.from("students").select("id", { count: "exact", head: true }),
+      // Pack requests still awaiting first contact (新提交的拼单).
+      adminSupabase
+        .from("pack_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending"),
+      // Express shipment requests still awaiting handling (新提交的急件).
+      adminSupabase
+        .from("shipment_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending"),
     ]);
 
     if (parcelsRes.error) {
@@ -45,6 +61,9 @@ export const GET = adminHandler({
       activeShipments,
       totalShipments: shipmentsRes.data?.length ?? 0,
       usersTotal: usersRes.count ?? 0,
+      // 待处理提醒计数。count 查询失败时回退到 0，不影响其余统计。
+      pendingPackRequests: pendingPackRes.count ?? 0,
+      pendingShipmentRequests: pendingRequestRes.count ?? 0,
     });
   },
 });

@@ -13,6 +13,15 @@ interface Counts {
   activeShipments: number;
   totalShipments: number;
   usersTotal: number;
+  pendingPackRequests: number;
+  pendingShipmentRequests: number;
+}
+
+interface TodoItem {
+  label: string;
+  count: number;
+  href: string;
+  icon: string;
 }
 
 export default function AdminHomePage() {
@@ -37,6 +46,30 @@ export default function AdminHomePage() {
     (groups[s.group] ??= []).push(s);
   }
 
+  // 待处理事项：只展示数量 > 0 的项，引导运营优先处理。
+  const todos: TodoItem[] = counts
+    ? [
+        {
+          label: "待入库包裹",
+          count: counts.parcelsByStatus.expected ?? 0,
+          href: "/admin/shipping/parcels",
+          icon: "📦",
+        },
+        {
+          label: "待联系拼单",
+          count: counts.pendingPackRequests ?? 0,
+          href: "/admin/shipping/pack-requests",
+          icon: "📬",
+        },
+        {
+          label: "待处理急件",
+          count: counts.pendingShipmentRequests ?? 0,
+          href: "/admin/shipping/requests",
+          icon: "⚡",
+        },
+      ].filter((t) => t.count > 0)
+    : [];
+
   return (
     <>
       <h1
@@ -48,6 +81,57 @@ export default function AdminHomePage() {
       <p className="text-sm mb-8" style={{ color: "var(--mid)" }}>
         BIA Services · 运营面板
       </p>
+
+      {/* 待处理提醒 — 引导运营优先处理需要动作的事项 */}
+      {counts && (
+        <section className="mb-10">
+          <h2
+            className="font-display text-lg tracking-[0.15em] mb-3"
+            style={{ color: "var(--black)" }}
+          >
+            待处理 · TO-DO
+          </h2>
+          {todos.length === 0 ? (
+            <div
+              className="brutal-container p-4 text-sm"
+              style={{ background: "var(--cream)", color: "var(--mid)" }}
+            >
+              ✅ 暂无待处理事项，全部已跟进。
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {todos.map((t) => (
+                <Link
+                  key={t.href}
+                  href={t.href}
+                  className="brutal-container p-4 hover:-translate-y-0.5 transition-transform"
+                  style={{ background: "var(--gold)" }}
+                >
+                  <p
+                    className="font-display text-[10px] tracking-wider"
+                    style={{ color: "var(--black)" }}
+                  >
+                    <span className="mr-1">{t.icon}</span>
+                    {t.label}
+                  </p>
+                  <p
+                    className="font-display text-3xl mt-1"
+                    style={{ color: "var(--black)" }}
+                  >
+                    {t.count}
+                  </p>
+                  <p
+                    className="font-display text-[10px] tracking-wider mt-1"
+                    style={{ color: "var(--black)" }}
+                  >
+                    去处理 →
+                  </p>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {counts && (
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
