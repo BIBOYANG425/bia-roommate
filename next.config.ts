@@ -15,6 +15,25 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // 集运/users admin retired from uscbia.com in Phase 3 — the admin now lives at
+  // admin.uscbia.com. 308-redirect any old /admin bookmarks to the new app.
+  // NOTE: /api/admin/me stays here (AuthProvider uses it for isAdmin) — it is
+  // under /api/admin, not /admin, so this rule does not touch it.
+  async redirects() {
+    return [
+      {
+        source: "/admin",
+        destination: "https://admin.uscbia.com/admin",
+        permanent: true,
+      },
+      {
+        source: "/admin/:path*",
+        destination: "https://admin.uscbia.com/admin/:path*",
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
