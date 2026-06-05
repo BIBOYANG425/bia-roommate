@@ -31,6 +31,13 @@ const nextConfig: NextConfig = {
         destination: "https://admin.uscbia.com/admin/:path*",
         permanent: true,
       },
+      {
+        // Legacy 集运 admin alias — clean server 308 (replaces the old
+        // redirect() shim page, which only did a client meta-refresh).
+        source: "/shipping/admin",
+        destination: "https://admin.uscbia.com/admin/shipping/routes",
+        permanent: true,
+      },
     ];
   },
 
