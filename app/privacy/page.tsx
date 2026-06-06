@@ -31,7 +31,7 @@ function BackArrow() {
 
 const MONO = "'Menlo','SF Mono','Courier New',monospace";
 const EFFECTIVE_DATE = "April 16, 2026";
-const LAST_UPDATED = "April 16, 2026";
+const LAST_UPDATED = "June 6, 2026";
 const CONTACT_EMAIL = "uscbia@usc.edu";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -265,10 +265,89 @@ export default function PrivacyPolicyPage() {
             </Prose>
           </section>
 
+          {/* ─── 4A. Product Analytics (uscbia.com) ─── */}
+          <section className="px-6 py-10 border-b border-[#30363d]">
+            <SectionLabel>{"// 04A · PRODUCT ANALYTICS"}</SectionLabel>
+            <SectionHeading>
+              How we measure what works on the BIA website
+            </SectionHeading>
+            <Prose>
+              <p>
+                Pages on{" "}
+                <code className="bg-[#1c2128] border border-[#30363d] rounded px-1.5 py-0.5 text-[13px] text-[#e3b341]">
+                  uscbia.com
+                </code>{" "}
+                use{" "}
+                <a
+                  href="https://posthog.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#58a6ff] hover:text-[#79c0ff] underline underline-offset-4"
+                >
+                  PostHog
+                </a>{" "}
+                (US region) to record a small set of explicitly-defined
+                product events — for example: a page is viewed, a course is
+                added to a saved schedule, a shipping pack request is
+                submitted. Each event includes a random anonymous identifier,
+                the event name, the page path, and the timestamp.
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>
+                  <strong className="text-[#e6edf3]">No autocapture.</strong>{" "}
+                  PostHog&apos;s automatic page-content capture is turned off.
+                  Clicks, form values, and DOM text are never sent.
+                </li>
+                <li>
+                  <strong className="text-[#e6edf3]">
+                    No personal identifiers in events.
+                  </strong>{" "}
+                  Email, name, WeChat ID, USC ID, and BIA member ID are
+                  excluded from event payloads by design.
+                </li>
+                <li>
+                  <strong className="text-[#e6edf3]">
+                    No third-party advertising trackers.
+                  </strong>{" "}
+                  The site has no advertising SDKs.
+                </li>
+                <li>
+                  <strong className="text-[#e6edf3]">Storage:</strong>{" "}
+                  PostHog&apos;s US infrastructure, under BIA&apos;s account.
+                  Dashboards visible only to BIA officers with the{" "}
+                  <code className="text-[13px] text-[#8b949e]">
+                    super_admin
+                  </code>{" "}
+                  role.
+                </li>
+                <li>
+                  <strong className="text-[#e6edf3]">Retention:</strong>{" "}
+                  raw events kept for 12 months. Aggregate summaries kept
+                  indefinitely.
+                </li>
+                <li>
+                  <strong className="text-[#e6edf3]">Opt-out:</strong>{" "}
+                  email{" "}
+                  <a
+                    href={`mailto:${CONTACT_EMAIL}`}
+                    className="text-[#58a6ff] hover:text-[#79c0ff] underline underline-offset-4"
+                  >
+                    {CONTACT_EMAIL}
+                  </a>{" "}
+                  and we will exclude your account from aggregate analytics.
+                </li>
+              </ul>
+              <p>
+                This section covers analytics on the BIA website. The Chrome
+                extension (sections 01–04 above) does not use PostHog.
+              </p>
+            </Prose>
+          </section>
+
           {/* ─── 5. What We Don't Do ─── */}
           <section className="px-6 py-10 border-b border-[#30363d]">
             <SectionLabel>{"// 05 · WHAT WE DON'T DO"}</SectionLabel>
-            <SectionHeading>No sale, no ads, no tracking</SectionHeading>
+            <SectionHeading>No sale, no ads, no cross-site tracking</SectionHeading>
             <Prose>
               <ul className="list-disc pl-6 space-y-2">
                 <li>We do not sell your data.</li>
@@ -281,13 +360,14 @@ export default function PrivacyPolicyPage() {
                   websites.
                 </li>
                 <li>
-                  We do not transfer your data outside of what the extension&apos;s
-                  stated purpose requires.
+                  We do not transfer your data outside of what the
+                  extension&apos;s and website&apos;s stated purposes require.
                 </li>
               </ul>
               <p>
-                Our use of any information we receive matches the extension&apos;s
-                single purpose stated above.
+                Our use of any information we receive matches the stated
+                purposes above (single-purpose extension, product-analytics
+                for the BIA website).
               </p>
             </Prose>
           </section>
