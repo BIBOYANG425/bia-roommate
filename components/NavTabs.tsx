@@ -11,7 +11,6 @@ const TABS = [
   { href: "/roommates", label: "找室友" },
   { href: "/sublet", label: "转租" },
   { href: "/squad", label: "找搭子" },
-  { href: "/events", label: "活动" },
   { href: "/shipping", label: "集运" },
   { href: "/course-planner", label: "选课" },
   { href: "/course-rating", label: "课评" },
