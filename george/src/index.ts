@@ -16,6 +16,7 @@ import { processMessage } from './agent/george.js'
 import { getStats, log } from './observability/logger.js'
 import { matchStudentsToEvents } from './jobs/proactive.js'
 import { sendPendingReminders } from './jobs/reminder-sender.js'
+import { sendPendingShippingNotifications } from './jobs/shipping-notifier.js'
 import { scrapeInstagram } from './scrapers/instagram.js'
 import { scrapeUSCEvents } from './scrapers/usc-events.js'
 import { loadAllSkills, getRegistryStats } from './skills/index.js'
@@ -134,6 +135,13 @@ cron.schedule('0 */3 * * *', () => {
 cron.schedule('*/5 * * * *', () => {
   sendPendingReminders().catch((err) => {
     log('error', 'reminder_cron_error', { error: err.message })
+  })
+})
+
+// Drain the shipping-notification queue (parcel status changes → WeChat/iMessage).
+cron.schedule('*/5 * * * *', () => {
+  sendPendingShippingNotifications().catch((err) => {
+    log('error', 'shipping_notifier_cron_error', { error: err.message })
   })
 })
 
