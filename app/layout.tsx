@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Bebas_Neue, Inter, Instrument_Serif } from "next/font/google";
 import localFont from "next/font/local";
 import { AuthProvider } from "@/components/AuthProvider";
-import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import FeedbackButton from "@/components/FeedbackButton";
 import "./globals.css";
 
@@ -66,7 +65,6 @@ export default function RootLayout({
           {children}
           <FeedbackButton />
         </AuthProvider>
-        <AnalyticsProvider />
         {/* Film grain overlay */}
         <div className="grain" aria-hidden="true" />
       </body>

@@ -58,54 +58,158 @@ export async function POST(req: NextRequest) {
   if (pErr || !pending) return NextResponse.json({ error: 'unknown code' }, { status: 404 });
   if (pending.status === 'completed') return NextResponse.json({ error: 'already completed' }, { status: 409 });
 
-  // Generate user_id. TODO Slice F: replace with auth.users.id from real auth flow.
-  const userId = randomUUID();
+  // Resolve user_id. students.user_id is FK to auth.users.id with a UNIQUE
+  // constraint, so we must create (or fetch) an auth.users row by email FIRST
+  // and then link students.user_id to that id. Random UUIDs fail the FK check
+  // silently inside Supabase's update API.
+  //
+  // TODO Slice F: replace this implicit auth user creation with a real OAuth
+  // sign-in. For the pilot, we mint a confirmed auth user per email so the
+  // student data chain works end-to-end.
+  let userId: string;
+  const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+    email,
+    email_confirm: true,
+  });
+  if (created?.user?.id) {
+    userId = created.user.id;
+  } else {
+    const { data: list, error: listErr } = await supabase.auth.admin.listUsers({
+      page: 1,
+      perPage: 200,
+    });
+    if (listErr) {
+      return NextResponse.json({ error: `auth list: ${listErr.message}` }, { status: 500 });
+    }
+    const found = list.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+    if (!found) {
+      return NextResponse.json(
+        { error: `auth: cannot create or find user (${createErr?.message ?? 'unknown'})` },
+        { status: 500 },
+      );
+    }
+    userId = found.id;
+  }
 
-  // Create students row (FK target for user_profiles, etc.)
+  // Reconcile students rows. Two possible existing rows could be linked to
+  // the same person:
+  //   - Row A: keyed by imessage_handle, often has user_id=NULL (orphan from
+  //            old iMessage activity before auth existed)
+  //   - Row B: keyed by user_id, linked to the auth.users row matching the
+  //            form email
+  // If both exist as distinct rows, we MERGE: delete the imessage-only orphan
+  // and re-attach its imessage_id to the auth-linked row. If only one exists,
+  // we just link the missing field. If neither, fresh insert.
+  const { data: authStudent } = await supabase
+    .from('students')
+    .select('id, imessage_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  const imessageHandle = pending.imessage_handle;
+  const { data: imsgStudent } = imessageHandle
+    ? await supabase
+        .from('students')
+        .select('id, user_id')
+        .eq('imessage_id', imessageHandle)
+        .maybeSingle()
+    : { data: null };
+
+  let primaryStudentId: string;
+  if (authStudent && imsgStudent && authStudent.id !== imsgStudent.id) {
+    const { error: delErr } = await supabase.from('students').delete().eq('id', imsgStudent.id);
+    if (delErr) return NextResponse.json({ error: `student merge delete: ${delErr.message}` }, { status: 500 });
+    const { error: updErr } = await supabase
+      .from('students')
+      .update({ imessage_id: imessageHandle })
+      .eq('id', authStudent.id);
+    if (updErr) return NextResponse.json({ error: `student merge attach: ${updErr.message}` }, { status: 500 });
+    primaryStudentId = authStudent.id;
+  } else if (authStudent) {
+    if (imessageHandle && authStudent.imessage_id !== imessageHandle) {
+      const { error: attachErr } = await supabase
+        .from('students')
+        .update({ imessage_id: imessageHandle })
+        .eq('id', authStudent.id);
+      if (attachErr) return NextResponse.json({ error: `student attach imsg: ${attachErr.message}` }, { status: 500 });
+    }
+    primaryStudentId = authStudent.id;
+  } else if (imsgStudent) {
+    const { error: linkErr } = await supabase
+      .from('students')
+      .update({ user_id: userId })
+      .eq('id', imsgStudent.id);
+    if (linkErr) return NextResponse.json({ error: `student link auth: ${linkErr.message}` }, { status: 500 });
+    primaryStudentId = imsgStudent.id;
+  } else {
+    const { data: inserted, error: insErr } = await supabase
+      .from('students')
+      .insert({ user_id: userId, imessage_id: imessageHandle })
+      .select('id')
+      .single();
+    if (insErr || !inserted) {
+      return NextResponse.json({ error: `student insert: ${insErr?.message ?? 'no row'}` }, { status: 500 });
+    }
+    primaryStudentId = inserted.id;
+  }
+
   const interestsArray = interests.categories;
-  const { error: studentErr } = await supabase.from('students').insert({
-    user_id: userId,
-    imessage_id: pending.imessage_handle,
-    name: identity.name,
-    major: identity.major,
-    year: identity.year,
-    interests: interestsArray,
-    onboarding_complete: true,
-  });
-  if (studentErr) return NextResponse.json({ error: `student insert: ${studentErr.message}` }, { status: 500 });
 
-  // Write 3-table contract
-  const { error: profileErr } = await supabase.from('user_profiles').insert({
-    user_id: userId,
-    identity: renderIdentity(identity, email),
-    academic: `year: ${identity.year}, major: ${identity.major}`,
-    interests: renderInterests(interests),
-    relationships: '',
-    state: `new_user: true, onboarded_at: ${new Date().toISOString()}`,
-    george_notes: '',
-  });
-  if (profileErr) return NextResponse.json({ error: `profile insert: ${profileErr.message}` }, { status: 500 });
+  const { error: studentErr } = await supabase
+    .from('students')
+    .update({
+      name: identity.name,
+      major: identity.major,
+      year: identity.year,
+      interests: interestsArray,
+      onboarding_complete: true,
+    })
+    .eq('id', primaryStudentId);
+  if (studentErr) {
+    return NextResponse.json({ error: `student data: ${studentErr.message}` }, { status: 500 });
+  }
+
+  // Write 3-table contract via upsert so re-onboarding overwrites stale memory
+  // blocks (otherwise a returning user keeps old profile content forever).
+  const { error: profileErr } = await supabase.from('user_profiles').upsert(
+    {
+      user_id: userId,
+      identity: renderIdentity(identity, email),
+      academic: `year: ${identity.year}, major: ${identity.major}`,
+      interests: renderInterests(interests),
+      relationships: '',
+      state: `new_user: true, onboarded_at: ${new Date().toISOString()}`,
+      george_notes: '',
+    },
+    { onConflict: 'user_id' },
+  );
+  if (profileErr) return NextResponse.json({ error: `profile upsert: ${profileErr.message}` }, { status: 500 });
 
   const cadenceInterval = prefs.cadence === 'off' ? '12 hours' : prefs.cadence;
   const isPaused = prefs.cadence === 'off';
-  const { error: configErr } = await supabase.from('user_heartbeat_config').insert({
-    user_id: userId,
-    cadence: cadenceInterval,
-    active_hours_start: `${prefs.active_hours_start}:00`,
-    active_hours_end: `${prefs.active_hours_end}:00`,
-    timezone: 'America/Los_Angeles',
-    paused: isPaused,
-    consent_proactive_messages: prefs.consent_proactive_messages,
-    consent_anomaly_checkin: prefs.consent_anomaly_checkin,
-  });
-  if (configErr) return NextResponse.json({ error: `config insert: ${configErr.message}` }, { status: 500 });
+  const { error: configErr } = await supabase.from('user_heartbeat_config').upsert(
+    {
+      user_id: userId,
+      cadence: cadenceInterval,
+      active_hours_start: `${prefs.active_hours_start}:00`,
+      active_hours_end: `${prefs.active_hours_end}:00`,
+      timezone: 'America/Los_Angeles',
+      paused: isPaused,
+      consent_proactive_messages: prefs.consent_proactive_messages,
+      consent_anomaly_checkin: prefs.consent_anomaly_checkin,
+    },
+    { onConflict: 'user_id' },
+  );
+  if (configErr) return NextResponse.json({ error: `config upsert: ${configErr.message}` }, { status: 500 });
 
   const instructions = renderStandingInstructions(identity, interests, prefs);
-  const { error: instErr } = await supabase.from('user_heartbeat_instructions').insert({
-    user_id: userId,
-    content: instructions,
-  });
-  if (instErr) return NextResponse.json({ error: `instructions insert: ${instErr.message}` }, { status: 500 });
+  const { error: instErr } = await supabase.from('user_heartbeat_instructions').upsert(
+    {
+      user_id: userId,
+      content: instructions,
+    },
+    { onConflict: 'user_id' },
+  );
+  if (instErr) return NextResponse.json({ error: `instructions upsert: ${instErr.message}` }, { status: 500 });
 
   // Mark pending row completed
   await supabase.from('pending_users').update({ status: 'completed' }).eq('code', code);

@@ -23,7 +23,7 @@ async function mintCode(): Promise<string> {
 export default async function GeorgeLanding() {
   const code = await mintCode();
   const phone = process.env.GEORGE_IMESSAGE_PHONE ?? "+1XXXXXXXXXX";
-  const smsLink = `sms:${phone}&body=${encodeURIComponent(`${code}-START`)}`;
+  const smsLink = `sms:${phone}&body=${encodeURIComponent(`i'm ready to try george (${code})`)}`;
 
   return (
     <div
