@@ -3,14 +3,22 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { RoommateProfile, GENDER_OPTIONS, YEAR_OPTIONS } from "@/lib/types";
+import {
+  RoommateProfile,
+  GENDER_OPTIONS,
+  YEAR_OPTIONS,
+  SCHOOL_OPTIONS,
+} from "@/lib/types";
+import {
+  type ProductSchool,
+  normalizeProductSchool,
+} from "@/lib/product-school";
 import ProfileCard from "@/components/ProfileCard";
 import ProfileModal from "@/components/ProfileModal";
 import SkeletonCard from "@/components/SkeletonCard";
 import Toast from "@/components/Toast";
-import NavTabs from "@/components/NavTabs";
+import ProductShell, { ProductTaskHeader } from "@/components/ProductShell";
 
 function Marquee({
   bg,
@@ -39,7 +47,15 @@ function Marquee({
   );
 }
 
-function HomeContent() {
+type RoommatesContentProps = {
+  initialSchool: ProductSchool;
+  onSchoolChange: (school: ProductSchool) => void;
+};
+
+function RoommatesContent({
+  initialSchool,
+  onSchoolChange,
+}: RoommatesContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [profiles, setProfiles] = useState<RoommateProfile[]>([]);
@@ -51,9 +67,16 @@ function HomeContent() {
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
   const [search, setSearch] = useState("");
-  const [schoolFilter, setSchoolFilter] = useState("");
+  const [schoolFilter, setSchoolFilter] = useState(
+    normalizeProductSchool(searchParams.get("school")) ?? initialSchool,
+  );
   const [genderFilter, setGenderFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- shell school changes should update the page default filter
+    setSchoolFilter(initialSchool);
+  }, [initialSchool]);
 
   useEffect(() => {
     if (searchParams.get("submitted") === "true") {
@@ -109,22 +132,14 @@ function HomeContent() {
     return true;
   });
 
-  // Override CSS variables at page level so every element inherits school colors
-  const schoolVars: React.CSSProperties = {};
-  if (schoolFilter === "UC Berkeley") {
-    Object.assign(schoolVars, {
-      "--cardinal": "#014B83",
-      "--gold": "#FEDD76",
-    } as Record<string, string>);
-  } else if (schoolFilter === "Stanford") {
-    Object.assign(schoolVars, {
-      "--cardinal": "#8C1515",
-      "--gold": "#EAAB00",
-    } as Record<string, string>);
+  function handleSchoolFilterChange(nextSchool: string) {
+    setSchoolFilter(nextSchool);
+    const normalized = normalizeProductSchool(nextSchool);
+    if (normalized) onSchoolChange(normalized);
   }
 
   return (
-    <main className="min-h-screen" style={schoolVars}>
+    <>
       {showToast && (
         <Toast
           message="PROFILE DROPPED SUCCESSFULLY"
@@ -132,83 +147,18 @@ function HomeContent() {
         />
       )}
 
-      {/* Nav */}
-      <NavTabs />
-
-      {/* Top Marquee */}
-      <Marquee
-        bg="var(--cardinal)"
-        text="var(--gold)"
-        items={[
-          "BIA 新生找室友",
-          "FIND YOUR ROOMMATE",
-          "CLASS OF 2030",
-          "NEW DROP",
-          "USC ✕ BERKELEY ✕ STANFORD",
-          "ROOMMATE MATCH",
-        ]}
+      <ProductTaskHeader
+        eyebrow="Housing / Roommates"
+        school={initialSchool}
+        title="找室友"
+        description="Browse roommate profiles from your school first, then widen to all schools when you need more options."
+        primaryAction={{ label: "Browse profiles", href: "#browse" }}
+        secondaryAction={{ label: "Drop my profile", href: "/submit" }}
+        trustItems={["School-first profiles", "Profile control", "Report issues"]}
       />
 
-      {/* Hero */}
-      <section
-        className="relative overflow-hidden border-b-[3px] border-[var(--black)]"
-        style={{ background: "var(--cream)" }}
-      >
-        <div className="ghost-text -left-4 top-1/2 -translate-y-1/2">
-          ROOMMATE
-        </div>
-        <div className="max-w-6xl mx-auto px-6 py-16 sm:py-24 relative">
-          <div className="flex items-center gap-6 mb-8">
-            <Image
-              src="/logo.jpg"
-              alt="BIA Class of 2030"
-              width={100}
-              height={100}
-              className="border-[3px] border-[var(--black)]"
-              style={{ boxShadow: "6px 6px 0 var(--cardinal)" }}
-            />
-            <div>
-              <div className="new-drop-badge mb-2">NEW DROP 2030</div>
-              <p
-                className="font-display text-sm"
-                style={{ color: "var(--mid)" }}
-              >
-                BIA ROOMMATE MATCH
-              </p>
-            </div>
-          </div>
-
-          <h1
-            className="font-display text-[60px] sm:text-[96px] leading-[0.85] mb-6"
-            style={{ color: "var(--black)" }}
-          >
-            BIA 新生
-            <br />
-            <span className="glitch-text" style={{ color: "var(--cardinal)" }}>
-              找室友
-            </span>
-          </h1>
-
-          <p
-            className="text-sm sm:text-base max-w-md mb-10"
-            style={{ color: "var(--mid)" }}
-          >
-            填写你的生活习惯，找到最合拍的室友。
-            <br />
-            Drop your profile. Find your match.
-          </p>
-
-          <Link
-            href="/submit"
-            className="brutal-btn brutal-btn-primary inline-block"
-          >
-            DROP MY PROFILE →
-          </Link>
-        </div>
-      </section>
-
       {/* Filters */}
-      <section className="max-w-6xl mx-auto px-6 py-8 relative">
+      <section id="browse" className="max-w-6xl mx-auto px-6 py-8 relative">
         <span className="section-number">01</span>
         <h2
           className="font-display text-[40px] sm:text-[60px] mb-6"
@@ -219,7 +169,7 @@ function HomeContent() {
 
         {/* Campus Tabs */}
         <div className="flex gap-0 mb-6 flex-wrap">
-          {["", "USC", "UC Berkeley", "Stanford"].map((s) => {
+          {["", ...SCHOOL_OPTIONS].map((s) => {
             const active = schoolFilter === s;
             const label = s || "ALL";
             let bg = "var(--cream)";
@@ -242,7 +192,7 @@ function HomeContent() {
             return (
               <button
                 key={label}
-                onClick={() => setSchoolFilter(s)}
+                onClick={() => handleSchoolFilterChange(s)}
                 className="font-display text-sm sm:text-base tracking-[0.1em] px-5 sm:px-8 py-3 border-[3px] border-[var(--black)] -mr-[3px] first:mr-0 transition-colors"
                 style={{ background: bg, color: fg }}
               >
@@ -434,14 +384,18 @@ function HomeContent() {
           onClose={() => setSelectedProfile(null)}
         />
       )}
-    </main>
+    </>
   );
 }
 
 export default function Home() {
   return (
     <Suspense>
-      <HomeContent />
+      <ProductShell group="housing" page="roommates">
+        {({ school, setSchool }) => (
+          <RoommatesContent initialSchool={school} onSchoolChange={setSchool} />
+        )}
+      </ProductShell>
     </Suspense>
   );
 }
