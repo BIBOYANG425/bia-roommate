@@ -1,11 +1,11 @@
-// Thin Google Maps Platform client. One file covers Geocoding (here),
-// Distance Matrix (Task 4), and Places Nearby (Phase 2). Two LRU caches
-// keep costs flat within Google ToS (30-day max geocode, 1-hour API).
+// Thin Google Maps Platform client. One file covers Geocoding (geocode),
+// Distance Matrix (distanceMatrix), and Places Nearby (placesNearby). Two LRU
+// caches keep costs flat within Google ToS (30-day max geocode, 1-hour API).
 //
 // Errors are thrown with a `code` field so callers can map to tool errors.
 // Known codes: `geo_disabled`, `geo_unavailable`.
 //
-// Header last reviewed: 2026-04-21
+// Header last reviewed: 2026-06-10
 
 import { LRUCache } from 'lru-cache'
 import { log } from '../observability/logger.js'
@@ -146,6 +146,56 @@ export async function distanceMatrix(
   )
   apiCache.set(cacheKey, matrix)
   return matrix
+}
+
+export type PlaceType =
+  | 'restaurant'
+  | 'cafe'
+  | 'supermarket'
+  | 'gym'
+  | 'pharmacy'
+  | 'library'
+export type NearbyPlace = {
+  name: string
+  place_id: string
+  lat: number
+  lng: number
+  rating?: number
+}
+
+export async function placesNearby(
+  center: LatLng,
+  type: PlaceType,
+  radiusMeters: number,
+): Promise<NearbyPlace[]> {
+  const cacheKey = `nearby|${type}|${llKey(center)}|${radiusMeters}`
+  const cached = apiCache.get(cacheKey) as NearbyPlace[] | undefined
+  if (cached) return cached
+
+  const key = requireKey()
+  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${llKey(center)}&radius=${radiusMeters}&type=${type}&key=${key}`
+  const res = await fetchWithRetry(url)
+  const data = (await res.json()) as {
+    status: string
+    results?: Array<{
+      name: string
+      place_id: string
+      geometry: { location: { lat: number; lng: number } }
+      rating?: number
+    }>
+  }
+  if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+    throw new GeoError('geo_unavailable', `places status ${data.status}`)
+  }
+  const out: NearbyPlace[] = (data.results ?? []).map((r) => ({
+    name: r.name,
+    place_id: r.place_id,
+    lat: r.geometry.location.lat,
+    lng: r.geometry.location.lng,
+    rating: r.rating,
+  }))
+  apiCache.set(cacheKey, out)
+  return out
 }
 
 // Exported for Task 5 (rate limiter) and Phase 2 (placesNearby).

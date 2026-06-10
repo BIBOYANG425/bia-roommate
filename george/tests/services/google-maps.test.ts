@@ -160,3 +160,70 @@ describe('distanceMatrix', () => {
     expect(global.fetch).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('placesNearby', () => {
+  it('returns array of places, preserving optional rating', async () => {
+    const { placesNearby } = await import('../../src/services/google-maps.js')
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          status: 'OK',
+          results: [
+            {
+              name: 'Test Cafe',
+              place_id: 'p1',
+              geometry: { location: { lat: 34.02, lng: -118.28 } },
+              rating: 4.5,
+            },
+            {
+              name: 'Test Diner',
+              place_id: 'p2',
+              geometry: { location: { lat: 34.02, lng: -118.29 } },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    )
+    const result = await placesNearby({ lat: 34.02, lng: -118.28 }, 'restaurant', 500)
+    expect(result).toHaveLength(2)
+    expect(result[0].rating).toBe(4.5)
+    expect(result[1].rating).toBeUndefined()
+  })
+
+  it('returns empty array on ZERO_RESULTS', async () => {
+    const { placesNearby } = await import('../../src/services/google-maps.js')
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ status: 'ZERO_RESULTS' }), { status: 200 }),
+    )
+    expect(await placesNearby({ lat: 34.02, lng: -118.28 }, 'cafe', 500)).toEqual([])
+  })
+
+  it('caches identical nearby calls', async () => {
+    const { placesNearby } = await import('../../src/services/google-maps.js')
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          status: 'OK',
+          results: [
+            { name: 'X', place_id: 'p1', geometry: { location: { lat: 34.02, lng: -118.28 } } },
+          ],
+        }),
+        { status: 200 },
+      ),
+    )
+    await placesNearby({ lat: 34.02, lng: -118.28 }, 'gym', 1000)
+    await placesNearby({ lat: 34.02, lng: -118.28 }, 'gym', 1000)
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws geo_unavailable on a hard Google status', async () => {
+    const { placesNearby } = await import('../../src/services/google-maps.js')
+    vi.mocked(global.fetch).mockResolvedValue(
+      new Response(JSON.stringify({ status: 'REQUEST_DENIED' }), { status: 200 }),
+    )
+    await expect(
+      placesNearby({ lat: 34.02, lng: -118.28 }, 'pharmacy', 800),
+    ).rejects.toMatchObject({ code: 'geo_unavailable' })
+  })
+})

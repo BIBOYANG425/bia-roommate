@@ -56,7 +56,7 @@ export const SUB_AGENT_TOOLS: Record<SubAgent, string[]> = {
   social: ['suggest_connection', 'search_roommates', 'freshman_faq', 'lookup_student', 'search_events', 'load_skill'],
   // describe_course exposed here so first-touch "什么是 writ150 / GESM / CSCI102" questions
   // can be answered during onboarding (intent='general' → routes to campus) without a handoff.
-  campus: ['campus_knowledge', 'freshman_faq', 'describe_course', 'travel_time', 'lookup_student', 'load_skill', 'update_profile'],
+  campus: ['campus_knowledge', 'freshman_faq', 'describe_course', 'travel_time', 'find_places_near', 'lookup_student', 'load_skill', 'update_profile'],
 }
 
 // Onboarding turn cap: after this many turns without completion, prompt switches to wrap-up mode

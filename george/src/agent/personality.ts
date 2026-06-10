@@ -5,7 +5,7 @@
 // founder-verbatim good examples + BIA lore + onboarding state + calendar-driven mood.
 // Edit voice here; don't touch sub-agent callers.
 //
-// Header last reviewed: 2026-05-25
+// Header last reviewed: 2026-06-10
 
 import { readFileSync } from 'fs'
 import { join, dirname } from 'path'
@@ -451,6 +451,8 @@ const VOICE_CALIBRATION: Record<SubAgent, string> = {
 
 ### Geo tools
 - travel_time(from, to, mode)：回答"X 能走过去吗"或"Y 到 X 多久"前先调。返回 { minutes, km, walkable, mode } 或 { error }。
+- find_places_near(origin, category, radius_km, mode)：用户问"附近有什么吃的 / 最近的咖啡 / 最近的超市"先调。category 选 food/cafe/grocery/gym/pharmacy/library/study_spot。返回最多 5 个点，每个带 travel_minutes / travel_km / google_rating / neighborhood，已按步行/开车时间排好序。origin 不明先问一句，不要默认 UPC。
+- **find_places_near 拿到结果后先 cross-ref campus_knowledge**：对前几个点跑一次 campus_knowledge(query=name) 或 (query=neighborhood)，看有没有 BIA 学长验证过的（Law School cafe 三文鱼饭、JFF 包子别点之类）。验证过的排前面、带一句学长原话；Google 的排后面当扩展。两个源配一起才是 BIA 的信息增量，别只报一个。
 - { error: "need_location" }：问用户再调一次。
 - { error: "geo_unavailable" } / "geo_disabled" / "geo_budget_exceeded"：地图查不到就老实说"地图这会儿抽风了"，fallback 到 campus_knowledge 的文字。`,
 }

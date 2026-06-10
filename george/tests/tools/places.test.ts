@@ -181,3 +181,155 @@ describe('travel_time', () => {
     expect(parsed.minutes).toBeGreaterThan(20)
   })
 })
+
+describe('find_places_near', () => {
+  it('caps candidates at 5 before Distance Matrix and returns sorted results', async () => {
+    // 10 candidates come back from placesNearby; the tool must keep only the
+    // top 5 by rating before pricing them through Distance Matrix.
+    const placesMock = vi.fn(async () =>
+      Array.from({ length: 10 }, (_, i) => ({
+        name: `Place ${i}`,
+        place_id: `p${i}`,
+        lat: 34.02 + i * 0.001,
+        lng: -118.28,
+        rating: 5 - i * 0.1,
+      })),
+    )
+    const dmMock = vi.fn(async (_origins: unknown, dests: unknown[]) => [
+      dests.map(() => ({ minutes: 5, km: 0.4 })),
+    ])
+    vi.doMock('../../src/services/google-maps.js', () => ({
+      geocode: vi.fn(),
+      placesNearby: placesMock,
+      distanceMatrix: dmMock,
+      GeoError: FakeGeoError,
+    }))
+    vi.doMock('../../src/services/geo-rate-limit.js', () => ({
+      checkGeoBudget: vi.fn(() => true),
+    }))
+    const execute = await loadTool('find_places_near')
+    const result = await execute('find_places_near', {
+      origin: 'Parkside',
+      category: 'food',
+      radius_km: 0.5,
+      mode: 'walking',
+      student_id: 's1',
+    })
+    const parsed = JSON.parse(result)
+    expect(parsed).toHaveLength(5)
+    // Distance Matrix must be priced with EXACTLY 5 destinations (cost cap).
+    expect(dmMock.mock.calls[0][1]).toHaveLength(5)
+    // Highest-rated candidates survive the cap (Place 0..4, ratings 5.0..4.6).
+    expect(parsed.map((p: { name: string }) => p.name)).toEqual([
+      'Place 0',
+      'Place 1',
+      'Place 2',
+      'Place 3',
+      'Place 4',
+    ])
+  })
+
+  it('returns empty array when no places in radius', async () => {
+    vi.doMock('../../src/services/google-maps.js', () => ({
+      geocode: vi.fn(),
+      placesNearby: vi.fn(async () => []),
+      distanceMatrix: vi.fn(),
+      GeoError: FakeGeoError,
+    }))
+    vi.doMock('../../src/services/geo-rate-limit.js', () => ({
+      checkGeoBudget: vi.fn(() => true),
+    }))
+    const execute = await loadTool('find_places_near')
+    const result = await execute('find_places_near', {
+      origin: 'Parkside',
+      category: 'food',
+      radius_km: 0.5,
+      student_id: 's1',
+    })
+    expect(JSON.parse(result)).toEqual([])
+  })
+
+  it('returns need_location for an unresolved short-acronym origin', async () => {
+    vi.doMock('../../src/services/google-maps.js', () => ({
+      geocode: vi.fn(),
+      placesNearby: vi.fn(),
+      distanceMatrix: vi.fn(),
+      GeoError: FakeGeoError,
+    }))
+    vi.doMock('../../src/services/geo-rate-limit.js', () => ({
+      checkGeoBudget: vi.fn(() => true),
+    }))
+    const execute = await loadTool('find_places_near')
+    const result = await execute('find_places_near', {
+      origin: 'MRF',
+      category: 'food',
+      radius_km: 0.5,
+      student_id: 's1',
+    })
+    expect(JSON.parse(result)).toMatchObject({ error: 'need_location' })
+  })
+
+  it('returns geo_budget_exceeded when over the per-student cap', async () => {
+    const placesMock = vi.fn()
+    vi.doMock('../../src/services/google-maps.js', () => ({
+      geocode: vi.fn(),
+      placesNearby: placesMock,
+      distanceMatrix: vi.fn(),
+      GeoError: FakeGeoError,
+    }))
+    vi.doMock('../../src/services/geo-rate-limit.js', () => ({
+      checkGeoBudget: vi.fn(() => false),
+    }))
+    const execute = await loadTool('find_places_near')
+    const result = await execute('find_places_near', {
+      origin: 'Parkside',
+      category: 'food',
+      student_id: 's1',
+    })
+    expect(JSON.parse(result)).toMatchObject({ error: 'geo_budget_exceeded' })
+    expect(placesMock).not.toHaveBeenCalled()
+  })
+
+  it('clamps radius to the 3km ceiling', async () => {
+    const placesMock = vi.fn(async () => [])
+    vi.doMock('../../src/services/google-maps.js', () => ({
+      geocode: vi.fn(),
+      placesNearby: placesMock,
+      distanceMatrix: vi.fn(),
+      GeoError: FakeGeoError,
+    }))
+    vi.doMock('../../src/services/geo-rate-limit.js', () => ({
+      checkGeoBudget: vi.fn(() => true),
+    }))
+    const execute = await loadTool('find_places_near')
+    await execute('find_places_near', {
+      origin: 'Parkside',
+      category: 'grocery',
+      radius_km: 99,
+      student_id: 's1',
+    })
+    // 99km clamps to 3km → 3000 meters passed to placesNearby.
+    expect(placesMock.mock.calls[0][2]).toBe(3000)
+  })
+
+  it('surfaces geo_unavailable when the places client errors', async () => {
+    vi.doMock('../../src/services/google-maps.js', () => ({
+      geocode: vi.fn(),
+      placesNearby: vi.fn(async () => {
+        throw new FakeGeoError('geo_unavailable', 'timeout')
+      }),
+      distanceMatrix: vi.fn(),
+      GeoError: FakeGeoError,
+    }))
+    vi.doMock('../../src/services/geo-rate-limit.js', () => ({
+      checkGeoBudget: vi.fn(() => true),
+    }))
+    const execute = await loadTool('find_places_near')
+    const result = await execute('find_places_near', {
+      origin: 'Parkside',
+      category: 'food',
+      student_id: 's1',
+    })
+    expect(JSON.parse(result)).toMatchObject({ error: 'geo_unavailable' })
+  })
+})
