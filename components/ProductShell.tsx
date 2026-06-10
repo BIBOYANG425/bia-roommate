@@ -65,6 +65,8 @@ type ProductTaskHeaderProps = {
   primaryAction: ProductTaskHeaderAction;
   secondaryAction: ProductTaskHeaderAction;
   trustItems: string[];
+  previewImage: string;
+  previewAlt: string;
 };
 
 const PRODUCT_NAV_GROUPS: ProductNavGroup[] = [
@@ -221,7 +223,7 @@ function LanguageToggle({
 }) {
   return (
     <div
-      className="inline-flex h-10 shrink-0 border border-[var(--black)] bg-white/60"
+      className="inline-flex h-10 shrink-0 overflow-hidden rounded-full border border-white/20 bg-white/10 text-white shadow-sm"
       aria-label={PRODUCT_SHELL_COPY[language].language}
     >
       {(["zh", "en"] as const).map((option) => {
@@ -236,11 +238,10 @@ function LanguageToggle({
             style={
               active
                 ? {
-                    background:
-                      option === "zh" ? "var(--cardinal)" : "var(--gold)",
-                    color: option === "zh" ? "white" : "var(--black)",
+                    background: "rgba(255,255,255,0.92)",
+                    color: "#171717",
                   }
-                : { color: "var(--mid)" }
+                : { color: "rgba(255,255,255,0.72)" }
             }
           >
             {option === "zh" ? (compact ? "中" : "中文") : "EN"}
@@ -281,13 +282,13 @@ export default function ProductShell({
   return (
     <div
       className="min-h-screen pb-20 lg:pb-0"
-      style={{ background: "var(--beige)" }}
+      style={{ background: "var(--bg-primary)" }}
     >
-      <header className="sticky top-0 z-40 hidden border-b border-[rgba(26,20,16,0.16)] bg-[rgba(250,246,236,0.94)] backdrop-blur lg:block">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-6">
+      <header className="fixed left-0 right-0 top-5 z-40 hidden px-6 lg:block">
+        <div className="mx-auto flex h-16 max-w-5xl items-center gap-4 rounded-2xl border border-white/15 bg-[rgba(31,31,41,0.72)] px-5 text-white shadow-2xl backdrop-blur-xl">
           <Link
             href="/"
-            className="flex shrink-0 items-center gap-2 rounded-md px-2 py-1.5 transition-opacity hover:opacity-75"
+            className="flex shrink-0 items-center gap-2 rounded-xl px-2 py-1.5 transition-opacity hover:opacity-80"
           >
             <Image
               src="/logo.png"
@@ -297,7 +298,7 @@ export default function ProductShell({
               className="object-contain"
               style={{ height: "auto" }}
             />
-            <span className="font-display text-base tracking-[0.08em] text-[var(--black)]">
+            <span className="heading-serif text-xl tracking-tight text-white">
               BIA
             </span>
           </Link>
@@ -318,18 +319,18 @@ export default function ProductShell({
                     onKeyDown={(event) => {
                       if (event.key === "Escape") setOpenGroup(null);
                     }}
-                    className="h-10 rounded-md border px-4 font-display text-[12px] tracking-[0.08em] transition-colors"
+                    className="h-10 rounded-xl border px-4 text-sm font-medium transition-colors"
                     style={
                       active
                         ? {
-                            background: "var(--cardinal)",
-                            borderColor: "var(--cardinal)",
-                            color: "white",
+                            background: "rgba(255,255,255,0.92)",
+                            borderColor: "rgba(255,255,255,0.92)",
+                            color: "#171717",
                           }
                         : {
-                            background: "rgba(255,255,255,0.52)",
-                            borderColor: "rgba(26,20,16,0.14)",
-                            color: "var(--mid)",
+                            background: "transparent",
+                            borderColor: "transparent",
+                            color: "rgba(255,255,255,0.72)",
                           }
                     }
                     aria-expanded={open}
@@ -338,7 +339,7 @@ export default function ProductShell({
                   </button>
 
                   {open && (
-                    <div className="absolute left-1/2 top-12 w-72 -translate-x-1/2 border border-[rgba(26,20,16,0.14)] bg-[var(--cream)] p-2 shadow-[8px_8px_0_rgba(26,20,16,0.12)]">
+                    <div className="absolute left-1/2 top-12 w-72 -translate-x-1/2 overflow-hidden rounded-2xl border border-black/5 bg-white/95 p-2 text-[#171717] shadow-xl backdrop-blur">
                       {navGroup.items.map((item) => {
                         const itemActive = isActivePath(pathname, item.href);
                         return (
@@ -346,17 +347,25 @@ export default function ProductShell({
                             key={item.href}
                             href={item.href}
                             onClick={() => setOpenGroup(null)}
-                            className="block border-b border-[rgba(26,20,16,0.1)] px-3 py-3 last:border-b-0 hover:bg-white"
+                            className="block rounded-xl px-3 py-3 transition-colors hover:bg-[#F9FAF7]"
                             style={
                               itemActive
-                                ? { color: "var(--cardinal)" }
-                                : { color: "var(--black)" }
+                                ? { color: "#71031f" }
+                                : { color: "#171717" }
                             }
                           >
-                            <span className="block font-display text-sm tracking-[0.08em]">
+                            <span
+                              className="block text-sm font-semibold"
+                              style={{
+                                fontFamily:
+                                  language === "zh"
+                                    ? "var(--font-display-zh)"
+                                    : "var(--font-body)",
+                              }}
+                            >
                               {item.label[language]}
                             </span>
-                            <span className="mt-1 block text-xs text-[var(--mid)]">
+                            <span className="mt-1 block text-xs text-[#646464]">
                               {item.description[language]}
                             </span>
                           </Link>
@@ -369,8 +378,8 @@ export default function ProductShell({
             })}
           </nav>
 
-          <label className="flex h-10 shrink-0 items-center gap-2 border border-[rgba(26,20,16,0.16)] bg-white/60 px-3">
-            <span className="font-display text-[10px] tracking-[0.1em] text-[var(--mid)]">
+          <label className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3">
+            <span className="font-display text-[10px] tracking-[0.1em] text-white/60">
               {copy.school}
             </span>
             <select
@@ -378,11 +387,11 @@ export default function ProductShell({
               onChange={(event) =>
                 setSchool(event.target.value as ProductSchool)
               }
-              className="bg-transparent text-sm font-bold text-[var(--black)] outline-none"
+              className="bg-transparent text-sm font-bold text-white outline-none"
               aria-label={copy.chooseSchool}
             >
               {SCHOOL_OPTIONS.map((option) => (
-                <option key={option} value={option}>
+                <option key={option} value={option} className="text-[#171717]">
                   {option}
                 </option>
               ))}
@@ -395,11 +404,11 @@ export default function ProductShell({
             {isAdmin && (
               <Link
                 href="/admin"
-                className="border border-[var(--black)] px-3 py-2 font-display text-[10px] tracking-wider hover:bg-[var(--cardinal)] hover:text-white"
+                className="rounded-full border border-white/20 px-3 py-2 font-display text-[10px] tracking-wider text-white/80 hover:bg-white/10 hover:text-white"
                 style={
                   pathname.startsWith("/admin")
-                    ? { background: "var(--cardinal)", color: "white" }
-                    : { color: "var(--black)" }
+                    ? { background: "rgba(255,255,255,0.18)", color: "white" }
+                    : undefined
                 }
               >
                 {copy.admin}
@@ -410,11 +419,11 @@ export default function ProductShell({
                 <>
                   <Link
                     href="/account"
-                    className="border border-[var(--black)] px-3 py-2 font-display text-[10px] tracking-wider hover:bg-[var(--gold)]"
+                    className="rounded-full border border-white/20 px-3 py-2 font-display text-[10px] tracking-wider text-white/80 hover:bg-white/10 hover:text-white"
                     style={
                       pathname === "/account"
-                        ? { background: "var(--gold)", color: "var(--black)" }
-                        : { color: "var(--black)" }
+                        ? { background: "rgba(255,255,255,0.18)", color: "white" }
+                        : undefined
                     }
                   >
                     {copy.account}
@@ -422,7 +431,7 @@ export default function ProductShell({
                   <button
                     type="button"
                     onClick={signOut}
-                    className="border border-[var(--black)] px-3 py-2 font-display text-[10px] tracking-wider text-[var(--black)] hover:bg-[var(--cardinal)] hover:text-white"
+                    className="rounded-full border border-white/20 px-3 py-2 font-display text-[10px] tracking-wider text-white/80 hover:bg-white/10 hover:text-white"
                   >
                     {copy.signOut}
                   </button>
@@ -431,7 +440,7 @@ export default function ProductShell({
                 <button
                   type="button"
                   onClick={() => setShowAuth(true)}
-                  className="border border-[var(--black)] px-3 py-2 font-display text-[10px] tracking-wider text-[var(--black)] hover:bg-[var(--cardinal)] hover:text-white"
+                  className="rounded-full bg-white/90 px-4 py-2 font-display text-[10px] tracking-wider text-[#171717] shadow-sm hover:bg-white"
                 >
                   {copy.signIn}
                 </button>
@@ -440,8 +449,8 @@ export default function ProductShell({
         </div>
       </header>
 
-      <header className="sticky top-0 z-40 border-b border-[rgba(26,20,16,0.16)] bg-[rgba(250,246,236,0.96)] backdrop-blur lg:hidden">
-        <div className="flex h-14 items-center justify-between px-4">
+      <header className="fixed left-0 right-0 top-3 z-40 px-3 lg:hidden">
+        <div className="flex h-14 items-center justify-between rounded-2xl border border-white/15 bg-[rgba(31,31,41,0.78)] px-4 text-white shadow-xl backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-2">
             <Image
               src="/logo.png"
@@ -451,7 +460,7 @@ export default function ProductShell({
               className="object-contain"
               style={{ height: "auto" }}
             />
-            <span className="font-display text-sm tracking-[0.08em] text-[var(--black)]">
+            <span className="heading-serif text-lg tracking-tight text-white">
               BIA
             </span>
           </Link>
@@ -465,7 +474,7 @@ export default function ProductShell({
               (user ? (
                 <Link
                   href="/account"
-                  className="border border-[var(--black)] px-3 py-2 font-display text-[10px] tracking-wider"
+                  className="rounded-full border border-white/20 px-3 py-2 font-display text-[10px] tracking-wider text-white/80"
                 >
                   {copy.account}
                 </Link>
@@ -473,7 +482,7 @@ export default function ProductShell({
                 <button
                   type="button"
                   onClick={() => setShowAuth(true)}
-                  className="border border-[var(--black)] px-3 py-2 font-display text-[10px] tracking-wider"
+                  className="rounded-full bg-white/90 px-3 py-2 font-display text-[10px] tracking-wider text-[#171717]"
                 >
                   {copy.signIn}
                 </button>
@@ -482,20 +491,22 @@ export default function ProductShell({
         </div>
       </header>
 
-      <main>{children({ school, setSchool, language, setLanguage })}</main>
+      <main className="pt-20 lg:pt-24">
+        {children({ school, setSchool, language, setLanguage })}
+      </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-4 border-t border-[rgba(26,20,16,0.18)] bg-[rgba(250,246,236,0.96)] backdrop-blur lg:hidden">
+      <nav className="fixed inset-x-3 bottom-3 z-40 grid h-14 grid-cols-4 overflow-hidden rounded-2xl border border-black/5 bg-white/90 shadow-xl backdrop-blur lg:hidden">
         {PRODUCT_NAV_GROUPS.map((navGroup) => {
           const active = group === navGroup.id;
           return (
             <Link
               key={navGroup.id}
               href={navGroup.href}
-              className="flex items-center justify-center border-r border-[rgba(26,20,16,0.12)] px-1 text-center font-display text-[10px] tracking-[0.06em] last:border-r-0"
+              className="flex items-center justify-center border-r border-black/5 px-1 text-center text-[11px] font-semibold last:border-r-0"
               style={
                 active
-                  ? { color: "var(--cardinal)" }
-                  : { color: "var(--mid)" }
+                  ? { color: "#71031f" }
+                  : { color: "#646464" }
               }
             >
               {navGroup.label[language]}
@@ -518,57 +529,85 @@ export function ProductTaskHeader({
   primaryAction,
   secondaryAction,
   trustItems,
+  previewImage,
+  previewAlt,
 }: ProductTaskHeaderProps) {
   const copy = PRODUCT_SHELL_COPY[language];
   return (
     <section
-      className="border-b-[3px] border-[var(--black)]"
-      style={{ background: "var(--cream)" }}
+      className="relative overflow-hidden"
+      style={{ background: "var(--bg-primary)" }}
     >
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-7 sm:px-6 sm:py-10 lg:grid-cols-[1fr_auto] lg:items-end">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-black/10 to-transparent" />
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 pb-14 pt-10 sm:px-6 sm:pb-20 sm:pt-16 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
         <div className="min-w-0">
-          <p className="font-display text-xs tracking-[0.16em] text-[var(--mid)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#999]">
             {eyebrow}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <span className="border border-[var(--black)] bg-white px-3 py-1.5 text-xs font-bold text-[var(--black)]">
+            <span className="rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-xs font-semibold text-[#171717] shadow-sm">
               {copy.currentSchool} {school}
             </span>
-            <span className="border border-[rgba(26,20,16,0.18)] bg-[var(--beige)] px-3 py-1.5 text-xs font-bold text-[var(--mid)]">
+            <span className="rounded-full border border-black/5 bg-[#eef6f4] px-3.5 py-1.5 text-xs font-semibold text-[#55736f]">
               {copy.switchSchool}
             </span>
           </div>
-          <h1 className="mt-5 max-w-3xl font-display text-[42px] leading-[0.95] text-[var(--black)] sm:text-[64px]">
+          <h1
+            className="heading-serif mt-6 max-w-3xl text-[48px] leading-[0.96] text-[#171717] sm:text-[72px]"
+            style={{
+              fontFamily:
+                language === "zh"
+                  ? "var(--font-display-zh)"
+                  : "var(--font-display)",
+            }}
+          >
             {title}
           </h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--mid)] sm:text-base">
+          <p className="mt-5 max-w-2xl text-base leading-7 text-[#646464] sm:text-lg">
             {description}
           </p>
-          <ul className="mt-4 flex flex-wrap gap-2">
+          <ul className="mt-6 flex flex-wrap gap-2">
             {trustItems.map((item) => (
               <li
                 key={item}
-                className="border border-[rgba(26,20,16,0.18)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--mid)]"
+                className="rounded-full border border-black/5 bg-white/80 px-3 py-1.5 text-xs font-medium text-[#646464] shadow-sm"
               >
                 {item}
               </li>
             ))}
           </ul>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Link
+              href={primaryAction.href}
+              className="group inline-flex min-h-12 items-center justify-center rounded-xl bg-[#171717] px-6 text-sm font-bold uppercase tracking-wide text-white shadow-lg transition-all duration-200 hover:bg-[#2C2C2C]"
+            >
+              {primaryAction.label}
+              <span className="ml-2 transition-transform duration-200 group-hover:translate-x-1">
+                →
+              </span>
+            </Link>
+            <Link
+              href={secondaryAction.href}
+              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-black/10 bg-white px-6 text-sm font-semibold text-[#171717] shadow-sm transition-all duration-200 hover:border-black/20 hover:shadow-md"
+            >
+              {secondaryAction.label}
+            </Link>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 lg:justify-end">
-          <Link
-            href={primaryAction.href}
-            className="inline-flex min-h-11 items-center justify-center border-[3px] border-[var(--black)] bg-[var(--cardinal)] px-5 font-display text-sm tracking-[0.08em] text-white transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5"
-          >
-            {primaryAction.label}
-          </Link>
-          <Link
-            href={secondaryAction.href}
-            className="inline-flex min-h-11 items-center justify-center border-[3px] border-[var(--black)] bg-[var(--gold)] px-5 font-display text-sm tracking-[0.08em] text-[var(--black)] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5"
-          >
-            {secondaryAction.label}
-          </Link>
+        <div className="relative hidden lg:block">
+          <div className="absolute -inset-6 rounded-[2rem] bg-[#A0D7D1]/20 blur-3xl" />
+          <div className="relative overflow-hidden rounded-3xl border border-black/5 bg-white shadow-2xl">
+            <Image
+              src={previewImage}
+              alt={previewAlt}
+              width={900}
+              height={650}
+              className="aspect-[4/3] w-full object-cover object-top"
+              priority
+            />
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white via-white/85 to-transparent" />
+          </div>
         </div>
       </div>
     </section>
