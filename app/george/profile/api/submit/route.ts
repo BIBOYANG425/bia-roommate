@@ -1,19 +1,18 @@
 // app/george/profile/api/submit/route.ts
-// Ingests the 4-step onboarding form and writes the 3-table contract that
-// the heartbeat scheduler reads (user_profiles + user_heartbeat_config +
-// user_heartbeat_instructions). Also creates the students row.
+// Ingests the card-stack onboarding form and writes the 3-table contract
+// that the heartbeat scheduler reads (user_profiles + user_heartbeat_config
+// + user_heartbeat_instructions). Also reconciles the students row.
 //
-// Slice B simplification: no real auth integration yet. We generate a UUID
-// for user_id, create students + 3-table rows linked by it, and mark
-// pending_users.status = 'completed'. Email is stored in user_profiles.identity
-// (text block) but NOT linked to auth.users. Real OAuth linkage happens in
-// Slice F — at that point, match by email to associate auth.users.id with
-// the student record.
-// Header last reviewed: 2026-06-08
+// Slice B simplification: no interactive sign-in yet. We mint (or fetch) a
+// confirmed auth.users row by form email via the admin API, link
+// students.user_id to it, and merge any orphan student row keyed by the
+// pending user's imessage_handle. pending_users.status flips to 'completed'
+// at the end. Real OAuth sign-in replaces the implicit user creation in
+// Slice F.
+// Header last reviewed: 2026-06-10
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { z } from 'zod';
-import { randomUUID } from 'crypto';
 
 const schema = z.object({
   code: z.string().length(6),

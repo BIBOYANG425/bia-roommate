@@ -40,10 +40,13 @@ const CATEGORIES = [
 ];
 const YEARS = ['freshman', 'sophomore', 'junior', 'senior', 'grad'];
 
+// Active hours mirror george's heartbeat default (09:00-22:00 LA). A narrow
+// window here would quietly defeat the Slice B "first heartbeat within 12h"
+// contract — heartbeats can only fire inside these hours.
 const DEFAULT_PREFS = {
   cadence: '24 hours',
-  active_hours_start: '17:00',
-  active_hours_end: '18:00',
+  active_hours_start: '09:00',
+  active_hours_end: '22:00',
   consent_proactive_messages: true,
   consent_anomaly_checkin: false,
 };
@@ -74,8 +77,6 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!code) router.replace('/george');
   }, [code, router]);
-
-  if (!code) return null;
 
   const validators: Array<() => boolean> = [
     () => email.toLowerCase().endsWith('@usc.edu') && email.length > '@usc.edu'.length,
@@ -130,6 +131,10 @@ export default function ProfilePage() {
     ],
     [email, identity, interests, consents],
   );
+
+  // Early return must come after every hook (react-hooks/rules-of-hooks);
+  // the useEffect above redirects to /george while this renders nothing.
+  if (!code) return null;
 
   return (
     <div style={pageStyle}>

@@ -1,9 +1,11 @@
 // app/george/api/code/route.ts
 // Mints a 6-char alphanumeric onboarding code and inserts a pending_users row.
-// Called server-side from /george landing on first visit.
+// Called server-side from /george landing on first visit. Codes act as bearer
+// tokens linking a phone handle to a profile, so they come from the CSPRNG.
 //
 // pending_users.code is the primary key; we retry on the rare collision.
-// Header last reviewed: 2026-06-08
+// Header last reviewed: 2026-06-10
+import { randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -11,8 +13,7 @@ const ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 
 function generateCode(): string {
   let c = "";
-  for (let i = 0; i < 6; i++)
-    c += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+  for (let i = 0; i < 6; i++) c += ALPHABET[randomInt(ALPHABET.length)];
   return c;
 }
 
