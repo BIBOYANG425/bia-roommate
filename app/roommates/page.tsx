@@ -30,7 +30,7 @@ function Marquee({
   const content = items.join("  //  ") + "  //  ";
   return (
     <div
-      className="overflow-hidden border-y border-black/5"
+      className="overflow-hidden border-y-[3px] border-[var(--black)]"
       style={{ background: bg, color: text }}
     >
       <div className="marquee-track py-2">
@@ -238,38 +238,30 @@ function RoommatesContent({
         primaryAction={{ label: copy.primaryAction, href: "#browse" }}
         secondaryAction={{ label: copy.secondaryAction, href: "/submit" }}
         trustItems={copy.trustItems}
-        previewImage="/previews/roommates.png"
-        previewAlt="BIA roommate product preview"
       />
 
       {/* Filters */}
-      <section
-        id="browse"
-        className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16"
-      >
-        <div className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-black/10 to-transparent sm:inset-x-6" />
+      <section id="browse" className="max-w-6xl mx-auto px-6 py-8 relative">
+        <span className="section-number">01</span>
         <h2
-          className="heading-serif mb-8 text-[38px] leading-none text-[#171717] sm:text-[52px]"
-          style={{
-            fontFamily:
-              language === "zh" ? "var(--font-display-zh)" : "var(--font-display)",
-          }}
+          className="font-display text-[40px] sm:text-[60px] mb-6"
+          style={{ color: "var(--black)" }}
         >
           {copy.browseTitle}
         </h2>
 
-        <div className="mb-8 grid gap-3 rounded-3xl border border-black/5 bg-white/80 p-3 shadow-lg shadow-black/[0.04] backdrop-blur sm:grid-cols-[1fr_auto_auto]">
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <input
             type="text"
             placeholder={copy.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="min-h-12 rounded-2xl border border-black/10 bg-[#F9FAF7] px-4 text-sm text-[#171717] outline-none transition-shadow placeholder:text-[#999] focus:shadow-[0_0_0_3px_rgba(160,215,209,0.35)]"
+            className="brutal-input flex-1"
           />
           <select
             value={genderFilter}
             onChange={(e) => setGenderFilter(e.target.value)}
-            className="min-h-12 rounded-2xl border border-black/10 bg-[#F9FAF7] px-4 text-sm font-medium text-[#171717] outline-none transition-shadow focus:shadow-[0_0_0_3px_rgba(160,215,209,0.35)]"
+            className="brutal-select"
           >
             <option value="">{copy.allGenders}</option>
             {GENDER_OPTIONS.map((g) => (
@@ -281,7 +273,7 @@ function RoommatesContent({
           <select
             value={yearFilter}
             onChange={(e) => setYearFilter(e.target.value)}
-            className="min-h-12 rounded-2xl border border-black/10 bg-[#F9FAF7] px-4 text-sm font-medium text-[#171717] outline-none transition-shadow focus:shadow-[0_0_0_3px_rgba(160,215,209,0.35)]"
+            className="brutal-select"
           >
             <option value="">{copy.allYears}</option>
             {YEAR_OPTIONS.map((y) => (
@@ -299,34 +291,34 @@ function RoommatesContent({
             ))}
           </div>
         ) : error ? (
-          <div className="rounded-3xl border border-black/5 bg-white py-20 text-center shadow-lg shadow-black/[0.04]">
+          <div className="text-center py-20">
             <p
-              className="heading-serif text-2xl text-[#71031f]"
+              className="font-display text-2xl"
+              style={{ color: "var(--cardinal)" }}
             >
               {error}
             </p>
             <button
               onClick={fetchProfiles}
-              className="mt-6 rounded-xl bg-[#171717] px-6 py-3 text-sm font-bold uppercase tracking-wide text-white"
+              className="brutal-btn brutal-btn-gold mt-6"
             >
               {copy.retry}
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="relative rounded-3xl border border-black/5 bg-white py-20 text-center shadow-lg shadow-black/[0.04]">
+          <div className="text-center py-20 relative">
+            <div className="ghost-text left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[120px]">
+              EMPTY
+            </div>
             <h3
-              className="heading-serif relative mb-3 text-4xl text-[#171717]"
-              style={{
-                fontFamily:
-                  language === "zh"
-                    ? "var(--font-display-zh)"
-                    : "var(--font-display)",
-              }}
+              className="font-display text-3xl mb-3 relative"
+              style={{ color: "var(--black)" }}
             >
               {profiles.length === 0 ? copy.noProfiles : copy.noMatches}
             </h3>
             <p
-              className="relative mb-6 text-sm text-[#646464]"
+              className="text-sm mb-6 relative"
+              style={{ color: "var(--mid)" }}
             >
               {profiles.length === 0
                 ? copy.beFirst
@@ -335,7 +327,7 @@ function RoommatesContent({
             {profiles.length === 0 && (
               <Link
                 href="/submit"
-                className="relative inline-flex min-h-12 items-center rounded-xl bg-[#171717] px-6 text-sm font-bold uppercase tracking-wide text-white"
+                className="brutal-btn brutal-btn-primary inline-block relative"
               >
                 {copy.dropProfile}
               </Link>
@@ -344,11 +336,12 @@ function RoommatesContent({
         ) : (
           <>
             <p
-              className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#999]"
+              className="text-xs mb-4"
+              style={{ color: "var(--mid)", fontFamily: "var(--font-body)" }}
             >
               {copy.profilesFound(filtered.length)}
             </p>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filtered.map((profile, i) => (
                 <div
                   key={profile.id}
@@ -375,47 +368,51 @@ function RoommatesContent({
 
       {/* Bottom Marquee */}
       <Marquee
-        bg="#1F1F29"
-        text="#A0D7D1"
+        bg="var(--gold)"
+        text="var(--cardinal)"
         items={copy.marqueeItems}
       />
 
       {/* Social Links */}
       <section
-        className="border-t border-black/5 px-6 py-10"
-        style={{ background: "#FEFFFC" }}
+        className="border-t-[3px] border-[var(--black)] py-8 px-6"
+        style={{ background: "var(--cream)" }}
       >
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-3 sm:flex-row">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row gap-4 justify-center items-center">
           <a
             href="https://www.instagram.com/bia_usc/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-black/10 bg-white px-5 text-sm font-semibold text-[#171717] shadow-sm transition-shadow hover:shadow-md"
+            className="brutal-btn brutal-btn-ghost text-sm flex items-center gap-2"
           >
             <span>INSTAGRAM</span>
-            <span className="text-[#71031f]">@BIA_USC</span>
-            <span className="text-xs text-[#999]">→</span>
+            <span style={{ color: "var(--cardinal)" }}>@BIA_USC</span>
+            <span style={{ color: "var(--mid)", fontSize: "10px" }}>→</span>
           </a>
           <a
             href="https://xhslink.com/m/2t4EzpZAKAc"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-black/10 bg-white px-5 text-sm font-semibold text-[#171717] shadow-sm transition-shadow hover:shadow-md"
+            className="brutal-btn brutal-btn-ghost text-sm flex items-center gap-2"
           >
-            <span className="text-[#71031f]">小红书</span>
+            <span style={{ color: "var(--cardinal)" }}>小红书</span>
             <span
-              className="rounded-full bg-[#eef6f4] px-2 py-0.5 text-[10px] font-semibold text-[#55736f]"
+              className="new-drop-badge"
+              style={{ fontSize: "9px", padding: "1px 6px" }}
             >
               4138 LIKES
             </span>
-            <span className="text-xs text-[#999]">→</span>
+            <span style={{ color: "var(--mid)", fontSize: "10px" }}>→</span>
           </a>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-black/5 px-6 py-8 text-center">
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#999]">
+      <footer className="py-6 px-6 text-center border-t-[3px] border-[var(--black)]">
+        <p
+          className="font-display text-xs tracking-[0.2em]"
+          style={{ color: "var(--mid)" }}
+        >
           {copy.footer}
         </p>
       </footer>

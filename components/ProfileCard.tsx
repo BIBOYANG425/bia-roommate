@@ -3,7 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { RoommateProfile } from "@/lib/types";
-import { getLastChar, relativeTime, schoolAccent } from "@/lib/utils";
+import {
+  getLastChar,
+  relativeTime,
+  schoolAccent,
+  schoolCardClass,
+} from "@/lib/utils";
 import { useAuth } from "./AuthProvider";
 
 const SCHOOL_LOGOS: Record<string, string> = {
@@ -78,6 +83,7 @@ export default function ProfileCard({
 
   const lastChar = getLastChar(profile.name);
   const accent = schoolAccent(profile.school);
+  const cardClass = schoolCardClass(profile.school);
 
   const subtitleParts = [
     profile.school,
@@ -90,7 +96,7 @@ export default function ProfileCard({
 
   return (
     <div
-      className="group relative flex cursor-pointer flex-col gap-4 rounded-3xl border border-black/5 bg-white p-5 shadow-lg shadow-black/[0.04] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/[0.08]"
+      className={`brutal-card ${cardClass} p-5 cursor-pointer flex flex-col gap-3 relative`}
       onClick={onClick}
     >
       {/* School logo + timestamp */}
@@ -105,7 +111,8 @@ export default function ProfileCard({
           />
         )}
         <span
-          className="text-[10px] font-medium uppercase tracking-wider text-[#999]"
+          className="text-[9px] uppercase tracking-wider"
+          style={{ color: "var(--mid)" }}
         >
           {relativeTime(profile.created_at)}
         </span>
@@ -119,12 +126,12 @@ export default function ProfileCard({
             alt={profile.name}
             width={48}
             height={48}
-            className="h-12 w-12 shrink-0 rounded-2xl object-cover ring-1 ring-black/10"
+            className="w-12 h-12 object-cover border-[3px] border-[var(--black)] shrink-0"
             unoptimized
           />
         ) : (
           <div
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl text-white shadow-sm"
+            className="w-12 h-12 flex items-center justify-center text-white font-display text-xl border-[3px] border-[var(--black)] shrink-0"
             style={{ backgroundColor: accent }}
           >
             {lastChar}
@@ -132,12 +139,12 @@ export default function ProfileCard({
         )}
         <div className="min-w-0 flex-1">
           <h3
-            className="truncate text-lg font-semibold text-[#171717]"
-            style={{ fontFamily: "var(--font-display-zh)" }}
+            className="font-display text-xl truncate"
+            style={{ color: "var(--black)" }}
           >
             {profile.name}
           </h3>
-          <p className="truncate text-xs text-[#646464]">
+          <p className="text-[11px] truncate" style={{ color: "var(--mid)" }}>
             {subtitleParts.join(" / ")}
           </p>
         </div>
@@ -147,15 +154,15 @@ export default function ProfileCard({
       {profile.tags && profile.tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {profile.tags.slice(0, 4).map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-black/5 bg-[#F9FAF7] px-2.5 py-1 text-[11px] font-medium text-[#646464]"
-            >
+            <span key={tag} className="brutal-tag">
               {tag}
             </span>
           ))}
           {profile.tags.length > 4 && (
-            <span className="rounded-full border border-dashed border-black/10 px-2.5 py-1 text-[11px] font-medium text-[#999]">
+            <span
+              className="brutal-tag"
+              style={{ borderStyle: "dashed", color: "var(--mid)" }}
+            >
               +{profile.tags.length - 4}
             </span>
           )}
@@ -164,20 +171,20 @@ export default function ProfileCard({
 
       {/* Bio preview */}
       {profile.bio && (
-        <p className="line-clamp-2 text-sm leading-6 text-[#646464]">
+        <p className="text-xs line-clamp-2" style={{ color: "var(--mid)" }}>
           {profile.bio}
         </p>
       )}
 
       {/* Footer */}
-      <div className="mt-auto flex items-center justify-between border-t border-black/5 pt-3">
+      <div className="mt-auto pt-3 border-t-[2px] border-[var(--black)] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <button
             onClick={handleLike}
             disabled={!user || likeLoading}
-            className="text-base transition-transform hover:scale-110"
+            className="text-sm transition-transform hover:scale-110"
             style={{
-              color: localLiked ? "#71031f" : "#999",
+              color: localLiked ? "var(--cardinal)" : "var(--mid)",
               cursor: user ? "pointer" : "default",
             }}
             title={user ? (localLiked ? "Unlike" : "Like") : "Sign in to like"}
@@ -185,16 +192,16 @@ export default function ProfileCard({
             {localLiked ? "\u2665" : "\u2661"}
           </button>
           {(likeCount ?? 0) > 0 && (
-            <span className="text-[10px] text-[#999]">
+            <span className="text-[10px]" style={{ color: "var(--mid)" }}>
               {likeCount}
             </span>
           )}
         </div>
         <span
-          className="text-xs font-bold uppercase tracking-wide transition-transform duration-200 group-hover:translate-x-1"
+          className="font-display text-xs tracking-wider"
           style={{ color: accent }}
         >
-          View details →
+          VIEW DETAILS →
         </span>
       </div>
     </div>
