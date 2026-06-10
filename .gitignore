@@ -49,3 +49,11 @@ george/data/wechat/
 
 # Distilled voice skills — contain verbatim chat adjacent content + cloned tooling
 .claude/skills/
+
+# codegraph local index (per-repo SQLite db)
+.codegraph/
+# gstack local tooling (contains terminal-internal-token secret)
+.gstack/
+
+# chrome extension store-submission zips (use GitHub Releases, not git)
+extension/*.zip
