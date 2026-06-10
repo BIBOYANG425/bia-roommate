@@ -3,15 +3,18 @@
 import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { schoolAccent } from "@/lib/utils";
 import { SubletListing, ROOM_TYPE_OPTIONS, SCHOOL_OPTIONS } from "@/lib/types";
+import {
+  type ProductSchool,
+  normalizeProductSchool,
+} from "@/lib/product-school";
 import SubletCard from "@/components/SubletCard";
 import SubletModal from "@/components/SubletModal";
 import SkeletonCard from "@/components/SkeletonCard";
 import Toast from "@/components/Toast";
-import NavTabs from "@/components/NavTabs";
+import ProductShell, { ProductTaskHeader } from "@/components/ProductShell";
 
 function Marquee({
   bg,
@@ -40,7 +43,14 @@ function Marquee({
   );
 }
 
-function SubletContent() {
+const SCHOOL_FILTER_OPTIONS: Array<ProductSchool | ""> = ["", ...SCHOOL_OPTIONS];
+
+type SubletContentProps = {
+  initialSchool: ProductSchool;
+  onSchoolChange: (school: ProductSchool) => void;
+};
+
+function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [listings, setListings] = useState<SubletListing[]>([]);
@@ -52,8 +62,8 @@ function SubletContent() {
   );
 
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
-  const [schoolFilter, setSchoolFilter] = useState(
-    searchParams.get("school") ?? "",
+  const [schoolFilter, setSchoolFilter] = useState<ProductSchool | "">(
+    normalizeProductSchool(searchParams.get("school")) ?? initialSchool,
   );
   const [roomTypeFilter, setRoomTypeFilter] = useState(
     searchParams.get("type") ?? "",
@@ -62,6 +72,10 @@ function SubletContent() {
     (searchParams.get("sort") as "newest" | "price_asc" | "price_desc") ||
       "newest",
   );
+
+  useEffect(() => {
+    setSchoolFilter(initialSchool);
+  }, [initialSchool]);
 
   useEffect(() => {
     if (
@@ -149,21 +163,14 @@ function SubletContent() {
     return result;
   }, [listings, schoolFilter, roomTypeFilter, search, sortBy]);
 
-  const schoolVars: React.CSSProperties = {};
-  if (schoolFilter === "UC Berkeley") {
-    Object.assign(schoolVars, {
-      "--cardinal": "#014B83",
-      "--gold": "#FEDD76",
-    } as Record<string, string>);
-  } else if (schoolFilter === "Stanford") {
-    Object.assign(schoolVars, {
-      "--cardinal": "#8C1515",
-      "--gold": "#EAAB00",
-    } as Record<string, string>);
+  function handleSchoolFilterChange(nextSchool: ProductSchool | "") {
+    setSchoolFilter(nextSchool);
+    const normalized = normalizeProductSchool(nextSchool);
+    if (normalized) onSchoolChange(normalized);
   }
 
   return (
-    <main className="min-h-screen" style={schoolVars}>
+    <>
       {showToast && (
         <Toast
           message="LISTING POSTED SUCCESSFULLY"
@@ -171,80 +178,18 @@ function SubletContent() {
         />
       )}
 
-      <NavTabs />
-
-      <Marquee
-        bg="var(--cardinal)"
-        text="var(--gold)"
-        items={[
-          "BIA 公寓转租",
-          "FIND YOUR SUBLET",
-          "APARTMENTS",
-          "USC ✕ BERKELEY ✕ STANFORD",
-          "SUBLET MATCH",
-        ]}
+      <ProductTaskHeader
+        eyebrow="Housing / Sublets"
+        school={initialSchool}
+        title="找转租"
+        description="Browse sublets near your school first, then search by rent, room type, and move-in timing."
+        primaryAction={{ label: "Browse listings", href: "#browse" }}
+        secondaryAction={{ label: "Post sublet", href: "/sublet-submit" }}
+        trustItems={["Community listings", "Search and sort", "Report issues"]}
       />
 
-      {/* Hero */}
-      <section
-        className="relative overflow-hidden border-b-[3px] border-[var(--black)]"
-        style={{ background: "var(--cream)" }}
-      >
-        <div className="ghost-text -left-4 top-1/2 -translate-y-1/2">
-          SUBLET
-        </div>
-        <div className="max-w-6xl mx-auto px-6 py-16 sm:py-24 relative">
-          <div className="flex items-center gap-6 mb-8">
-            <Image
-              src="/logo.jpg"
-              alt="BIA"
-              width={100}
-              height={100}
-              className="border-[3px] border-[var(--black)]"
-              style={{ boxShadow: "6px 6px 0 var(--cardinal)" }}
-            />
-            <div>
-              <div className="new-drop-badge mb-2">SUBLET</div>
-              <p
-                className="font-display text-sm"
-                style={{ color: "var(--mid)" }}
-              >
-                BIA APARTMENT SUBLET
-              </p>
-            </div>
-          </div>
-
-          <h1
-            className="font-display text-[60px] sm:text-[96px] leading-[0.85] mb-6"
-            style={{ color: "var(--black)" }}
-          >
-            BIA
-            <br />
-            <span className="glitch-text" style={{ color: "var(--cardinal)" }}>
-              公寓转租
-            </span>
-          </h1>
-
-          <p
-            className="text-sm sm:text-base max-w-md mb-10"
-            style={{ color: "var(--mid)" }}
-          >
-            发布你的转租信息，找到合适的租客。
-            <br />
-            Post your sublet. Find your tenant.
-          </p>
-
-          <Link
-            href="/sublet-submit"
-            className="brutal-btn brutal-btn-primary inline-block"
-          >
-            POST MY SUBLET →
-          </Link>
-        </div>
-      </section>
-
       {/* Filters */}
-      <section className="max-w-6xl mx-auto px-6 py-8 relative">
+      <section id="browse" className="max-w-6xl mx-auto px-6 py-8 relative">
         <span className="section-number">01</span>
         <h2
           className="font-display text-[40px] sm:text-[60px] mb-6"
@@ -255,7 +200,7 @@ function SubletContent() {
 
         {/* Campus Tabs */}
         <div className="flex gap-0 mb-6 flex-wrap">
-          {["", ...SCHOOL_OPTIONS].map((s) => {
+          {SCHOOL_FILTER_OPTIONS.map((s) => {
             const active = schoolFilter === s;
             const label = s || "ALL";
             const bg = active
@@ -267,7 +212,7 @@ function SubletContent() {
             return (
               <button
                 key={label}
-                onClick={() => setSchoolFilter(s)}
+                onClick={() => handleSchoolFilterChange(s)}
                 className="font-display text-sm sm:text-base tracking-[0.1em] px-5 sm:px-8 py-3 border-[3px] border-[var(--black)] -mr-[3px] first:mr-0 transition-colors"
                 style={{ background: bg, color: fg }}
               >
@@ -423,14 +368,18 @@ function SubletContent() {
           onClose={() => setSelectedListing(null)}
         />
       )}
-    </main>
+    </>
   );
 }
 
 export default function SubletPage() {
   return (
     <Suspense>
-      <SubletContent />
+      <ProductShell group="housing" page="sublet">
+        {({ school, setSchool }) => (
+          <SubletContent initialSchool={school} onSchoolChange={setSchool} />
+        )}
+      </ProductShell>
     </Suspense>
   );
 }
