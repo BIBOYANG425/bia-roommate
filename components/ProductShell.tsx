@@ -14,6 +14,7 @@ import {
 import { SCHOOL_OPTIONS } from "@/lib/types";
 
 export type ProductGroup = "housing" | "courses" | "services" | "community";
+export type ProductLanguage = "zh" | "en";
 
 export type ProductPage =
   | "roommates"
@@ -26,13 +27,13 @@ export type ProductPage =
 
 type ProductNavItem = {
   href: string;
-  label: string;
-  description: string;
+  label: Record<ProductLanguage, string>;
+  description: Record<ProductLanguage, string>;
 };
 
 type ProductNavGroup = {
   id: ProductGroup;
-  label: string;
+  label: Record<ProductLanguage, string>;
   href: string;
   items: ProductNavItem[];
 };
@@ -40,6 +41,8 @@ type ProductNavGroup = {
 type ProductShellContext = {
   school: ProductSchool;
   setSchool: (school: ProductSchool) => void;
+  language: ProductLanguage;
+  setLanguage: (language: ProductLanguage) => void;
 };
 
 type ProductShellProps = {
@@ -56,6 +59,7 @@ type ProductTaskHeaderAction = {
 type ProductTaskHeaderProps = {
   eyebrow: string;
   school: ProductSchool;
+  language: ProductLanguage;
   title: string;
   description: string;
   primaryAction: ProductTaskHeaderAction;
@@ -66,76 +70,185 @@ type ProductTaskHeaderProps = {
 const PRODUCT_NAV_GROUPS: ProductNavGroup[] = [
   {
     id: "housing",
-    label: "Housing",
+    label: { zh: "住房", en: "Housing" },
     href: "/roommates",
     items: [
       {
         href: "/roommates",
-        label: "找室友",
-        description: "Roommate profiles by school",
+        label: { zh: "找室友", en: "Roommates" },
+        description: {
+          zh: "按学校浏览室友资料",
+          en: "Roommate profiles by school",
+        },
       },
       {
         href: "/sublet",
-        label: "转租",
-        description: "Apartments and sublets",
+        label: { zh: "转租", en: "Sublets" },
+        description: {
+          zh: "公寓和短期转租",
+          en: "Apartments and sublets",
+        },
       },
     ],
   },
   {
     id: "courses",
-    label: "Courses",
+    label: { zh: "选课", en: "Courses" },
     href: "/course-planner",
     items: [
       {
         href: "/course-planner",
-        label: "选课规划",
-        description: "Plan schedules",
+        label: { zh: "选课规划", en: "Course Planner" },
+        description: { zh: "规划课表", en: "Plan schedules" },
       },
       {
         href: "/course-rating",
-        label: "课评",
-        description: "Student course reviews",
+        label: { zh: "课评", en: "Course Reviews" },
+        description: {
+          zh: "学生课评参考",
+          en: "Student course reviews",
+        },
       },
     ],
   },
   {
     id: "services",
-    label: "Services",
+    label: { zh: "服务", en: "Services" },
     href: "/shipping",
     items: [
       {
         href: "/shipping",
-        label: "集运",
-        description: "Shipping and parcels",
+        label: { zh: "集运", en: "Shipping" },
+        description: { zh: "包裹和物流服务", en: "Shipping and parcels" },
       },
       {
         href: "/squad",
-        label: "找搭子",
-        description: "Campus companions",
+        label: { zh: "找搭子", en: "Squad" },
+        description: { zh: "校园搭子和活动伙伴", en: "Campus companions" },
       },
     ],
   },
   {
     id: "community",
-    label: "Community",
+    label: { zh: "社群", en: "Community" },
     href: "/usc-group",
     items: [
       {
         href: "/usc-group",
-        label: "新生群",
-        description: "School communities",
+        label: { zh: "新生群", en: "Freshman Groups" },
+        description: { zh: "学校社群入口", en: "School communities" },
       },
       {
         href: "/join",
-        label: "加入 BIA",
-        description: "Events and membership",
+        label: { zh: "加入 BIA", en: "Join BIA" },
+        description: { zh: "活动和会员服务", en: "Events and membership" },
       },
     ],
   },
 ];
 
+const PRODUCT_LANGUAGE_STORAGE_KEY = "bia-product-language";
+
+const PRODUCT_SHELL_COPY: Record<
+  ProductLanguage,
+  {
+    school: string;
+    chooseSchool: string;
+    signIn: string;
+    account: string;
+    signOut: string;
+    admin: string;
+    language: string;
+    currentSchool: string;
+    switchSchool: string;
+  }
+> = {
+  zh: {
+    school: "学校",
+    chooseSchool: "选择学校",
+    signIn: "登录",
+    account: "账号",
+    signOut: "退出",
+    admin: "管理",
+    language: "语言",
+    currentSchool: "当前学校",
+    switchSchool: "右上角可切换学校",
+  },
+  en: {
+    school: "School",
+    chooseSchool: "Choose school",
+    signIn: "Sign in",
+    account: "Account",
+    signOut: "Sign out",
+    admin: "Admin",
+    language: "Language",
+    currentSchool: "Current school",
+    switchSchool: "Switch schools in the top bar",
+  },
+};
+
 function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || (href !== "/" && pathname.startsWith(href));
+}
+
+function resolveInitialProductLanguage(): ProductLanguage {
+  if (typeof window === "undefined") return "zh";
+  try {
+    const stored = window.localStorage.getItem(PRODUCT_LANGUAGE_STORAGE_KEY);
+    return stored === "en" ? "en" : "zh";
+  } catch {
+    return "zh";
+  }
+}
+
+function writeStoredProductLanguage(language: ProductLanguage) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(PRODUCT_LANGUAGE_STORAGE_KEY, language);
+  } catch {
+    // Storage can fail in private mode or restricted browser contexts.
+  }
+}
+
+function LanguageToggle({
+  language,
+  setLanguage,
+  compact = false,
+}: {
+  language: ProductLanguage;
+  setLanguage: (language: ProductLanguage) => void;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className="inline-flex h-10 shrink-0 border border-[var(--black)] bg-white/60"
+      aria-label={PRODUCT_SHELL_COPY[language].language}
+    >
+      {(["zh", "en"] as const).map((option) => {
+        const active = option === language;
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => setLanguage(option)}
+            aria-pressed={active}
+            className="px-3 font-display text-[10px] tracking-[0.08em] transition-colors"
+            style={
+              active
+                ? {
+                    background:
+                      option === "zh" ? "var(--cardinal)" : "var(--gold)",
+                    color: option === "zh" ? "white" : "var(--black)",
+                  }
+                : { color: "var(--mid)" }
+            }
+          >
+            {option === "zh" ? (compact ? "中" : "中文") : "EN"}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function ProductShell({
@@ -150,10 +263,19 @@ export default function ProductShell({
   const [school, setSchoolState] = useState<ProductSchool>(() =>
     resolveInitialProductSchool(searchParams.get("school")),
   );
+  const [language, setLanguageState] = useState<ProductLanguage>(
+    resolveInitialProductLanguage,
+  );
+  const copy = PRODUCT_SHELL_COPY[language];
 
   function setSchool(nextSchool: ProductSchool) {
     setSchoolState(nextSchool);
     writeStoredProductSchool(nextSchool);
+  }
+
+  function setLanguage(nextLanguage: ProductLanguage) {
+    setLanguageState(nextLanguage);
+    writeStoredProductLanguage(nextLanguage);
   }
 
   return (
@@ -212,7 +334,7 @@ export default function ProductShell({
                     }
                     aria-expanded={open}
                   >
-                    {navGroup.label}
+                    {navGroup.label[language]}
                   </button>
 
                   {open && (
@@ -232,10 +354,10 @@ export default function ProductShell({
                             }
                           >
                             <span className="block font-display text-sm tracking-[0.08em]">
-                              {item.label}
+                              {item.label[language]}
                             </span>
                             <span className="mt-1 block text-xs text-[var(--mid)]">
-                              {item.description}
+                              {item.description[language]}
                             </span>
                           </Link>
                         );
@@ -249,7 +371,7 @@ export default function ProductShell({
 
           <label className="flex h-10 shrink-0 items-center gap-2 border border-[rgba(26,20,16,0.16)] bg-white/60 px-3">
             <span className="font-display text-[10px] tracking-[0.1em] text-[var(--mid)]">
-              School
+              {copy.school}
             </span>
             <select
               value={school}
@@ -257,7 +379,7 @@ export default function ProductShell({
                 setSchool(event.target.value as ProductSchool)
               }
               className="bg-transparent text-sm font-bold text-[var(--black)] outline-none"
-              aria-label="Choose school"
+              aria-label={copy.chooseSchool}
             >
               {SCHOOL_OPTIONS.map((option) => (
                 <option key={option} value={option}>
@@ -268,6 +390,8 @@ export default function ProductShell({
           </label>
 
           <div className="flex shrink-0 items-center gap-2">
+            <LanguageToggle language={language} setLanguage={setLanguage} />
+
             {isAdmin && (
               <Link
                 href="/admin"
@@ -278,7 +402,7 @@ export default function ProductShell({
                     : { color: "var(--black)" }
                 }
               >
-                ADMIN
+                {copy.admin}
               </Link>
             )}
             {!loading &&
@@ -293,14 +417,14 @@ export default function ProductShell({
                         : { color: "var(--black)" }
                     }
                   >
-                    ACCOUNT
+                    {copy.account}
                   </Link>
                   <button
                     type="button"
                     onClick={signOut}
                     className="border border-[var(--black)] px-3 py-2 font-display text-[10px] tracking-wider text-[var(--black)] hover:bg-[var(--cardinal)] hover:text-white"
                   >
-                    SIGN OUT
+                    {copy.signOut}
                   </button>
                 </>
               ) : (
@@ -309,7 +433,7 @@ export default function ProductShell({
                   onClick={() => setShowAuth(true)}
                   className="border border-[var(--black)] px-3 py-2 font-display text-[10px] tracking-wider text-[var(--black)] hover:bg-[var(--cardinal)] hover:text-white"
                 >
-                  SIGN IN
+                  {copy.signIn}
                 </button>
               ))}
           </div>
@@ -331,27 +455,34 @@ export default function ProductShell({
               BIA
             </span>
           </Link>
-          {!loading &&
-            (user ? (
-              <Link
-                href="/account"
-                className="border border-[var(--black)] px-3 py-2 font-display text-[10px] tracking-wider"
-              >
-                ACCOUNT
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowAuth(true)}
-                className="border border-[var(--black)] px-3 py-2 font-display text-[10px] tracking-wider"
-              >
-                SIGN IN
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <LanguageToggle
+              language={language}
+              setLanguage={setLanguage}
+              compact
+            />
+            {!loading &&
+              (user ? (
+                <Link
+                  href="/account"
+                  className="border border-[var(--black)] px-3 py-2 font-display text-[10px] tracking-wider"
+                >
+                  {copy.account}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowAuth(true)}
+                  className="border border-[var(--black)] px-3 py-2 font-display text-[10px] tracking-wider"
+                >
+                  {copy.signIn}
+                </button>
+              ))}
+          </div>
         </div>
       </header>
 
-      <main>{children({ school, setSchool })}</main>
+      <main>{children({ school, setSchool, language, setLanguage })}</main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-4 border-t border-[rgba(26,20,16,0.18)] bg-[rgba(250,246,236,0.96)] backdrop-blur lg:hidden">
         {PRODUCT_NAV_GROUPS.map((navGroup) => {
@@ -367,7 +498,7 @@ export default function ProductShell({
                   : { color: "var(--mid)" }
               }
             >
-              {navGroup.label}
+              {navGroup.label[language]}
             </Link>
           );
         })}
@@ -381,12 +512,14 @@ export default function ProductShell({
 export function ProductTaskHeader({
   eyebrow,
   school,
+  language,
   title,
   description,
   primaryAction,
   secondaryAction,
   trustItems,
 }: ProductTaskHeaderProps) {
+  const copy = PRODUCT_SHELL_COPY[language];
   return (
     <section
       className="border-b-[3px] border-[var(--black)]"
@@ -399,10 +532,10 @@ export function ProductTaskHeader({
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="border border-[var(--black)] bg-white px-3 py-1.5 text-xs font-bold text-[var(--black)]">
-              当前学校 {school}
+              {copy.currentSchool} {school}
             </span>
             <span className="border border-[rgba(26,20,16,0.18)] bg-[var(--beige)] px-3 py-1.5 text-xs font-bold text-[var(--mid)]">
-              ALL schools available
+              {copy.switchSchool}
             </span>
           </div>
           <h1 className="mt-5 max-w-3xl font-display text-[42px] leading-[0.95] text-[var(--black)] sm:text-[64px]">
