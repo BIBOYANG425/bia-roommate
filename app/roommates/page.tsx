@@ -47,6 +47,8 @@ function Marquee({
   );
 }
 
+const SCHOOL_FILTER_OPTIONS: Array<ProductSchool | ""> = ["", ...SCHOOL_OPTIONS];
+
 type RoommatesContentProps = {
   initialSchool: ProductSchool;
   onSchoolChange: (school: ProductSchool) => void;
@@ -67,20 +69,18 @@ function RoommatesContent({
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
   const [search, setSearch] = useState("");
-  const [schoolFilter, setSchoolFilter] = useState(
+  const [schoolFilter, setSchoolFilter] = useState<ProductSchool | "">(
     normalizeProductSchool(searchParams.get("school")) ?? initialSchool,
   );
   const [genderFilter, setGenderFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- shell school changes should update the page default filter
     setSchoolFilter(initialSchool);
   }, [initialSchool]);
 
   useEffect(() => {
     if (searchParams.get("submitted") === "true") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time toast on redirect
       setShowToast(true);
       router.replace("/roommates", { scroll: false });
     }
@@ -112,7 +112,6 @@ function RoommatesContent({
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch sets state in async callback
     fetchProfiles();
   }, [fetchProfiles]);
 
@@ -132,7 +131,7 @@ function RoommatesContent({
     return true;
   });
 
-  function handleSchoolFilterChange(nextSchool: string) {
+  function handleSchoolFilterChange(nextSchool: ProductSchool | "") {
     setSchoolFilter(nextSchool);
     const normalized = normalizeProductSchool(nextSchool);
     if (normalized) onSchoolChange(normalized);
@@ -169,7 +168,7 @@ function RoommatesContent({
 
         {/* Campus Tabs */}
         <div className="flex gap-0 mb-6 flex-wrap">
-          {["", ...SCHOOL_OPTIONS].map((s) => {
+          {SCHOOL_FILTER_OPTIONS.map((s) => {
             const active = schoolFilter === s;
             const label = s || "ALL";
             let bg = "var(--cream)";

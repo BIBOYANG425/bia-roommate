@@ -43,6 +43,8 @@ function Marquee({
   );
 }
 
+const SCHOOL_FILTER_OPTIONS: Array<ProductSchool | ""> = ["", ...SCHOOL_OPTIONS];
+
 type SubletContentProps = {
   initialSchool: ProductSchool;
   onSchoolChange: (school: ProductSchool) => void;
@@ -60,7 +62,7 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
   );
 
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
-  const [schoolFilter, setSchoolFilter] = useState(
+  const [schoolFilter, setSchoolFilter] = useState<ProductSchool | "">(
     normalizeProductSchool(searchParams.get("school")) ?? initialSchool,
   );
   const [roomTypeFilter, setRoomTypeFilter] = useState(
@@ -72,7 +74,6 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
   );
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- shell school changes should update the page default filter
     setSchoolFilter(initialSchool);
   }, [initialSchool]);
 
@@ -162,7 +163,7 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
     return result;
   }, [listings, schoolFilter, roomTypeFilter, search, sortBy]);
 
-  function handleSchoolFilterChange(nextSchool: string) {
+  function handleSchoolFilterChange(nextSchool: ProductSchool | "") {
     setSchoolFilter(nextSchool);
     const normalized = normalizeProductSchool(nextSchool);
     if (normalized) onSchoolChange(normalized);
@@ -199,7 +200,7 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
 
         {/* Campus Tabs */}
         <div className="flex gap-0 mb-6 flex-wrap">
-          {["", ...SCHOOL_OPTIONS].map((s) => {
+          {SCHOOL_FILTER_OPTIONS.map((s) => {
             const active = schoolFilter === s;
             const label = s || "ALL";
             const bg = active
