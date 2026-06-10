@@ -4,8 +4,7 @@ import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { schoolAccent } from "@/lib/utils";
-import { SubletListing, ROOM_TYPE_OPTIONS, SCHOOL_OPTIONS } from "@/lib/types";
+import { SubletListing, ROOM_TYPE_OPTIONS } from "@/lib/types";
 import {
   type ProductSchool,
   normalizeProductSchool,
@@ -14,7 +13,10 @@ import SubletCard from "@/components/SubletCard";
 import SubletModal from "@/components/SubletModal";
 import SkeletonCard from "@/components/SkeletonCard";
 import Toast from "@/components/Toast";
-import ProductShell, { ProductTaskHeader } from "@/components/ProductShell";
+import ProductShell, {
+  ProductTaskHeader,
+  type ProductLanguage,
+} from "@/components/ProductShell";
 
 function Marquee({
   bg,
@@ -43,14 +45,107 @@ function Marquee({
   );
 }
 
-const SCHOOL_FILTER_OPTIONS: Array<ProductSchool | ""> = ["", ...SCHOOL_OPTIONS];
+const SUBLET_COPY: Record<
+  ProductLanguage,
+  {
+    toast: string;
+    loadError: string;
+    headerEyebrow: string;
+    headerTitle: string;
+    headerDescription: string;
+    primaryAction: string;
+    secondaryAction: string;
+    trustItems: string[];
+    browseTitle: string;
+    searchPlaceholder: string;
+    allTypes: string;
+    sortNewest: string;
+    sortPriceAsc: string;
+    sortPriceDesc: string;
+    retry: string;
+    noListings: string;
+    noMatches: string;
+    beFirst: string;
+    adjustFilters: string;
+    postSublet: string;
+    listingsFound: (count: number) => string;
+    loadingMore: string;
+    loadMore: string;
+    marqueeItems: string[];
+    footer: string;
+  }
+> = {
+  zh: {
+    toast: "房源发布成功",
+    loadError: "加载失败，请重试",
+    headerEyebrow: "住房 / 转租",
+    headerTitle: "找转租",
+    headerDescription:
+      "优先浏览你学校附近的转租，再按租金、房型和入住时间筛选。",
+    primaryAction: "浏览房源",
+    secondaryAction: "发布转租",
+    trustItems: ["社区房源", "搜索排序", "可反馈问题"],
+    browseTitle: "浏览",
+    searchPlaceholder: "搜索公寓 / 地址...",
+    allTypes: "全部房型",
+    sortNewest: "最新发布",
+    sortPriceAsc: "价格低到高",
+    sortPriceDesc: "价格高到低",
+    retry: "重试",
+    noListings: "暂无房源",
+    noMatches: "没有匹配",
+    beFirst: "成为第一个发布转租的人。",
+    adjustFilters: "试试调整筛选条件。",
+    postSublet: "发布转租",
+    listingsFound: (count) => `${count} 个房源`,
+    loadingMore: "加载中...",
+    loadMore: "加载更多",
+    marqueeItems: ["转租", "找到下一站住处", "BIA", "公寓", "发布房源"],
+    footer: "BIA 公寓转租 — 找到下一站住处",
+  },
+  en: {
+    toast: "LISTING POSTED SUCCESSFULLY",
+    loadError: "LOAD FAILED - RETRY",
+    headerEyebrow: "Housing / Sublets",
+    headerTitle: "Sublets",
+    headerDescription:
+      "Browse sublets near your school first, then search by rent, room type, and move-in timing.",
+    primaryAction: "Browse listings",
+    secondaryAction: "Post sublet",
+    trustItems: ["Community listings", "Search and sort", "Report issues"],
+    browseTitle: "BROWSE",
+    searchPlaceholder: "SEARCH APARTMENT / ADDRESS...",
+    allTypes: "ALL TYPES",
+    sortNewest: "Newest",
+    sortPriceAsc: "Price low to high",
+    sortPriceDesc: "Price high to low",
+    retry: "RETRY",
+    noListings: "NO LISTINGS YET",
+    noMatches: "NO MATCHES",
+    beFirst: "Be the first to post a sublet.",
+    adjustFilters: "Try adjusting your filters.",
+    postSublet: "POST SUBLET",
+    listingsFound: (count) => `${count} LISTINGS FOUND`,
+    loadingMore: "LOADING...",
+    loadMore: "LOAD MORE",
+    marqueeItems: [
+      "SUBLET",
+      "FIND YOUR PLACE",
+      "BIA",
+      "APARTMENTS",
+      "POST YOUR LISTING",
+    ],
+    footer: "BIA SUBLETS — FIND YOUR NEXT HOME",
+  },
+};
 
 type SubletContentProps = {
   initialSchool: ProductSchool;
-  onSchoolChange: (school: ProductSchool) => void;
+  language: ProductLanguage;
 };
 
-function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
+function SubletContent({ initialSchool, language }: SubletContentProps) {
+  const copy = SUBLET_COPY[language];
   const searchParams = useSearchParams();
   const router = useRouter();
   const [listings, setListings] = useState<SubletListing[]>([]);
@@ -62,7 +157,7 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
   );
 
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
-  const [schoolFilter, setSchoolFilter] = useState<ProductSchool | "">(
+  const [schoolFilter, setSchoolFilter] = useState<ProductSchool>(
     normalizeProductSchool(searchParams.get("school")) ?? initialSchool,
   );
   const [roomTypeFilter, setRoomTypeFilter] = useState(
@@ -117,7 +212,7 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
         .range(from, to);
 
       if (err) {
-        setError("LOAD FAILED — RETRY");
+        setError(copy.loadError);
       } else {
         const newData = data || [];
         if (append) {
@@ -130,7 +225,7 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
       setLoading(false);
       setLoadingMore(false);
     },
-    [listings.length],
+    [copy.loadError, listings.length],
   );
 
   useEffect(() => {
@@ -163,29 +258,24 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
     return result;
   }, [listings, schoolFilter, roomTypeFilter, search, sortBy]);
 
-  function handleSchoolFilterChange(nextSchool: ProductSchool | "") {
-    setSchoolFilter(nextSchool);
-    const normalized = normalizeProductSchool(nextSchool);
-    if (normalized) onSchoolChange(normalized);
-  }
-
   return (
     <>
       {showToast && (
         <Toast
-          message="LISTING POSTED SUCCESSFULLY"
+          message={copy.toast}
           onClose={() => setShowToast(false)}
         />
       )}
 
       <ProductTaskHeader
-        eyebrow="Housing / Sublets"
+        eyebrow={copy.headerEyebrow}
         school={initialSchool}
-        title="找转租"
-        description="Browse sublets near your school first, then search by rent, room type, and move-in timing."
-        primaryAction={{ label: "Browse listings", href: "#browse" }}
-        secondaryAction={{ label: "Post sublet", href: "/sublet-submit" }}
-        trustItems={["Community listings", "Search and sort", "Report issues"]}
+        language={language}
+        title={copy.headerTitle}
+        description={copy.headerDescription}
+        primaryAction={{ label: copy.primaryAction, href: "#browse" }}
+        secondaryAction={{ label: copy.secondaryAction, href: "/sublet-submit" }}
+        trustItems={copy.trustItems}
       />
 
       {/* Filters */}
@@ -195,37 +285,13 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
           className="font-display text-[40px] sm:text-[60px] mb-6"
           style={{ color: "var(--black)" }}
         >
-          BROWSE
+          {copy.browseTitle}
         </h2>
-
-        {/* Campus Tabs */}
-        <div className="flex gap-0 mb-6 flex-wrap">
-          {SCHOOL_FILTER_OPTIONS.map((s) => {
-            const active = schoolFilter === s;
-            const label = s || "ALL";
-            const bg = active
-              ? s
-                ? schoolAccent(s)
-                : "var(--black)"
-              : "var(--cream)";
-            const fg = active ? "white" : "var(--mid)";
-            return (
-              <button
-                key={label}
-                onClick={() => handleSchoolFilterChange(s)}
-                className="font-display text-sm sm:text-base tracking-[0.1em] px-5 sm:px-8 py-3 border-[3px] border-[var(--black)] -mr-[3px] first:mr-0 transition-colors"
-                style={{ background: bg, color: fg }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
 
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <input
             type="text"
-            placeholder="SEARCH APARTMENT / ADDRESS..."
+            placeholder={copy.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="brutal-input flex-1"
@@ -235,7 +301,7 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
             onChange={(e) => setRoomTypeFilter(e.target.value)}
             className="brutal-select"
           >
-            <option value="">ALL TYPES</option>
+            <option value="">{copy.allTypes}</option>
             {ROOM_TYPE_OPTIONS.map((r) => (
               <option key={r} value={r}>
                 {r}
@@ -249,9 +315,9 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
             }
             className="brutal-select"
           >
-            <option value="newest">最新发布</option>
-            <option value="price_asc">价格低→高</option>
-            <option value="price_desc">价格高→低</option>
+            <option value="newest">{copy.sortNewest}</option>
+            <option value="price_asc">{copy.sortPriceAsc}</option>
+            <option value="price_desc">{copy.sortPriceDesc}</option>
           </select>
         </div>
 
@@ -273,7 +339,7 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
               onClick={() => fetchListings()}
               className="brutal-btn brutal-btn-gold mt-6"
             >
-              RETRY
+              {copy.retry}
             </button>
           </div>
         ) : filtered.length === 0 ? (
@@ -285,22 +351,22 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
               className="font-display text-3xl mb-3 relative"
               style={{ color: "var(--black)" }}
             >
-              {listings.length === 0 ? "NO LISTINGS YET" : "NO MATCHES"}
+              {listings.length === 0 ? copy.noListings : copy.noMatches}
             </h3>
             <p
               className="text-sm mb-6 relative"
               style={{ color: "var(--mid)" }}
             >
               {listings.length === 0
-                ? "Be the first to post a sublet."
-                : "Try adjusting your filters."}
+                ? copy.beFirst
+                : copy.adjustFilters}
             </p>
             {listings.length === 0 && (
               <Link
                 href="/sublet-submit"
                 className="brutal-btn brutal-btn-primary inline-block relative"
               >
-                POST SUBLET
+                {copy.postSublet}
               </Link>
             )}
           </div>
@@ -310,7 +376,7 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
               className="text-xs mb-4"
               style={{ color: "var(--mid)", fontFamily: "var(--font-body)" }}
             >
-              {filtered.length} LISTINGS FOUND
+              {copy.listingsFound(filtered.length)}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filtered.map((listing, i) => (
@@ -326,14 +392,14 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
                 </div>
               ))}
             </div>
-            {hasMore && !search && !schoolFilter && !roomTypeFilter && (
+            {hasMore && !search && !roomTypeFilter && (
               <div className="text-center mt-8">
                 <button
                   onClick={() => fetchListings(true)}
                   disabled={loadingMore}
                   className="brutal-btn brutal-btn-gold"
                 >
-                  {loadingMore ? "LOADING..." : "LOAD MORE"}
+                  {loadingMore ? copy.loadingMore : copy.loadMore}
                 </button>
               </div>
             )}
@@ -344,13 +410,7 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
       <Marquee
         bg="var(--gold)"
         text="var(--cardinal)"
-        items={[
-          "SUBLET",
-          "FIND YOUR PLACE",
-          "BIA",
-          "APARTMENTS",
-          "POST YOUR LISTING",
-        ]}
+        items={copy.marqueeItems}
       />
 
       <footer className="py-6 px-6 text-center border-t-[3px] border-[var(--black)]">
@@ -358,7 +418,7 @@ function SubletContent({ initialSchool, onSchoolChange }: SubletContentProps) {
           className="font-display text-xs tracking-[0.2em]"
           style={{ color: "var(--mid)" }}
         >
-          BIA 公寓转租 — FIND YOUR NEXT HOME
+          {copy.footer}
         </p>
       </footer>
 
@@ -376,8 +436,8 @@ export default function SubletPage() {
   return (
     <Suspense>
       <ProductShell group="housing" page="sublet">
-        {({ school, setSchool }) => (
-          <SubletContent initialSchool={school} onSchoolChange={setSchool} />
+        {({ school, language }) => (
+          <SubletContent initialSchool={school} language={language} />
         )}
       </ProductShell>
     </Suspense>
