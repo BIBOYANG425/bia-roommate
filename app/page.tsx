@@ -65,6 +65,7 @@ export default function LandingPage() {
             backgroundOpacity={0.45}
             className="text-white w-full max-w-4xl pointer-events-auto shadow-2xl transition-all duration-300"
           >
+            <div className="w-full flex flex-col">
             <nav className="w-full py-3 px-6 flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <Link href="/" className="flex items-center gap-2">
@@ -174,7 +175,8 @@ export default function LandingPage() {
                   className="py-3 border-b border-white/10"
                   onClick={() => setMenuOpen(false)}
                 >
-                  {t.nav.george[lang]} 👻
+                  {t.nav.george[lang]}{" "}
+                  <span aria-hidden>👻</span>
                 </Link>
                 <button
                   onClick={() => setLang(lang === "en" ? "zh" : "en")}
@@ -184,6 +186,7 @@ export default function LandingPage() {
                 </button>
               </div>
             )}
+            </div>
           </GlassSurface>
         </div>
 
@@ -291,7 +294,7 @@ export default function LandingPage() {
           {/* ─── Mission Section ─── */}
           <section
             id="mission"
-            className="py-24 sm:py-32 px-6 sm:px-16 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative"
+            className="scroll-mt-24 py-24 sm:py-32 px-6 sm:px-16 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative"
           >
             <div className="w-full md:w-1/2 rounded-3xl overflow-hidden aspect-square md:aspect-[4/3] bg-[#1F1F29] shadow-xl border border-black/5 relative group">
               <Image

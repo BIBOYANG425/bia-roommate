@@ -105,6 +105,7 @@ export default function JoinPage() {
             backgroundOpacity={0.45}
             className="text-white w-full max-w-4xl pointer-events-auto shadow-2xl transition-all duration-300"
           >
+            <div className="w-full flex flex-col">
             <nav className="w-full py-3 px-6 flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <Link href="/" className="flex items-center gap-2">
@@ -205,6 +206,7 @@ export default function JoinPage() {
                 </button>
               </div>
             )}
+            </div>
           </GlassSurface>
         </div>
 
