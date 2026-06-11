@@ -8,7 +8,9 @@ import { authedHandler } from "@/lib/api/authed-handler";
 // read). rsvp_event enforces event status + capacity — those business errors
 // are surfaced as 409 (event_not_open / event_full), not 500.
 // Uses the user's anon JWT client (so auth.uid() resolves inside the RPC) —
-// NO service-role (bia-roommate security boundary). Idempotent.
+// NO service-role (bia-roommate security boundary). Idempotent. Rate-limited
+// like the sibling write routes (likes/comments) — POST and DELETE share one
+// "events-rsvp" budget since together they form a single toggle.
 
 type Params = { id: string };
 
@@ -16,6 +18,7 @@ type Params = { id: string };
 const RSVP_BUSINESS_ERRORS = ["event_full", "event_not_open"] as const;
 
 export const POST = authedHandler<undefined, Params>({
+  rateLimit: { key: "events-rsvp", limit: 30, windowMs: 60_000 },
   handler: async ({ supabase, params }) => {
     const { error } = await supabase.rpc("rsvp_event", { p_event_id: params.id });
     if (error) {
@@ -35,6 +38,7 @@ export const POST = authedHandler<undefined, Params>({
 });
 
 export const DELETE = authedHandler<undefined, Params>({
+  rateLimit: { key: "events-rsvp", limit: 30, windowMs: 60_000 },
   handler: async ({ supabase, params }) => {
     const { error } = await supabase.rpc("unrsvp_event", { p_event_id: params.id });
     if (error) {

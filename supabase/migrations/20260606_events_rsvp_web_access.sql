@@ -20,6 +20,17 @@
 --   · attendance semantics = checked_in_at IS NOT NULL
 -- `source` STAYS and keeps being written for backward compat (live admin code
 -- still writes it), but nothing new reads it for semantics.
+--
+-- ROLLOUT ORDER (round 2 — supersedes the earlier "admin PR after" comment):
+--   1. apply this migration (columns + backfill + RLS + RPCs — all additive);
+--   2. merge bia-admin PR #13 FIRST (check-in writes checked_in_at);
+--   3. only then merge bia-roommate PR #63 (this PR — exposes web RSVP).
+-- Rationale: if #63 went live before #13, live admin check-in would still
+-- write only source='checkin' WITHOUT checked_in_at, so "web RSVP → legacy
+-- check-in → student un-RSVP" would hit unrsvp_event's DELETE branch and
+-- permanently destroy the attendance row. As a second line of defense,
+-- unrsvp_event also carries a transitional source guard (see §3) so even an
+-- out-of-order merge cannot lose attendance data.
 -- ──────────────────────────────────────────────────────────────────────────
 
 -- 0. Columns + backfill (additive only — no drops, no type changes).
@@ -45,6 +56,27 @@ EXCEPTION WHEN others THEN NULL; END $$;
 DROP POLICY IF EXISTS "public_read_active_events" ON public.events;
 CREATE POLICY "public_read_active_events" ON public.events FOR SELECT
   USING (status = 'active');
+
+-- 1b. event_attendance: enable RLS with NO policies = deny-all for direct
+--     PostgREST access. george's 001_george_schema.sql created the table bare
+--     and no migration anywhere enabled RLS, so Supabase's default grants let
+--     anyone holding the published anon key INSERT/UPDATE/DELETE arbitrary
+--     rows — bypassing every guard in rsvp_event. Closing this is mandatory
+--     before RSVP becomes user-facing. Nothing breaks:
+--       · george + bia-admin only use the service-role key → BYPASSRLS.
+--       · the web RPCs below (and ensure_student_for_current_user, same
+--         pattern) are SECURITY DEFINER: they execute as their owner — the
+--         migration role (postgres), which also owns event_attendance — and
+--         table owners bypass RLS unless FORCE ROW LEVEL SECURITY is set
+--         (it is not, neither here nor in george's schema).
+--       · the student app never touches event_attendance directly; all
+--         reads/writes go through the RPCs.
+--     After applying, verify the live grant state with:
+--       select grantee, privilege_type from information_schema.table_privileges
+--       where table_name = 'event_attendance';
+DO $$ BEGIN
+  ALTER TABLE public.event_attendance ENABLE ROW LEVEL SECURITY;
+EXCEPTION WHEN others THEN NULL; END $$;
 
 -- 2. list_events_with_rsvp() — upcoming active events + rsvp_count + whether the
 --    caller has RSVP'd (anon → always false). SECURITY DEFINER so it can
@@ -139,10 +171,19 @@ END; $$;
 REVOKE ALL ON FUNCTION public.rsvp_event(uuid) FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.rsvp_event(uuid) TO authenticated;
 
---    unrsvp_event clears rsvped_at; the row itself is deleted ONLY when the
---    student was never checked in (checked_in_at IS NULL) — attendance records
---    must survive an un-RSVP. Rows without rsvped_at (e.g. reminder- or
---    checkin-only rows) are never touched.
+--    unrsvp_event clears rsvped_at; the row itself is deleted ONLY when it is
+--    a pure web-RSVP row: never checked in (checked_in_at IS NULL) AND not
+--    carrying a legacy 'checkin' / george 'reminder' marker in source. The
+--    source guard is the transitional safety net: until bia-admin PR #13 is
+--    live, admin check-in still writes only source='checkin' with NO
+--    checked_in_at — without the guard, "web RSVP → legacy check-in →
+--    student un-RSVP" would permanently delete the attendance row. It also
+--    keeps george's set_reminder marker rows (source='reminder') alive.
+--    Guarded-out rows fall through to the UPDATE branch: the row survives
+--    and only loses its RSVP mark. (source defaults to 'rsvp' and the web
+--    insert sets it explicitly, so it is never NULL in practice; a NULL
+--    would fail NOT IN and fall through to the UPDATE — conservative,
+--    nothing deleted.) Rows without rsvped_at are never touched.
 CREATE OR REPLACE FUNCTION public.unrsvp_event(p_event_id uuid)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE sid uuid;
@@ -150,13 +191,14 @@ BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
   SELECT id INTO sid FROM public.students WHERE user_id = auth.uid();
   IF sid IS NOT NULL THEN
+    DELETE FROM public.event_attendance
+      WHERE student_id = sid AND event_id = p_event_id
+        AND rsvped_at IS NOT NULL AND checked_in_at IS NULL
+        AND source NOT IN ('checkin', 'reminder');
     UPDATE public.event_attendance
       SET rsvped_at = NULL
       WHERE student_id = sid AND event_id = p_event_id
-        AND rsvped_at IS NOT NULL AND checked_in_at IS NOT NULL;
-    DELETE FROM public.event_attendance
-      WHERE student_id = sid AND event_id = p_event_id
-        AND rsvped_at IS NOT NULL AND checked_in_at IS NULL;
+        AND rsvped_at IS NOT NULL;
   END IF;
 END; $$;
 REVOKE ALL ON FUNCTION public.unrsvp_event(uuid) FROM public, anon;
