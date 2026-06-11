@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getRecommendations } from "@/lib/course-planner/recommender";
 import { runAgent } from "@/lib/course-planner/agent";
 import { corsHeaders, handleOptions } from "@/lib/cors";
+import { enforceCourseAgentRateLimit } from "@/lib/api/ip-rate-limit";
 
 function filterByLevel<T extends { number: string }>(
   courses: T[],
@@ -24,6 +25,12 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const cors = corsHeaders(request);
+
+  // Public endpoint sharing the agent-stream LLM path — same per-IP budget
+  // ("course-agent" bucket) so alternating endpoints doesn't double it.
+  const limited = enforceCourseAgentRateLimit(request, cors);
+  if (limited) return limited;
+
   try {
     const body = await request.json();
     const { interests, semester, units, level, mode } = body ?? {};

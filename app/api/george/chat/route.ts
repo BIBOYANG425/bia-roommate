@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceIpRateLimit } from "@/lib/api/ip-rate-limit";
 
 // Forwards web-chat requests to the George Express backend (the same backend
 // that powers iMessage and WeChat). The backend lives in bia-roommate/george/
@@ -31,7 +32,31 @@ interface ChatMessage {
 const SERVICE_UNAVAILABLE_MESSAGE =
   "汪... 我现在正在调教中 👻🐕\n\nGeorge is currently being fine-tuned. The team is sharpening my replies and rolling out new tools. Try me again in a few minutes — I'll be right back.";
 
+// The chat UI renders `data.error` as a normal bubble, so 429/413 bodies
+// stay in George's bilingual voice instead of reading like infra errors.
+const RATE_LIMIT_MESSAGE =
+  "汪汪，你问得太快啦 🐕 让我喘口气，一分钟后再来找我吧！\n\nToo many messages at once — George needs a breather. Try again in a minute.";
+const MESSAGE_TOO_LONG_MESSAGE =
+  "汪... 这条消息太长啦，我的狗脑子装不下 🐕 拆短一点再发给我吧（2000 字以内）。\n\nThat message is too long for George (2,000 characters max) — try splitting it up.";
+
+// Each relayed message drives a full agent loop (LLM + tools) upstream, so
+// clamp both the request rate and the message size before forwarding.
+const MAX_MESSAGE_CHARS = 2000;
+
+// userId is client-supplied and keyed into Supabase memory upstream — only
+// forward it when it looks like the ids the web UI mints (`dev-<uuid>`);
+// anything else collapses to the shared anonymous id.
+const SAFE_USER_ID = /^[\w.:-]{1,64}$/;
+
 export async function POST(req: NextRequest) {
+  // Per-IP limit before any parsing or upstream work.
+  const limited = enforceIpRateLimit(req, {
+    name: "george-chat",
+    windows: [{ id: "minute", limit: 10, windowMs: 60_000 }],
+    message: RATE_LIMIT_MESSAGE,
+  });
+  if (limited) return limited;
+
   const backendUrl = process.env.GEORGE_BACKEND_URL;
   const adminToken = process.env.GEORGE_ADMIN_TOKEN;
 
@@ -52,6 +77,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "message is required" }, { status: 400 });
   }
 
+  if (message.length > MAX_MESSAGE_CHARS) {
+    return NextResponse.json(
+      { error: MESSAGE_TOO_LONG_MESSAGE },
+      { status: 413 },
+    );
+  }
+
+  const safeUserId =
+    typeof userId === "string" && SAFE_USER_ID.test(userId)
+      ? userId
+      : "web-anon";
+
   // The backend pulls history from Supabase keyed on userId, so we don't
   // forward the client history. We pass a stable userId so the conversation
   // stays coherent across turns.
@@ -64,7 +101,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${adminToken}`,
       },
       body: JSON.stringify({
-        userId: userId || "web-anon",
+        userId: safeUserId,
         platform: "imessage",
         text: message,
       }),

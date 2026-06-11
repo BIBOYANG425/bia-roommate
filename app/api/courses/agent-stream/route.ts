@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { runAgentStreaming, type AgentEvent } from "@/lib/course-planner/agent";
 import { corsHeaders, handleOptions } from "@/lib/cors";
+import { enforceCourseAgentRateLimit } from "@/lib/api/ip-rate-limit";
 import { parseIntake } from "./intake";
 
 export async function OPTIONS(request: NextRequest) {
@@ -9,6 +10,11 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const cors = corsHeaders(request);
+
+  // Public endpoint that fans out to 2+ LLM calls per hit — per-IP rate
+  // limit (shared budget with /api/courses/recommend) before any work.
+  const limited = enforceCourseAgentRateLimit(request, cors);
+  if (limited) return limited;
 
   try {
     const body = await request.json();
