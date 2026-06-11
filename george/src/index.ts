@@ -1,10 +1,11 @@
 // Express server entry. Registers tools (side-effect imports — count is reported
 // at startup via getToolDefinitions().length), mounts WeChat adapter, starts
-// iMessage watcher, boots 4 cron jobs (proactive match / reminders / IG + USC
+// iMessage watcher, boots the cron jobs (proactive match / reminders / shipping
+// notifier behind the opt-in SHIPPING_NOTIFIER_ENABLED kill switch / IG + USC
 // scrapes), and loads the skill registry. Nothing routes through this file at
 // runtime — message flow lives in agent/george.ts; this is wire-up only.
 //
-// Header last reviewed: 2026-05-22
+// Header last reviewed: 2026-06-11
 
 import express from 'express'
 import cors from 'cors'
@@ -139,11 +140,20 @@ cron.schedule('*/5 * * * *', () => {
 })
 
 // Drain the shipping-notification queue (parcel status changes → WeChat/iMessage).
-cron.schedule('*/5 * * * *', () => {
-  sendPendingShippingNotifications().catch((err) => {
-    log('error', 'shipping_notifier_cron_error', { error: err.message })
+// Opt-IN kill switch: the producer trigger has been live in prod since 2026-06-06,
+// so an ungated boot (even local dev with prod creds) would deliver the entire
+// pending backlog to real students. Disabled is the safe default.
+if (config.shippingNotifier.enabled) {
+  cron.schedule('*/5 * * * *', () => {
+    sendPendingShippingNotifications().catch((err) => {
+      log('error', 'shipping_notifier_cron_error', { error: err.message })
+    })
   })
-})
+} else {
+  log('info', 'shipping_notifier_disabled', {
+    hint: 'shipping notification cron NOT scheduled — set SHIPPING_NOTIFIER_ENABLED=true to deliver queued parcel notifications',
+  })
+}
 
 // Weekly: Mon 12:00 PT (lunchtime). Picked so that:
 //   - it lands inside proactive.ts's active window (hour 8-21 LA local), so the
@@ -222,6 +232,7 @@ async function startServer() {
       tools: getToolDefinitions().length,
       proactive: config.proactive.enabled,
       rolloutPct: config.proactive.rolloutPct,
+      shippingNotifier: config.shippingNotifier.enabled,
     })
     console.log(`\nGeorge (BIA 学长) listening on port ${config.port}`)
     console.log(`  WeChat : http://localhost:${config.port}/wechat`)
