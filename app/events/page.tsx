@@ -2,8 +2,10 @@
 
 // 活动 — student-facing events list with RSVP. Reads /api/events (public),
 // RSVP toggles via /api/events/[id]/rsvp (auth required → AuthModal). Reuses the
-// existing events / event_attendance tables (george-ingested + BIA events).
-// All DB access goes through anon/user client + SECURITY DEFINER RPCs.
+// existing events / event_attendance tables (george-ingested + BIA events);
+// RSVP state lives in event_attendance.rsvped_at (not the legacy source column).
+// All DB access goes through anon/user client + SECURITY DEFINER RPCs. The RPC
+// rejects full (event_full) / non-active (event_not_open) events → 409 here.
 
 import { useEffect, useState } from "react";
 import NavTabs from "@/components/NavTabs";
@@ -88,9 +90,14 @@ export default function EventsPage() {
       const res = await fetch(`/api/events/${ev.id}/rsvp`, {
         method: going ? "POST" : "DELETE",
       });
-      if (!res.ok) throw new Error("rsvp failed");
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(body?.error ?? "rsvp failed");
+      }
       setToast(going ? "已报名 — 到时见 🎉" : "已取消报名");
-    } catch {
+    } catch (err) {
       // Revert on failure.
       setEvents((list) =>
         list.map((e) =>
@@ -99,7 +106,16 @@ export default function EventsPage() {
             : e,
         ),
       );
-      setToast("操作失败，请重试");
+      const code = err instanceof Error ? err.message : "";
+      if (code === "event_full") {
+        setToast("这个活动已经满员了 😢");
+        load(); // 本地的名额数已过期，重新拉取
+      } else if (code === "event_not_open") {
+        setToast("这个活动暂不开放报名");
+        load();
+      } else {
+        setToast("操作失败，请重试");
+      }
     } finally {
       setBusy(null);
     }
