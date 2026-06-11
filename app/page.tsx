@@ -33,6 +33,7 @@ function ArrowIcon() {
 export default function LandingPage() {
   const [time, setTime] = useState("");
   const [lang, setLang] = useState<Lang>("en");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const updateTime = () =>
@@ -127,8 +128,62 @@ export default function LandingPage() {
                 >
                   {t.nav.joinUs[lang]}
                 </Link>
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  aria-label="Menu"
+                  aria-expanded={menuOpen}
+                  className="sm:hidden flex items-center justify-center border border-white/20 rounded-lg text-white/90 min-h-[44px] min-w-[44px] text-xl leading-none"
+                >
+                  {menuOpen ? "✕" : "☰"}
+                </button>
               </div>
             </nav>
+            {menuOpen && (
+              <div className="sm:hidden flex flex-col px-6 pb-4 text-sm text-gray-200">
+                <Link
+                  href="/#mission"
+                  className="py-3 border-b border-white/10"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t.nav.about[lang]}
+                </Link>
+                <Link
+                  href="/hackathon"
+                  className="py-3 border-b border-white/10"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t.nav.events[lang]}
+                </Link>
+                <Link
+                  href="/roommates"
+                  className="py-3 border-b border-white/10"
+                  style={{ fontFamily: "var(--font-display-zh)" }}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t.nav.freshmanServices[lang]}
+                </Link>
+                <Link
+                  href="/blog"
+                  className="py-3 border-b border-white/10"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t.nav.blog[lang]}
+                </Link>
+                <Link
+                  href="/george"
+                  className="py-3 border-b border-white/10"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t.nav.george[lang]} 👻
+                </Link>
+                <button
+                  onClick={() => setLang(lang === "en" ? "zh" : "en")}
+                  className="py-3 text-left text-white/80"
+                >
+                  {lang === "en" ? "中文" : "EN"}
+                </button>
+              </div>
+            )}
           </GlassSurface>
         </div>
 
