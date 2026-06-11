@@ -1,3 +1,10 @@
+// Students table access: id resolution (race-safe create), profile updates,
+// memories/referrals, and the cross-platform account-link flow (generateLinkCode
+// + claimLinkCode). claimLinkCode is reachable from the unauthenticated relay —
+// every guard in it is load-bearing; read the step comments before changing order.
+//
+// Header last reviewed: 2026-06-11
+
 import { randomInt } from 'node:crypto'
 import { supabase } from './client.js'
 import { isClaimBlocked, recordFailedClaim } from '../security/link-code-limiter.js'
@@ -102,6 +109,24 @@ export async function claimLinkCode(
     return { success: false, message: '不能链接自己的账号' }
   }
 
+  const platformColumn = claimingPlatform === 'wechat' ? 'wechat_open_id' : 'imessage_id'
+  const otherColumn = claimingPlatform === 'wechat' ? 'imessage_id' : 'wechat_open_id'
+  const platformLabel = claimingPlatform === 'wechat' ? '微信' : 'iMessage'
+
+  // Refuse when the target is already linked on the claiming platform.
+  // Attaching the claimer's id below would silently OVERWRITE the target's
+  // existing wechat_open_id/imessage_id — that account loses its link and its
+  // next message creates a fresh empty student row. Valid code, so this does
+  // not count as a failed guess for the limiter.
+  if (target[platformColumn]) {
+    log('warn', 'link_code_claim_refused', {
+      reason: 'target_already_linked_on_platform',
+      targetId: target.id,
+      claimingPlatform,
+    })
+    return { success: false, message: `对方账号已经绑定了一个${platformLabel}，不能重复链接。如果需要换绑，请先解绑或联系我们处理。` }
+  }
+
   const { data: claimer } = await supabase
     .from('students')
     .select('wechat_open_id, imessage_id')
@@ -110,13 +135,27 @@ export async function claimLinkCode(
 
   if (!claimer) return { success: false, message: '找不到你的账号' }
 
-  const platformColumn = claimingPlatform === 'wechat' ? 'wechat_open_id' : 'imessage_id'
   const platformValue = claimer[platformColumn]
   // Never null out the target's platform id — a claimer row without an id for
   // the claiming platform shouldn't exist (resolveStudentId creates it with one).
   if (!platformValue) {
     log('error', 'link_code_claim_failed', { step: 'claimer_missing_platform_id', claimingStudentId, claimingPlatform })
     return { success: false, message: '找不到你的账号' }
+  }
+
+  // Refuse when the claimer is itself dual-linked (also holds the OTHER
+  // platform's id). The merge below re-parents ALL the claimer's messages
+  // (leaking the other platform's history into the target account) and then
+  // deletes the claimer row while it still carries that other identity —
+  // cascade-deleting its student_memories/reminders and SET-NULL-orphaning
+  // its parcels. Valid code, so no limiter penalty.
+  if (claimer[otherColumn]) {
+    log('warn', 'link_code_claim_refused', {
+      reason: 'claimer_linked_on_other_platform',
+      claimingStudentId,
+      claimingPlatform,
+    })
+    return { success: false, message: '你的账号已经同时绑定了微信和iMessage，不能再链接到其他账号。如需调整请联系我们。' }
   }
 
   // Sequenced claim — supabase-js has no transactions; a truly atomic claim
@@ -127,10 +166,14 @@ export async function claimLinkCode(
   //      so attaching it to the target while the claimer still holds it would
   //      violate the constraint (the old Promise.all version hit exactly that,
   //      silently, because errors were never checked)
-  //   2. attach it to the target row + burn the link code (single-use)
+  //   2. attach it to the target row + burn the link code (single-use) — the
+  //      target-side guard above guarantees this never overwrites an existing id
   //   3. re-parent the claimer's messages onto the target
-  //   4. delete the now-empty claimer row — strictly after 3, because
-  //      messages.student_id is ON DELETE CASCADE
+  //   4. delete the claimer row — strictly after 3, because messages.student_id
+  //      is ON DELETE CASCADE. Safe only because the dual-link guard above
+  //      guarantees the row holds no other platform id by now (the claiming id
+  //      was freed in step 1), so the delete cannot drop a second identity or
+  //      cascade away its student_memories/reminders or orphan its parcels
   const { error: freeError } = await supabase
     .from('students')
     .update({ [platformColumn]: null })
