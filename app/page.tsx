@@ -506,13 +506,18 @@ export default function LandingPage() {
                 </Link>
               </div>
               <div className="flex gap-6">
-                {["Insta", "X", "LinkedIn", "Discord"].map((social) => (
+                {[
+                  { label: "Insta", href: "https://www.instagram.com/bia_usc/" },
+                  { label: "小红书", href: "https://xhslink.com/m/2t4EzpZAKAc" },
+                ].map((social) => (
                   <a
-                    key={social}
-                    href="#"
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm font-medium opacity-80 hover:opacity-100 hover:text-[#A0D7D1] transition-colors link-hover py-2 px-1 min-w-[44px] text-center"
                   >
-                    {social}
+                    {social.label}
                   </a>
                 ))}
               </div>
