@@ -80,10 +80,10 @@ export default function LandingPage() {
                   </span>
                 </Link>
                 <div className="hidden sm:flex gap-4 text-sm text-gray-200 items-center">
-                  <Link href="/about" className="link-hover py-3 px-1">
+                  <Link href="/#mission" className="link-hover py-3 px-1">
                     {t.nav.about[lang]}
                   </Link>
-                  <Link href="/events" className="link-hover py-3 px-1">
+                  <Link href="/hackathon" className="link-hover py-3 px-1">
                     {t.nav.events[lang]}
                   </Link>
                   <Link
@@ -486,13 +486,13 @@ export default function LandingPage() {
                   {t.footer.home[lang]}
                 </Link>
                 <Link
-                  href="/about"
+                  href="/#mission"
                   className="hover:text-[#A0D7D1] transition-colors link-hover py-2"
                 >
                   {t.nav.about[lang]}
                 </Link>
                 <Link
-                  href="/events"
+                  href="/hackathon"
                   className="hover:text-[#A0D7D1] transition-colors link-hover py-2"
                 >
                   {t.nav.events[lang]}
