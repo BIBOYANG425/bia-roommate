@@ -221,7 +221,12 @@ export default function InterestInput({
 
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
-        if (errData?.isRejection) {
+        if (res.status === 429) {
+          // Rate limited — retrying immediately only extends the lockout
+          // (the limiter counts rejected attempts too), so the copy must
+          // say "wait", never "try different keywords".
+          setError("TOO MANY REQUESTS — WAIT A MINUTE AND TRY AGAIN");
+        } else if (errData?.isRejection) {
           setError(
             errData.error ||
               "I CAN ONLY HELP WITH USC COURSE-RELATED QUESTIONS",

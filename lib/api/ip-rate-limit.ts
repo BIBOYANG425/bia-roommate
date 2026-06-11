@@ -42,9 +42,10 @@ export interface IpRateLimitWindow {
 
 export interface IpRateLimitOptions {
   /**
-   * Bucket prefix. Routes that share a backend cost share a name —
-   * agent-stream and recommend both use "course-agent" so one IP can't
-   * double its LLM budget by alternating endpoints.
+   * Bucket prefix. Paths that share a backend cost class share a name —
+   * agent-stream and recommend's LLM mode both use "course-agent" so one
+   * IP can't double its LLM budget by alternating endpoints, while
+   * recommend's keyword-only free mode uses its own "course-free" bucket.
    */
   name: string;
   windows: IpRateLimitWindow[];
@@ -96,11 +97,14 @@ export function enforceIpRateLimit(
 }
 
 /**
- * Shared per-IP budget for the two public LLM course-planner endpoints
- * (/api/courses/agent-stream and /api/courses/recommend). Each request
- * fans out to 2+ LLM calls plus catalog/RMP scraping, so the budget is
- * deliberately tight: 5/min absorbs a real user iterating on interests,
- * 30/day caps sustained key-burning from a single IP.
+ * Shared per-IP budget for the LLM-cost paths of the public course-planner
+ * endpoints: /api/courses/agent-stream (always LLM) and
+ * /api/courses/recommend with mode !== "free". Each such request fans out
+ * to 2+ LLM calls plus catalog/RMP scraping, so the budget is deliberately
+ * tight: 5/min absorbs a real user iterating on interests, 30/day caps
+ * sustained key-burning from a single IP. The zero-LLM-cost path
+ * (recommend with mode:"free") deliberately does NOT share this bucket —
+ * see enforceCourseFreeRateLimit.
  */
 export function enforceCourseAgentRateLimit(
   request: Request,
@@ -114,6 +118,29 @@ export function enforceCourseAgentRateLimit(
     ],
     message:
       "Too many AI searches from your network — wait a minute and try again.",
+    headers: corsHeaders,
+  });
+}
+
+/**
+ * Loose per-IP budget for the zero-LLM-cost path: /api/courses/recommend
+ * with mode:"free" (keyword matching only — burns no LLM keys). 60/min is
+ * enough to stop scraping floods while staying invisible to legitimate
+ * shared-egress callers: the LIVE George bot relays every bot user's
+ * course search from ONE egress IP (george/src/tools/recommend-courses.ts
+ * POSTs here with mode:"free"), and a campus NAT puts a whole dorm behind
+ * one address. No daily cap — the 30/day window on the LLM paths exists to
+ * cap key burn, which this path cannot cause.
+ */
+export function enforceCourseFreeRateLimit(
+  request: Request,
+  corsHeaders: Record<string, string>,
+): Response | null {
+  return enforceIpRateLimit(request, {
+    name: "course-free",
+    windows: [{ id: "minute", limit: 60, windowMs: 60_000 }],
+    message:
+      "Too many searches from your network — wait a minute and try again.",
     headers: corsHeaders,
   });
 }

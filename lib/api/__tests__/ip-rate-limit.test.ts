@@ -1,6 +1,7 @@
 // Tests for the public-route per-IP rate limiter: IP derivation order,
 // multi-window enforcement, 429 shape (Retry-After + merged headers), and
-// the shared course-agent budget. Uses unique bucket names per test since
+// the split course budgets (tight LLM "course-agent" vs loose keyword-only
+// "course-free"). Uses unique bucket names / IPs per test since
 // lib/rate-limit.ts keeps a module-level store.
 // Header last reviewed: 2026-06-11
 
@@ -9,6 +10,7 @@ import {
   getClientIp,
   enforceIpRateLimit,
   enforceCourseAgentRateLimit,
+  enforceCourseFreeRateLimit,
 } from "../ip-rate-limit";
 
 function makeRequest(headers: Record<string, string> = {}): Request {
@@ -117,7 +119,7 @@ describe("enforceCourseAgentRateLimit", () => {
   it("shares one budget across callers using the same IP", async () => {
     // 5/min budget: exhaust it, then the 6th call must be a 429 carrying
     // the CORS headers passed by the route.
-    const ip = `203.0.113.${100 + (Date.now() % 100)}`;
+    const ip = `agent-shared-${Date.now()}`;
     const req = makeRequest({ "x-forwarded-for": ip });
     const cors = { "Access-Control-Allow-Origin": "https://bia-roommate.vercel.app" };
 
@@ -132,5 +134,60 @@ describe("enforceCourseAgentRateLimit", () => {
     );
     const body = await blocked!.json();
     expect(typeof body.error).toBe("string");
+  });
+});
+
+describe("enforceCourseFreeRateLimit", () => {
+  const cors = {
+    "Access-Control-Allow-Origin": "https://bia-roommate.vercel.app",
+  };
+
+  it("allows 60/min on the free path without consuming the LLM budget", async () => {
+    // The shared-egress scenario: the George bot relays many users'
+    // mode:"free" searches from ONE IP. 60 in a minute must all pass and
+    // must leave the tight course-agent bucket untouched.
+    const req = makeRequest({ "x-forwarded-for": `free-a-${Date.now()}` });
+
+    for (let i = 0; i < 60; i++) {
+      expect(enforceCourseFreeRateLimit(req, cors)).toBeNull();
+    }
+    const blocked = enforceCourseFreeRateLimit(req, cors);
+    expect(blocked).not.toBeNull();
+    expect(blocked!.status).toBe(429);
+    expect(blocked!.headers.get("Access-Control-Allow-Origin")).toBe(
+      "https://bia-roommate.vercel.app",
+    );
+    const body = await blocked!.json();
+    expect(typeof body.error).toBe("string");
+
+    // 61 free-mode hits must NOT have eaten into the tight LLM budget.
+    expect(enforceCourseAgentRateLimit(req, cors)).toBeNull();
+  });
+
+  it("keeps the free path open when the LLM budget is exhausted", () => {
+    // An IP locked out of the LLM paths (5/min) must still be able to use
+    // the zero-cost keyword path — campus NAT users behind one address
+    // should never lose the basic course finder to someone else's AI use.
+    const req = makeRequest({ "x-forwarded-for": `free-b-${Date.now()}` });
+
+    for (let i = 0; i < 6; i++) {
+      enforceCourseAgentRateLimit(req, cors);
+    }
+    expect(enforceCourseAgentRateLimit(req, cors)).not.toBeNull();
+    expect(enforceCourseFreeRateLimit(req, cors)).toBeNull();
+  });
+
+  it("has no daily window — only the per-minute cap applies", () => {
+    // Regression guard for the budget split: the free path must enforce
+    // exactly one window ("minute"). A "day" window here would re-create
+    // the silent George-bot lockout this split exists to prevent.
+    const req = makeRequest({ "x-forwarded-for": `free-c-${Date.now()}` });
+    const blocked = (() => {
+      for (let i = 0; i < 60; i++) enforceCourseFreeRateLimit(req, cors);
+      return enforceCourseFreeRateLimit(req, cors);
+    })();
+    expect(blocked).not.toBeNull();
+    // Retry-After must point at the minute window, not a day-scale reset.
+    expect(Number(blocked!.headers.get("Retry-After"))).toBeLessThanOrEqual(60);
   });
 });

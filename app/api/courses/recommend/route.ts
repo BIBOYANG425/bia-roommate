@@ -2,7 +2,10 @@ import { NextRequest } from "next/server";
 import { getRecommendations } from "@/lib/course-planner/recommender";
 import { runAgent } from "@/lib/course-planner/agent";
 import { corsHeaders, handleOptions } from "@/lib/cors";
-import { enforceCourseAgentRateLimit } from "@/lib/api/ip-rate-limit";
+import {
+  enforceCourseAgentRateLimit,
+  enforceCourseFreeRateLimit,
+} from "@/lib/api/ip-rate-limit";
 
 function filterByLevel<T extends { number: string }>(
   courses: T[],
@@ -26,14 +29,22 @@ export async function OPTIONS(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const cors = corsHeaders(request);
 
-  // Public endpoint sharing the agent-stream LLM path — same per-IP budget
-  // ("course-agent" bucket) so alternating endpoints doesn't double it.
-  const limited = enforceCourseAgentRateLimit(request, cors);
-  if (limited) return limited;
-
   try {
     const body = await request.json();
     const { interests, semester, units, level, mode } = body ?? {};
+
+    // Rate limit by COST CLASS, decided after the (cheap) body parse:
+    // mode:"free" never touches LLM keys (keyword matching only), so it
+    // gets the loose anti-scraping budget — shared-egress callers like the
+    // LIVE George bot (george/src/tools/recommend-courses.ts always sends
+    // mode:"free") and campus NAT users stay under it. Anything else can
+    // burn LLM keys and shares the tight "course-agent" budget with
+    // /api/courses/agent-stream so alternating endpoints doesn't double it.
+    const limited =
+      mode === "free"
+        ? enforceCourseFreeRateLimit(request, cors)
+        : enforceCourseAgentRateLimit(request, cors);
+    if (limited) return limited;
 
     if (typeof interests !== "string" || interests.trim().length < 2) {
       return Response.json(

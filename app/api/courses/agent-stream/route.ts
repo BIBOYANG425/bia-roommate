@@ -11,8 +11,8 @@ export async function OPTIONS(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const cors = corsHeaders(request);
 
-  // Public endpoint that fans out to 2+ LLM calls per hit — per-IP rate
-  // limit (shared budget with /api/courses/recommend) before any work.
+  // Public endpoint that fans out to 2+ LLM calls per hit — tight per-IP
+  // budget (shared with /api/courses/recommend's LLM mode) before any work.
   const limited = enforceCourseAgentRateLimit(request, cors);
   if (limited) return limited;
 
