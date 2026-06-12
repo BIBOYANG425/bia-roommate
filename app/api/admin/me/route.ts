@@ -1,6 +1,6 @@
 // /api/admin/me
 // GET — returns the current viewer's admin status. Non-sensitive; used by
-// client-side shells (AdminShell, NavTabs) to decide whether to render the
+// client-side shells (AdminShell, ProductShell) to decide whether to render the
 // admin nav. Real gating still happens on individual admin endpoints.
 
 import { NextResponse } from "next/server";

@@ -8,7 +8,7 @@ import SquadCard, { CATEGORY_COLORS } from "@/components/squad/SquadCard";
 import SquadModal from "@/components/squad/SquadModal";
 import SkeletonCard from "@/components/SkeletonCard";
 import Toast from "@/components/Toast";
-import NavTabs from "@/components/NavTabs";
+import ProductShell from "@/components/ProductShell";
 
 const ALL_CATS = ["全部", ...SQUAD_CATEGORIES] as const;
 
@@ -96,15 +96,13 @@ function SquadContent() {
     });
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
       {showToast && (
         <Toast
           message="SQUAD POST DROPPED"
           onClose={() => setShowToast(false)}
         />
       )}
-
-      <NavTabs />
 
       <Marquee
         bg="var(--gold)"
@@ -325,14 +323,16 @@ function SquadContent() {
           }}
         />
       )}
-    </main>
+    </div>
   );
 }
 
 export default function SquadPage() {
   return (
     <Suspense>
-      <SquadContent />
+      <ProductShell group="services" page="squad">
+        {() => <SquadContent />}
+      </ProductShell>
     </Suspense>
   );
 }

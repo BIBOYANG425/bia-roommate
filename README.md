@@ -238,7 +238,7 @@ George is a bilingual AI companion deployed on WeChat Official Account and iMess
 │   ├── course-planner/         #   Course planner page
 │   ├── usc-group/              #   USC group page
 │   └── api/                    #   API routes (courses, RMP proxy)
-├── components/                 # React components (ProfileCard, NavTabs, etc.)
+├── components/                 # React components (ProfileCard, ProductShell, etc.)
 ├── lib/                        # Utils, types, Supabase client, CORS helpers
 ├── public/                     # Static assets, school logos
 │
