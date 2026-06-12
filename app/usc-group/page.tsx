@@ -1,17 +1,23 @@
 "use client";
 
-import NavTabs from "@/components/NavTabs";
+import { Suspense } from "react";
+import ProductShell from "@/components/ProductShell";
 
 export default function UscGroupPage() {
   return (
-    <main className="min-h-screen flex flex-col">
-      <NavTabs />
-      <iframe
-        src="/usc-group.html"
-        className="flex-1 w-full border-none"
-        style={{ minHeight: "calc(100vh - 50px)" }}
-        title="USC 新生群"
-      />
-    </main>
+    <Suspense>
+      <ProductShell group="community" page="usc-group">
+        {() => (
+          <main className="flex min-h-screen flex-col">
+            <iframe
+              src="/usc-group.html"
+              className="w-full flex-1 border-none"
+              style={{ minHeight: "calc(100vh - 64px)" }}
+              title="USC 新生群"
+            />
+          </main>
+        )}
+      </ProductShell>
+    </Suspense>
   );
 }
