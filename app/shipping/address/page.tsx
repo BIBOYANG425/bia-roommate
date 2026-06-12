@@ -1,9 +1,9 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import NavTabs from "@/components/NavTabs";
+import ProductShell from "@/components/ProductShell";
 import AuthModal from "@/components/AuthModal";
 import { useAuth } from "@/components/AuthProvider";
 import type { WarehouseAddress } from "@/lib/types";
@@ -13,7 +13,7 @@ interface AddressResponse {
   warehouse: WarehouseAddress | null;
 }
 
-export default function ShippingAddressPage() {
+function ShippingAddressContent() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
@@ -72,8 +72,6 @@ export default function ShippingAddressPage() {
 
   return (
     <main className="min-h-screen" style={{ background: "var(--cream)" }}>
-      <NavTabs />
-
       {/* Header */}
       <section
         className="relative overflow-hidden border-b-[3px] border-[var(--black)]"
@@ -342,5 +340,15 @@ function AddressRow({
         </button>
       )}
     </div>
+  );
+}
+
+export default function ShippingAddressPage() {
+  return (
+    <Suspense>
+      <ProductShell group="services" page="shipping">
+        {() => <ShippingAddressContent />}
+      </ProductShell>
+    </Suspense>
   );
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import AuthModal from "@/components/AuthModal";
-import NavTabs from "@/components/NavTabs";
+import ProductShell from "@/components/ProductShell";
 import Toast from "@/components/Toast";
 import SkeletonCard from "@/components/SkeletonCard";
 import ParcelCard from "@/components/ParcelCard";
@@ -206,8 +206,6 @@ function ShippingDashboardContent() {
       {showToast && (
         <Toast message={toastMsg} onClose={() => setShowToast(false)} />
       )}
-
-      <NavTabs />
 
       {/* Hero */}
       <section
@@ -524,7 +522,9 @@ function ShippingDashboardContent() {
 export default function ShippingDashboardPage() {
   return (
     <Suspense>
-      <ShippingDashboardContent />
+      <ProductShell group="services" page="shipping">
+        {() => <ShippingDashboardContent />}
+      </ProductShell>
     </Suspense>
   );
 }
