@@ -71,7 +71,7 @@ function ShippingAddressContent() {
     : null;
 
   return (
-    <main className="min-h-screen" style={{ background: "var(--cream)" }}>
+    <div className="min-h-screen" style={{ background: "var(--cream)" }}>
       {/* Header */}
       <section
         className="relative overflow-hidden border-b-[3px] border-[var(--black)]"
@@ -298,7 +298,7 @@ function ShippingAddressContent() {
           router.refresh();
         }}
       />
-    </main>
+    </div>
   );
 }
 

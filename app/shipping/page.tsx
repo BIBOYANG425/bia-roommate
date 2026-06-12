@@ -202,7 +202,7 @@ function ShippingDashboardContent() {
   })();
 
   return (
-    <main className="min-h-screen" style={{ background: "var(--cream)" }}>
+    <div className="min-h-screen" style={{ background: "var(--cream)" }}>
       {showToast && (
         <Toast message={toastMsg} onClose={() => setShowToast(false)} />
       )}
@@ -515,7 +515,7 @@ function ShippingDashboardContent() {
           setShowToast(true);
         }}
       />
-    </main>
+    </div>
   );
 }
 

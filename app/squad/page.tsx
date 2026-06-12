@@ -96,7 +96,7 @@ function SquadContent() {
     });
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
       {showToast && (
         <Toast
           message="SQUAD POST DROPPED"
@@ -323,7 +323,7 @@ function SquadContent() {
           }}
         />
       )}
-    </main>
+    </div>
   );
 }
 

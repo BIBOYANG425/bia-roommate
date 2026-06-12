@@ -159,7 +159,7 @@ function CourseRankingsContent() {
   const rankBase = payload ? (payload.page - 1) * payload.pageSize : 0;
 
   return (
-    <main className="min-h-screen" style={{ background: "#F5F3EE" }}>
+    <div className="min-h-screen" style={{ background: "#F5F3EE" }}>
       <div
         className="border-b-[3px] border-[var(--black)] px-6 py-5"
         style={{ background: "var(--cardinal)" }}
@@ -369,7 +369,7 @@ function CourseRankingsContent() {
           BIA 课评 — ALL RANKINGS
         </p>
       </footer>
-    </main>
+    </div>
   );
 }
 

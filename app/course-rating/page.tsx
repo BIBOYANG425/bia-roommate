@@ -176,7 +176,7 @@ function CourseRatingContent() {
   }, [tab, recent, topRated]);
 
   return (
-    <main className="min-h-screen" style={{ background: "#F5F3EE" }}>
+    <div className="min-h-screen" style={{ background: "#F5F3EE" }}>
       {/* Header */}
       <div
         className="border-b-[3px] border-[var(--black)] px-6 py-5"
@@ -412,7 +412,7 @@ function CourseRatingContent() {
       {showReviewModal && (
         <ReviewModal onClose={() => setShowReviewModal(false)} />
       )}
-    </main>
+    </div>
   );
 }
 

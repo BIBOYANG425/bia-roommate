@@ -183,7 +183,7 @@ function PlannerContent() {
   }, []);
 
   return (
-    <main className="min-h-screen" style={{ background: "#F5F3EE" }}>
+    <div className="min-h-screen" style={{ background: "#F5F3EE" }}>
       <PlannerHeader
         showTour={showTour}
         onTourComplete={() => {
@@ -270,7 +270,7 @@ function PlannerContent() {
           BIA 选课 — USC COURSE PLANNER
         </p>
       </footer>
-    </main>
+    </div>
   );
 }
 

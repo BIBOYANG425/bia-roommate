@@ -77,19 +77,19 @@ function SquadSubmitContent() {
 
   if (authLoading) {
     return (
-      <main className="min-h-screen">
+      <div className="min-h-screen">
         <div className="flex items-center justify-center h-96">
           <p className="font-display text-2xl" style={{ color: "var(--mid)" }}>
             LOADING...
           </p>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (!user) {
     return (
-      <main className="min-h-screen">
+      <div className="min-h-screen">
         <div className="max-w-lg mx-auto px-6 py-20 text-center">
           <h2
             className="font-display text-4xl mb-4"
@@ -104,14 +104,14 @@ function SquadSubmitContent() {
             ← BACK
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
   const catColor = CATEGORY_COLORS[category] ?? "#1a1410";
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
       {/* Header */}
       <div
         className="border-b-[3px] border-[var(--black)] flex items-center gap-4 px-6 py-4"
@@ -381,7 +381,7 @@ function SquadSubmitContent() {
           </Link>
         </div>
       </form>
-    </main>
+    </div>
   );
 }
 

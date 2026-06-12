@@ -115,7 +115,7 @@ function CourseRatingDetailContent() {
   const courseCode = `${dept} ${courseNumber}`;
 
   return (
-    <main className="min-h-screen" style={{ background: "#F5F3EE" }}>
+    <div className="min-h-screen" style={{ background: "#F5F3EE" }}>
       <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Back link */}
         <Link
@@ -330,7 +330,7 @@ function CourseRatingDetailContent() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }
 
