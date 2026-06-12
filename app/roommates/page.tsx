@@ -422,6 +422,7 @@ function RoommatesContent({
         <ProfileModal
           profile={selectedProfile}
           onClose={() => setSelectedProfile(null)}
+          language={language}
         />
       )}
     </>

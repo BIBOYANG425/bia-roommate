@@ -67,9 +67,11 @@ function HabitBar({
 export default function ProfileModal({
   profile,
   onClose,
+  language = "en",
 }: {
   profile: RoommateProfile;
   onClose: () => void;
+  language?: "en" | "zh";
 }) {
   const lastChar = getLastChar(profile.name);
   const accent = schoolAccent(profile.school);
@@ -246,12 +248,20 @@ export default function ProfileModal({
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Contact — prominent with copy. Prefer structured channels; fall
+          {/* Contact — gated behind sign-in so a student's WeChat/phone isn't
+              exposed to logged-out visitors. Prefer structured channels; fall
               back to the legacy single-string `contact` for old rows. */}
-          {profile.contact_channels && profile.contact_channels.length > 0 ? (
-            <ContactChannelList channels={profile.contact_channels} gold={gold} />
+          {user ? (
+            profile.contact_channels && profile.contact_channels.length > 0 ? (
+              <ContactChannelList
+                channels={profile.contact_channels}
+                gold={gold}
+              />
+            ) : (
+              <CopyContactBox contact={profile.contact} gold={gold} />
+            )
           ) : (
-            <CopyContactBox contact={profile.contact} gold={gold} />
+            <ContactLocked gold={gold} language={language} />
           )}
 
           {/* Tags */}
@@ -461,5 +471,39 @@ function ContactChannelRow({ channel }: { channel: ContactChannel }) {
         {copied ? "COPIED!" : "COPY"}
       </button>
     </li>
+  );
+}
+
+function ContactLocked({
+  gold,
+  language,
+}: {
+  gold: string;
+  language: "en" | "zh";
+}) {
+  const copy =
+    language === "zh"
+      ? { label: "联系方式", hint: "登录后查看联系方式" }
+      : { label: "CONTACT", hint: "Sign in to view contact" };
+  return (
+    <div
+      className="p-4 border-[3px] border-[var(--black)] flex items-center gap-3"
+      style={{ background: gold }}
+    >
+      <span className="text-2xl shrink-0" aria-hidden>
+        🔒
+      </span>
+      <div>
+        <p
+          className="text-[10px] uppercase tracking-wider font-display mb-1"
+          style={{ color: "var(--black)" }}
+        >
+          {copy.label}
+        </p>
+        <p className="font-display text-base" style={{ color: "var(--black)" }}>
+          {copy.hint}
+        </p>
+      </div>
+    </div>
   );
 }
