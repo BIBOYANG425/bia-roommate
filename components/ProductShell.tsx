@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import AuthModal from "@/components/AuthModal";
 import { useAuth } from "@/components/AuthProvider";
+import { useLanguage } from "@/components/LanguageProvider";
 import {
   type ProductSchool,
   resolveInitialProductSchool,
@@ -147,8 +148,6 @@ const PRODUCT_NAV_GROUPS: ProductNavGroup[] = [
   },
 ];
 
-const PRODUCT_LANGUAGE_STORAGE_KEY = "bia-product-language";
-
 const PRODUCT_SHELL_COPY: Record<
   ProductLanguage,
   {
@@ -189,25 +188,6 @@ const PRODUCT_SHELL_COPY: Record<
 
 function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || (href !== "/" && pathname.startsWith(href));
-}
-
-function resolveInitialProductLanguage(): ProductLanguage {
-  if (typeof window === "undefined") return "zh";
-  try {
-    const stored = window.localStorage.getItem(PRODUCT_LANGUAGE_STORAGE_KEY);
-    return stored === "en" ? "en" : "zh";
-  } catch {
-    return "zh";
-  }
-}
-
-function writeStoredProductLanguage(language: ProductLanguage) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(PRODUCT_LANGUAGE_STORAGE_KEY, language);
-  } catch {
-    // Storage can fail in private mode or restricted browser contexts.
-  }
 }
 
 function LanguageToggle({
@@ -263,19 +243,12 @@ export default function ProductShell({
   const [school, setSchoolState] = useState<ProductSchool>(() =>
     resolveInitialProductSchool(searchParams.get("school")),
   );
-  const [language, setLanguageState] = useState<ProductLanguage>(
-    resolveInitialProductLanguage,
-  );
+  const { language, setLanguage } = useLanguage();
   const copy = PRODUCT_SHELL_COPY[language];
 
   function setSchool(nextSchool: ProductSchool) {
     setSchoolState(nextSchool);
     writeStoredProductSchool(nextSchool);
-  }
-
-  function setLanguage(nextLanguage: ProductLanguage) {
-    setLanguageState(nextLanguage);
-    writeStoredProductLanguage(nextLanguage);
   }
 
   return (

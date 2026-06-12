@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "./AuthProvider";
+import { useLanguage } from "./LanguageProvider";
 import { isSchoolEmail } from "@/lib/auth";
 
 type AuthLanguage = "en" | "zh";
@@ -94,10 +95,11 @@ export default function AuthModal({
   title,
   subtitle,
   defaultMode = "signin",
-  language = "en",
+  language,
 }: AuthModalProps) {
   const { signUp, signIn } = useAuth();
-  const copy = AUTH_COPY[language];
+  const { language: contextLanguage } = useLanguage();
+  const copy = AUTH_COPY[language ?? contextLanguage];
   const [mode, setMode] = useState<"signin" | "signup">(defaultMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
