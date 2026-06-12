@@ -9,7 +9,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import NavTabs from "@/components/NavTabs";
+import ProductShell from "@/components/ProductShell";
 import type {
   CourseAggregate,
   CourseRankingSort,
@@ -160,8 +160,6 @@ function CourseRankingsContent() {
 
   return (
     <main className="min-h-screen" style={{ background: "#F5F3EE" }}>
-      <NavTabs />
-
       <div
         className="border-b-[3px] border-[var(--black)] px-6 py-5"
         style={{ background: "var(--cardinal)" }}
@@ -378,7 +376,6 @@ function CourseRankingsContent() {
 function RankingsFallback() {
   return (
     <main className="min-h-screen" style={{ background: "#F5F3EE" }}>
-      <NavTabs />
       <div
         className="border-b-[3px] border-[var(--black)] px-6 py-5"
         style={{ background: "var(--cardinal)" }}
@@ -397,7 +394,9 @@ function RankingsFallback() {
 export default function CourseRankingsPage() {
   return (
     <Suspense fallback={<RankingsFallback />}>
-      <CourseRankingsContent />
+      <ProductShell group="courses" page="course-rating">
+        {() => <CourseRankingsContent />}
+      </ProductShell>
     </Suspense>
   );
 }

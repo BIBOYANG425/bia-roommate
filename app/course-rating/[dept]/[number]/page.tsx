@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import NavTabs from "@/components/NavTabs";
+import ProductShell from "@/components/ProductShell";
 import AggregateRatings from "@/components/course-rating/AggregateRatings";
 import ProfessorPills from "@/components/course-rating/ProfessorPills";
 import ReviewCard from "@/components/course-rating/ReviewCard";
@@ -27,7 +27,7 @@ interface CourseData {
   }[];
 }
 
-export default function CourseRatingDetailPage() {
+function CourseRatingDetailContent() {
   const params = useParams<{ dept: string; number: string }>();
   const dept = params.dept.toUpperCase();
   const courseNumber = params.number;
@@ -116,8 +116,6 @@ export default function CourseRatingDetailPage() {
 
   return (
     <main className="min-h-screen" style={{ background: "#F5F3EE" }}>
-      <NavTabs />
-
       <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Back link */}
         <Link
@@ -333,5 +331,15 @@ export default function CourseRatingDetailPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function CourseRatingDetailPage() {
+  return (
+    <Suspense>
+      <ProductShell group="courses" page="course-rating">
+        {() => <CourseRatingDetailContent />}
+      </ProductShell>
+    </Suspense>
   );
 }

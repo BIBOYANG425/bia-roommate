@@ -11,6 +11,7 @@ import {
   emptyIntakeConstraints,
   type IntakeConstraints,
 } from "@/lib/course-planner/agent/types";
+import ProductShell from "@/components/ProductShell";
 import PlannerHeader from "./PlannerHeader";
 import ManualSearch from "./ManualSearch";
 import InterestMode from "./InterestMode";
@@ -276,9 +277,13 @@ function PlannerContent() {
 export default function CoursePlannerPage() {
   return (
     <Suspense>
-      <ScheduleProvider>
-        <PlannerContent />
-      </ScheduleProvider>
+      <ProductShell group="courses" page="course-planner">
+        {() => (
+          <ScheduleProvider>
+            <PlannerContent />
+          </ScheduleProvider>
+        )}
+      </ProductShell>
     </Suspense>
   );
 }

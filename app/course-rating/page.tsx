@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import NavTabs from "@/components/NavTabs";
+import ProductShell from "@/components/ProductShell";
 import CourseRatingSearch from "@/components/course-rating/CourseRatingSearch";
 import CourseRatingCard from "@/components/course-rating/CourseRatingCard";
 import ReviewModal from "@/components/course-rating/ReviewModal";
@@ -85,7 +85,7 @@ function courseMetaKey(dept: string, number: string) {
   return `${dept}-${number}`;
 }
 
-export default function CourseRatingPage() {
+function CourseRatingContent() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("recent");
   const [recent, setRecent] = useState<CourseAggregate[]>([]);
@@ -177,8 +177,6 @@ export default function CourseRatingPage() {
 
   return (
     <main className="min-h-screen" style={{ background: "#F5F3EE" }}>
-      <NavTabs />
-
       {/* Header */}
       <div
         className="border-b-[3px] border-[var(--black)] px-6 py-5"
@@ -415,5 +413,15 @@ export default function CourseRatingPage() {
         <ReviewModal onClose={() => setShowReviewModal(false)} />
       )}
     </main>
+  );
+}
+
+export default function CourseRatingPage() {
+  return (
+    <Suspense>
+      <ProductShell group="courses" page="course-rating">
+        {() => <CourseRatingContent />}
+      </ProductShell>
+    </Suspense>
   );
 }
