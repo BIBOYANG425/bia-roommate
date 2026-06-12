@@ -5,7 +5,8 @@ import Link from "next/link";
 import ScrollFloat from "@/components/ScrollFloat";
 import GlassSurface from "@/components/GlassSurface";
 import BorderGlow from "@/components/BorderGlow";
-import { t, type Lang } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const APPLY_URL = "#apply";
 
@@ -53,7 +54,7 @@ function CheckIcon() {
 
 export default function JoinPage() {
   const [time, setTime] = useState("");
-  const [lang, setLang] = useState<Lang>("en");
+  const { language: lang, setLanguage: setLang } = useLanguage();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {

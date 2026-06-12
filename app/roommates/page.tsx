@@ -17,6 +17,7 @@ import ProductShell, {
   ProductTaskHeader,
   type ProductLanguage,
 } from "@/components/ProductShell";
+import { useAuth } from "@/components/AuthProvider";
 
 function Marquee({
   bg,
@@ -137,6 +138,13 @@ const ROOMMATES_COPY: Record<
   },
 };
 
+// Columns returned to logged-out visitors — deliberately excludes `contact`
+// and `contact_channels` so a student's WeChat/phone is never sent over the
+// wire to anonymous users. Signed-in users get `*`. This is the client half;
+// server-side enforcement belongs in the roommate_profiles RLS policy.
+const PUBLIC_PROFILE_COLUMNS =
+  "id, name, school, gender, major, year, enrollment_term, sleep_habit, clean_level, noise_level, music_habit, study_style, hobbies, tags, avatar_url, bio, visible, created_at";
+
 type RoommatesContentProps = {
   initialSchool: ProductSchool;
   language: ProductLanguage;
@@ -147,6 +155,7 @@ function RoommatesContent({
   language,
 }: RoommatesContentProps) {
   const copy = ROOMMATES_COPY[language];
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [profiles, setProfiles] = useState<RoommateProfile[]>([]);
@@ -180,7 +189,7 @@ function RoommatesContent({
     setError(null);
     const { data, error: err } = await supabase
       .from("roommate_profiles")
-      .select("*")
+      .select(user ? "*" : PUBLIC_PROFILE_COLUMNS)
       .eq("visible", true)
       .order("created_at", { ascending: false });
 
@@ -198,7 +207,7 @@ function RoommatesContent({
         .catch(() => {});
     }
     setLoading(false);
-  }, [copy.loadError]);
+  }, [copy.loadError, user]);
 
   useEffect(() => {
     fetchProfiles();
@@ -422,6 +431,7 @@ function RoommatesContent({
         <ProfileModal
           profile={selectedProfile}
           onClose={() => setSelectedProfile(null)}
+          language={language}
         />
       )}
     </>

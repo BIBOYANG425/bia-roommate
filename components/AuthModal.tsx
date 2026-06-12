@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { useAuth } from "./AuthProvider";
+import { useLanguage } from "./LanguageProvider";
 import { isSchoolEmail } from "@/lib/auth";
+
+type AuthLanguage = "en" | "zh";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -11,7 +14,79 @@ interface AuthModalProps {
   title?: string;
   subtitle?: string;
   defaultMode?: "signin" | "signup";
+  /** Language for the modal's own copy. Defaults to English so existing call
+      sites keep working; product pages pass the shell's current language. */
+  language?: AuthLanguage;
 }
+
+const AUTH_COPY: Record<
+  AuthLanguage,
+  {
+    createTitle: string;
+    signInTitle: string;
+    createSubtitle: string;
+    signInSubtitle: string;
+    accepted: string;
+    passwordCreate: string;
+    password: string;
+    creating: string;
+    signingIn: string;
+    createAccount: string;
+    signIn: string;
+    noAccount: string;
+    haveAccount: string;
+    signUpLink: string;
+    signInLink: string;
+    checkEmail: string;
+    sentLinkTo: string;
+    activateHint: string;
+    gotIt: string;
+  }
+> = {
+  en: {
+    createTitle: "CREATE ACCOUNT",
+    signInTitle: "SIGN IN",
+    createSubtitle: "Use your school email to create an account",
+    signInSubtitle: "Sign in with your school email and password",
+    accepted: "ACCEPTED: .usc.edu, .berkeley.edu, .stanford.edu",
+    passwordCreate: "Create a password (6+ chars)",
+    password: "Password",
+    creating: "CREATING...",
+    signingIn: "SIGNING IN...",
+    createAccount: "CREATE ACCOUNT",
+    signIn: "SIGN IN",
+    noAccount: "Don't have an account? ",
+    haveAccount: "Already have an account? ",
+    signUpLink: "Sign up",
+    signInLink: "Sign in",
+    checkEmail: "CHECK YOUR EMAIL",
+    sentLinkTo: "We sent a verification link to",
+    activateHint:
+      "Click the link in the email to activate your account, then sign in.",
+    gotIt: "GOT IT",
+  },
+  zh: {
+    createTitle: "注册账号",
+    signInTitle: "登录",
+    createSubtitle: "使用学校邮箱注册账号",
+    signInSubtitle: "使用学校邮箱和密码登录",
+    accepted: "支持邮箱：.usc.edu, .berkeley.edu, .stanford.edu",
+    passwordCreate: "设置密码（至少 6 位）",
+    password: "密码",
+    creating: "注册中...",
+    signingIn: "登录中...",
+    createAccount: "注册账号",
+    signIn: "登录",
+    noAccount: "还没有账号？",
+    haveAccount: "已有账号？",
+    signUpLink: "注册",
+    signInLink: "登录",
+    checkEmail: "请查收邮箱",
+    sentLinkTo: "我们已发送验证链接至",
+    activateHint: "点击邮件中的链接激活账号，然后登录。",
+    gotIt: "知道了",
+  },
+};
 
 export default function AuthModal({
   isOpen,
@@ -20,8 +95,11 @@ export default function AuthModal({
   title,
   subtitle,
   defaultMode = "signin",
+  language,
 }: AuthModalProps) {
   const { signUp, signIn } = useAuth();
+  const { language: contextLanguage } = useLanguage();
+  const copy = AUTH_COPY[language ?? contextLanguage];
   const [mode, setMode] = useState<"signin" | "signup">(defaultMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -83,12 +161,9 @@ export default function AuthModal({
   }
 
   const displayTitle =
-    title || (mode === "signup" ? "CREATE ACCOUNT" : "SIGN IN");
+    title || (mode === "signup" ? copy.createTitle : copy.signInTitle);
   const displaySubtitle =
-    subtitle ||
-    (mode === "signup"
-      ? "Use your school email to create an account"
-      : "Sign in with your school email and password");
+    subtitle || (mode === "signup" ? copy.createSubtitle : copy.signInSubtitle);
 
   return (
     <div
@@ -121,17 +196,16 @@ export default function AuthModal({
               className="font-display text-xl tracking-wider mb-2"
               style={{ color: "var(--black)" }}
             >
-              CHECK YOUR EMAIL
+              {copy.checkEmail}
             </h2>
             <p className="text-sm mb-2" style={{ color: "var(--mid)" }}>
-              We sent a verification link to
+              {copy.sentLinkTo}
             </p>
             <p className="text-sm mb-4">
               <strong style={{ color: "var(--black)" }}>{email}</strong>
             </p>
             <p className="text-xs mb-4" style={{ color: "var(--mid)" }}>
-              Click the link in the email to activate your account, then sign
-              in.
+              {copy.activateHint}
             </p>
             <button
               onClick={handleClose}
@@ -141,7 +215,7 @@ export default function AuthModal({
                 boxShadow: "3px 3px 0 var(--black)",
               }}
             >
-              GOT IT
+              {copy.gotIt}
             </button>
           </div>
         ) : (
@@ -175,7 +249,7 @@ export default function AuthModal({
                 className="text-[10px] mb-3 font-display tracking-wider"
                 style={{ color: "var(--mid)" }}
               >
-                ACCEPTED: .usc.edu, .berkeley.edu, .stanford.edu
+                {copy.accepted}
               </div>
 
               <input
@@ -186,9 +260,7 @@ export default function AuthModal({
                   setError(null);
                 }}
                 placeholder={
-                  mode === "signup"
-                    ? "Create a password (6+ chars)"
-                    : "Password"
+                  mode === "signup" ? copy.passwordCreate : copy.password
                 }
                 className="w-full px-3 py-3 border-[3px] border-[var(--black)] text-sm mb-3 outline-none"
                 style={{ background: "white", fontFamily: "inherit" }}
@@ -219,11 +291,11 @@ export default function AuthModal({
               >
                 {loading
                   ? mode === "signup"
-                    ? "CREATING..."
-                    : "SIGNING IN..."
+                    ? copy.creating
+                    : copy.signingIn
                   : mode === "signup"
-                    ? "CREATE ACCOUNT"
-                    : "SIGN IN"}
+                    ? copy.createAccount
+                    : copy.signIn}
               </button>
             </form>
 
@@ -232,15 +304,13 @@ export default function AuthModal({
               className="text-xs text-center mt-4"
               style={{ color: "var(--mid)" }}
             >
-              {mode === "signin"
-                ? "Don't have an account? "
-                : "Already have an account? "}
+              {mode === "signin" ? copy.noAccount : copy.haveAccount}
               <button
                 onClick={switchMode}
                 className="underline"
                 style={{ color: "var(--cardinal)" }}
               >
-                {mode === "signin" ? "Sign up" : "Sign in"}
+                {mode === "signin" ? copy.signUpLink : copy.signInLink}
               </button>
             </p>
           </>
