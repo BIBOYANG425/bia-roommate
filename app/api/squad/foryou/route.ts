@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { buildReason, type RankRow } from "@/lib/squad/reason";
 
-export async function GET(_req?: Request) {
+export async function GET(_req: Request) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
