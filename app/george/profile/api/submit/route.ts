@@ -9,7 +9,7 @@
 // pending user's imessage_handle. pending_users.status flips to 'completed'
 // at the end. Real OAuth sign-in replaces the implicit user creation in
 // Slice F.
-// Header last reviewed: 2026-06-10
+// Header last reviewed: 2026-06-12
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { z } from 'zod';
@@ -165,6 +165,26 @@ export async function POST(req: NextRequest) {
     .eq('id', primaryStudentId);
   if (studentErr) {
     return NextResponse.json({ error: `student data: ${studentErr.message}` }, { status: 500 });
+  }
+
+  // Cold-start matching profile (spec §7.6): picks → tags + embedded facets.
+  // Failure here must NEVER fail onboarding — log and continue (tags/vectors
+  // can be rebuilt by the Phase-0 backfill).
+  try {
+    const { buildMatchingProfile, makeEmbedClient } = await import("@/lib/matching/interests");
+    const embed = makeEmbedClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
+    const result = await buildMatchingProfile(supabase, primaryStudentId, {
+      categories: interests.categories ?? [],
+      freeText: interests.free_text ?? "",
+      major: identity.major ?? null,
+      year: identity.year ?? null,
+    }, embed);
+    console.log(`[matching] onboarding profile built for ${primaryStudentId}:`, JSON.stringify(result));
+  } catch (e) {
+    console.error("[matching] onboarding profile build failed (non-fatal):", e);
   }
 
   // Write 3-table contract via upsert so re-onboarding overwrites stale memory
