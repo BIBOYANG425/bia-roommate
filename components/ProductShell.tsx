@@ -504,7 +504,11 @@ export default function ProductShell({
         })}
       </nav>
 
-      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+      <AuthModal
+        isOpen={showAuth}
+        onClose={() => setShowAuth(false)}
+        language={language}
+      />
     </div>
   );
 }
