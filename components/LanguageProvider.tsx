@@ -18,10 +18,10 @@ export type Language = "en" | "zh";
 // carry over seamlessly.
 const LANGUAGE_STORAGE_KEY = "bia-product-language";
 
-// App-wide default when the visitor has no stored preference. The site is a
-// zh-first community (see <html lang="zh-CN">), so we default to Chinese.
-// Change this one constant to flip the default everywhere.
-const DEFAULT_LANGUAGE: Language = "zh";
+// App-wide default when the visitor has no stored preference. Matches the
+// marketing pages' historical first-load language. Change this one constant
+// to flip the default everywhere.
+const DEFAULT_LANGUAGE: Language = "en";
 
 export function resolveInitialLanguage(): Language {
   if (typeof window === "undefined") return DEFAULT_LANGUAGE;
