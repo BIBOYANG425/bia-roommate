@@ -9,6 +9,7 @@ import SquadModal from "@/components/squad/SquadModal";
 import SkeletonCard from "@/components/SkeletonCard";
 import Toast from "@/components/Toast";
 import ProductShell from "@/components/ProductShell";
+import ForYouSection, { ForYouItem } from "@/components/squad/ForYouSection";
 
 const ALL_CATS = ["全部", ...SQUAD_CATEGORIES] as const;
 
@@ -52,6 +53,10 @@ function SquadContent() {
   const [genderFilter, setGenderFilter] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "deadline">("newest");
 
+  const [forYou, setForYou] = useState<{ post_id: string; rank: number; reason: string | null }[] | null>(null);
+  const [forYouLoading, setForYouLoading] = useState(true);
+  const [forYouUnavailable, setForYouUnavailable] = useState(false);
+
   useEffect(() => {
     if (searchParams.get("posted") === "true") {
       setShowToast(true);
@@ -74,9 +79,35 @@ function SquadContent() {
     }
   }, []);
 
+  const fetchForYou = useCallback(async () => {
+    setForYouLoading(true);
+    try {
+      const res = await fetch("/api/squad/foryou");
+      if (res.status === 401) { setForYou(null); return; }
+      if (!res.ok) { setForYou(null); setForYouUnavailable(true); return; }
+      setForYou(await res.json());
+    } catch {
+      setForYou(null); setForYouUnavailable(true);
+    } finally {
+      setForYouLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  useEffect(() => {
+    fetchForYou();
+  }, [fetchForYou]);
+
+  const forYouItems: ForYouItem[] = (forYou ?? [])
+    .map(({ post_id, rank, reason }) => {
+      const post = posts.find((p) => p.id === post_id);
+      return post ? { post, rank, reason } : null;
+    })
+    .filter((x): x is ForYouItem => x !== null)
+    .slice(0, 6);
 
   const filtered = posts
     .filter((p) => {
@@ -149,6 +180,22 @@ function SquadContent() {
             POST SQUAD →
           </Link>
         </div>
+      </section>
+
+      {/* For You section */}
+      <section className="max-w-6xl mx-auto px-6 pt-8">
+        {(forYou !== null || forYouLoading) && (
+          <ForYouSection
+            items={forYouItems}
+            loading={forYouLoading || loading}
+            onSelect={setSelected}
+          />
+        )}
+        {forYouUnavailable && (
+          <p className="mb-6 text-[11px] uppercase tracking-wider" style={{ color: "var(--mid)" }}>
+            推荐暂时不可用 — 按最新排序
+          </p>
+        )}
       </section>
 
       {/* Browse */}
@@ -304,6 +351,15 @@ function SquadContent() {
           BIA 找搭子 — FIND YOUR SQUAD
         </p>
       </footer>
+
+      {/* Mobile FAB — sits above the fixed bottom nav (bottom-20 = 80px) */}
+      <Link
+        href="/squad/submit"
+        aria-label="发布找搭子"
+        className="sm:hidden fixed bottom-20 right-4 z-40 brutal-btn brutal-btn-primary !px-5 !py-3 min-h-[44px] min-w-[44px]"
+      >
+        发布 +
+      </Link>
 
       {selected && (
         <SquadModal
