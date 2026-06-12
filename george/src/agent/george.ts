@@ -1,5 +1,6 @@
-// Main message processor. Adapter input → rate-limit → injection filter → student lookup →
-// intent classifier → sub-agent loop (up to 12 tool iterations) → DB save → response send.
+// Main message processor. Adapter input → noise filter → rate-limit (keyed on the raw
+// platform user id, BEFORE any DB write) → student lookup → injection filter → intent
+// classifier → sub-agent loop (up to 12 tool iterations) → DB save → response send.
 // Non-text messages return playful refusals from NON_TEXT_RESPONSES. Link codes, onboarding
 // state, memory loading, and async memory extraction all dispatch from here.
 //
@@ -7,7 +8,7 @@
 // budget, dropped-oldest messages are summarized into the dynamic system prompt, and each
 // tool result is capped to prevent in-turn bloat.
 //
-// Header last reviewed: 2026-05-22
+// Header last reviewed: 2026-06-11
 
 import Anthropic from '@anthropic-ai/sdk'
 import { getClaudeClient } from './llm-providers.js'
@@ -95,10 +96,15 @@ export async function processMessage(msg: IncomingMessage): Promise<string | nul
     const noiseCheck = checkAutomatedNoise(msg.text, { userId: msg.userId, platform: msg.platform })
     if (noiseCheck.isNoise) return null
 
-    const studentId = await resolveStudentId(msg.userId, msg.platform)
-
-    const rateCheck = checkRateLimit(studentId)
+    // Rate-limit on the RAW platform user id BEFORE resolveStudentId —
+    // resolveStudentId CREATES a students row for unseen ids, so running the
+    // limiter after it (the old order) let anonymous spam both fill the
+    // students table and reach the LLM. Keyed per platform:id; in-memory,
+    // no DB touch.
+    const rateCheck = checkRateLimit(`${msg.platform}:${msg.userId}`)
     if (!rateCheck.allowed) return RATE_LIMIT_RESPONSE
+
+    const studentId = await resolveStudentId(msg.userId, msg.platform)
 
     const injectionCheck = checkInjection(msg.text)
     if (injectionCheck.blocked) {
