@@ -9,8 +9,9 @@ import { SQUAD_CATEGORIES, SQUAD_GENDER_OPTIONS } from "@/lib/types";
 export async function GET() {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
-    .from("squad_posts")
+    .from("squad_posts_with_status")
     .select("*")
+    .neq("status", "closed")
     .order("created_at", { ascending: false });
 
   if (error)

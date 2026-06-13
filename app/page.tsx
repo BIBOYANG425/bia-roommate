@@ -7,7 +7,8 @@ import GlassSurface from "@/components/GlassSurface";
 import BorderGlow from "@/components/BorderGlow";
 import Folder from "@/components/Folder";
 import { BlogPreview } from "@/components/BlogPreview";
-import { t, type Lang } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/components/LanguageProvider";
 
 function ArrowIcon() {
   return (
@@ -32,7 +33,7 @@ function ArrowIcon() {
 
 export default function LandingPage() {
   const [time, setTime] = useState("");
-  const [lang, setLang] = useState<Lang>("en");
+  const { language: lang, setLanguage: setLang } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {

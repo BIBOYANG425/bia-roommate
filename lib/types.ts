@@ -192,6 +192,7 @@ export interface SquadPost {
   gender_restriction: string;
   contact: string | null;
   created_at: string;
+  status?: string;
 }
 
 export const SQUAD_CATEGORIES = [

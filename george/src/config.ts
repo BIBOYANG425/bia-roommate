@@ -41,4 +41,12 @@ export const config = {
     enabled: process.env.PROACTIVE_ENABLED !== 'false',
     rolloutPct: parseInt(process.env.PROACTIVE_ROLLOUT_PCT || '10'),
   },
+  // Opt-IN (default OFF) — deliberately the opposite of proactive's opt-OUT.
+  // The parcels AFTER-UPDATE trigger has been enqueueing real pending rows in
+  // prod since 2026-06-06, so ANY george boot with prod creds (including a
+  // local `npm run dev`) would otherwise start draining the queue to real
+  // students. Set SHIPPING_NOTIFIER_ENABLED=true explicitly to deliver.
+  shippingNotifier: {
+    enabled: process.env.SHIPPING_NOTIFIER_ENABLED === 'true',
+  },
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import NavTabs from "@/components/NavTabs";
 import OnboardingTour from "@/components/course-planner/OnboardingTour";
 import Toast from "@/components/Toast";
 
@@ -21,8 +20,6 @@ export default function PlannerHeader({
 }: PlannerHeaderProps) {
   return (
     <>
-      <NavTabs />
-
       {showTour && <OnboardingTour onComplete={onTourComplete} />}
 
       {/* Header */}

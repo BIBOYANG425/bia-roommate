@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import NavTabs from "@/components/NavTabs";
+import ProductShell from "@/components/ProductShell";
 import { useAuth } from "@/components/AuthProvider";
 import {
   SQUAD_CATEGORIES,
@@ -12,7 +12,7 @@ import {
 } from "@/lib/types";
 import { CATEGORY_COLORS } from "@/components/squad/SquadCard";
 
-export default function SquadSubmitPage() {
+function SquadSubmitContent() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
@@ -77,21 +77,19 @@ export default function SquadSubmitPage() {
 
   if (authLoading) {
     return (
-      <main className="min-h-screen">
-        <NavTabs />
+      <div className="min-h-screen">
         <div className="flex items-center justify-center h-96">
           <p className="font-display text-2xl" style={{ color: "var(--mid)" }}>
             LOADING...
           </p>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (!user) {
     return (
-      <main className="min-h-screen">
-        <NavTabs />
+      <div className="min-h-screen">
         <div className="max-w-lg mx-auto px-6 py-20 text-center">
           <h2
             className="font-display text-4xl mb-4"
@@ -106,16 +104,14 @@ export default function SquadSubmitPage() {
             ← BACK
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
   const catColor = CATEGORY_COLORS[category] ?? "#1a1410";
 
   return (
-    <main className="min-h-screen">
-      <NavTabs />
-
+    <div className="min-h-screen">
       {/* Header */}
       <div
         className="border-b-[3px] border-[var(--black)] flex items-center gap-4 px-6 py-4"
@@ -385,6 +381,16 @@ export default function SquadSubmitPage() {
           </Link>
         </div>
       </form>
-    </main>
+    </div>
+  );
+}
+
+export default function SquadSubmitPage() {
+  return (
+    <Suspense>
+      <ProductShell group="services" page="squad">
+        {() => <SquadSubmitContent />}
+      </ProductShell>
+    </Suspense>
   );
 }
