@@ -1,9 +1,11 @@
 // app/george/page.tsx
-// Public landing page for george onboarding (Spectrum shared-pool funnel).
-// The student enters THEIR phone number; the backend registers it as a shared
-// Spectrum user and the pool ASSIGNS them a number to text (it differs per
-// user — there is no single george number on the free plan). A confirm panel
-// then opens iMessage to their assigned number with a prefilled "Hi".
+// Public landing page for george onboarding.
+// The student enters THEIR phone number; the backend mints a pending handshake
+// code pre-linked to that handle and returns george's ONE shared iMessage number
+// (GEORGE_IMESSAGE_PHONE). A confirm panel then opens iMessage to that single
+// number with a prefilled "...george (code)" message — the code (and sender
+// handle) bind identity in george's handshake. There is no per-user number on
+// the shared plan; everyone texts the same line.
 //
 // The "&body=" sms format is required on iOS 14+ for prefilled body. Do not
 // change to "?body=" — that format is deprecated and breaks on some iOS versions.
@@ -15,13 +17,12 @@ import { useState } from "react";
 type Step =
   | { name: "form" }
   | { name: "loading" }
-  | { name: "ready"; assigned: string; alreadyOnboarded: boolean }
+  | { name: "ready"; georgeNumber: string; code: string | null; alreadyOnboarded: boolean }
   | { name: "error"; message: string };
 
 const ERROR_COPY: Record<string, string> = {
   invalid_phone: "that doesn't look like a US phone number — try like 213-555-0123",
   rate_limited: "slow down a sec, try again in a minute",
-  pool_unavailable: "we're out of lines right now 🥲 ping us @bia and we'll fix it",
   not_configured: "setup hiccup on our side — try again later",
   spectrum_error: "couldn't reach the message service — try again in a bit",
 };
@@ -45,7 +46,8 @@ export default function GeorgeLanding() {
       }
       setStep({
         name: "ready",
-        assigned: data.assignedPhoneNumber,
+        georgeNumber: data.georgeNumber,
+        code: typeof data.code === "string" ? data.code : null,
         alreadyOnboarded: !!data.alreadyOnboarded,
       });
     } catch {
@@ -53,8 +55,17 @@ export default function GeorgeLanding() {
     }
   }
 
+  // Prefill the handshake message. The natural format "...george (code)" is what
+  // george's extractCodeFromStartMessage parses; the code binds identity even if
+  // the student's iMessage sends from an Apple ID email rather than their number.
+  const smsBody =
+    step.name === "ready" && step.code
+      ? `i'm ready to try george (${step.code})`
+      : "Hi";
   const smsLink =
-    step.name === "ready" ? `sms:${step.assigned}&body=${encodeURIComponent("Hi")}` : "#";
+    step.name === "ready"
+      ? `sms:${step.georgeNumber}&body=${encodeURIComponent(smsBody)}`
+      : "#";
 
   return (
     <div
@@ -103,7 +114,7 @@ export default function GeorgeLanding() {
               className="brutal-btn brutal-btn-primary"
               style={{ marginTop: "1rem", width: "100%", minHeight: 44 }}
             >
-              {step.name === "loading" ? "getting your line…" : "Text george"}
+              {step.name === "loading" ? "setting you up…" : "Text george"}
             </button>
             {step.name === "error" && (
               <p style={{ marginTop: "1rem", fontSize: "0.85rem", color: "var(--cardinal)" }}>
@@ -111,13 +122,13 @@ export default function GeorgeLanding() {
               </p>
             )}
             <p style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--mid)" }}>
-              we assign you a direct line to george — takes 2 seconds.
+              george lives in iMessage. we&apos;ll open it with your hello — takes 2 seconds.
             </p>
           </div>
         ) : (
           <div className="brutal-card" style={{ marginTop: "2rem", padding: "1.5rem" }}>
             <p style={{ fontFamily: "var(--font-display)", color: "var(--black)" }}>
-              {step.alreadyOnboarded ? "welcome back — your line is" : "your line to george is"}
+              {step.alreadyOnboarded ? "welcome back — text george at" : "text george at"}
             </p>
             <p
               style={{
@@ -127,7 +138,7 @@ export default function GeorgeLanding() {
                 margin: "0.5rem 0 1rem",
               }}
             >
-              {step.assigned}
+              {step.georgeNumber}
             </p>
             <a
               href={smsLink}
@@ -137,7 +148,7 @@ export default function GeorgeLanding() {
               OK — open iMessage
             </a>
             <p style={{ marginTop: "1rem", fontSize: "0.75rem", color: "var(--mid)" }}>
-              just hit send on the &quot;Hi&quot; — george takes it from there.
+              just hit send — george takes it from there.
             </p>
           </div>
         )}

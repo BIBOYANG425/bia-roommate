@@ -1,13 +1,18 @@
-// POST /george/api/signup — the Spectrum signup funnel backend.
-// Body: { phone: string }. Registers the student's phone as a shared Spectrum
-// user (the pool ASSIGNS them a number to text), pre-links a pending_users row
-// to their handle, and returns the assigned number + code so the frontend can
-// open iMessage with a prefilled message.
+// POST /george/api/signup — the george onboarding funnel backend.
+// Body: { phone: string }. Mints (or reuses) a pending_users code pre-linked to
+// the student's handle, then returns george's ONE shared iMessage number
+// (GEORGE_IMESSAGE_PHONE) plus the code so the frontend can open iMessage with a
+// prefilled "...george (code)" message.
+//
+// On the free/shared Spectrum plan the connection has a single routable identity,
+// so every student texts the SAME number; the code (primary) and sender handle
+// (backup, self-healed on handshake) bind identity in george's handshake. There
+// is no per-user assigned number — that does not route on the shared plan.
 // Unauthenticated by design (it's the front door) — IP rate-limited.
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { normalizeUsPhone, registerSharedUser } from "@/lib/george/spectrum";
+import { normalizeUsPhone } from "@/lib/george/spectrum";
 import { mintPendingCode, findPendingByHandle } from "@/lib/george/mint-code";
 
 export async function POST(request: Request) {
@@ -24,16 +29,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_phone" }, { status: 400 });
   }
 
-  const projectId = process.env.SPECTRUM_PROJECT_ID;
-  const projectSecret = process.env.SPECTRUM_PROJECT_SECRET;
-  if (!projectId || !projectSecret) {
+  const georgeNumber = process.env.GEORGE_IMESSAGE_PHONE;
+  if (!georgeNumber) {
     return NextResponse.json({ error: "not_configured" }, { status: 500 });
-  }
-
-  const outcome = await registerSharedUser(phone, { projectId, projectSecret });
-  if (!outcome.ok) {
-    const status = outcome.error === "pool_unavailable" ? 503 : 502;
-    return NextResponse.json({ error: outcome.error }, { status });
   }
 
   // Pre-link a pending row to this handle (reuse an existing one so repeat
@@ -51,10 +49,5 @@ export async function POST(request: Request) {
     code = await mintPendingCode(admin, { imessageHandle: phone });
   }
 
-  return NextResponse.json({
-    assignedPhoneNumber: outcome.assignedPhoneNumber,
-    code,
-    alreadyRegistered: outcome.alreadyRegistered,
-    alreadyOnboarded,
-  });
+  return NextResponse.json({ georgeNumber, code, alreadyOnboarded });
 }
