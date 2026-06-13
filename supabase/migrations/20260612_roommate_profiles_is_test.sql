@@ -10,11 +10,22 @@
 ALTER TABLE public.roommate_profiles
   ADD COLUMN IF NOT EXISTS is_test boolean NOT NULL DEFAULT false;
 
--- Mark the known seed/test profiles (TEST 1, TOMMY TROJAN). No-op on
--- environments that don't have them.
+-- The read policy below references is_test. The contact-privacy migration
+-- grants anon an explicit column allowlist that omits is_test, so grant it
+-- here — before the policy is created — so anon's read path always has the
+-- column available.
+GRANT SELECT (is_test) ON public.roommate_profiles TO anon;
+
+-- Mark the known seed/test profiles (TEST 1, TOMMY TROJAN). Guarded on
+-- user_id IS NULL: seed rows are inserted without an auth user, while every
+-- real submission sets user_id (the insert RLS requires auth.uid()), so a
+-- genuine signed-up user who happens to share one of these names is never
+-- hidden. (A literal id IN (...) match would be stronger, but the canonical
+-- row UUIDs aren't reachable from this environment.) No-op where absent.
 UPDATE public.roommate_profiles
 SET is_test = true
-WHERE name IN ('TEST 1', 'TOMMY TROJAN');
+WHERE name IN ('TEST 1', 'TOMMY TROJAN')
+  AND user_id IS NULL;
 
 -- Public browse now excludes test rows in addition to invisible ones.
 DROP POLICY IF EXISTS "read_visible_profiles" ON public.roommate_profiles;

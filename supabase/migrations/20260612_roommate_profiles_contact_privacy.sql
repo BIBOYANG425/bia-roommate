@@ -7,32 +7,35 @@
 -- even though the profile modal now hides them in the UI. RLS row policies
 -- (read_visible_profiles) gate *rows*, not *columns*, so they can't fix this.
 --
--- Fix: replace anon's table-wide SELECT with a column-scoped grant covering
--- every column EXCEPT `contact` / `contact_channels`. The column list is built
--- dynamically from the live schema so it stays correct regardless of which
--- optional columns a given environment actually has. `authenticated` keeps
--- full SELECT (granted in 20260426), so signed-in users still see contact info.
--- This pairs with the client change that selects an explicit non-contact column
--- list for logged-out visitors (app/roommates/page.tsx PUBLIC_PROFILE_COLUMNS).
+-- Fix: replace anon's table-wide SELECT with a column-scoped grant on an
+-- explicit ALLOWLIST of non-sensitive columns. An allowlist (rather than
+-- "every column except contact/contact_channels") means a column added later
+-- is never silently exposed to anon — a new field stays private until it is
+-- deliberately added here. This list mirrors app/roommates/page.tsx
+-- PUBLIC_PROFILE_COLUMNS. `authenticated` keeps full SELECT (granted in
+-- 20260426), so signed-in users still see contact info. The is_test column is
+-- granted to anon in 20260612_roommate_profiles_is_test.sql, next to the read
+-- policy that references it.
 
-DO $$
-DECLARE
-  col text;
-BEGIN
-  -- Drop the table-wide grant; column privileges only take effect once the
-  -- broad grant is gone.
-  REVOKE SELECT ON public.roommate_profiles FROM anon;
+REVOKE SELECT ON public.roommate_profiles FROM anon;
 
-  FOR col IN
-    SELECT column_name
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name = 'roommate_profiles'
-      AND column_name NOT IN ('contact', 'contact_channels')
-  LOOP
-    EXECUTE format(
-      'GRANT SELECT (%I) ON public.roommate_profiles TO anon',
-      col
-    );
-  END LOOP;
-END $$;
+GRANT SELECT (
+  id,
+  name,
+  school,
+  gender,
+  major,
+  year,
+  enrollment_term,
+  sleep_habit,
+  clean_level,
+  noise_level,
+  music_habit,
+  study_style,
+  hobbies,
+  tags,
+  avatar_url,
+  bio,
+  visible,
+  created_at
+) ON public.roommate_profiles TO anon;
