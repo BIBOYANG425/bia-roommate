@@ -7,17 +7,20 @@
 -- even though the profile modal now hides them in the UI. RLS row policies
 -- (read_visible_profiles) gate *rows*, not *columns*, so they can't fix this.
 --
--- Fix: replace anon's table-wide SELECT with a column-scoped grant that
--- excludes `contact` and `contact_channels`. `authenticated` keeps full SELECT
--- (granted in 20260426), so signed-in users still see contact info. This pairs
--- with the client change that selects an explicit non-contact column list for
--- logged-out visitors (app/roommates/page.tsx PUBLIC_PROFILE_COLUMNS).
+-- Fix: replace anon's table-wide SELECT with a column-scoped grant on an
+-- explicit ALLOWLIST of non-sensitive columns. An allowlist (rather than
+-- "every column except contact/contact_channels") means a column added later
+-- is never silently exposed to anon — a new field stays private until it is
+-- deliberately added here. This list mirrors app/roommates/page.tsx
+-- PUBLIC_PROFILE_COLUMNS. `authenticated` keeps full SELECT (granted in
+-- 20260426), so signed-in users still see contact info. The is_test column is
+-- granted to anon in 20260612_roommate_profiles_is_test.sql, next to the read
+-- policy that references it.
 
 REVOKE SELECT ON public.roommate_profiles FROM anon;
 
 GRANT SELECT (
   id,
-  user_id,
   name,
   school,
   gender,
@@ -34,6 +37,5 @@ GRANT SELECT (
   avatar_url,
   bio,
   visible,
-  created_at,
-  updated_at
+  created_at
 ) ON public.roommate_profiles TO anon;
