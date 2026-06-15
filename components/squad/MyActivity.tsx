@@ -10,7 +10,9 @@ export default function MyActivity() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    // No synchronous setLoading here: initial `loading` is already true, and
+    // skipping it avoids a loading flash on focus-refetch (and the
+    // set-state-synchronously-in-effect lint error).
     const [p, mp, mj] = await Promise.all([
       fetch("/api/squad/me/pings").then((r) => (r.ok ? r.json() : [])).catch(() => []),
       fetch("/api/squad/me/posts").then((r) => (r.ok ? r.json() : [])).catch(() => []),
