@@ -10,6 +10,7 @@ import SkeletonCard from "@/components/SkeletonCard";
 import Toast from "@/components/Toast";
 import ProductShell from "@/components/ProductShell";
 import ForYouSection, { ForYouItem } from "@/components/squad/ForYouSection";
+import MyActivity from "@/components/squad/MyActivity";
 
 const ALL_CATS = ["全部", ...SQUAD_CATEGORIES] as const;
 
@@ -48,6 +49,7 @@ function SquadContent() {
   const [error, setError] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [selected, setSelected] = useState<SquadPost | null>(null);
+  const [view, setView] = useState<"discover" | "mine">("discover");
 
   const [cat, setCat] = useState<string>("全部");
   const [genderFilter, setGenderFilter] = useState("");
@@ -128,6 +130,22 @@ function SquadContent() {
 
   return (
     <div className="min-h-screen">
+      <div className="max-w-6xl mx-auto px-6 pt-6 flex gap-0">
+        {(["discover", "mine"] as const).map((v) => (
+          <button
+            key={v}
+            onClick={() => setView(v)}
+            className="font-display text-sm tracking-[0.08em] px-5 py-3 border-[3px] border-[var(--black)] -mr-[3px] transition-colors"
+            style={{ background: view === v ? "var(--black)" : "var(--cream)", color: view === v ? "white" : "var(--mid)" }}
+          >
+            {v === "discover" ? "发现" : "我的"}
+          </button>
+        ))}
+      </div>
+      {view === "mine" ? (
+        <section className="max-w-6xl mx-auto px-6 py-10"><MyActivity /></section>
+      ) : (
+      <>
       {showToast && (
         <Toast
           message="SQUAD POST DROPPED"
@@ -378,6 +396,8 @@ function SquadContent() {
             );
           }}
         />
+      )}
+      </>
       )}
     </div>
   );
