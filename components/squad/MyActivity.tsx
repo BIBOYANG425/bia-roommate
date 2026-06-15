@@ -21,6 +21,9 @@ export default function MyActivity() {
     setPings(p); setPosts(mp); setJoined(mj); setLoading(false);
   }, []);
 
+  // load() sets state only after an await (async fetch), not synchronously, so
+  // this is not the cascading-render pattern the rule targets — standard fetch-on-mount.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
     const onFocus = () => load();
