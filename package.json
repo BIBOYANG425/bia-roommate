@@ -7,7 +7,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "NODE_PATH=./node_modules/.ignored:./node_modules node ./node_modules/.ignored/vitest/vitest.mjs run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",
