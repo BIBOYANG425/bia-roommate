@@ -7,7 +7,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test": "NODE_PATH=./node_modules/.ignored:./node_modules node ./node_modules/.ignored/vitest/vitest.mjs run"
+    "test": "vitest run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",
@@ -35,6 +35,9 @@
     "shadcn": "^4.1.2",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.2",
+    "@testing-library/react": "^16.3.2",
+    "@vitejs/plugin-react": "^6.0.2",
+    "jsdom": "^25.0.1"
   }
 }

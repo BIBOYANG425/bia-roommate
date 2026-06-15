@@ -11,16 +11,12 @@ export default defineConfig({
       "app/**/*.test.ts",
       "lib/**/*.test.ts",
     ],
-    environment: "jsdom",
+    // Default node env keeps the existing backend tests unchanged; component
+    // tests opt into jsdom per-file via `// @vitest-environment jsdom`.
   },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "."),
-      react: path.resolve(__dirname, "node_modules/.ignored/react"),
-      "react-dom": path.resolve(__dirname, "node_modules/.ignored/react-dom"),
-      "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/.ignored/react/jsx-dev-runtime"),
-      "react/jsx-runtime": path.resolve(__dirname, "node_modules/.ignored/react/jsx-runtime"),
-      next: path.resolve(__dirname, "node_modules/.ignored/next"),
     },
   },
 });
