@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import ProfileSection from './_components/ProfileSection';
 import HeartbeatConfigSection from './_components/HeartbeatConfigSection';
 import PrivacySection from './_components/PrivacySection';
+import SquadSettingsSection from './_components/SquadSettingsSection';
 
 export default async function GeorgeSettingsPage() {
   const supabase = await createServerSupabaseClient();
@@ -11,14 +12,18 @@ export default async function GeorgeSettingsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const [{ data: profile }, { data: config }] = await Promise.all([
+  const [{ data: profile }, { data: config }, prefsRes, signalsRes] = await Promise.all([
     supabase.from('user_profiles').select('*').eq('user_id', user.id).maybeSingle(),
     supabase
       .from('user_heartbeat_config')
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle(),
+    supabase.rpc('squad_my_prefs'),
+    supabase.rpc('squad_my_signals'),
   ]);
+  const squadPrefs = prefsRes.data;
+  const squadSignals = (signalsRes.data ?? [])[0] ?? { interest_tags: [], facets: [] };
 
   return (
     <div
@@ -39,6 +44,7 @@ export default async function GeorgeSettingsPage() {
       <ProfileSection profile={profile} userId={user.id} />
       <HeartbeatConfigSection config={config} userId={user.id} />
       <PrivacySection config={config} userId={user.id} />
+      {squadPrefs && <SquadSettingsSection initialPrefs={squadPrefs} initialSignals={squadSignals} />}
     </div>
   );
 }
