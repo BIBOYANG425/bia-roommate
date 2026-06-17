@@ -7,6 +7,7 @@ import SavedScheduleView from "@/components/course-planner/SavedScheduleView";
 import { ScheduleProvider, usePlanner } from "@/lib/course-planner/store";
 import type { RecommendedCourse } from "@/lib/course-planner/recommender";
 import type { AgentRecommendation } from "@/lib/course-planner/agent";
+import type { DayOfWeek } from "@/lib/course-planner/types";
 import {
   emptyIntakeConstraints,
   type IntakeConstraints,
@@ -20,7 +21,8 @@ import AgentChat from "@/components/course-planner/AgentChat";
 export interface SchedulePrefs {
   earliestClass: string;
   doneBy: string;
-  preferBackToBack: boolean;
+  excludeFull: boolean;
+  blockedDays: DayOfWeek[];
   hideDClearance: boolean;
   hideGraduate: boolean;
   hideThematicOption: boolean;
@@ -38,7 +40,8 @@ function PlannerContent() {
   const [prefs, setPrefs] = useState<SchedulePrefs>({
     earliestClass: "",
     doneBy: "",
-    preferBackToBack: false,
+    excludeFull: true,
+    blockedDays: [],
     hideDClearance: false,
     hideGraduate: false,
     hideThematicOption: false,

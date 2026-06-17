@@ -22,12 +22,13 @@ export function parseSectionTimes(times: SectionTime[]): TimeSlot[] {
   const slots: TimeSlot[] = [];
   for (const t of times) {
     if (!t.start_time || !t.end_time || !t.day) continue;
-    if (t.day.toUpperCase() === "TBA") continue;
+    const dayToken = t.day.toUpperCase();
+    if (dayToken === "TBA") continue;
 
     const startMin = parseTimeToMinutes(t.start_time);
     const endMin = parseTimeToMinutes(t.end_time);
 
-    for (const dayChar of t.day.split("")) {
+    for (const dayChar of dayToken.split("")) {
       const day = DAY_MAP[dayChar];
       if (day) slots.push({ day, startMin, endMin });
     }
@@ -69,6 +70,7 @@ export function formatTime(time: string): string {
 export function formatDays(day: string): string {
   if (!day || day.toUpperCase() === "TBA") return "TBA";
   return day
+    .toUpperCase()
     .split("")
     .map((c) => DAY_MAP[c] || c)
     .join("/");

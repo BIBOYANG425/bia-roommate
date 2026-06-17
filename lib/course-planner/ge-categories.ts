@@ -7,7 +7,9 @@ export const GE_CATEGORIES = [
   { id: "GE-F", name: "Quantitative Reasoning" },
   { id: "GE-G", name: "Global Perspectives I" },
   { id: "GE-H", name: "Global Perspectives II" },
-  { id: "GESM", name: "GE Seminars" },
+  // GESM intentionally omitted from the category grid: USC has no GESM category
+  // endpoint (the seminars are filed under GE-A..H), so the grid button 404s.
+  // GESM seminars remain reachable via course search and the interest/agent flow.
 ] as const;
 
 export type GECategoryId = (typeof GE_CATEGORIES)[number]["id"];

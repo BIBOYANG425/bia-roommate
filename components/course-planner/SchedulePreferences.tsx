@@ -1,6 +1,7 @@
 "use client";
 
 import type { SchedulePrefs } from "@/app/course-planner/page";
+import type { DayOfWeek } from "@/lib/course-planner/types";
 
 interface SchedulePreferencesProps {
   prefs: SchedulePrefs;
@@ -94,14 +95,14 @@ export default function SchedulePreferences({
         <label className="flex items-center gap-2 cursor-pointer mt-4 sm:mt-0">
           <input
             type="checkbox"
-            checked={prefs.preferBackToBack}
+            checked={prefs.excludeFull}
             onChange={(e) =>
-              onChange({ ...prefs, preferBackToBack: e.target.checked })
+              onChange({ ...prefs, excludeFull: e.target.checked })
             }
             className="w-4 h-4 accent-(--cardinal)"
           />
           <span className="text-sm" style={{ color: "var(--black)" }}>
-            Prefer back-to-back classes
+            Only schedules with open seats
           </span>
         </label>
       </div>
@@ -151,6 +152,44 @@ export default function SchedulePreferences({
             Hide Thematic Option (CORE)
           </span>
         </label>
+      </div>
+
+      <div
+        className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t"
+        style={{ borderColor: "var(--beige)" }}
+      >
+        <span
+          className="font-display text-[11px] tracking-wider"
+          style={{ color: "var(--black)" }}
+        >
+          BLOCK DAYS
+        </span>
+        {(["Mon", "Tue", "Wed", "Thu", "Fri"] as DayOfWeek[]).map((day) => {
+          const active = prefs.blockedDays.includes(day);
+          return (
+            <button
+              key={day}
+              type="button"
+              onClick={() =>
+                onChange({
+                  ...prefs,
+                  blockedDays: active
+                    ? prefs.blockedDays.filter((d) => d !== day)
+                    : [...prefs.blockedDays, day],
+                })
+              }
+              className="px-3 py-1 text-xs font-display tracking-wider border-[2px]"
+              style={{
+                borderColor: "var(--black)",
+                background: active ? "var(--cardinal)" : "white",
+                color: active ? "white" : "var(--black)",
+                borderRadius: "16px",
+              }}
+            >
+              {day.toUpperCase()}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

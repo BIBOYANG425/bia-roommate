@@ -43,6 +43,15 @@ describe("parseSectionTimes", () => {
     ];
     expect(parseSectionTimes(times)).toHaveLength(0);
   });
+
+  it("parses lowercase day tokens (regression: silent slot drop)", () => {
+    const times: SectionTime[] = [
+      { day: "mwf", start_time: "10:00", end_time: "10:50", location: "" },
+    ];
+    const slots = parseSectionTimes(times);
+    expect(slots).toHaveLength(3);
+    expect(slots.map((s) => s.day)).toEqual(["Mon", "Wed", "Fri"]);
+  });
 });
 
 describe("slotsConflict", () => {
@@ -131,5 +140,9 @@ describe("formatDays", () => {
   it("returns TBA for TBA input", () => {
     expect(formatDays("TBA")).toBe("TBA");
     expect(formatDays("")).toBe("TBA");
+  });
+
+  it("formats lowercase tokens", () => {
+    expect(formatDays("th")).toBe("Tue/Thu");
   });
 });
