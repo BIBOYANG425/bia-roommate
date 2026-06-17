@@ -11,12 +11,13 @@
 //
 // For admin-only routes, use adminHandler — it gates on requireAdmin() and
 // exposes a service-role client alongside the user's anon client.
-// Header last reviewed: 2026-05-25
+// Header last reviewed: 2026-06-17
 
 import { NextResponse } from "next/server";
 import type { z } from "zod";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { resolveAuth } from "@/lib/api/resolve-auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin";
 import {
@@ -157,13 +158,11 @@ export function authedHandler<
     request: Request,
     routeCtx: RouteContext<P>,
   ): Promise<Response> => {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
+    const auth = await resolveAuth(request);
+    if (!auth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { user, supabase } = auth;
 
     const rlResp = runRateLimit(opts.rateLimit, user.id);
     if (rlResp) return rlResp;
