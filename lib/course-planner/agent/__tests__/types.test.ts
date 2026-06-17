@@ -98,6 +98,62 @@ describe("validateInterpretedQuery", () => {
     spy.mockRestore();
   });
 
+  it("truncates clarifyingQuestion chips to 8 instead of rejecting", () => {
+    // Repro: open-ended request ("any easy elective") makes the LLM emit
+    // >8 chips. Schema caps chips at 8 — strict parse used to throw
+    // "Too big: expected array to have <=8 items" and crash the request.
+    const input = {
+      isValid: true,
+      needsClarification: true,
+      clarifyingQuestions: [
+        {
+          key: "subject",
+          label: "Easy elective about what subject?",
+          chips: [
+            "Surprise me",
+            "Art",
+            "Music",
+            "Film",
+            "History",
+            "Philosophy",
+            "Psychology",
+            "Communication",
+            "Sociology", // 9th chip — over the cap
+          ],
+        },
+      ],
+    };
+
+    const result = validateInterpretedQuery(input);
+    expect(result.clarifyingQuestions).toHaveLength(1);
+    expect(result.clarifyingQuestions![0].chips).toHaveLength(8);
+    expect(result.clarifyingQuestions![0].chips).toEqual([
+      "Surprise me",
+      "Art",
+      "Music",
+      "Film",
+      "History",
+      "Philosophy",
+      "Psychology",
+      "Communication",
+    ]);
+  });
+
+  it("truncates clarifyingQuestions list to 2 instead of rejecting", () => {
+    const input = {
+      isValid: true,
+      needsClarification: true,
+      clarifyingQuestions: [
+        { key: "a", label: "Q1", chips: ["x", "y"] },
+        { key: "b", label: "Q2", chips: ["x", "y"] },
+        { key: "c", label: "Q3", chips: ["x", "y"] }, // 3rd — over the cap of 2
+      ],
+    };
+
+    const result = validateInterpretedQuery(input);
+    expect(result.clarifyingQuestions).toHaveLength(2);
+  });
+
   it("handles null departments array from LLM", () => {
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
