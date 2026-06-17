@@ -10,8 +10,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /** Extract a Bearer token from the request's Authorization header, or null. */
 export function getBearerToken(request: Request): string | null {
-  const header =
-    request.headers.get("authorization") ?? request.headers.get("Authorization");
+  const header = request.headers.get("authorization");
   if (!header) return null;
   const match = header.match(/^Bearer\s+(.+)$/i);
   return match ? match[1].trim() : null;
