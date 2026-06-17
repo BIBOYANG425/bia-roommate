@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-const { getPending, markSent, markSkipped, markFailed, sendMsg } = vi.hoisted(() => ({
+const { getPending, markStale, markSent, markSkipped, markFailed, sendMsg } = vi.hoisted(() => ({
   getPending: vi.fn(),
+  markStale: vi.fn(),
   markSent: vi.fn(),
   markSkipped: vi.fn(),
   markFailed: vi.fn(),
@@ -10,6 +11,7 @@ const { getPending, markSent, markSkipped, markFailed, sendMsg } = vi.hoisted(()
 
 vi.mock('../../src/db/shipping-notifications.js', () => ({
   getPendingShippingNotifications: getPending,
+  markStaleNotificationsSkipped: markStale,
   markShippingNotificationSent: markSent,
   markShippingNotificationSkipped: markSkipped,
   markShippingNotificationFailed: markFailed,
@@ -24,6 +26,8 @@ import {
 
 beforeEach(() => {
   getPending.mockReset()
+  markStale.mockReset()
+  markStale.mockResolvedValue(0)
   markSent.mockReset()
   markSkipped.mockReset()
   markFailed.mockReset()
@@ -95,5 +99,25 @@ describe('sendPendingShippingNotifications', () => {
     getPending.mockResolvedValue([])
     await sendPendingShippingNotifications()
     expect(sendMsg).not.toHaveBeenCalled()
+  })
+
+  it('triages stale pending rows before fetching the queue', async () => {
+    getPending.mockResolvedValue([])
+    await sendPendingShippingNotifications()
+    expect(markStale).toHaveBeenCalledTimes(1)
+    expect(markStale.mock.invocationCallOrder[0]).toBeLessThan(
+      getPending.mock.invocationCallOrder[0],
+    )
+  })
+
+  it('still delivers fresh rows after skipping a stale backlog', async () => {
+    markStale.mockResolvedValue(42)
+    getPending.mockResolvedValue([
+      { id: 'n6', kind: 'in_transit', payload: {}, students: { wechat_open_id: 'wx6' } },
+    ])
+    sendMsg.mockResolvedValue(undefined)
+    await sendPendingShippingNotifications()
+    expect(sendMsg).toHaveBeenCalledWith('wechat', 'wx6', expect.any(String))
+    expect(markSent).toHaveBeenCalledWith('n6')
   })
 })

@@ -1,73 +1,123 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const STEPS = [
   {
-    title: "WELCOME TO BIA 选课",
-    subtitle: "YOUR USC COURSE PLANNING ASSISTANT",
-    description:
-      "Build your perfect schedule in minutes. We rank sections by professor ratings, detect time conflicts, and generate optimized schedules — so you can spend less time on WebReg and more time on everything else.",
+    title: { en: "WELCOME TO BIA 选课", zh: "欢迎使用 BIA 选课" },
+    subtitle: {
+      en: "YOUR USC COURSE PLANNING ASSISTANT",
+      zh: "你的 USC 选课助手",
+    },
+    description: {
+      en: "Build your perfect schedule in minutes. We rank sections by professor ratings, detect time conflicts, and generate optimized schedules — so you can spend less time on WebReg and more time on everything else.",
+      zh: "几分钟搭出理想课表。我们按教授评分排序、自动检测时间冲突、生成最优课表——让你少花时间在 WebReg 上，把时间留给更重要的事。",
+    },
     icon: "🎓",
     visual: "hero",
   },
   {
-    title: "SEARCH COURSES",
-    subtitle: "STEP 1 — FIND WHAT YOU NEED",
-    description:
-      'Type a course code like "CSCI 104", a department like "ECON", or a keyword like "machine learning". We search across all USC offerings for the semester and show matches instantly.',
+    title: { en: "SEARCH COURSES", zh: "搜索课程" },
+    subtitle: {
+      en: "STEP 1 — FIND WHAT YOU NEED",
+      zh: "第 1 步 — 找到你需要的课",
+    },
+    description: {
+      en: 'Type a course code like "CSCI 104", a department like "ECON", or a keyword like "machine learning". We search across all USC offerings for the semester and show matches instantly.',
+      zh: "输入课程代码（如 CSCI 104）、院系（如 ECON）或关键词（如 machine learning）。我们会搜索本学期所有 USC 课程并即时显示匹配结果。",
+    },
     icon: "🔍",
     visual: "search",
   },
   {
-    title: "GE REQUIREMENTS",
-    subtitle: "STEP 1 (ALT) — FILL YOUR GEs",
-    description:
-      "Click any GE category (A through H) to browse all courses that fulfill it. Great for knocking out requirements while picking interesting electives.",
+    title: { en: "GE REQUIREMENTS", zh: "通识要求 (GE)" },
+    subtitle: {
+      en: "STEP 1 (ALT) — FILL YOUR GEs",
+      zh: "第 1 步（备选）— 修满通识",
+    },
+    description: {
+      en: "Click any GE category (A through H) to browse all courses that fulfill it. Great for knocking out requirements while picking interesting electives.",
+      zh: "点击任意通识类别（A 到 H），浏览所有满足该要求的课程。一边完成要求，一边挑选有趣的选修课。",
+    },
     icon: "📋",
     visual: "ge",
   },
   {
-    title: "DISCOVER BY INTEREST",
-    subtitle: "STEP 1 (ALT) — DON'T KNOW WHAT TO TAKE?",
-    description:
-      'Switch to "Discover" mode and describe your interests — like "Japanese animation, social justice, and coding". Our system scans 5,000+ courses and finds the best matches with relevance tags. You can also filter by unit count to narrow results.',
+    title: { en: "DISCOVER BY INTEREST", zh: "按兴趣发现" },
+    subtitle: {
+      en: "STEP 1 (ALT) — DON'T KNOW WHAT TO TAKE?",
+      zh: "第 1 步（备选）— 不知道选什么？",
+    },
+    description: {
+      en: 'Switch to "Discover" mode and describe your interests — like "Japanese animation, social justice, and coding". Our system scans 5,000+ courses and finds the best matches with relevance tags. You can also filter by unit count to narrow results.',
+      zh: "切换到“发现”模式，描述你的兴趣——比如“日本动画、社会公正、编程”。系统会扫描 5,000+ 门课程，用相关度标签找出最匹配的课。你还能按学分筛选结果。",
+    },
     icon: "✨",
     visual: "discover",
   },
   {
-    title: "SET PREFERENCES",
-    subtitle: "STEP 2 — CUSTOMIZE YOUR SCHEDULE",
-    description:
-      "Pick your earliest class time, when you want to be done, and whether you prefer back-to-back classes or gaps between them. We optimize around your lifestyle.",
+    title: { en: "SET PREFERENCES", zh: "设置偏好" },
+    subtitle: {
+      en: "STEP 2 — CUSTOMIZE YOUR SCHEDULE",
+      zh: "第 2 步 — 定制你的课表",
+    },
+    description: {
+      en: "Pick your earliest class time, when you want to be done, and whether you prefer back-to-back classes or gaps between them. We optimize around your lifestyle.",
+      zh: "选择最早上课时间、希望几点结束，以及偏好连堂还是课间留空。我们会围绕你的作息来优化课表。",
+    },
     icon: "⚙️",
     visual: "prefs",
   },
   {
-    title: "BUILD BEST SCHEDULE",
-    subtitle: "STEP 3 — ONE CLICK, FIVE OPTIONS",
-    description:
-      'Hit "Build" and we generate up to 5 conflict-free schedules ranked by RateMyProfessors ratings. Each shows a visual weekly calendar so you can compare at a glance.',
+    title: { en: "BUILD BEST SCHEDULE", zh: "生成最佳课表" },
+    subtitle: {
+      en: "STEP 3 — ONE CLICK, FIVE OPTIONS",
+      zh: "第 3 步 — 一键生成五种方案",
+    },
+    description: {
+      en: 'Hit "Build" and we generate up to 5 conflict-free schedules ranked by RateMyProfessors ratings. Each shows a visual weekly calendar so you can compare at a glance.',
+      zh: "点击“生成”，我们会按 RateMyProfessors 评分排出最多 5 套无冲突课表。每套都配可视化周历，一眼即可对比。",
+    },
     icon: "📅",
     visual: "build",
   },
   {
-    title: "PROFESSOR RATINGS",
-    subtitle: "BUILT-IN RMP INTEGRATION",
-    description:
-      'Every section shows the instructor\'s RateMyProfessors rating, difficulty score, and "would take again" percentage. Color-coded green/yellow/red so you can decide instantly.',
+    title: { en: "PROFESSOR RATINGS", zh: "教授评分" },
+    subtitle: { en: "BUILT-IN RMP INTEGRATION", zh: "内置 RMP 评分" },
+    description: {
+      en: 'Every section shows the instructor\'s RateMyProfessors rating, difficulty score, and "would take again" percentage. Color-coded green/yellow/red so you can decide instantly.',
+      zh: "每个班次都显示教授的 RateMyProfessors 评分、难度分和“愿意再选”比例。绿/黄/红配色，帮你即刻判断。",
+    },
     icon: "⭐",
     visual: "rmp",
   },
   {
-    title: "CHROME EXTENSION",
-    subtitle: "SUPERCHARGE WEBREG",
-    description:
-      "Install the BIA Course Helper extension to see RMP ratings, seat counts, and conflict highlights directly on WebReg. Plus a built-in optimizer and interest search — all without leaving the page.",
+    title: { en: "CHROME EXTENSION", zh: "Chrome 扩展" },
+    subtitle: { en: "SUPERCHARGE WEBREG", zh: "强化你的 WebReg" },
+    description: {
+      en: "Install the BIA Course Helper extension to see RMP ratings, seat counts, and conflict highlights directly on WebReg. Plus a built-in optimizer and interest search — all without leaving the page.",
+      zh: "安装 BIA Course Helper 扩展，直接在 WebReg 上看到 RMP 评分、座位数和冲突提示。还内置课表优化器和兴趣搜索——无需离开页面。",
+    },
     icon: "🧩",
     visual: "extension",
   },
 ] as const;
+
+const TOUR_COPY = {
+  en: {
+    skip: "SKIP TOUR",
+    back: "← BACK",
+    next: "NEXT →",
+    getStarted: "GET STARTED →",
+  },
+  zh: {
+    skip: "跳过",
+    back: "← 上一步",
+    next: "下一步 →",
+    getStarted: "开始使用 →",
+  },
+} as const;
 
 function StepVisual({ visual }: { visual: string }) {
   const box = (content: React.ReactNode) => (
@@ -478,6 +528,8 @@ export default function OnboardingTour({
   const [, setDirection] = useState<"next" | "prev">("next");
   const [animating, setAnimating] = useState(false);
 
+  const { language: lang } = useLanguage();
+  const copy = TOUR_COPY[lang];
   const total = STEPS.length;
   const current = STEPS[step];
 
@@ -543,7 +595,7 @@ export default function OnboardingTour({
           className="absolute top-4 right-4 font-display text-[11px] tracking-wider z-10 hover:underline"
           style={{ color: "var(--mid)" }}
         >
-          SKIP TOUR
+          {copy.skip}
         </button>
 
         {/* Content */}
@@ -567,13 +619,13 @@ export default function OnboardingTour({
                 className="font-display text-2xl tracking-wider"
                 style={{ color: "var(--black)" }}
               >
-                {current.title}
+                {current.title[lang]}
               </h2>
               <p
                 className="font-display text-[11px] tracking-[0.15em]"
                 style={{ color: "var(--cardinal)" }}
               >
-                {current.subtitle}
+                {current.subtitle[lang]}
               </p>
             </div>
           </div>
@@ -583,7 +635,7 @@ export default function OnboardingTour({
             className="text-sm leading-relaxed mt-3"
             style={{ color: "var(--mid)" }}
           >
-            {current.description}
+            {current.description[lang]}
           </p>
 
           {/* Visual */}
@@ -621,7 +673,7 @@ export default function OnboardingTour({
                 className="px-4 py-2 font-display text-xs tracking-wider border-[2px] border-[var(--black)] transition-all hover:translate-y-[-1px]"
                 style={{ background: "white", color: "var(--black)" }}
               >
-                ← BACK
+                {copy.back}
               </button>
             )}
             <button
@@ -633,7 +685,7 @@ export default function OnboardingTour({
                 boxShadow: "3px 3px 0 var(--cardinal)",
               }}
             >
-              {step === total - 1 ? "GET STARTED →" : "NEXT →"}
+              {step === total - 1 ? copy.getStarted : copy.next}
             </button>
           </div>
         </div>

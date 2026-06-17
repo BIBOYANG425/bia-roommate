@@ -11,6 +11,7 @@ import {
   SCHOOL_OPTIONS,
 } from "@/lib/types";
 import { CATEGORY_COLORS } from "@/components/squad/SquadCard";
+import DescribeBox, { type SquadDraft } from "@/components/squad/DescribeBox";
 
 function SquadSubmitContent() {
   const router = useRouter();
@@ -26,8 +27,23 @@ function SquadSubmitContent() {
   const [school, setSchool] = useState("");
   const [contact, setContact] = useState("");
 
+  const [prefilled, setPrefilled] = useState<Set<string>>(new Set());
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function handleDraft(draft: SquadDraft) {
+    const filled = new Set<string>();
+    if (draft.category != null) { setCategory(draft.category); filled.add("category"); }
+    if (draft.content != null) { setContent(draft.content); filled.add("content"); }
+    if (draft.location != null) { setLocation(draft.location); filled.add("location"); }
+    if (draft.deadline != null) { setDeadline(draft.deadline); filled.add("deadline"); }
+    if (draft.max_people != null) { setMaxPeople(draft.max_people); filled.add("maxPeople"); }
+    if (draft.gender_restriction != null) { setGenderRestriction(draft.gender_restriction); filled.add("genderRestriction"); }
+    setPrefilled(filled);
+    // Clear highlight after 3 s so it's just a brief review cue
+    setTimeout(() => setPrefilled(new Set()), 3000);
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -129,6 +145,10 @@ function SquadSubmitContent() {
         </h1>
       </div>
 
+      <div className="max-w-2xl mx-auto px-6 pt-6">
+        <DescribeBox onDraft={handleDraft} />
+      </div>
+
       <form
         onSubmit={handleSubmit}
         className="max-w-2xl mx-auto px-6 py-10 flex flex-col gap-8"
@@ -141,7 +161,10 @@ function SquadSubmitContent() {
           >
             分类
           </label>
-          <div className="flex flex-wrap gap-0">
+          <div
+            className="flex flex-wrap gap-0"
+            style={prefilled.has("category") ? { outline: "2px solid var(--gold)", outlineOffset: "2px" } : undefined}
+          >
             {SQUAD_CATEGORIES.map((c) => {
               const active = category === c;
               const color = CATEGORY_COLORS[c];
@@ -220,6 +243,7 @@ function SquadSubmitContent() {
             required
             rows={5}
             className="brutal-input resize-none"
+            style={prefilled.has("content") ? { outline: "2px solid var(--gold)", outlineOffset: "2px" } : undefined}
           />
           <p
             className="text-[10px] mt-1 text-right"
@@ -244,6 +268,7 @@ function SquadSubmitContent() {
             placeholder="添加地点（选填）..."
             maxLength={100}
             className="brutal-input"
+            style={prefilled.has("location") ? { outline: "2px solid var(--gold)", outlineOffset: "2px" } : undefined}
           />
         </div>
 
@@ -258,7 +283,10 @@ function SquadSubmitContent() {
             </label>
             <div
               className="flex items-center border-[3px] border-[var(--black)]"
-              style={{ background: "var(--cream)" }}
+              style={{
+                background: "var(--cream)",
+                ...(prefilled.has("maxPeople") ? { outline: "2px solid var(--gold)", outlineOffset: "2px" } : {}),
+              }}
             >
               <button
                 type="button"
@@ -297,6 +325,7 @@ function SquadSubmitContent() {
               onChange={(e) => setDeadline(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
               className="brutal-input"
+              style={prefilled.has("deadline") ? { outline: "2px solid var(--gold)", outlineOffset: "2px" } : undefined}
             />
           </div>
         </div>
@@ -328,7 +357,10 @@ function SquadSubmitContent() {
           >
             性别要求
           </label>
-          <div className="flex gap-0">
+          <div
+            className="flex gap-0"
+            style={prefilled.has("genderRestriction") ? { outline: "2px solid var(--gold)", outlineOffset: "2px" } : undefined}
+          >
             {SQUAD_GENDER_OPTIONS.map((g) => {
               const active = genderRestriction === g;
               return (

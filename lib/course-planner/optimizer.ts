@@ -1,11 +1,11 @@
 import type {
   Course,
-  Section,
   SelectedSection,
   RmpRating,
   TimeSlot,
 } from "./types";
 import { parseSectionTimes, slotsConflict } from "./conflicts";
+import { isSectionUsable, rmpScore } from "./rules";
 import { getNextColorIndex } from "./colors";
 
 interface OptimizeInput {
@@ -19,16 +19,6 @@ interface OptimizeResult {
   sections: SelectedSection[];
   score: number;
   explored: number;
-}
-
-function getRmpScore(
-  section: Section,
-  rmpCache: Record<string, RmpRating | null>,
-): number {
-  const key = `${section.instructor?.lastName}, ${section.instructor?.firstName}`;
-  const rating = rmpCache[key];
-  if (!rating) return 2.5; // neutral default for unknown professors
-  return rating.avgRating;
 }
 
 function hasConflictWithSelected(
@@ -66,17 +56,12 @@ export function optimizeSchedule({
       course,
       courseId,
       sections: [...(course.sections || [])]
-        .filter((s) => {
-          if (s.isCancelled) return false;
-          if (s.capacity > 0 && s.registered >= s.capacity) return false;
-          return true;
-        })
-        .map((s) => {
-          let score = getRmpScore(s, rmpCache);
-          // Penalize closed-registration sections (reserved/restricted)
-          if (s.isClosed) score -= 0.5;
-          return { section: s, slots: parseSectionTimes(s.times), score };
-        })
+        .filter((s) => isSectionUsable(s, { excludeFull: true, hideDClearance: false }))
+        .map((s) => ({
+          section: s,
+          slots: parseSectionTimes(s.times),
+          score: rmpScore(s, rmpCache),
+        }))
         .sort((a, b) => b.score - a.score), // highest rated first
     };
   });

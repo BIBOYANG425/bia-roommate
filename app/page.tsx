@@ -34,6 +34,7 @@ function ArrowIcon() {
 export default function LandingPage() {
   const [time, setTime] = useState("");
   const { language: lang, setLanguage: setLang } = useLanguage();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const updateTime = () =>
@@ -65,6 +66,7 @@ export default function LandingPage() {
             backgroundOpacity={0.45}
             className="text-white w-full max-w-4xl pointer-events-auto shadow-2xl transition-all duration-300"
           >
+            <div className="w-full flex flex-col">
             <nav className="w-full py-3 px-6 flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <Link href="/" className="flex items-center gap-2">
@@ -81,10 +83,10 @@ export default function LandingPage() {
                   </span>
                 </Link>
                 <div className="hidden sm:flex gap-4 text-sm text-gray-200 items-center">
-                  <Link href="/about" className="link-hover py-3 px-1">
+                  <Link href="/#mission" className="link-hover py-3 px-1">
                     {t.nav.about[lang]}
                   </Link>
-                  <Link href="/events" className="link-hover py-3 px-1">
+                  <Link href="/hackathon" className="link-hover py-3 px-1">
                     {t.nav.events[lang]}
                   </Link>
                   <Link
@@ -128,8 +130,64 @@ export default function LandingPage() {
                 >
                   {t.nav.joinUs[lang]}
                 </Link>
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  aria-label="Menu"
+                  aria-expanded={menuOpen}
+                  className="sm:hidden flex items-center justify-center border border-white/20 rounded-lg text-white/90 min-h-[44px] min-w-[44px] text-xl leading-none"
+                >
+                  {menuOpen ? "✕" : "☰"}
+                </button>
               </div>
             </nav>
+            {menuOpen && (
+              <div className="sm:hidden flex flex-col px-6 pb-4 text-sm text-gray-200">
+                <Link
+                  href="/#mission"
+                  className="py-3 border-b border-white/10"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t.nav.about[lang]}
+                </Link>
+                <Link
+                  href="/hackathon"
+                  className="py-3 border-b border-white/10"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t.nav.events[lang]}
+                </Link>
+                <Link
+                  href="/roommates"
+                  className="py-3 border-b border-white/10"
+                  style={{ fontFamily: "var(--font-display-zh)" }}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t.nav.freshmanServices[lang]}
+                </Link>
+                <Link
+                  href="/blog"
+                  className="py-3 border-b border-white/10"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t.nav.blog[lang]}
+                </Link>
+                <Link
+                  href="/george"
+                  className="py-3 border-b border-white/10"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t.nav.george[lang]}{" "}
+                  <span aria-hidden>👻</span>
+                </Link>
+                <button
+                  onClick={() => setLang(lang === "en" ? "zh" : "en")}
+                  className="py-3 text-left text-white/80"
+                >
+                  {lang === "en" ? "中文" : "EN"}
+                </button>
+              </div>
+            )}
+            </div>
           </GlassSurface>
         </div>
 
@@ -237,7 +295,7 @@ export default function LandingPage() {
           {/* ─── Mission Section ─── */}
           <section
             id="mission"
-            className="py-24 sm:py-32 px-6 sm:px-16 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative"
+            className="scroll-mt-24 py-24 sm:py-32 px-6 sm:px-16 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative"
           >
             <div className="w-full md:w-1/2 rounded-3xl overflow-hidden aspect-square md:aspect-[4/3] bg-[#1F1F29] shadow-xl border border-black/5 relative group">
               <Image
@@ -487,13 +545,13 @@ export default function LandingPage() {
                   {t.footer.home[lang]}
                 </Link>
                 <Link
-                  href="/about"
+                  href="/#mission"
                   className="hover:text-[#A0D7D1] transition-colors link-hover py-2"
                 >
                   {t.nav.about[lang]}
                 </Link>
                 <Link
-                  href="/events"
+                  href="/hackathon"
                   className="hover:text-[#A0D7D1] transition-colors link-hover py-2"
                 >
                   {t.nav.events[lang]}
@@ -507,13 +565,18 @@ export default function LandingPage() {
                 </Link>
               </div>
               <div className="flex gap-6">
-                {["Insta", "X", "LinkedIn", "Discord"].map((social) => (
+                {[
+                  { label: "Insta", href: "https://www.instagram.com/bia_usc/" },
+                  { label: "小红书", href: "https://xhslink.com/m/2t4EzpZAKAc" },
+                ].map((social) => (
                   <a
-                    key={social}
-                    href="#"
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm font-medium opacity-80 hover:opacity-100 hover:text-[#A0D7D1] transition-colors link-hover py-2 px-1 min-w-[44px] text-center"
                   >
-                    {social}
+                    {social.label}
                   </a>
                 ))}
               </div>

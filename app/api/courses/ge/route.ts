@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { GE_MAP } from "@/lib/course-planner/ge-map";
+import { SEAT_REVALIDATE_SECONDS } from "@/lib/course-planner/cache-config";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
       ? `https://classes.usc.edu/api/Courses/CoursesByDepartment?termCode=${semester}&departmentPrefix=GESM`
       : `https://classes.usc.edu/api/Courses/GeCoursesByTerm?termCode=${semester}&geRequirementPrefix=${requirementPrefix}&categoryPrefix=${categoryPrefix}`;
 
-    const res = await fetch(apiUrl, { next: { revalidate: 3600 } });
+    const res = await fetch(apiUrl, { next: { revalidate: SEAT_REVALIDATE_SECONDS } });
 
     if (!res.ok) {
       return Response.json({ error: "USC API error" }, { status: res.status });
@@ -102,17 +103,22 @@ export async function GET(request: NextRequest) {
       })
       .map((c: any) => ({
         ...c,
-        sections: c.sections.filter((s: any) => !s.isCancelled && !s.isClosed),
+        // Keep full and closed-registration sections — the schedule generator
+        // (excludeFull pref) and the UI (CLOSED REG / FULL badges) handle them.
+        // Stripping !isClosed here orphaned lecture/discussion pairs (a full
+        // lecture vanished, leaving the discussion) and hid closed-registration
+        // sections (e.g. GESM seminars) entirely.
+        sections: c.sections.filter((s: any) => !s.isCancelled),
       }))
       .filter((c: any) => {
-        // Only include courses that have at least one open section with actual times
+        // Only include courses that have at least one section with actual times
         return c.sections.some((s: any) =>
           s.times.some((t: any) => t.start_time && t.day !== "TBA"),
         );
       });
 
     return Response.json(transformed, {
-      headers: { "Cache-Control": "public, s-maxage=3600" },
+      headers: { "Cache-Control": `public, s-maxage=${SEAT_REVALIDATE_SECONDS}` },
     });
   } catch {
     return Response.json({ error: "Network error" }, { status: 502 });

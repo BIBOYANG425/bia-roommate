@@ -5,6 +5,12 @@ import type { SchedulePrefs } from "@/app/course-planner/page";
 import type { Course, Section, RmpRating } from "@/lib/course-planner/types";
 import { parseSectionTimes, formatTime } from "@/lib/course-planner/conflicts";
 import { COURSE_COLORS } from "@/lib/course-planner/colors";
+import {
+  classifySection,
+  isSectionUsable,
+  rmpScore,
+  comboIsUsable,
+} from "@/lib/course-planner/rules";
 import { useAuth } from "@/components/AuthProvider";
 import AuthModal from "@/components/AuthModal";
 import ResultCalendar from "./ResultCalendar";
@@ -188,10 +194,7 @@ export default function ResultsView({
       setProgress(70);
 
       // 3. Generate schedule combinations using backtracking
-      const getRating = (sec: Section): number => {
-        const key = `${sec.instructor?.lastName}, ${sec.instructor?.firstName}`;
-        return rmpCache[key]?.avgRating ?? 2.5;
-      };
+      const getRating = (sec: Section): number => rmpScore(sec, rmpCache);
 
       // Parse time preference filters
       const earliestMin = prefs.earliestClass
@@ -216,12 +219,17 @@ export default function ResultsView({
       };
 
       function buildCombos(course: Course, _geTag?: string): SectionCombo[] {
-        let allActive = (course.sections || []).filter((s) => !s.isCancelled);
-
-        // Filter out D-clearance sections if preference is set
-        if (prefs.hideDClearance) {
-          allActive = allActive.filter((s) => !s.hasDClearance);
-        }
+        // Keep full sections here so lecture/discussion type detection is correct
+        // (a full lecture must still count as the "primary" type). excludeFull is
+        // applied per-combo below via comboIsUsable, so a full lecture drops the
+        // whole course instead of orphaning its discussion. Only drop cancelled +
+        // (optionally) D-clearance at this stage.
+        const allActive = (course.sections || []).filter((s) =>
+          isSectionUsable(s, {
+            excludeFull: false,
+            hideDClearance: prefs.hideDClearance,
+          }),
+        );
 
         // Group by type
         const byType: Record<string, Section[]> = {};
@@ -253,7 +261,11 @@ export default function ResultsView({
                 rating: getRating(sec),
               };
             })
-            .filter((c) => c.allSlots.length > 0);
+            .filter(
+              (c) =>
+                c.allSlots.length > 0 &&
+                comboIsUsable(c.sections, prefs.excludeFull),
+            );
         }
 
         // Build combos: for each primary, find compatible secondaries
@@ -339,7 +351,10 @@ export default function ResultsView({
           generateCombos(0, [], primarySlots);
         }
 
-        return combos;
+        // excludeFull is applied per-combo: a lecture+discussion combo is dropped
+        // if any of its sections is full, so a full lecture removes the whole
+        // course rather than leaving an orphan discussion.
+        return combos.filter((c) => comboIsUsable(c.sections, prefs.excludeFull));
       }
 
       // Group courses by the original selection and build combos
@@ -446,6 +461,16 @@ export default function ResultsView({
             (s) => s.startMin >= earliestMin && s.endMin <= doneByMin,
           );
           if (!meetsPrefs && (prefs.earliestClass || prefs.doneBy)) continue;
+
+          // Blocked-days: skip any combo meeting on a day the user blocked.
+          if (
+            prefs.blockedDays.length > 0 &&
+            combo.allSlots.some((s) =>
+              (prefs.blockedDays as string[]).includes(s.day),
+            )
+          ) {
+            continue;
+          }
 
           // Check conflicts with already-selected sections
           const hasConflict = combo.allSlots.some((newSlot) =>
@@ -904,14 +929,14 @@ export default function ResultsView({
                   {/* Schedule */}
                   <p className="text-sm mb-2" style={{ color: "var(--mid)" }}>
                     {timeDisplay} |{" "}
-                    {s.section.isCancelled
-                      ? "CANCELLED"
-                      : s.section.capacity > 0 &&
-                          s.section.registered >= s.section.capacity
-                        ? "FULL"
-                        : s.section.isClosed
-                          ? `CLOSED REG · ${s.section.registered}/${s.section.capacity} seats`
-                          : `${s.section.registered}/${s.section.capacity} seats`}
+                    {(() => {
+                      const st = classifySection(s.section);
+                      if (st === "cancelled") return "CANCELLED";
+                      if (st === "full") return "FULL";
+                      if (st === "closed-reg")
+                        return `CLOSED REG · ${s.section.registered}/${s.section.capacity} seats`;
+                      return `${s.section.registered}/${s.section.capacity} seats`;
+                    })()}
                   </p>
 
                   {/* Instructor + RMP */}

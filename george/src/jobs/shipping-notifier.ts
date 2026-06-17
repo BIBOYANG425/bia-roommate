@@ -1,5 +1,6 @@
 import {
   getPendingShippingNotifications,
+  markStaleNotificationsSkipped,
   markShippingNotificationSent,
   markShippingNotificationSkipped,
   markShippingNotificationFailed,
@@ -33,6 +34,14 @@ export function messageForKind(kind: string): string | null {
 //                          └─(no copy/student/id)──► mark 'skipped'
 //                          └─(send throws)─────────► mark 'failed'(error)
 export async function sendPendingShippingNotifications() {
+  // Triage first: pending rows scheduled >24h ago are stale (backlog built up
+  // while the notifier was disabled or down) — mark them 'skipped' instead of
+  // blasting outdated status updates at students, and log how many.
+  const staleCount = await markStaleNotificationsSkipped()
+  if (staleCount > 0) {
+    log('warn', 'shipping_notifications_stale_skipped', { count: staleCount })
+  }
+
   const pending = await getPendingShippingNotifications()
   if (pending.length === 0) return
 

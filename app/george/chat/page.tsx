@@ -103,7 +103,7 @@ export default function GeorgeChatPage() {
         <Link href="/george" className="gc-back">&larr; Back to George</Link>
         <div className="gc-title-row">
           <h1 className="font-display gc-title">GEORGE</h1>
-          <span className="gc-subtitle">DEV TEST CONSOLE</span>
+          <span className="gc-subtitle">BETA PREVIEW</span>
         </div>
         <div className="gc-divider" />
       </div>
@@ -165,9 +165,8 @@ export default function GeorgeChatPage() {
 
       {/* Footer */}
       <div className="gc-footer">
-        <span>Model: Claude Sonnet 4.6</span>
-        <span>Personality: Ghost Dog ENTP</span>
-        <span>API: /api/george/chat</span>
+        <span>George Tirebiter · A BIA Project</span>
+        <span>est. 1940s · USC</span>
       </div>
     </div>
   )

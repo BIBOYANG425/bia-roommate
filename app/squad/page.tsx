@@ -9,6 +9,8 @@ import SquadModal from "@/components/squad/SquadModal";
 import SkeletonCard from "@/components/SkeletonCard";
 import Toast from "@/components/Toast";
 import ProductShell from "@/components/ProductShell";
+import ForYouSection, { ForYouItem } from "@/components/squad/ForYouSection";
+import MyActivity from "@/components/squad/MyActivity";
 
 const ALL_CATS = ["全部", ...SQUAD_CATEGORIES] as const;
 
@@ -47,10 +49,15 @@ function SquadContent() {
   const [error, setError] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [selected, setSelected] = useState<SquadPost | null>(null);
+  const [view, setView] = useState<"discover" | "mine">("discover");
 
   const [cat, setCat] = useState<string>("全部");
   const [genderFilter, setGenderFilter] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "deadline">("newest");
+
+  const [forYou, setForYou] = useState<{ post_id: string; rank: number; reason: string | null }[] | null>(null);
+  const [forYouLoading, setForYouLoading] = useState(true);
+  const [forYouUnavailable, setForYouUnavailable] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("posted") === "true") {
@@ -74,9 +81,35 @@ function SquadContent() {
     }
   }, []);
 
+  const fetchForYou = useCallback(async () => {
+    setForYouLoading(true);
+    try {
+      const res = await fetch("/api/squad/foryou");
+      if (res.status === 401) { setForYou(null); return; }
+      if (!res.ok) { setForYou(null); setForYouUnavailable(true); return; }
+      setForYou(await res.json());
+    } catch {
+      setForYou(null); setForYouUnavailable(true);
+    } finally {
+      setForYouLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  useEffect(() => {
+    fetchForYou();
+  }, [fetchForYou]);
+
+  const forYouItems: ForYouItem[] = (forYou ?? [])
+    .map(({ post_id, rank, reason }) => {
+      const post = posts.find((p) => p.id === post_id);
+      return post ? { post, rank, reason } : null;
+    })
+    .filter((x): x is ForYouItem => x !== null)
+    .slice(0, 6);
 
   const filtered = posts
     .filter((p) => {
@@ -97,6 +130,22 @@ function SquadContent() {
 
   return (
     <div className="min-h-screen">
+      <div className="max-w-6xl mx-auto px-6 pt-6 flex gap-0">
+        {(["discover", "mine"] as const).map((v) => (
+          <button
+            key={v}
+            onClick={() => setView(v)}
+            className="font-display text-sm tracking-[0.08em] px-5 py-3 border-[3px] border-[var(--black)] -mr-[3px] transition-colors"
+            style={{ background: view === v ? "var(--black)" : "var(--cream)", color: view === v ? "white" : "var(--mid)" }}
+          >
+            {v === "discover" ? "发现" : "我的"}
+          </button>
+        ))}
+      </div>
+      {view === "mine" ? (
+        <section className="max-w-6xl mx-auto px-6 py-10"><MyActivity /></section>
+      ) : (
+      <>
       {showToast && (
         <Toast
           message="SQUAD POST DROPPED"
@@ -149,6 +198,22 @@ function SquadContent() {
             POST SQUAD →
           </Link>
         </div>
+      </section>
+
+      {/* For You section */}
+      <section className="max-w-6xl mx-auto px-6 pt-8">
+        {(forYou !== null || forYouLoading) && (
+          <ForYouSection
+            items={forYouItems}
+            loading={forYouLoading || loading}
+            onSelect={setSelected}
+          />
+        )}
+        {forYouUnavailable && (
+          <p className="mb-6 text-[11px] uppercase tracking-wider" style={{ color: "var(--mid)" }}>
+            推荐暂时不可用 — 按最新排序
+          </p>
+        )}
       </section>
 
       {/* Browse */}
@@ -305,6 +370,15 @@ function SquadContent() {
         </p>
       </footer>
 
+      {/* Mobile FAB — sits above the fixed bottom nav (bottom-20 = 80px) */}
+      <Link
+        href="/squad/submit"
+        aria-label="发布找搭子"
+        className="sm:hidden fixed bottom-20 right-4 z-40 brutal-btn brutal-btn-primary !px-5 !py-3 min-h-[44px] min-w-[44px]"
+      >
+        发布 +
+      </Link>
+
       {selected && (
         <SquadModal
           post={selected}
@@ -322,6 +396,8 @@ function SquadContent() {
             );
           }}
         />
+      )}
+      </>
       )}
     </div>
   );
