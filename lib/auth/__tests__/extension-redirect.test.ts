@@ -22,6 +22,20 @@ describe("isValidExtensionRedirect", () => {
     expect(isValidExtensionRedirect(null, extId)).toBe(false);
     expect(isValidExtensionRedirect(`https://${extId}.chromiumapp.org/`, undefined)).toBe(false);
   });
+  it("rejects suffix-attack hostnames", () => {
+    expect(isValidExtensionRedirect(`https://${extId}.chromiumapp.org.evil.com/`, extId)).toBe(false);
+  });
+  it("rejects userinfo-confusion authority (real host is after @)", () => {
+    expect(isValidExtensionRedirect(`https://${extId}.chromiumapp.org@evil.com/`, extId)).toBe(false);
+  });
+  it("rejects path/query that merely contain the chromiumapp host", () => {
+    expect(isValidExtensionRedirect(`https://evil.com/${extId}.chromiumapp.org`, extId)).toBe(false);
+    expect(isValidExtensionRedirect(`https://evil.com/?r=https://${extId}.chromiumapp.org`, extId)).toBe(false);
+  });
+  it("rejects prefix/suffix variations on the host label", () => {
+    expect(isValidExtensionRedirect(`https://x${extId}.chromiumapp.org/`, extId)).toBe(false);
+    expect(isValidExtensionRedirect(`https://${extId}.chromiumapp.orgx/`, extId)).toBe(false);
+  });
 });
 
 describe("buildExtensionRedirectUrl", () => {
