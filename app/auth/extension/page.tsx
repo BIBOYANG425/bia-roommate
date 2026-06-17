@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import type { Session } from "@supabase/supabase-js";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -30,7 +31,7 @@ function ExtensionAuthInner() {
     let cancelled = false;
     createBrowserSupabaseClient()
       .auth.getSession()
-      .then(({ data: { session } }) => {
+      .then(({ data: { session } }: { data: { session: Session | null } }) => {
         if (cancelled || !session) return;
         window.location.href = buildExtensionRedirectUrl(redirectUri, {
           access_token: session.access_token,

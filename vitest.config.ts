@@ -9,18 +9,14 @@ const ignoredSupabase = path.resolve(
   __dirname,
   "node_modules/.ignored/@supabase/supabase-js/dist/index.mjs",
 );
-const localAlias = existsSync(ignoredSupabase)
-  ? { "@supabase/supabase-js": ignoredSupabase }
-  : {};
+const alias: Record<string, string> = { "@": path.resolve(__dirname, ".") };
+if (existsSync(ignoredSupabase)) {
+  alias["@supabase/supabase-js"] = ignoredSupabase;
+}
 
 export default defineConfig({
   test: {
     include: ["**/__tests__/**/*.test.ts", "app/**/*.test.ts", "lib/**/*.test.ts"],
   },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "."),
-      ...localAlias,
-    },
-  },
+  resolve: { alias },
 });
