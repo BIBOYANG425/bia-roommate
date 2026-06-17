@@ -16,7 +16,6 @@
 import { NextResponse } from "next/server";
 import type { z } from "zod";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { resolveAuth } from "@/lib/api/resolve-auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin";
