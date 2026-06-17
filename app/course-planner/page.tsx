@@ -20,7 +20,7 @@ import AgentChat from "@/components/course-planner/AgentChat";
 export interface SchedulePrefs {
   earliestClass: string;
   doneBy: string;
-  preferBackToBack: boolean;
+  excludeFull: boolean;
   hideDClearance: boolean;
   hideGraduate: boolean;
   hideThematicOption: boolean;
@@ -38,7 +38,7 @@ function PlannerContent() {
   const [prefs, setPrefs] = useState<SchedulePrefs>({
     earliestClass: "",
     doneBy: "",
-    preferBackToBack: false,
+    excludeFull: true,
     hideDClearance: false,
     hideGraduate: false,
     hideThematicOption: false,

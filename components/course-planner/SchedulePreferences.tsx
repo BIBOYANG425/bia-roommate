@@ -94,14 +94,14 @@ export default function SchedulePreferences({
         <label className="flex items-center gap-2 cursor-pointer mt-4 sm:mt-0">
           <input
             type="checkbox"
-            checked={prefs.preferBackToBack}
+            checked={prefs.excludeFull}
             onChange={(e) =>
-              onChange({ ...prefs, preferBackToBack: e.target.checked })
+              onChange({ ...prefs, excludeFull: e.target.checked })
             }
             className="w-4 h-4 accent-(--cardinal)"
           />
           <span className="text-sm" style={{ color: "var(--black)" }}>
-            Prefer back-to-back classes
+            Only schedules with open seats
           </span>
         </label>
       </div>
