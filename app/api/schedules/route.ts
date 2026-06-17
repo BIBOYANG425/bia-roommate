@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authedHandler } from "@/lib/api/authed-handler";
 import { scheduleCreateSchema } from "@/lib/schemas/schedules";
+import { handleOptions } from "@/lib/cors";
 
 export const POST = authedHandler({
   schema: scheduleCreateSchema,
@@ -64,3 +65,7 @@ export const GET = authedHandler({
     return NextResponse.json(data);
   },
 });
+
+export function OPTIONS(request: Request) {
+  return handleOptions(request) ?? new Response(null, { status: 204 });
+}
