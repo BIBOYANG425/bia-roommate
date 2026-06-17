@@ -5,6 +5,7 @@ import type { SchedulePrefs } from "@/app/course-planner/page";
 import type { Course, Section, RmpRating } from "@/lib/course-planner/types";
 import { parseSectionTimes, formatTime } from "@/lib/course-planner/conflicts";
 import { COURSE_COLORS } from "@/lib/course-planner/colors";
+import { classifySection, isSectionUsable, rmpScore } from "@/lib/course-planner/rules";
 import { useAuth } from "@/components/AuthProvider";
 import AuthModal from "@/components/AuthModal";
 import ResultCalendar from "./ResultCalendar";
@@ -188,10 +189,7 @@ export default function ResultsView({
       setProgress(70);
 
       // 3. Generate schedule combinations using backtracking
-      const getRating = (sec: Section): number => {
-        const key = `${sec.instructor?.lastName}, ${sec.instructor?.firstName}`;
-        return rmpCache[key]?.avgRating ?? 2.5;
-      };
+      const getRating = (sec: Section): number => rmpScore(sec, rmpCache);
 
       // Parse time preference filters
       const earliestMin = prefs.earliestClass
@@ -216,12 +214,14 @@ export default function ResultsView({
       };
 
       function buildCombos(course: Course, _geTag?: string): SectionCombo[] {
-        let allActive = (course.sections || []).filter((s) => !s.isCancelled);
-
-        // Filter out D-clearance sections if preference is set
-        if (prefs.hideDClearance) {
-          allActive = allActive.filter((s) => !s.hasDClearance);
-        }
+        // Apply section usability rules: always drop cancelled; drop full when the
+        // excludeFull preference is on; keep closed-registration; honor hideDClearance.
+        const allActive = (course.sections || []).filter((s) =>
+          isSectionUsable(s, {
+            excludeFull: prefs.excludeFull,
+            hideDClearance: prefs.hideDClearance,
+          }),
+        );
 
         // Group by type
         const byType: Record<string, Section[]> = {};
@@ -904,14 +904,14 @@ export default function ResultsView({
                   {/* Schedule */}
                   <p className="text-sm mb-2" style={{ color: "var(--mid)" }}>
                     {timeDisplay} |{" "}
-                    {s.section.isCancelled
-                      ? "CANCELLED"
-                      : s.section.capacity > 0 &&
-                          s.section.registered >= s.section.capacity
-                        ? "FULL"
-                        : s.section.isClosed
-                          ? `CLOSED REG · ${s.section.registered}/${s.section.capacity} seats`
-                          : `${s.section.registered}/${s.section.capacity} seats`}
+                    {(() => {
+                      const st = classifySection(s.section);
+                      if (st === "cancelled") return "CANCELLED";
+                      if (st === "full") return "FULL";
+                      if (st === "closed-reg")
+                        return `CLOSED REG · ${s.section.registered}/${s.section.capacity} seats`;
+                      return `${s.section.registered}/${s.section.capacity} seats`;
+                    })()}
                   </p>
 
                   {/* Instructor + RMP */}
