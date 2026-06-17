@@ -6,6 +6,7 @@ import {
   findConflicts,
 } from "@/lib/course-planner/conflicts";
 import { getNextColorIndex } from "@/lib/course-planner/colors";
+import { classifySection } from "@/lib/course-planner/rules";
 import type { Section, SelectedSection } from "@/lib/course-planner/types";
 import SectionRow from "./SectionRow";
 
@@ -28,7 +29,8 @@ export default function CourseDetail() {
   // sections visible — they may still be reachable via d-clearance or waitlist.
   const groups: Record<string, Section[]> = {};
   for (const sec of course.sections || []) {
-    if (sec.capacity > 0 && sec.registered >= sec.capacity && !sec.isCancelled) {
+    // Hide truly-full sections; keep closed-registration and cancelled visible.
+    if (classifySection(sec) === "full") {
       continue;
     }
     const type = sec.type || "Other";

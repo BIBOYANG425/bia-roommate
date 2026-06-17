@@ -2,6 +2,7 @@
 
 import type { Section } from "@/lib/course-planner/types";
 import { formatTime, formatDays } from "@/lib/course-planner/conflicts";
+import { classifySection } from "@/lib/course-planner/rules";
 import RmpBadge from "./RmpBadge";
 
 interface SectionRowProps {
@@ -21,11 +22,11 @@ export default function SectionRow({
 }: SectionRowProps) {
   const time = section.times[0];
   const isTBA = !time || !time.start_time || time.day?.toUpperCase() === "TBA";
-  const isFull =
-    section.capacity > 0 && section.registered >= section.capacity;
-  // "Closed registration" — admin-closed but seats may remain (d-clearance,
-  // waitlist, etc.). When a section is both closed and full, show FULL.
-  const isClosedReg = section.isClosed && !isFull && !section.isCancelled;
+  // Single source of truth: a closed-registration section is NOT full even when
+  // it looks like it (seats may remain via d-clearance / waitlist).
+  const status = classifySection(section);
+  const isFull = status === "full";
+  const isClosedReg = status === "closed-reg";
   const dim = section.isCancelled || isFull || isClosedReg;
 
   return (
