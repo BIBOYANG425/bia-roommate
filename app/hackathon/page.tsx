@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import ComingSoon from "@/components/ComingSoon";
+import { isComingSoon } from "@/lib/features";
 
 export const metadata: Metadata = {
   title: "BIA Hackathon Review — Build with Trae × MiniMax",
@@ -98,6 +100,17 @@ function BackArrow() {
 }
 
 export default function HackathonPage() {
+  if (isComingSoon("hackathon")) {
+    return (
+      <ComingSoon
+        name={{ en: "BIA Hackathon", zh: "BIA 黑客松" }}
+        tagline={{
+          en: "Our first hackathon was a blast. The next edition is in the works — stay tuned.",
+          zh: "首届黑客松圆满落幕，下一届正在筹备，敬请期待。",
+        }}
+      />
+    );
+  }
   return (
     <div className="min-h-screen bg-[#0d1117] text-[#e6edf3]">
       {/* ─── Top Nav Bar (outside main for a11y) ─── */}
