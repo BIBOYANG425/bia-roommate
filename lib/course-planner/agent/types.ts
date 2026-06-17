@@ -198,7 +198,32 @@ export function validateInterpretedQuery(raw: unknown): InterpretedQuery {
     );
   }
 
-  return InterpretedQuerySchema.parse(raw) as InterpretedQuery;
+  // Graceful degrade: open-ended requests make the LLM emit more chips /
+  // questions than the schema caps allow. Clamp to the limits instead of
+  // letting strict .parse() throw "Too big" and crash the whole request.
+  const clamped = clampClarifyingQuestions(raw);
+
+  return InterpretedQuerySchema.parse(clamped) as InterpretedQuery;
+}
+
+const MAX_CLARIFYING_QUESTIONS = 2;
+const MAX_CHIPS = 8;
+
+/** Truncate clarifyingQuestions (≤2) and each question's chips (≤8) to the
+ *  schema caps so an over-generous LLM response degrades instead of failing. */
+function clampClarifyingQuestions(raw: unknown): unknown {
+  const obj = raw as Record<string, unknown> | null | undefined;
+  if (!obj || !Array.isArray(obj.clarifyingQuestions)) return raw;
+
+  const clampedQuestions = obj.clarifyingQuestions
+    .slice(0, MAX_CLARIFYING_QUESTIONS)
+    .map((q) => {
+      const question = q as Record<string, unknown>;
+      if (!Array.isArray(question.chips)) return question;
+      return { ...question, chips: question.chips.slice(0, MAX_CHIPS) };
+    });
+
+  return { ...obj, clarifyingQuestions: clampedQuestions };
 }
 
 // ─── Research Layer Types ───
