@@ -39,6 +39,9 @@ describe("classifySection", () => {
   it("prefers full over closed-reg when a section is both full and closed", () => {
     expect(classifySection(makeSection({ isClosed: true, registered: 30, capacity: 30 }))).toBe("full");
   });
+  it("treats capacity 0 as not-full (unlisted/restricted convention)", () => {
+    expect(classifySection(makeSection({ registered: 0, capacity: 0 }))).toBe("open");
+  });
 });
 
 describe("isSectionUsable", () => {
@@ -62,6 +65,10 @@ describe("isSectionUsable", () => {
     expect(isSectionUsable(dclr, { excludeFull: false, hideDClearance: true })).toBe(false);
     expect(isSectionUsable(dclr, { excludeFull: false, hideDClearance: false })).toBe(true);
   });
+  it("drops a cancelled section even when it is also D-clearance and hideDClearance is on", () => {
+    const both = makeSection({ isCancelled: true, hasDClearance: true });
+    expect(isSectionUsable(both, { excludeFull: false, hideDClearance: true })).toBe(false);
+  });
 });
 
 describe("sectionHitsBlockedDay", () => {
@@ -74,6 +81,15 @@ describe("sectionHitsBlockedDay", () => {
   it("returns false when the section meets on no blocked day", () => {
     const tth = makeSection({ times: [{ day: "TH", start_time: "14:00", end_time: "15:50", location: "" }] });
     expect(sectionHitsBlockedDay(tth, ["Mon", "Wed", "Fri"])).toBe(false);
+  });
+  it("detects a blocked day on a later meeting of a multi-meeting section", () => {
+    const multi = makeSection({
+      times: [
+        { day: "T", start_time: "09:00", end_time: "10:50", location: "" },
+        { day: "F", start_time: "09:00", end_time: "09:50", location: "" },
+      ],
+    });
+    expect(sectionHitsBlockedDay(multi, ["Fri"])).toBe(true);
   });
 });
 
@@ -88,6 +104,12 @@ describe("withinTimeWindow", () => {
   it("returns false when a slot ends after doneBy", () => {
     expect(withinTimeWindow(slots, 540, 640)).toBe(false);
   });
+  it("returns true for an empty slots array (TBA / async sections)", () => {
+    expect(withinTimeWindow([], 540, 1080)).toBe(true);
+  });
+  it("treats the window bounds as inclusive at the exact boundary", () => {
+    expect(withinTimeWindow([{ day: "Mon", startMin: 600, endMin: 650 }], 600, 650)).toBe(true);
+  });
 });
 
 describe("rmpScore", () => {
@@ -101,7 +123,12 @@ describe("rmpScore", () => {
     expect(rmpScore(makeSection({ instructor: { firstName: "No", lastName: "Body" } }), cache)).toBe(2.5);
   });
   it("penalizes closed-registration sections by 0.5", () => {
-    const closed = makeSection({ isClosed: true, registered: 5, capacity: 30 });
+    const closed = makeSection({
+      isClosed: true,
+      registered: 5,
+      capacity: 30,
+      instructor: { firstName: "Jane", lastName: "Doe" },
+    });
     expect(rmpScore(closed, cache)).toBeCloseTo(3.7);
   });
 });

@@ -17,6 +17,8 @@ export type SectionStatus = "cancelled" | "full" | "closed-reg" | "open";
  */
 export function classifySection(s: Section): SectionStatus {
   if (s.isCancelled) return "cancelled";
+  // capacity === 0 means unlisted/restricted (not full) per the app's existing
+  // convention in SectionRow and the optimizer, so the guard treats it as not-full.
   if (s.capacity > 0 && s.registered >= s.capacity) return "full";
   if (s.isClosed) return "closed-reg";
   return "open";
@@ -46,7 +48,13 @@ export function sectionHitsBlockedDay(s: Section, blockedDays: DayOfWeek[]): boo
   return parseSectionTimes(s.times).some((slot) => blockedDays.includes(slot.day));
 }
 
-/** True if every slot starts no earlier than earliestMin and ends no later than doneByMin. */
+/**
+ * True if every slot starts no earlier than earliestMin and ends no later than
+ * doneByMin (inclusive bounds). Expects pre-parsed `TimeSlot[]` — the caller runs
+ * `parseSectionTimes(s.times)` first. An empty slots array (TBA / async sections
+ * with no meeting time) intentionally returns true: such sections have no meeting
+ * to constrain, so an earliest / done-by window never excludes them.
+ */
 export function withinTimeWindow(slots: TimeSlot[], earliestMin: number, doneByMin: number): boolean {
   return slots.every((s) => s.startMin >= earliestMin && s.endMin <= doneByMin);
 }
