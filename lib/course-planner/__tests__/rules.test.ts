@@ -5,6 +5,7 @@ import {
   sectionHitsBlockedDay,
   withinTimeWindow,
   rmpScore,
+  comboIsUsable,
 } from "../rules";
 import type { Section, RmpRating, TimeSlot } from "../types";
 
@@ -130,5 +131,38 @@ describe("rmpScore", () => {
       instructor: { firstName: "Jane", lastName: "Doe" },
     });
     expect(rmpScore(closed, cache)).toBeCloseTo(3.7);
+  });
+});
+
+describe("comboIsUsable", () => {
+  const openLecture = makeSection({ id: "L", registered: 10, capacity: 30 });
+  const fullLecture = makeSection({ id: "L", registered: 30, capacity: 30 });
+  const openDiscussion = makeSection({
+    id: "D",
+    type: "Discussion",
+    registered: 5,
+    capacity: 25,
+  });
+  const closedRegLecture = makeSection({
+    id: "L",
+    isClosed: true,
+    registered: 5,
+    capacity: 30,
+  });
+
+  it("keeps an all-open combo when excludeFull is on", () => {
+    expect(comboIsUsable([openLecture, openDiscussion], true)).toBe(true);
+  });
+
+  it("rejects a combo containing a full lecture when excludeFull is on (no orphan discussion)", () => {
+    expect(comboIsUsable([fullLecture, openDiscussion], true)).toBe(false);
+  });
+
+  it("keeps a combo with a full section when excludeFull is off", () => {
+    expect(comboIsUsable([fullLecture, openDiscussion], false)).toBe(true);
+  });
+
+  it("keeps a closed-registration combo when excludeFull is on", () => {
+    expect(comboIsUsable([closedRegLecture], true)).toBe(true);
   });
 });

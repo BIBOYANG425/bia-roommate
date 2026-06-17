@@ -5,7 +5,12 @@ import type { SchedulePrefs } from "@/app/course-planner/page";
 import type { Course, Section, RmpRating } from "@/lib/course-planner/types";
 import { parseSectionTimes, formatTime } from "@/lib/course-planner/conflicts";
 import { COURSE_COLORS } from "@/lib/course-planner/colors";
-import { classifySection, isSectionUsable, rmpScore } from "@/lib/course-planner/rules";
+import {
+  classifySection,
+  isSectionUsable,
+  rmpScore,
+  comboIsUsable,
+} from "@/lib/course-planner/rules";
 import { useAuth } from "@/components/AuthProvider";
 import AuthModal from "@/components/AuthModal";
 import ResultCalendar from "./ResultCalendar";
@@ -214,11 +219,14 @@ export default function ResultsView({
       };
 
       function buildCombos(course: Course, _geTag?: string): SectionCombo[] {
-        // Apply section usability rules: always drop cancelled; drop full when the
-        // excludeFull preference is on; keep closed-registration; honor hideDClearance.
+        // Keep full sections here so lecture/discussion type detection is correct
+        // (a full lecture must still count as the "primary" type). excludeFull is
+        // applied per-combo below via comboIsUsable, so a full lecture drops the
+        // whole course instead of orphaning its discussion. Only drop cancelled +
+        // (optionally) D-clearance at this stage.
         const allActive = (course.sections || []).filter((s) =>
           isSectionUsable(s, {
-            excludeFull: prefs.excludeFull,
+            excludeFull: false,
             hideDClearance: prefs.hideDClearance,
           }),
         );
@@ -253,7 +261,11 @@ export default function ResultsView({
                 rating: getRating(sec),
               };
             })
-            .filter((c) => c.allSlots.length > 0);
+            .filter(
+              (c) =>
+                c.allSlots.length > 0 &&
+                comboIsUsable(c.sections, prefs.excludeFull),
+            );
         }
 
         // Build combos: for each primary, find compatible secondaries
@@ -339,7 +351,10 @@ export default function ResultsView({
           generateCombos(0, [], primarySlots);
         }
 
-        return combos;
+        // excludeFull is applied per-combo: a lecture+discussion combo is dropped
+        // if any of its sections is full, so a full lecture removes the whole
+        // course rather than leaving an orphan discussion.
+        return combos.filter((c) => comboIsUsable(c.sections, prefs.excludeFull));
       }
 
       // Group courses by the original selection and build combos

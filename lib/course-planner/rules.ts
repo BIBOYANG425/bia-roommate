@@ -70,3 +70,17 @@ export function rmpScore(s: Section, rmpCache: Record<string, RmpRating | null>)
   if (classifySection(s) === "closed-reg") score -= 0.5;
   return score;
 }
+
+/**
+ * Whether a combo — a group of sections that must be taken together (e.g. a
+ * lecture plus its required discussion/lab) — can appear in a generated schedule.
+ * When excludeFull is on, the whole combo is unusable if ANY of its sections is
+ * full, so a course whose only lecture is full is dropped entirely instead of
+ * surfacing an orphaned discussion. Closed-registration sections are kept.
+ * Apply this AFTER lecture/discussion type detection so a full lecture never
+ * promotes a discussion to "primary".
+ */
+export function comboIsUsable(sections: Section[], excludeFull: boolean): boolean {
+  if (!excludeFull) return true;
+  return sections.every((s) => classifySection(s) !== "full");
+}

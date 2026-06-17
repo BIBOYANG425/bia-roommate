@@ -103,10 +103,15 @@ export async function GET(request: NextRequest) {
       })
       .map((c: any) => ({
         ...c,
-        sections: c.sections.filter((s: any) => !s.isCancelled && !s.isClosed),
+        // Keep full and closed-registration sections — the schedule generator
+        // (excludeFull pref) and the UI (CLOSED REG / FULL badges) handle them.
+        // Stripping !isClosed here orphaned lecture/discussion pairs (a full
+        // lecture vanished, leaving the discussion) and hid closed-registration
+        // sections (e.g. GESM seminars) entirely.
+        sections: c.sections.filter((s: any) => !s.isCancelled),
       }))
       .filter((c: any) => {
-        // Only include courses that have at least one open section with actual times
+        // Only include courses that have at least one section with actual times
         return c.sections.some((s: any) =>
           s.times.some((t: any) => t.start_time && t.day !== "TBA"),
         );
