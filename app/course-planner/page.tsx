@@ -7,6 +7,7 @@ import SavedScheduleView from "@/components/course-planner/SavedScheduleView";
 import { ScheduleProvider, usePlanner } from "@/lib/course-planner/store";
 import type { RecommendedCourse } from "@/lib/course-planner/recommender";
 import type { AgentRecommendation } from "@/lib/course-planner/agent";
+import type { DayOfWeek } from "@/lib/course-planner/types";
 import {
   emptyIntakeConstraints,
   type IntakeConstraints,
@@ -21,6 +22,7 @@ export interface SchedulePrefs {
   earliestClass: string;
   doneBy: string;
   excludeFull: boolean;
+  blockedDays: DayOfWeek[];
   hideDClearance: boolean;
   hideGraduate: boolean;
   hideThematicOption: boolean;
@@ -39,6 +41,7 @@ function PlannerContent() {
     earliestClass: "",
     doneBy: "",
     excludeFull: true,
+    blockedDays: [],
     hideDClearance: false,
     hideGraduate: false,
     hideThematicOption: false,

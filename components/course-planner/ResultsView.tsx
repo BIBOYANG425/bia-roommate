@@ -447,6 +447,16 @@ export default function ResultsView({
           );
           if (!meetsPrefs && (prefs.earliestClass || prefs.doneBy)) continue;
 
+          // Blocked-days: skip any combo meeting on a day the user blocked.
+          if (
+            prefs.blockedDays.length > 0 &&
+            combo.allSlots.some((s) =>
+              (prefs.blockedDays as string[]).includes(s.day),
+            )
+          ) {
+            continue;
+          }
+
           // Check conflicts with already-selected sections
           const hasConflict = combo.allSlots.some((newSlot) =>
             usedSlots.some(
