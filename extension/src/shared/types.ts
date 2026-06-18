@@ -24,6 +24,13 @@ export interface RecommendedCourse {
   geTag?: string;
 }
 
+export interface SavedScheduleSummary {
+  id: string;
+  name: string;
+  semester: string;
+  created_at: string;
+}
+
 // ─── Message types between content script / popup and background worker ───
 
 export type BackgroundMessage =
@@ -32,7 +39,18 @@ export type BackgroundMessage =
   | { type: "GE_COURSES"; category: string; semester: string }
   | { type: "RECOMMEND"; interests: string; semester: string; units?: string }
   | { type: "GET_SETTINGS" }
-  | { type: "SAVE_SETTINGS"; settings: ExtensionSettings };
+  | { type: "SAVE_SETTINGS"; settings: ExtensionSettings }
+  | { type: "AUTH_SIGN_IN" }
+  | { type: "AUTH_SIGN_OUT" }
+  | { type: "AUTH_GET_EMAIL" }
+  | {
+      type: "SAVE_SCHEDULE";
+      name?: string;
+      semester: string;
+      courses: string[];
+      schedule_data: unknown;
+    }
+  | { type: "LIST_SCHEDULES" };
 
 export type BackgroundResponse =
   | { type: "RMP_BATCH_RESULT"; ratings: Record<string, RmpRating | null> }
@@ -40,7 +58,11 @@ export type BackgroundResponse =
   | { type: "GE_RESULT"; courses: Course[] }
   | { type: "RECOMMEND_RESULT"; recommendations: RecommendedCourse[] }
   | { type: "SETTINGS_RESULT"; settings: ExtensionSettings }
-  | { type: "ERROR"; error: string };
+  | { type: "ERROR"; error: string }
+  | { type: "AUTH_RESULT"; email: string | null }
+  | { type: "SAVE_SCHEDULE_RESULT"; id: string }
+  | { type: "LIST_SCHEDULES_RESULT"; schedules: SavedScheduleSummary[] }
+  | { type: "AUTH_REQUIRED" };
 
 export interface ExtensionSettings {
   showRmpRatings: boolean;
