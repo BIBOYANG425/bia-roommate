@@ -228,21 +228,21 @@ function RoommatesContent({
       return;
     }
     let active = true;
-    supabase
-      .from("roommate_profiles")
-      .select(
-        "id, sleep_habit, clean_level, noise_level, music_habit, study_style, tags, major",
-      )
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .then(({ data }) => {
-        if (active) {
-          setMyProfile(
-            (data?.[0] as (HabitInput & { id: string }) | undefined) ?? null,
-          );
-        }
-      });
+    (async () => {
+      const { data } = await supabase
+        .from("roommate_profiles")
+        .select(
+          "id, sleep_habit, clean_level, noise_level, music_habit, study_style, tags, major",
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (active) {
+        setMyProfile(
+          (data?.[0] as (HabitInput & { id: string }) | undefined) ?? null,
+        );
+      }
+    })();
     return () => {
       active = false;
     };
