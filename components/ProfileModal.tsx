@@ -252,14 +252,22 @@ export default function ProfileModal({
               exposed to logged-out visitors. Prefer structured channels; fall
               back to the legacy single-string `contact` for old rows. */}
           {user ? (
-            profile.contact_channels && profile.contact_channels.length > 0 ? (
-              <ContactChannelList
-                channels={profile.contact_channels}
-                gold={gold}
-              />
-            ) : (
-              <CopyContactBox contact={profile.contact} gold={gold} />
-            )
+            <>
+              {profile.contact_channels &&
+              profile.contact_channels.length > 0 ? (
+                <ContactChannelList
+                  channels={profile.contact_channels}
+                  gold={gold}
+                />
+              ) : (
+                <CopyContactBox contact={profile.contact} gold={gold} />
+              )}
+              {(profile.contact ||
+                (profile.contact_channels &&
+                  profile.contact_channels.length > 0)) && (
+                <Icebreaker profile={profile} language={language} />
+              )}
+            </>
           ) : (
             <ContactLocked gold={gold} language={language} />
           )}
@@ -471,6 +479,66 @@ function ContactChannelRow({ channel }: { channel: ContactChannel }) {
         {copied ? "COPIED!" : "COPY"}
       </button>
     </li>
+  );
+}
+
+// Bridges the "心动 → 联系" dead end: after contact is revealed, copying a
+// WeChat left people with a blank chat box. This offers a warm, ready-to-send
+// opener referencing the person, so the next step isn't "now what do I say".
+function Icebreaker({
+  profile,
+  language,
+}: {
+  profile: RoommateProfile;
+  language: "en" | "zh";
+}) {
+  const [copied, setCopied] = useState(false);
+  const tag = profile.tags?.[0];
+  const message =
+    language === "zh"
+      ? `嗨 ${profile.name}～在 BIA 找室友看到你的资料${
+          tag ? `，也喜欢「${tag}」` : ""
+        }，感觉挺合的，想聊聊一起合租吗？`
+      : `Hi ${profile.name}! Found your profile on BIA roommate finder — feels like a good match. Want to chat about rooming together?`;
+  const copy =
+    language === "zh"
+      ? { title: "破冰开场白", hint: "复制后去微信发给 TA", action: "复制", done: "已复制" }
+      : {
+          title: "Icebreaker",
+          hint: "Copy it and send on WeChat",
+          action: "Copy",
+          done: "Copied",
+        };
+  const handleCopy = () => {
+    navigator.clipboard?.writeText(message);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <div className="border-[2px] border-dashed border-[var(--mid)] p-3">
+      <div className="flex items-center justify-between mb-1.5 gap-2">
+        <span
+          className="font-display text-[11px] tracking-wider"
+          style={{ color: "var(--mid)" }}
+        >
+          💬 {copy.title}
+        </span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="font-display text-[10px] tracking-wider px-2 py-0.5 border-[2px] border-[var(--black)] hover:bg-[var(--gold)] transition-colors shrink-0"
+          style={{ color: "var(--black)" }}
+        >
+          {copied ? copy.done : copy.action}
+        </button>
+      </div>
+      <p className="text-xs leading-relaxed" style={{ color: "var(--black)" }}>
+        {message}
+      </p>
+      <p className="text-[10px] mt-1.5" style={{ color: "var(--mid)" }}>
+        {copy.hint}
+      </p>
+    </div>
   );
 }
 
