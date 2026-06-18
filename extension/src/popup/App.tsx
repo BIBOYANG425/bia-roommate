@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { ScheduleOptimizer } from "./components/ScheduleOptimizer";
 import { InterestSearch } from "./components/InterestSearch";
+import { SavedSchedules } from "./components/SavedSchedules";
 import { Settings } from "./components/Settings";
 import "./styles.css";
 
-type Tab = "optimizer" | "discover" | "settings";
+type Tab = "optimizer" | "discover" | "saved" | "settings";
 
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>("optimizer");
@@ -32,6 +33,13 @@ export function App() {
           Discover
         </button>
         <button
+          className={`popup-tab ${activeTab === "saved" ? "active" : ""}`}
+          onClick={() => setActiveTab("saved")}
+          aria-pressed={activeTab === "saved"}
+        >
+          Saved
+        </button>
+        <button
           className={`popup-tab ${activeTab === "settings" ? "active" : ""}`}
           onClick={() => setActiveTab("settings")}
           aria-pressed={activeTab === "settings"}
@@ -43,6 +51,7 @@ export function App() {
       <main className="popup-content">
         {activeTab === "optimizer" && <ScheduleOptimizer />}
         {activeTab === "discover" && <InterestSearch />}
+        {activeTab === "saved" && <SavedSchedules />}
         {activeTab === "settings" && <Settings />}
       </main>
     </div>

@@ -43,9 +43,24 @@ async function runAuthFlow(interactive: boolean): Promise<StoredSession | null> 
   return session;
 }
 
-/** Interactive sign-in (shows the auth window). Returns the signed-in email. */
+// launchWebAuthFlow rejects with "The user did not approve access." (and
+// similar) when the user closes/cancels the auth window. That's not an error —
+// it just means no sign-in happened, so we don't want to surface it as one.
+function isUserCancelled(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /did not approve|cancell?ed|closed by the user/i.test(msg);
+}
+
+/** Interactive sign-in (shows the auth window). Returns the signed-in email,
+ *  or null if the user cancelled. */
 export async function signIn(): Promise<string | null> {
-  const session = await runAuthFlow(true);
+  let session: StoredSession | null = null;
+  try {
+    session = await runAuthFlow(true);
+  } catch (err) {
+    if (isUserCancelled(err)) return null;
+    throw err;
+  }
   return session ? decodeJwtEmail(session.access_token) : null;
 }
 
