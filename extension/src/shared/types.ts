@@ -48,7 +48,7 @@ export type BackgroundMessage =
       name?: string;
       semester: string;
       courses: string[];
-      schedule_data: unknown;
+      schedule_data: Record<string, unknown>;
     }
   | { type: "LIST_SCHEDULES" };
 

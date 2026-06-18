@@ -3,7 +3,7 @@
 // Chrome can kill and restart this worker at any time — the cache layer handles
 // persistence across restarts, so avoid module-level in-memory state.
 //
-// Header last reviewed: 2026-04-16
+// Header last reviewed: 2026-06-17
 
 import {
   fetchRmpBatch,

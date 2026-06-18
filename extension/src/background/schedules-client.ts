@@ -8,7 +8,7 @@ import type { SavedScheduleSummary } from "../shared/types";
 
 export async function saveSchedule(
   token: string,
-  body: { name?: string; semester: string; courses: string[]; schedule_data: unknown },
+  body: { name?: string; semester: string; courses: string[]; schedule_data: Record<string, unknown> },
 ): Promise<{ id: string }> {
   const res = await fetch(`${BIA_API_BASE}/api/schedules`, {
     method: "POST",
