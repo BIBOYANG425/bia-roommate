@@ -488,8 +488,13 @@ export function ScheduleOptimizer() {
   }
 
   async function handleSignInThenSave() {
-    const r = await chrome.runtime.sendMessage({ type: "AUTH_SIGN_IN" });
-    if (r?.type === "AUTH_RESULT" && r.email) await handleSaveToAccount();
+    try {
+      const r = await chrome.runtime.sendMessage({ type: "AUTH_SIGN_IN" });
+      if (r?.type === "AUTH_RESULT" && r.email) await handleSaveToAccount();
+      else setSaveState("idle"); // cancelled or no email
+    } catch {
+      setSaveState("idle");
+    }
   }
 
   const canOptimize = courseCodes.length > 0 || selectedGEs.size > 0;
