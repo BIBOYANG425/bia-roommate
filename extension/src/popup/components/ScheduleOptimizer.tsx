@@ -349,6 +349,7 @@ export function ScheduleOptimizer() {
   }
 
   const handleOptimize = useCallback(async () => {
+    setSaveState("idle");
     const totalItems = courseCodes.length + selectedGEs.size;
     if (totalItems === 0) return;
 
@@ -665,29 +666,27 @@ export function ScheduleOptimizer() {
             Optimal Schedule ({optimizedSections.length} sections)
           </p>
           <MiniCalendar sections={optimizedSections} />
-          {optimizedSections.length > 0 && (
-            <div style={{ marginTop: 12, textAlign: "center" }}>
-              {saveState === "auth" ? (
-                <button className="link-button" onClick={handleSignInThenSave}>
-                  Sign in to save
-                </button>
-              ) : (
-                <button
-                  className="link-button"
-                  onClick={handleSaveToAccount}
-                  disabled={saveState === "saving"}
-                >
-                  {saveState === "saving"
-                    ? "Saving…"
-                    : saveState === "saved"
-                      ? "Saved ✓"
-                      : saveState === "error"
-                        ? "Save failed — retry"
-                        : "Save to BIA account"}
-                </button>
-              )}
-            </div>
-          )}
+          <div style={{ marginTop: 12, textAlign: "center" }}>
+            {saveState === "auth" ? (
+              <button className="link-button" onClick={handleSignInThenSave}>
+                Sign in to save
+              </button>
+            ) : (
+              <button
+                className="link-button"
+                onClick={handleSaveToAccount}
+                disabled={saveState === "saving"}
+              >
+                {saveState === "saving"
+                  ? "Saving…"
+                  : saveState === "saved"
+                    ? "Saved ✓"
+                    : saveState === "error"
+                      ? "Save failed — retry"
+                      : "Save to BIA account"}
+              </button>
+            )}
+          </div>
           {optimizedSections.map((sec) => {
             const color = COURSE_COLORS[sec.colorIndex % COURSE_COLORS.length];
             const instructor = sec.section.instructor;
