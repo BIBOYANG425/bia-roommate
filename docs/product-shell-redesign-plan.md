@@ -80,12 +80,11 @@ Group mapping:
 
 School should be a product-level context, not just a filter.
 
-Priority order:
+Priority order (matches `resolveInitialProductSchool` in `lib/product-school.ts`):
 
-1. Logged-in user's profile school.
+1. Query param `?school=`.
 2. Last selected school in localStorage.
-3. Query param `?school=`.
-4. Default `USC`.
+3. Default `USC`.
 
 Behavior:
 
