@@ -22,11 +22,17 @@ export default function ProfileCard({
   onClick,
   likeCount,
   onLikeChange,
+  compatScore,
+  compatReasons,
 }: {
   profile: RoommateProfile;
   onClick: () => void;
   likeCount?: number;
   onLikeChange?: (profileId: string, liked: boolean) => void;
+  /** 0–100 compatibility vs the viewer's own profile; omit to hide the badge. */
+  compatScore?: number;
+  /** Already-localized reasons for the score (strongest first). */
+  compatReasons?: string[];
 }) {
   const { user } = useAuth();
   const [likeLoading, setLikeLoading] = useState(false);
@@ -149,6 +155,26 @@ export default function ProfileCard({
           </p>
         </div>
       </div>
+
+      {/* Compatibility — only present when scored against the viewer's profile */}
+      {typeof compatScore === "number" && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span
+            className="font-display text-xs tracking-wide px-2 py-0.5 border-[2px] border-[var(--black)]"
+            style={{ background: "var(--gold)", color: "var(--black)" }}
+          >
+            {compatScore}% ♥
+          </span>
+          {compatReasons && compatReasons.length > 0 && (
+            <span
+              className="text-[10px] truncate"
+              style={{ color: "var(--mid)" }}
+            >
+              {compatReasons.slice(0, 2).join(" · ")}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Tags */}
       {profile.tags && profile.tags.length > 0 && (

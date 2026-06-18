@@ -12,6 +12,7 @@ import {
 import ProfileCard from "@/components/ProfileCard";
 import ProfileModal from "@/components/ProfileModal";
 import SkeletonCard from "@/components/SkeletonCard";
+import { scoreCompatibility, type HabitInput } from "@/lib/roommate/compatibility";
 import Toast from "@/components/Toast";
 import ProductShell, {
   ProductTaskHeader,
@@ -70,6 +71,13 @@ const ROOMMATES_COPY: Record<
     profilesFound: (count: number) => string;
     marqueeItems: string[];
     footer: string;
+    sortMatch: string;
+    sortRecent: string;
+    matchNudge: string;
+    lifestyleLabel: string;
+    cohortLabel: string;
+    socialProof: (n: number) => string;
+    todayNew: (x: number) => string;
   }
 > = {
   zh: {
@@ -103,6 +111,13 @@ const ROOMMATES_COPY: Record<
       "发布资料",
     ],
     footer: "BIA 找室友 — 本校优先",
+    sortMatch: "最合拍",
+    sortRecent: "最新",
+    matchNudge: "发布你的资料，就能按合拍度为你排序",
+    lifestyleLabel: "生活习惯",
+    cohortLabel: "入学季",
+    socialProof: (n) => `${n} 位新生在找室友`,
+    todayNew: (x) => `今日新增 ${x}`,
   },
   en: {
     toast: "PROFILE DROPPED SUCCESSFULLY",
@@ -135,8 +150,31 @@ const ROOMMATES_COPY: Record<
       "DROP YOUR PROFILE",
     ],
     footer: "BIA ROOMMATE MATCH — SCHOOL-FIRST HOUSING",
+    sortMatch: "BEST MATCH",
+    sortRecent: "NEWEST",
+    matchNudge: "Drop your profile to sort everyone by how well you match",
+    lifestyleLabel: "LIFESTYLE",
+    cohortLabel: "COHORT",
+    socialProof: (n) => `${n} freshmen looking for roommates`,
+    todayNew: (x) => `${x} new today`,
   },
 };
+
+// Lifestyle quick-filters — chip toggles over the habits/tags we already collect.
+// A profile must satisfy ALL selected chips (AND). Pure client-side, additive.
+const LIFESTYLE_CHIPS: {
+  id: string;
+  label: { zh: string; en: string };
+  test: (p: RoommateProfile) => boolean;
+}[] = [
+  { id: "early", label: { zh: "早睡", en: "Early bird" }, test: (p) => ["22点前", "23点左右"].includes(p.sleep_habit ?? "") },
+  { id: "night", label: { zh: "夜猫子", en: "Night owl" }, test: (p) => ["0点后", "凌晨2点+"].includes(p.sleep_habit ?? "") },
+  { id: "tidy", label: { zh: "爱整洁", en: "Tidy" }, test: (p) => ["较整洁", "超级整洁"].includes(p.clean_level ?? "") },
+  { id: "quiet", label: { zh: "安静", en: "Quiet" }, test: (p) => ["要绝对安静", "偏安静"].includes(p.noise_level ?? "") },
+  { id: "nonsmoke", label: { zh: "不吸烟", en: "Non-smoker" }, test: (p) => (p.tags ?? []).includes("不吸烟") },
+  { id: "pet", label: { zh: "养宠物", en: "Pet-friendly" }, test: (p) => (p.tags ?? []).includes("养宠物") },
+  { id: "cook", label: { zh: "常做饭", en: "Cooks" }, test: (p) => (p.tags ?? []).includes("常做饭") },
+];
 
 // Columns returned to logged-out visitors — deliberately excludes `contact`
 // and `contact_channels` so a student's WeChat/phone is never sent over the
@@ -172,10 +210,44 @@ function RoommatesContent({
   );
   const [genderFilter, setGenderFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
+  const [cohortFilter, setCohortFilter] = useState("");
+  const [activeChips, setActiveChips] = useState<string[]>([]);
+  const [sortMode, setSortMode] = useState<"match" | "recent">("match");
+  const [myProfile, setMyProfile] = useState<
+    (HabitInput & { id: string }) | null
+  >(null);
 
   useEffect(() => {
     setSchoolFilter(initialSchool);
   }, [initialSchool]);
+
+  // Load the viewer's own habits so we can score everyone against them.
+  useEffect(() => {
+    if (!user) {
+      setMyProfile(null);
+      return;
+    }
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from("roommate_profiles")
+        .select(
+          "id, sleep_habit, clean_level, noise_level, music_habit, study_style, tags, major",
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (active) {
+        setMyProfile(
+          (data?.[0] as (HabitInput & { id: string }) | undefined) ?? null,
+        );
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only user identity matters
+  }, [user?.id]);
 
   useEffect(() => {
     if (searchParams.get("submitted") === "true") {
@@ -200,11 +272,26 @@ function RoommatesContent({
     }
     setProfiles(data || []);
     if (data && data.length > 0) {
-      const ids = data.map((p: RoommateProfile) => p.id).join(",");
-      fetch(`/api/likes/count?ids=${ids}`)
-        .then((r) => r.json())
-        .then(setLikeCounts)
-        .catch(() => {});
+      // /api/likes/count caps at 100 ids and 400s past that — batch so large
+      // result sets don't silently drop every like count.
+      const ids = (data as RoommateProfile[]).map((p) => p.id);
+      const CHUNK = 100;
+      const merged: Record<string, number> = {};
+      await Promise.all(
+        Array.from({ length: Math.ceil(ids.length / CHUNK) }, (_, i) =>
+          fetch(
+            `/api/likes/count?ids=${ids
+              .slice(i * CHUNK, i * CHUNK + CHUNK)
+              .join(",")}`,
+          )
+            .then((r) => (r.ok ? r.json() : {}))
+            .then((counts: Record<string, number>) =>
+              Object.assign(merged, counts),
+            )
+            .catch(() => {}),
+        ),
+      );
+      setLikeCounts(merged);
     }
     setLoading(false);
   }, [copy.loadError, user]);
@@ -217,6 +304,7 @@ function RoommatesContent({
     if (schoolFilter && p.school !== schoolFilter) return false;
     if (genderFilter && p.gender !== genderFilter) return false;
     if (yearFilter && p.year !== yearFilter) return false;
+    if (cohortFilter && p.enrollment_term !== cohortFilter) return false;
     if (search) {
       const q = search.toLowerCase();
       const matchName = p.name.toLowerCase().includes(q);
@@ -226,8 +314,43 @@ function RoommatesContent({
       if (!matchName && !matchMajor && !matchTags && !matchHobbies)
         return false;
     }
+    if (activeChips.length > 0) {
+      const selected = LIFESTYLE_CHIPS.filter((c) => activeChips.includes(c.id));
+      if (!selected.every((c) => c.test(p))) return false;
+    }
     return true;
   });
+
+  // Score every candidate against the viewer's own profile (when they have one)
+  // and exclude the viewer's own card. Default to "best match" ordering; fall
+  // back to the query's created_at-desc order when there's nothing to score by.
+  const useMatch = !!myProfile && sortMode === "match";
+  const scored = filtered
+    .filter((p) => !(myProfile && p.id === myProfile.id))
+    .map((p) => ({
+      profile: p,
+      compat: myProfile ? scoreCompatibility(myProfile, p) : null,
+    }));
+  const ordered = useMatch
+    ? [...scored].sort(
+        (a, b) =>
+          (b.compat?.comparable ? b.compat.score : -1) -
+          (a.compat?.comparable ? a.compat.score : -1),
+      )
+    : scored;
+
+  // Social proof + cohorts, derived from the loaded set for the current school.
+  const schoolPool = profiles.filter(
+    (p) => !schoolFilter || p.school === schoolFilter,
+  );
+  const freshmanCount = schoolPool.filter((p) => p.year === "新生").length;
+  const today = new Date().toDateString();
+  const todayCount = schoolPool.filter(
+    (p) => new Date(p.created_at).toDateString() === today,
+  ).length;
+  const cohorts = [
+    ...new Set(schoolPool.map((p) => p.enrollment_term).filter(Boolean)),
+  ] as string[];
 
   return (
     <>
@@ -258,6 +381,32 @@ function RoommatesContent({
         >
           {copy.browseTitle}
         </h2>
+
+        {/* Social proof — turns an empty-looking board into a live community */}
+        {freshmanCount > 0 && (
+          <div
+            className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-5 px-3 py-2 border-[3px] border-[var(--black)]"
+            style={{ background: "var(--gold)" }}
+          >
+            <span
+              className="font-display text-sm tracking-wide"
+              style={{ color: "var(--black)" }}
+            >
+              📣 {schoolFilter || initialSchool}
+            </span>
+            <span className="text-sm" style={{ color: "var(--black)" }}>
+              · {copy.socialProof(freshmanCount)}
+            </span>
+            {todayCount > 0 && (
+              <span
+                className="font-display text-[11px] tracking-wide px-2 py-0.5 border-[2px] border-[var(--black)]"
+                style={{ background: "white", color: "var(--cardinal)" }}
+              >
+                {copy.todayNew(todayCount)}
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <input
@@ -293,6 +442,101 @@ function RoommatesContent({
           </select>
         </div>
 
+        {/* Cohort (enrollment term) quick-filter — find your incoming class */}
+        {cohorts.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span
+              className="text-[10px] uppercase tracking-wider mr-1"
+              style={{ color: "var(--mid)" }}
+            >
+              {copy.cohortLabel}
+            </span>
+            {cohorts.map((term) => {
+              const on = cohortFilter === term;
+              return (
+                <button
+                  key={term}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setCohortFilter(on ? "" : term)}
+                  className="brutal-tag"
+                  style={{
+                    cursor: "pointer",
+                    background: on ? "var(--cardinal)" : "transparent",
+                    color: on ? "white" : "var(--mid)",
+                  }}
+                >
+                  {term}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Lifestyle quick-filters (AND across selected chips) */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span
+            className="text-[10px] uppercase tracking-wider mr-1"
+            style={{ color: "var(--mid)" }}
+          >
+            {copy.lifestyleLabel}
+          </span>
+          {LIFESTYLE_CHIPS.map((chip) => {
+            const on = activeChips.includes(chip.id);
+            return (
+              <button
+                key={chip.id}
+                type="button"
+                aria-pressed={on}
+                onClick={() =>
+                  setActiveChips((prev) =>
+                    on ? prev.filter((c) => c !== chip.id) : [...prev, chip.id],
+                  )
+                }
+                className="brutal-tag"
+                style={{
+                  cursor: "pointer",
+                  background: on ? "var(--black)" : "transparent",
+                  color: on ? "var(--cream)" : "var(--mid)",
+                }}
+              >
+                {chip.label[language]}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Sort mode — only meaningful once the viewer has their own profile */}
+        {myProfile ? (
+          <div className="flex items-center gap-2 mb-5">
+            {(["match", "recent"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                aria-pressed={sortMode === mode}
+                onClick={() => setSortMode(mode)}
+                className="font-display text-xs tracking-wider px-3 py-1 border-[2px] border-[var(--black)]"
+                style={{
+                  background:
+                    sortMode === mode ? "var(--gold)" : "transparent",
+                  color: "var(--black)",
+                  cursor: "pointer",
+                }}
+              >
+                {mode === "match" ? copy.sortMatch : copy.sortRecent}
+              </button>
+            ))}
+          </div>
+        ) : user ? (
+          <Link
+            href="/submit"
+            className="inline-block text-xs mb-5"
+            style={{ color: "var(--cardinal)" }}
+          >
+            ✨ {copy.matchNudge} →
+          </Link>
+        ) : null}
+
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -314,7 +558,7 @@ function RoommatesContent({
               {copy.retry}
             </button>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : ordered.length === 0 ? (
           <div className="text-center py-20 relative">
             <div className="ghost-text left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[120px]">
               EMPTY
@@ -348,10 +592,10 @@ function RoommatesContent({
               className="text-xs mb-4"
               style={{ color: "var(--mid)", fontFamily: "var(--font-body)" }}
             >
-              {copy.profilesFound(filtered.length)}
+              {copy.profilesFound(ordered.length)}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filtered.map((profile, i) => (
+              {ordered.map(({ profile, compat }, i) => (
                 <div
                   key={profile.id}
                   className="reveal"
@@ -361,6 +605,12 @@ function RoommatesContent({
                     profile={profile}
                     onClick={() => setSelectedProfile(profile)}
                     likeCount={likeCounts[profile.id]}
+                    compatScore={compat?.comparable ? compat.score : undefined}
+                    compatReasons={
+                      compat?.comparable
+                        ? compat.reasons.map((r) => r[language])
+                        : undefined
+                    }
                     onLikeChange={(id, liked) => {
                       setLikeCounts((prev) => ({
                         ...prev,
