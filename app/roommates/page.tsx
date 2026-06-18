@@ -75,6 +75,9 @@ const ROOMMATES_COPY: Record<
     sortRecent: string;
     matchNudge: string;
     lifestyleLabel: string;
+    cohortLabel: string;
+    socialProof: (n: number) => string;
+    todayNew: (x: number) => string;
   }
 > = {
   zh: {
@@ -112,6 +115,9 @@ const ROOMMATES_COPY: Record<
     sortRecent: "最新",
     matchNudge: "发布你的资料，就能按合拍度为你排序",
     lifestyleLabel: "生活习惯",
+    cohortLabel: "入学季",
+    socialProof: (n) => `${n} 位新生在找室友`,
+    todayNew: (x) => `今日新增 ${x}`,
   },
   en: {
     toast: "PROFILE DROPPED SUCCESSFULLY",
@@ -148,6 +154,9 @@ const ROOMMATES_COPY: Record<
     sortRecent: "NEWEST",
     matchNudge: "Drop your profile to sort everyone by how well you match",
     lifestyleLabel: "LIFESTYLE",
+    cohortLabel: "COHORT",
+    socialProof: (n) => `${n} freshmen looking for roommates`,
+    todayNew: (x) => `${x} new today`,
   },
 };
 
@@ -201,6 +210,7 @@ function RoommatesContent({
   );
   const [genderFilter, setGenderFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
+  const [cohortFilter, setCohortFilter] = useState("");
   const [activeChips, setActiveChips] = useState<string[]>([]);
   const [sortMode, setSortMode] = useState<"match" | "recent">("match");
   const [myProfile, setMyProfile] = useState<
@@ -262,11 +272,26 @@ function RoommatesContent({
     }
     setProfiles(data || []);
     if (data && data.length > 0) {
-      const ids = data.map((p: RoommateProfile) => p.id).join(",");
-      fetch(`/api/likes/count?ids=${ids}`)
-        .then((r) => r.json())
-        .then(setLikeCounts)
-        .catch(() => {});
+      // /api/likes/count caps at 100 ids and 400s past that — batch so large
+      // result sets don't silently drop every like count.
+      const ids = (data as RoommateProfile[]).map((p) => p.id);
+      const CHUNK = 100;
+      const merged: Record<string, number> = {};
+      await Promise.all(
+        Array.from({ length: Math.ceil(ids.length / CHUNK) }, (_, i) =>
+          fetch(
+            `/api/likes/count?ids=${ids
+              .slice(i * CHUNK, i * CHUNK + CHUNK)
+              .join(",")}`,
+          )
+            .then((r) => (r.ok ? r.json() : {}))
+            .then((counts: Record<string, number>) =>
+              Object.assign(merged, counts),
+            )
+            .catch(() => {}),
+        ),
+      );
+      setLikeCounts(merged);
     }
     setLoading(false);
   }, [copy.loadError, user]);
@@ -279,6 +304,7 @@ function RoommatesContent({
     if (schoolFilter && p.school !== schoolFilter) return false;
     if (genderFilter && p.gender !== genderFilter) return false;
     if (yearFilter && p.year !== yearFilter) return false;
+    if (cohortFilter && p.enrollment_term !== cohortFilter) return false;
     if (search) {
       const q = search.toLowerCase();
       const matchName = p.name.toLowerCase().includes(q);
@@ -313,6 +339,19 @@ function RoommatesContent({
       )
     : scored;
 
+  // Social proof + cohorts, derived from the loaded set for the current school.
+  const schoolPool = profiles.filter(
+    (p) => !schoolFilter || p.school === schoolFilter,
+  );
+  const freshmanCount = schoolPool.filter((p) => p.year === "新生").length;
+  const today = new Date().toDateString();
+  const todayCount = schoolPool.filter(
+    (p) => new Date(p.created_at).toDateString() === today,
+  ).length;
+  const cohorts = [
+    ...new Set(schoolPool.map((p) => p.enrollment_term).filter(Boolean)),
+  ] as string[];
+
   return (
     <>
       {showToast && (
@@ -342,6 +381,32 @@ function RoommatesContent({
         >
           {copy.browseTitle}
         </h2>
+
+        {/* Social proof — turns an empty-looking board into a live community */}
+        {freshmanCount > 0 && (
+          <div
+            className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-5 px-3 py-2 border-[3px] border-[var(--black)]"
+            style={{ background: "var(--gold)" }}
+          >
+            <span
+              className="font-display text-sm tracking-wide"
+              style={{ color: "var(--black)" }}
+            >
+              📣 {schoolFilter || initialSchool}
+            </span>
+            <span className="text-sm" style={{ color: "var(--black)" }}>
+              · {copy.socialProof(freshmanCount)}
+            </span>
+            {todayCount > 0 && (
+              <span
+                className="font-display text-[11px] tracking-wide px-2 py-0.5 border-[2px] border-[var(--black)]"
+                style={{ background: "white", color: "var(--cardinal)" }}
+              >
+                {copy.todayNew(todayCount)}
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <input
@@ -376,6 +441,37 @@ function RoommatesContent({
             ))}
           </select>
         </div>
+
+        {/* Cohort (enrollment term) quick-filter — find your incoming class */}
+        {cohorts.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span
+              className="text-[10px] uppercase tracking-wider mr-1"
+              style={{ color: "var(--mid)" }}
+            >
+              {copy.cohortLabel}
+            </span>
+            {cohorts.map((term) => {
+              const on = cohortFilter === term;
+              return (
+                <button
+                  key={term}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setCohortFilter(on ? "" : term)}
+                  className="brutal-tag"
+                  style={{
+                    cursor: "pointer",
+                    background: on ? "var(--cardinal)" : "transparent",
+                    color: on ? "white" : "var(--mid)",
+                  }}
+                >
+                  {term}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Lifestyle quick-filters (AND across selected chips) */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
