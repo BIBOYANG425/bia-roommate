@@ -3,7 +3,7 @@
 // Chrome can kill and restart this worker at any time — the cache layer handles
 // persistence across restarts, so avoid module-level in-memory state.
 //
-// Header last reviewed: 2026-04-16
+// Header last reviewed: 2026-06-17
 
 import {
   fetchRmpBatch,
@@ -12,6 +12,8 @@ import {
   fetchRecommendations,
 } from "./api-client";
 import { StorageCache } from "./cache";
+import { signIn, signOut, getEmail, getValidAccessToken } from "./auth";
+import { saveSchedule, listSchedules } from "./schedules-client";
 import type {
   BackgroundMessage,
   BackgroundResponse,
@@ -77,6 +79,44 @@ async function handleMessage(
 
     case "SAVE_SETTINGS":
       return handleSaveSettings(msg.settings);
+
+    case "AUTH_SIGN_IN":
+      return { type: "AUTH_RESULT", email: await signIn() };
+
+    case "AUTH_SIGN_OUT":
+      await signOut();
+      return { type: "AUTH_RESULT", email: null };
+
+    case "AUTH_GET_EMAIL":
+      return { type: "AUTH_RESULT", email: await getEmail() };
+
+    case "SAVE_SCHEDULE": {
+      const token = await getValidAccessToken();
+      if (!token) return { type: "AUTH_REQUIRED" };
+      try {
+        const { id } = await saveSchedule(token, {
+          name: msg.name,
+          semester: msg.semester,
+          courses: msg.courses,
+          schedule_data: msg.schedule_data,
+        });
+        return { type: "SAVE_SCHEDULE_RESULT", id };
+      } catch (err) {
+        if ((err as Error).message === "AUTH_REQUIRED") return { type: "AUTH_REQUIRED" };
+        throw err;
+      }
+    }
+
+    case "LIST_SCHEDULES": {
+      const token = await getValidAccessToken();
+      if (!token) return { type: "AUTH_REQUIRED" };
+      try {
+        return { type: "LIST_SCHEDULES_RESULT", schedules: await listSchedules(token) };
+      } catch (err) {
+        if ((err as Error).message === "AUTH_REQUIRED") return { type: "AUTH_REQUIRED" };
+        throw err;
+      }
+    }
   }
 }
 

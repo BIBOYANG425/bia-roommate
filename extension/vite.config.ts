@@ -73,7 +73,7 @@ function buildNonModuleEntries(): Plugin {
         version: "1.0.2",
         description:
           "RMP ratings, schedule optimization, and course discovery for USC students — by BIA",
-        permissions: ["storage"],
+        permissions: ["storage", "identity"],
         host_permissions: [
           "https://webreg.usc.edu/*",
           "https://classes.usc.edu/*",
