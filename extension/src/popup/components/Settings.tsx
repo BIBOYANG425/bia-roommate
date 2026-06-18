@@ -1,58 +1,11 @@
 import { useState, useEffect } from "react";
-import type { ExtensionSettings, SavedScheduleSummary } from "../../shared/types";
+import type { ExtensionSettings } from "../../shared/types";
 import { DEFAULT_SETTINGS } from "../../shared/types";
 import { EXTENSION_VERSION, SEMESTER_OPTIONS } from "../../shared/constants";
 
 export function Settings() {
   const [settings, setSettings] = useState<ExtensionSettings>(DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
-  const [email, setEmail] = useState<string | null>(null);
-  const [schedules, setSchedules] = useState<SavedScheduleSummary[]>([]);
-  const [authBusy, setAuthBusy] = useState(false);
-
-  useEffect(() => {
-    chrome.runtime
-      .sendMessage({ type: "AUTH_GET_EMAIL" })
-      .then((r) => {
-        if (r?.type === "AUTH_RESULT") setEmail(r.email);
-      })
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (!email) {
-      setSchedules([]);
-      return;
-    }
-    chrome.runtime
-      .sendMessage({ type: "LIST_SCHEDULES" })
-      .then((r) => {
-        if (r?.type === "LIST_SCHEDULES_RESULT") setSchedules(r.schedules);
-      })
-      .catch(() => {});
-  }, [email]);
-
-  async function handleSignIn() {
-    setAuthBusy(true);
-    try {
-      const r = await chrome.runtime.sendMessage({ type: "AUTH_SIGN_IN" });
-      if (r?.type === "AUTH_RESULT") setEmail(r.email);
-    } catch {
-      // user cancelled / window closed — stay signed out
-    } finally {
-      setAuthBusy(false);
-    }
-  }
-
-  async function handleSignOut() {
-    setAuthBusy(true);
-    try {
-      await chrome.runtime.sendMessage({ type: "AUTH_SIGN_OUT" });
-      setEmail(null);
-    } finally {
-      setAuthBusy(false);
-    }
-  }
 
   useEffect(() => {
     chrome.runtime
@@ -97,52 +50,6 @@ export function Settings() {
 
   return (
     <div>
-      <p className="section-title">Account</p>
-      {email ? (
-        <>
-          <div className="setting-row">
-            <div>
-              <div className="setting-label">Signed in</div>
-              <div className="setting-description">{email}</div>
-            </div>
-            <button
-              className="link-button"
-              onClick={handleSignOut}
-              disabled={authBusy}
-            >
-              Sign out
-            </button>
-          </div>
-          <div style={{ marginTop: 8 }}>
-            <div className="setting-label">My Schedules</div>
-            {schedules.length === 0 ? (
-              <div className="setting-description">No saved schedules yet.</div>
-            ) : (
-              schedules.map((s) => (
-                <div key={s.id} className="setting-description">
-                  {s.name} · {s.semester}
-                </div>
-              ))
-            )}
-          </div>
-        </>
-      ) : (
-        <div className="setting-row">
-          <div>
-            <div className="setting-label">Not signed in</div>
-            <div className="setting-description">
-              Sign in to save schedules to your BIA account.
-            </div>
-          </div>
-          <button
-            className="link-button"
-            onClick={handleSignIn}
-            disabled={authBusy}
-          >
-            {authBusy ? "…" : "Sign in"}
-          </button>
-        </div>
-      )}
       <p className="section-title">Features</p>
 
       <div className="setting-row">
