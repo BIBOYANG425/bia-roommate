@@ -8,7 +8,13 @@ import BorderGlow from "@/components/BorderGlow";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/components/LanguageProvider";
 
-const APPLY_URL = "#apply";
+// Real application exit. The page previously pointed every "Apply" CTA at the
+// in-page "#apply" anchor, which scrolled to a section whose own button looped
+// back to the same anchor — a dead self-reference with no way to actually apply.
+// Wired to the published BIA contact. Swap to a recruiting Google Form URL if/when
+// one exists (then set the anchors to target="_blank" rel="noopener noreferrer").
+const APPLY_URL =
+  "mailto:bia@usc.edu?subject=BIA%20Membership%20Application&body=Name%3A%0AMajor%2FYear%3A%0AWhy%20BIA%3A%0A";
 
 function ArrowIcon({ size = 14 }: { size?: number }) {
   return (
