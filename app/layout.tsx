@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Inter, Instrument_Serif } from "next/font/google";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/AuthProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import FeedbackButton from "@/components/FeedbackButton";
@@ -70,6 +71,7 @@ export default function RootLayout({
         </LanguageProvider>
         {/* Film grain overlay */}
         <div className="grain" aria-hidden="true" />
+        <Analytics />
       </body>
     </html>
   );

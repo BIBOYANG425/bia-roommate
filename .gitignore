@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+# NOTE: unanchored so nested copies (e.g. store-assets/node_modules) are ignored too
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -57,3 +58,16 @@ george/data/wechat/
 
 # Local session-log backups (the real logs are committed; .bak copies are local)
 .claude/session-logs/*.local.bak.md
+
+# R session history (never relevant to this app)
+.Rhistory
+.Rapp.history
+
+# Loose non-code material that was committed by accident — kept on disk, out of git
+Downloads/
+Documents/
+BIA service Content Strategy/
+
+# store-assets: keep listing assets, ignore build output / packaged extension
+store-assets/bia-course-helper/
+store-assets/*.zip

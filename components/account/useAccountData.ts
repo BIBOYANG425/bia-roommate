@@ -17,6 +17,7 @@ import {
 } from "@/lib/types";
 import type { SavedSchedule } from "./SavedSchedulesList";
 import type { Comment } from "./CommentsList";
+import type { LikedYouProfile } from "./LikedYou";
 
 export function useAccountData() {
   const { user, loading: authLoading } = useAuth();
@@ -24,6 +25,7 @@ export function useAccountData() {
   const [profile, setProfile] = useState<RoommateProfile | null>(null);
   const [schedules, setSchedules] = useState<SavedSchedule[]>([]);
   const [likedProfiles, setLikedProfiles] = useState<RoommateProfile[]>([]);
+  const [likedYou, setLikedYou] = useState<LikedYouProfile[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [sublets, setSublets] = useState<SubletListing[]>([]);
   const [parcels, setParcels] = useState<Parcel[]>([]);
@@ -110,7 +112,10 @@ export function useAccountData() {
             ]
           : [];
 
-        const [likedRes, commentProfilesRes] = await Promise.all([
+        const myProfileId =
+          (profileRes.data as RoommateProfile | null)?.id ?? null;
+
+        const [likedRes, commentProfilesRes, whoLikedMeRes] = await Promise.all([
           likeIds?.length
             ? supabase
                 .from("roommate_profiles")
@@ -123,9 +128,59 @@ export function useAccountData() {
                 .select("id, name, school")
                 .in("id", commentProfileIds)
             : Promise.resolve({ data: null }),
+          myProfileId
+            ? supabase
+                .from("profile_likes")
+                .select("user_id, created_at")
+                .eq("profile_id", myProfileId)
+            : Promise.resolve({ data: null }),
         ]);
 
         setLikedProfiles((likedRes.data as RoommateProfile[]) || []);
+
+        // "Who liked me" → mutual when their profile is one I also liked.
+        // All client-side: likes are world-readable; profiles readable when visible.
+        const likerRows =
+          (whoLikedMeRes.data as
+            | { user_id: string; created_at: string }[]
+            | null) ?? [];
+        const likerUserIds = [...new Set(likerRows.map((r) => r.user_id))];
+        if (likerUserIds.length > 0) {
+          const myLikedIds = new Set(
+            (likesRes.data ?? []).map(
+              (l: { profile_id: string }) => l.profile_id,
+            ),
+          );
+          const { data: likerProfiles } = await supabase
+            .from("roommate_profiles")
+            .select("*")
+            .in("user_id", likerUserIds)
+            .eq("visible", true);
+          const likedAtByUser = new Map(
+            likerRows.map((r) => [r.user_id, r.created_at]),
+          );
+          setLikedYou(
+            (
+              (likerProfiles as
+                | (RoommateProfile & { user_id: string | null })[]
+                | null) ?? []
+            )
+              .filter((p) => p.user_id !== user!.id)
+              .map((p) => ({
+                ...p,
+                liked_at:
+                  (p.user_id && likedAtByUser.get(p.user_id)) || p.created_at,
+                is_mutual: myLikedIds.has(p.id),
+              }))
+              .sort(
+                (a, b) =>
+                  Number(b.is_mutual) - Number(a.is_mutual) ||
+                  (a.liked_at < b.liked_at ? 1 : -1),
+              ),
+          );
+        } else {
+          setLikedYou([]);
+        }
 
         if (commentsRes.data?.length) {
           const profileMap = new Map(
@@ -175,6 +230,34 @@ export function useAccountData() {
     if (error) setComments(prev);
   }
 
+  async function handleLikeBack(profileId: string) {
+    // Optimistically flip to mutual (reveals contact); revert on failure.
+    setLikedYou((list) =>
+      list.map((p) => (p.id === profileId ? { ...p, is_mutual: true } : p)),
+    );
+    try {
+      const res = await fetch("/api/likes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_id: profileId }),
+      });
+      const data = res.ok ? await res.json() : null;
+      // POST toggles; a pending liker is one we haven't liked, so it should
+      // return liked:true. If it somehow toggled off, revert.
+      if (!data?.liked) {
+        setLikedYou((list) =>
+          list.map((p) =>
+            p.id === profileId ? { ...p, is_mutual: false } : p,
+          ),
+        );
+      }
+    } catch {
+      setLikedYou((list) =>
+        list.map((p) => (p.id === profileId ? { ...p, is_mutual: false } : p)),
+      );
+    }
+  }
+
   async function handleUnlike(profileId: string) {
     const prev = likedProfiles;
     setLikedProfiles((p) => p.filter((x) => x.id !== profileId));
@@ -215,6 +298,7 @@ export function useAccountData() {
     profile,
     schedules,
     likedProfiles,
+    likedYou,
     comments,
     sublets,
     parcels,
@@ -223,6 +307,7 @@ export function useAccountData() {
     loadError,
     handleDeleteComment,
     handleUnlike,
+    handleLikeBack,
     handleDeleteSublet,
     handleDeleteSchedule,
   };

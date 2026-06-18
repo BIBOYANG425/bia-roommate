@@ -22,13 +22,19 @@ export default function ProfileCard({
   onClick,
   likeCount,
   onLikeChange,
+  compatScore,
+  compatReasons,
 }: {
   profile: RoommateProfile;
   onClick: () => void;
   likeCount?: number;
   onLikeChange?: (profileId: string, liked: boolean) => void;
+  /** 0–100 compatibility vs the viewer's own profile; omit to hide the badge. */
+  compatScore?: number;
+  /** Already-localized reasons for the score (strongest first). */
+  compatReasons?: string[];
 }) {
-  const { user } = useAuth();
+  const { user, promptSignIn } = useAuth();
   const [likeLoading, setLikeLoading] = useState(false);
   const [localLiked, setLocalLiked] = useState(false);
 
@@ -58,27 +64,38 @@ export default function ProfileCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- user?.id is the relevant dep, not the whole user object
   }, [user?.id, profile.id]);
 
-  const handleLike = useCallback(
-    async (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (!user || likeLoading) return;
-      setLikeLoading(true);
-      try {
-        const res = await fetch("/api/likes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ profile_id: profile.id }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setLocalLiked(data.liked);
-          onLikeChange?.(profile.id, data.liked);
-        }
-      } finally {
-        setLikeLoading(false);
+  const doLike = useCallback(async () => {
+    if (likeLoading) return;
+    setLikeLoading(true);
+    try {
+      const res = await fetch("/api/likes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_id: profile.id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLocalLiked(data.liked);
+        onLikeChange?.(profile.id, data.liked);
       }
+    } finally {
+      setLikeLoading(false);
+    }
+  }, [profile.id, likeLoading, onLikeChange]);
+
+  const handleLike = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (likeLoading) return;
+      // Logged-out: don't swallow the click — turn the strongest-intent action
+      // into a sign-in, then complete the like automatically.
+      if (!user) {
+        promptSignIn({ onSuccess: doLike });
+        return;
+      }
+      doLike();
     },
-    [user, profile.id, likeLoading, onLikeChange],
+    [user, likeLoading, doLike, promptSignIn],
   );
 
   const lastChar = getLastChar(profile.name);
@@ -150,6 +167,26 @@ export default function ProfileCard({
         </div>
       </div>
 
+      {/* Compatibility — only present when scored against the viewer's profile */}
+      {typeof compatScore === "number" && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span
+            className="font-display text-xs tracking-wide px-2 py-0.5 border-[2px] border-[var(--black)]"
+            style={{ background: "var(--gold)", color: "var(--black)" }}
+          >
+            {compatScore}% ♥
+          </span>
+          {compatReasons && compatReasons.length > 0 && (
+            <span
+              className="text-[10px] truncate"
+              style={{ color: "var(--mid)" }}
+            >
+              {compatReasons.slice(0, 2).join(" · ")}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Tags */}
       {profile.tags && profile.tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
@@ -181,11 +218,11 @@ export default function ProfileCard({
         <div className="flex items-center gap-2">
           <button
             onClick={handleLike}
-            disabled={!user || likeLoading}
+            disabled={likeLoading}
             className="text-sm transition-transform hover:scale-110"
             style={{
               color: localLiked ? "var(--cardinal)" : "var(--mid)",
-              cursor: user ? "pointer" : "default",
+              cursor: "pointer",
             }}
             title={user ? (localLiked ? "Unlike" : "Like") : "Sign in to like"}
           >

@@ -7,6 +7,15 @@
 export type Lang = "en" | "zh";
 
 export const t = {
+  comingSoon: {
+    kicker: { en: "Coming soon", zh: "敬请期待" },
+    body: {
+      en: "We'd rather ship this right than ship it broken. It's being polished — we'll open it soon.",
+      zh: "与其上线半成品，不如把它做对。正在打磨中，很快开放。",
+    },
+    back: { en: "Back to home", zh: "返回首页" },
+    badge: { en: "Soon", zh: "敬请期待" },
+  },
   nav: {
     about: { en: "About", zh: "关于我们" },
     events: { en: "Events", zh: "活动" },

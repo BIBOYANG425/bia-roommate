@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS } from "./types";
 export const BIA_API_BASE = "https://bia-roommate.vercel.app";
 
 /** Keep in sync with manifest.json and vite built manifest */
-export const EXTENSION_VERSION = "1.0.2";
+export const EXTENSION_VERSION = "1.0.3";
 
 /** USC term codes: YYYY + 1/2/3 = Spring / Summer / Fall */
 export const SEMESTER_OPTIONS = [

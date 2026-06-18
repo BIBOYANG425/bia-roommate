@@ -299,6 +299,7 @@ export function ScheduleOptimizer() {
   const [hideDClearance, setHideDClearance] = useState(false);
   const [hideGraduate, setHideGraduate] = useState(false);
   const [hideThematicOption, setHideThematicOption] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "auth" | "error">("idle");
 
   // Read course bin from chrome.storage (persists across pages)
   useEffect(() => {
@@ -348,6 +349,7 @@ export function ScheduleOptimizer() {
   }
 
   const handleOptimize = useCallback(async () => {
+    setSaveState("idle");
     const totalItems = courseCodes.length + selectedGEs.size;
     if (totalItems === 0) return;
 
@@ -463,6 +465,37 @@ export function ScheduleOptimizer() {
     hideGraduate,
     hideThematicOption,
   ]);
+
+  async function handleSaveToAccount() {
+    if (optimizedSections.length === 0) return;
+    setSaveState("saving");
+    try {
+      const settings = await chrome.storage.local.get("settings");
+      const semester = settings.settings?.semester ?? DEFAULT_SETTINGS.semester;
+      const courses = [...courseCodes, ...selectedGEs];
+      const r = await chrome.runtime.sendMessage({
+        type: "SAVE_SCHEDULE",
+        semester,
+        courses,
+        schedule_data: { sections: optimizedSections },
+      });
+      if (r?.type === "SAVE_SCHEDULE_RESULT") setSaveState("saved");
+      else if (r?.type === "AUTH_REQUIRED") setSaveState("auth");
+      else setSaveState("error");
+    } catch {
+      setSaveState("error");
+    }
+  }
+
+  async function handleSignInThenSave() {
+    try {
+      const r = await chrome.runtime.sendMessage({ type: "AUTH_SIGN_IN" });
+      if (r?.type === "AUTH_RESULT" && r.email) await handleSaveToAccount();
+      else setSaveState("idle"); // cancelled or no email
+    } catch {
+      setSaveState("idle");
+    }
+  }
 
   const canOptimize = courseCodes.length > 0 || selectedGEs.size > 0;
 
@@ -638,6 +671,27 @@ export function ScheduleOptimizer() {
             Optimal Schedule ({optimizedSections.length} sections)
           </p>
           <MiniCalendar sections={optimizedSections} />
+          <div style={{ marginTop: 12, textAlign: "center" }}>
+            {saveState === "auth" ? (
+              <button className="link-button" onClick={handleSignInThenSave}>
+                Sign in to save
+              </button>
+            ) : (
+              <button
+                className="link-button"
+                onClick={handleSaveToAccount}
+                disabled={saveState === "saving"}
+              >
+                {saveState === "saving"
+                  ? "Saving…"
+                  : saveState === "saved"
+                    ? "Saved ✓"
+                    : saveState === "error"
+                      ? "Save failed — retry"
+                      : "Save to BIA account"}
+              </button>
+            )}
+          </div>
           {optimizedSections.map((sec) => {
             const color = COURSE_COLORS[sec.colorIndex % COURSE_COLORS.length];
             const instructor = sec.section.instructor;
