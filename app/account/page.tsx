@@ -7,6 +7,7 @@ import CollapsibleSection from "@/components/account/CollapsibleSection";
 import SubletsList from "@/components/account/SubletsList";
 import SavedSchedulesList from "@/components/account/SavedSchedulesList";
 import LikedProfiles from "@/components/account/LikedProfiles";
+import LikedYou from "@/components/account/LikedYou";
 import CommentsList from "@/components/account/CommentsList";
 import ShippingSummary from "@/components/account/ShippingSummary";
 import { useAccountData } from "@/components/account/useAccountData";
@@ -19,6 +20,7 @@ export default function AccountPage() {
     profile,
     schedules,
     likedProfiles,
+    likedYou,
     comments,
     sublets,
     parcels,
@@ -27,11 +29,13 @@ export default function AccountPage() {
     loadError,
     handleDeleteComment,
     handleUnlike,
+    handleLikeBack,
     handleDeleteSublet,
     handleDeleteSchedule,
   } = useAccountData();
 
   const [sections, setSections] = useState<Record<string, boolean>>({
+    matches: true,
     shipping: true,
     sublets: true,
     saved: true,
@@ -101,6 +105,20 @@ export default function AccountPage() {
         </div>
       ) : (
         <div className="space-y-3">
+          <CollapsibleSection
+            title="MATCHES 💞"
+            count={likedYou.length}
+            open={!!sections.matches}
+            onToggle={() => toggleSection("matches")}
+          >
+            <LikedYou
+              profiles={likedYou}
+              hasProfile={!!profile}
+              onLikeBack={handleLikeBack}
+              onPublishClick={() => router.push("/submit")}
+            />
+          </CollapsibleSection>
+
           <CollapsibleSection
             title="YOUR SHIPPING"
             count={parcels.length}
