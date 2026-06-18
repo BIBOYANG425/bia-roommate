@@ -52,6 +52,13 @@ george/data/wechat/
 # Distilled voice skills — contain verbatim chat adjacent content + cloned tooling
 .claude/skills/
 
+# Local tool state — not meant to be shared
+.codex/
+.gstack/
+
+# Local session-log backups (the real logs are committed; .bak copies are local)
+.claude/session-logs/*.local.bak.md
+
 # R session history (never relevant to this app)
 .Rhistory
 .Rapp.history
