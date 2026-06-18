@@ -91,7 +91,7 @@ export default function ProfileModal({
     };
   }, [onClose]);
 
-  const { user } = useAuth();
+  const { user, promptSignIn } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [likeLoading, setLikeLoading] = useState(false);
@@ -124,8 +124,8 @@ export default function ProfileModal({
     fetchLikeData();
   }, [profile.id, user]);
 
-  const handleLike = useCallback(async () => {
-    if (!user || likeLoading) return;
+  const doLike = useCallback(async () => {
+    if (likeLoading) return;
     setLikeLoading(true);
     try {
       const res = await fetch("/api/likes", {
@@ -141,7 +141,22 @@ export default function ProfileModal({
     } finally {
       setLikeLoading(false);
     }
-  }, [user, profile.id, likeLoading]);
+  }, [profile.id, likeLoading]);
+
+  const handleLike = useCallback(() => {
+    if (likeLoading) return;
+    if (!user) {
+      promptSignIn({
+        subtitle:
+          language === "zh"
+            ? "登录后让 TA 知道你心动了"
+            : "Sign in to let them know you're interested",
+        onSuccess: doLike,
+      });
+      return;
+    }
+    doLike();
+  }, [user, likeLoading, doLike, promptSignIn, language]);
 
   const hasHabits =
     profile.sleep_habit ||
@@ -181,12 +196,12 @@ export default function ProfileModal({
             e.stopPropagation();
             handleLike();
           }}
-          disabled={!user || likeLoading}
+          disabled={likeLoading}
           className="absolute top-4 right-16 w-10 h-10 flex items-center justify-center border-[3px] border-[var(--black)] z-10 text-lg transition-colors"
           style={{
             background: liked ? "var(--cardinal)" : "var(--cream)",
             color: liked ? "white" : "var(--black)",
-            cursor: user ? "pointer" : "not-allowed",
+            cursor: "pointer",
           }}
           title={user ? (liked ? "Unlike" : "Like") : "Sign in to like"}
         >
