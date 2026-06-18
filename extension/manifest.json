@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvIm6mgbKkUtH6utxb4f9OyZ/QUaNKfrrDi5sXHEOVwCF/bnxNgTIJnHmoAlV9TXoKyPA+2S4B5j8u+M/aPOSiSeR18kEqsL26Y52HOGqhnDxKoWpivH5+L/ZkIhRcAvHsgQdo94lgf37ZUpRRI+f/ipEdq0hrItquq3qLpFMQC3/zNHFBUYtnhgAXZS4HRwrv/RqEKXhag8DziUncXZniLPBebyn/PFh+afD6B5r4hXRCfuwf+u3GTvHzE/AzQ+jKus4a8Ic94nl8YkJCDSg00eoULxpSWTZWaxqguDpnG7l3eKJ6fJJTXr7i/UlvX31NwxssvPt7YXoQo42+AE9lwIDAQAB",
   "name": "BIA Course Helper",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "RMP ratings, schedule optimization, and course discovery for USC students — by BIA",
   "permissions": ["storage", "identity"],
   "host_permissions": [
