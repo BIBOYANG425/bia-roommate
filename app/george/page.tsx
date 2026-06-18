@@ -11,6 +11,8 @@
 "use client";
 
 import { useState } from "react";
+import ComingSoon from "@/components/ComingSoon";
+import { isComingSoon } from "@/lib/features";
 
 type Step =
   | { name: "form" }
@@ -27,6 +29,13 @@ const ERROR_COPY: Record<string, string> = {
 };
 
 export default function GeorgeLanding() {
+  if (isComingSoon("george")) {
+    return <ComingSoon name={{ en: "George", zh: "George" }} />;
+  }
+  return <GeorgeLandingInner />;
+}
+
+function GeorgeLandingInner() {
   const [phone, setPhone] = useState("");
   const [step, setStep] = useState<Step>({ name: "form" });
 
