@@ -116,7 +116,7 @@ export default function GeorgeSignupForm() {
           value={dialCode}
           onChange={(e) => setDialCode(e.target.value)}
           className="brutal-input"
-          style={{ minHeight: 44, flex: "0 0 auto" }}
+          style={{ minHeight: 44, width: "8rem", flex: "0 0 8rem" }}
         >
           {COUNTRY_CODES.map((c) => (
             <option key={c.dial} value={c.dial}>
@@ -136,7 +136,7 @@ export default function GeorgeSignupForm() {
             if (e.key === "Enter" && step.name !== "loading") signUp();
           }}
           className="brutal-input"
-          style={{ flex: 1, textAlign: "center", minHeight: 44 }}
+          style={{ flex: "1 1 0%", minWidth: 0, textAlign: "center", minHeight: 44 }}
         />
       </div>
       <button
