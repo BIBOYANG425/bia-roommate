@@ -1,14 +1,16 @@
 // app/georgebeta/page.tsx
-// Beta tester landing for George. Public (no gate) — beta users just have the
-// link. Points testers at the two surfaces (web chat = reliable today, iMessage
-// = private beta and provider-flaky), shows what to try, and collects structured
-// feedback via POST /api/feedback (category/message/email/path).
+// Beta tester entry for George. Runs the SAME signup flow as /george (phone +
+// country code -> Spectrum-assigned line -> open iMessage) via the shared
+// GeorgeSignupForm, but ungated — /george is paused behind the coming-soon flag
+// (lib/features), so beta testers come here to actually onboard. Adds beta
+// framing, a web-chat fallback, and a structured feedback form (POST /api/feedback).
 //
 // Header last reviewed: 2026-06-18
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
+import GeorgeSignupForm from "../george/GeorgeSignupForm";
 
 const TRY_PROMPTS = [
   "where's the best matcha near campus?",
@@ -61,62 +63,45 @@ export default function GeorgeBeta() {
 
   return (
     <div style={{ background: "var(--cream)", minHeight: "100vh", padding: "3rem 1rem" }}>
-      <div style={{ maxWidth: 560, margin: "0 auto" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
         {/* Hero */}
-        <div style={{ textAlign: "center" }}>
-          <span className="brutal-tag brutal-tag-gold">private beta</span>
-          <h1
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "3rem",
-              fontStyle: "italic",
-              color: "var(--cardinal)",
-              margin: "0.75rem 0 0",
-            }}
-          >
-            george
-          </h1>
-          <p style={{ color: "var(--mid)", marginTop: "0.75rem" }}>
-            the AI senior who lives in your iMessage. you are testing the beta,
-            so things will break. what you tell us shapes it.
-          </p>
-        </div>
+        <span className="brutal-tag brutal-tag-gold">private beta</span>
+        <h1
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "3rem",
+            fontStyle: "italic",
+            color: "var(--cardinal)",
+            margin: "0.75rem 0 0",
+          }}
+        >
+          george
+        </h1>
+        <p style={{ color: "var(--mid)", marginTop: "0.75rem" }}>
+          the AI senior who lives in your iMessage. enter your number, we match
+          you a private line, you text it. you are a beta tester, so things will
+          break and what you flag shapes it.
+        </p>
 
-        {/* Test surfaces */}
-        <div className="brutal-card" style={{ marginTop: "2rem", padding: "1.5rem" }}>
-          <p style={{ fontFamily: "var(--font-display)", color: "var(--black)", marginBottom: "0.75rem" }}>
-            two ways to try it
-          </p>
-          <Link
-            href="/george/chat"
-            className="brutal-btn brutal-btn-primary"
-            style={{ display: "block", width: "100%", minHeight: 44, marginBottom: "0.75rem" }}
-          >
-            Try George in your browser
+        {/* The actual signup flow (same as /george) */}
+        <GeorgeSignupForm />
+
+        {/* Reliability note + web-chat fallback */}
+        <p style={{ marginTop: "1.5rem", fontSize: "0.78rem", color: "var(--mid)" }}>
+          iMessage runs through a provider that has been flaky lately. if george
+          goes quiet, that is usually the provider, not you.{" "}
+          <Link href="/george/chat" style={{ color: "var(--cardinal)" }}>
+            prefer the browser? try web chat
           </Link>
-          <p style={{ fontSize: "0.8rem", color: "var(--mid)", marginBottom: "1rem" }}>
-            web chat, no setup. the most reliable way to test right now.
-          </p>
-          <Link
-            href="/george"
-            className="brutal-btn"
-            style={{ display: "block", width: "100%", minHeight: 44 }}
-          >
-            Get George on iMessage
-          </Link>
-          <p style={{ fontSize: "0.8rem", color: "var(--mid)", marginTop: "0.75rem" }}>
-            iMessage is private beta and runs through a provider that has been
-            flaky lately. if George goes quiet, that is usually the provider, not
-            you. web chat keeps working when it does.
-          </p>
-        </div>
+          .
+        </p>
 
         {/* What to try */}
         <div style={{ marginTop: "2rem" }}>
           <p style={{ fontFamily: "var(--font-display)", color: "var(--black)", marginBottom: "0.75rem" }}>
             stuff worth asking
           </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "center" }}>
             {TRY_PROMPTS.map((p) => (
               <span key={p} className="brutal-tag" style={{ fontSize: "0.8rem" }}>
                 {p}
@@ -126,7 +111,7 @@ export default function GeorgeBeta() {
         </div>
 
         {/* Feedback */}
-        <div className="brutal-card" style={{ marginTop: "2rem", padding: "1.5rem" }}>
+        <div className="brutal-card" style={{ marginTop: "2rem", padding: "1.5rem", textAlign: "left" }}>
           <p style={{ fontFamily: "var(--font-display)", color: "var(--black)", marginBottom: "0.25rem" }}>
             found something off? tell us
           </p>
@@ -188,7 +173,7 @@ export default function GeorgeBeta() {
         </div>
 
         {/* Footer */}
-        <p style={{ marginTop: "2rem", textAlign: "center", fontSize: "0.75rem", color: "var(--mid)" }}>
+        <p style={{ marginTop: "2rem", fontSize: "0.75rem", color: "var(--mid)" }}>
           BIA · need a human? <a href="mailto:bia@usc.edu">bia@usc.edu</a> · IG{" "}
           <a href="https://instagram.com/bia_usc" target="_blank" rel="noreferrer">
             @bia_usc
