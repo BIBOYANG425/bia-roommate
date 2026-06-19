@@ -1,10 +1,14 @@
 // Calls the web app's /api/schedules with the user's Supabase bearer token.
+// save (POST), list (GET), and get-one (GET ?id=) all live here.
 // Throws "AUTH_REQUIRED" on a 401 so the worker can prompt re-login.
 //
-// Header last reviewed: 2026-06-17
+// Header last reviewed: 2026-06-18
 
 import { BIA_API_BASE } from "../shared/constants";
-import type { SavedScheduleSummary } from "../shared/types";
+import type {
+  SavedScheduleSummary,
+  SavedScheduleDetail,
+} from "../shared/types";
 
 export async function saveSchedule(
   token: string,
@@ -31,4 +35,20 @@ export async function listSchedules(token: string): Promise<SavedScheduleSummary
   if (!res.ok) throw new Error(`List failed: ${res.status}`);
   const data = await res.json();
   return (Array.isArray(data) ? data : []) as SavedScheduleSummary[];
+}
+
+export async function getSchedule(
+  token: string,
+  id: string,
+): Promise<SavedScheduleDetail> {
+  const res = await fetch(
+    `${BIA_API_BASE}/api/schedules?id=${encodeURIComponent(id)}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(15000),
+    },
+  );
+  if (res.status === 401) throw new Error("AUTH_REQUIRED");
+  if (!res.ok) throw new Error(`Load failed: ${res.status}`);
+  return (await res.json()) as SavedScheduleDetail;
 }
