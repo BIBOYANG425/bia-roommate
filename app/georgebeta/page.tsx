@@ -77,8 +77,8 @@ export default function GeorgeBeta() {
             george
           </h1>
           <p style={{ color: "var(--mid)", marginTop: "0.75rem" }}>
-            the AI senior who lives in your iMessage. you're testing the beta, so
-            things will break. what you tell us shapes it.
+            the AI senior who lives in your iMessage. you are testing the beta,
+            so things will break. what you tell us shapes it.
           </p>
         </div>
 
