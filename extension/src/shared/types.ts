@@ -9,7 +9,11 @@ export type {
   SelectedSection,
 } from "../../../shared/course-types";
 
-import type { Course, RmpRating } from "../../../shared/course-types";
+import type {
+  Course,
+  RmpRating,
+  SelectedSection,
+} from "../../../shared/course-types";
 
 // ─── Extension-only types ───
 
@@ -31,6 +35,13 @@ export interface SavedScheduleSummary {
   created_at: string;
 }
 
+/** Full saved schedule, as returned by GET /api/schedules?id=<id>. */
+export interface SavedScheduleDetail extends SavedScheduleSummary {
+  courses: string[];
+  preferences: Record<string, unknown> | null;
+  schedule_data: { sections: SelectedSection[] };
+}
+
 // ─── Message types between content script / popup and background worker ───
 
 export type BackgroundMessage =
@@ -50,7 +61,8 @@ export type BackgroundMessage =
       courses: string[];
       schedule_data: Record<string, unknown>;
     }
-  | { type: "LIST_SCHEDULES" };
+  | { type: "LIST_SCHEDULES" }
+  | { type: "GET_SCHEDULE"; id: string };
 
 export type BackgroundResponse =
   | { type: "RMP_BATCH_RESULT"; ratings: Record<string, RmpRating | null> }
@@ -62,6 +74,7 @@ export type BackgroundResponse =
   | { type: "AUTH_RESULT"; email: string | null }
   | { type: "SAVE_SCHEDULE_RESULT"; id: string }
   | { type: "LIST_SCHEDULES_RESULT"; schedules: SavedScheduleSummary[] }
+  | { type: "GET_SCHEDULE_RESULT"; schedule: SavedScheduleDetail }
   | { type: "AUTH_REQUIRED" };
 
 export interface ExtensionSettings {

@@ -13,7 +13,7 @@ import {
 } from "./api-client";
 import { StorageCache } from "./cache";
 import { signIn, signOut, getEmail, getValidAccessToken } from "./auth";
-import { saveSchedule, listSchedules } from "./schedules-client";
+import { saveSchedule, listSchedules, getSchedule } from "./schedules-client";
 import type {
   BackgroundMessage,
   BackgroundResponse,
@@ -112,6 +112,17 @@ async function handleMessage(
       if (!token) return { type: "AUTH_REQUIRED" };
       try {
         return { type: "LIST_SCHEDULES_RESULT", schedules: await listSchedules(token) };
+      } catch (err) {
+        if ((err as Error).message === "AUTH_REQUIRED") return { type: "AUTH_REQUIRED" };
+        throw err;
+      }
+    }
+
+    case "GET_SCHEDULE": {
+      const token = await getValidAccessToken();
+      if (!token) return { type: "AUTH_REQUIRED" };
+      try {
+        return { type: "GET_SCHEDULE_RESULT", schedule: await getSchedule(token, msg.id) };
       } catch (err) {
         if ((err as Error).message === "AUTH_REQUIRED") return { type: "AUTH_REQUIRED" };
         throw err;
