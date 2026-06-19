@@ -14,12 +14,25 @@ export type SignupOutcome =
   | { ok: true; assignedPhoneNumber: string; alreadyRegistered: boolean }
   | { ok: false; error: "invalid_phone" | "pool_unavailable" | "spectrum_error" };
 
-/** Normalize US phone input to E.164 (+1XXXXXXXXXX). Returns null if not a US number. */
-export function normalizeUsPhone(raw: string): string | null {
-  const digits = raw.replace(/\D/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return null;
+/**
+ * Normalize phone input to E.164 (+<country><number>). Any explicit country
+ * code (a leading "+" or the "00" international prefix) is preserved, so +86
+ * (China), +44, +33, etc. all work. A bare North-American number (10 digits, or
+ * 11 starting with 1) defaults to +1. Returns null if it is not a plausible
+ * E.164 (8-15 digits after the "+"). Must agree with george's normalizeHandle()
+ * so the registered phone matches the iMessage handle the agent sees.
+ */
+export function normalizePhone(raw: string): string | null {
+  let d = raw.replace(/[^\d+]/g, "");
+  if (!d.startsWith("+") && d.startsWith("00")) d = `+${d.slice(2)}`;
+  if (!d.startsWith("+")) {
+    if (d.length === 10) d = `+1${d}`;
+    else if (d.length === 11 && d.startsWith("1")) d = `+${d}`;
+    else return null; // bare number with no country code we can infer
+  }
+  const digits = d.slice(1);
+  if (digits.length < 8 || digits.length > 15) return null; // E.164 bounds
+  return `+${digits}`;
 }
 
 function authHeader(projectId: string, projectSecret: string): string {

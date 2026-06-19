@@ -9,7 +9,7 @@ const { registerMock, mintMock, findMock, rateMock } = vi.hoisted(() => ({
 
 vi.mock("@/lib/george/spectrum", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/george/spectrum")>();
-  return { normalizeUsPhone: actual.normalizeUsPhone, registerSharedUser: registerMock };
+  return { normalizePhone: actual.normalizePhone, registerSharedUser: registerMock };
 });
 vi.mock("@/lib/george/mint-code", () => ({
   mintPendingCode: mintMock,

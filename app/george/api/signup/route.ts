@@ -7,7 +7,7 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { normalizeUsPhone, registerSharedUser } from "@/lib/george/spectrum";
+import { normalizePhone, registerSharedUser } from "@/lib/george/spectrum";
 import { mintPendingCode, findPendingByHandle } from "@/lib/george/mint-code";
 
 export async function POST(request: Request) {
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-  const phone = normalizeUsPhone(typeof body?.phone === "string" ? body.phone : "");
+  const phone = normalizePhone(typeof body?.phone === "string" ? body.phone : "");
   if (!phone) {
     return NextResponse.json({ error: "invalid_phone" }, { status: 400 });
   }

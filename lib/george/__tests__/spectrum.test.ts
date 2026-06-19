@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { normalizeUsPhone, registerSharedUser } from "../spectrum";
+import { normalizePhone, registerSharedUser } from "../spectrum";
 
 const CREDS = { projectId: "pid", projectSecret: "psecret" };
 const ASSIGNED = "+16285550000";
@@ -15,17 +15,22 @@ function mockFetchSequence(responses: Array<{ ok: boolean; json: unknown }>) {
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe("normalizeUsPhone", () => {
-  it("normalizes 10-digit and formatted inputs to E.164", () => {
-    expect(normalizeUsPhone("2135550123")).toBe("+12135550123");
-    expect(normalizeUsPhone("(213) 555-0123")).toBe("+12135550123");
-    expect(normalizeUsPhone("1-213-555-0123")).toBe("+12135550123");
-    expect(normalizeUsPhone("+1 213 555 0123")).toBe("+12135550123");
+describe("normalizePhone", () => {
+  it("normalizes 10-digit and formatted US inputs to E.164", () => {
+    expect(normalizePhone("2135550123")).toBe("+12135550123");
+    expect(normalizePhone("(213) 555-0123")).toBe("+12135550123");
+    expect(normalizePhone("1-213-555-0123")).toBe("+12135550123");
+    expect(normalizePhone("+1 213 555 0123")).toBe("+12135550123");
   });
-  it("rejects non-US shapes", () => {
-    expect(normalizeUsPhone("12345")).toBeNull();
-    expect(normalizeUsPhone("+86 138 0000 0000")).toBeNull();
-    expect(normalizeUsPhone("")).toBeNull();
+  it("preserves international country codes", () => {
+    expect(normalizePhone("+86 138 0000 0000")).toBe("+8613800000000");
+    expect(normalizePhone("008613800000000")).toBe("+8613800000000");
+    expect(normalizePhone("+44 7911 123456")).toBe("+447911123456");
+    expect(normalizePhone("+33 6 12 34 56 78")).toBe("+33612345678");
+  });
+  it("rejects implausible inputs", () => {
+    expect(normalizePhone("12345")).toBeNull();
+    expect(normalizePhone("")).toBeNull();
   });
 });
 
