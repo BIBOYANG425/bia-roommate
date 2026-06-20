@@ -233,7 +233,7 @@ function ShippingDashboardContent() {
           >
             淘宝下单 → 国内仓库代收 → 拼箱发美国 → USC 取件。
             <br />
-            海运 / 空运 / 敏感货三条线路，小包裹也收，BIA 兜底。
+            海运 / 空运 / 敏感货三条线路，小包裹也收。代收 · 拼箱 · 全程状态可查，丢件协助跟进理赔。
           </p>
 
           <div className="flex flex-wrap gap-3">
@@ -248,6 +248,13 @@ function ShippingDashboardContent() {
               className="brutal-btn brutal-btn-gold inline-block"
             >
               仓库地址 / 我的 MEMBER ID
+            </Link>
+            <Link
+              href="/shipping/terms"
+              className="brutal-btn inline-block"
+              style={{ background: "var(--cream)", color: "var(--black)" }}
+            >
+              价格与政策 →
             </Link>
           </div>
         </div>

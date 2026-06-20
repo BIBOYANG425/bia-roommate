@@ -360,7 +360,7 @@ function DeclareParcelContent() {
                   className="text-[10px] mt-1 uppercase tracking-wider"
                   style={{ color: "var(--mid)" }}
                 >
-                  单件上限 ¥50000 · 美国清关建议单件 ¥800 以下
+                  单件上限 ¥50000 · 请如实填写，便于仓库核对与丢件理赔
                 </p>
               </div>
             </div>
@@ -623,11 +623,18 @@ function DeclareParcelContent() {
                   </>
                 ) : (
                   <>
-                    我确认包裹<strong>不含</strong>上述禁运物品。如仓库发现违禁品，可能被退回或销毁，BIA 不承担损失。
+                    我确认包裹<strong>不含</strong>上述禁运物品。如仓库发现违禁品，可能被退回或销毁，BIA 不承担损失；合规包裹若在国际段丢失，BIA 协助跟进理赔。
                   </>
                 )}
               </span>
             </label>
+            <Link
+              href="/shipping/terms"
+              className="inline-block mt-3 text-[11px] underline"
+              style={{ color: "var(--cardinal)" }}
+            >
+              价格与政策（含理赔说明）→
+            </Link>
           </div>
 
           {/* Error */}
