@@ -453,6 +453,8 @@ export interface Parcel {
   notes: string | null;
   user_notes: string | null;
   shipping_method: ShippingMethod | null;
+  /** Per-parcel pickup code; rendered as a QR + short code for officer 核销. */
+  pickup_token?: string | null;
   created_at: string;
   updated_at: string;
 }
