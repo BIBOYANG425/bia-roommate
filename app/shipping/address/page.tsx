@@ -269,7 +269,7 @@ function ShippingAddressContent() {
                 </li>
                 <li>地址 / 电话 / 邮编全部复制过去</li>
                 <li>下单成功后回来「预报包裹」— 填国内单号仓库更好对应</li>
-                <li>签收 / 发货 / 到美国，每一步 BIA 都会通知你</li>
+                <li>签收 / 发货 / 到美国，每一步状态都会在「我的包裹」里更新</li>
               </ol>
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link

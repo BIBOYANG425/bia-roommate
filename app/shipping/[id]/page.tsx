@@ -21,7 +21,9 @@ import {
   type ParcelEvent,
   type Shipment,
   type ShippingContact,
+  type ShippingRoute,
 } from "@/lib/types";
+import { deriveEta } from "@/lib/shipping/eta";
 import { relativeTime } from "@/lib/utils";
 
 export default function ParcelDetailPage() {
@@ -34,6 +36,7 @@ export default function ParcelDetailPage() {
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [contacts, setContacts] = useState<ShippingContact[]>([]);
+  const [routes, setRoutes] = useState<ShippingRoute[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -42,8 +45,12 @@ export default function ParcelDetailPage() {
     (async () => {
       const res = await fetch("/api/shipping/routes");
       if (res.ok) {
-        const data = (await res.json()) as { contacts: ShippingContact[] };
+        const data = (await res.json()) as {
+          contacts: ShippingContact[];
+          routes: ShippingRoute[];
+        };
         setContacts(data.contacts ?? []);
+        setRoutes(data.routes ?? []);
       }
     })();
   }, []);
@@ -159,6 +166,11 @@ export default function ParcelDetailPage() {
   const weightKg = parcel.weight_grams
     ? (parcel.weight_grams / 1000).toFixed(1)
     : null;
+  const eta = deriveEta(
+    parcel,
+    shipment,
+    routes.find((r) => r.method === parcel.shipping_method),
+  );
 
   return (
     <main className="min-h-screen" style={{ background: "var(--cream)" }}>
@@ -217,6 +229,21 @@ export default function ParcelDetailPage() {
               label: PARCEL_STATUS_META[k].label,
             }))}
           />
+          {eta.label && (
+            <div className="mt-4 pt-3 border-t-[2px] border-[var(--black)]/10">
+              <p
+                className="font-display text-sm"
+                style={{ color: "var(--black)" }}
+              >
+                {eta.label}
+              </p>
+              {eta.sub && (
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--mid)" }}>
+                  {eta.sub}
+                </p>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Pickup instructions (arrived_us only) */}
