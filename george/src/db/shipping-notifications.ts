@@ -14,7 +14,9 @@ export async function getPendingShippingNotifications() {
   const now = Date.now()
   const { data } = await supabase
     .from('shipping_notifications')
-    .select('id, kind, payload, students(id, wechat_open_id, imessage_id, name)')
+    .select(
+      'id, kind, payload, created_at, students(id, wechat_open_id, imessage_id, name, shipping_notif_opt_out)',
+    )
     .eq('status', 'pending')
     .lte('scheduled_for', new Date(now).toISOString())
     .gte('scheduled_for', new Date(now - STALE_AFTER_MS).toISOString())
