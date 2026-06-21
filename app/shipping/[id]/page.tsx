@@ -37,6 +37,8 @@ export default function ParcelDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -115,6 +117,39 @@ export default function ParcelDetailPage() {
       return;
     }
     router.replace("/shipping?tab=all");
+  };
+
+  const reloadDetail = async () => {
+    const res = await fetch(`/api/shipping/parcels/${id}`, { cache: "no-store" });
+    if (res.ok) {
+      const d = (await res.json()) as {
+        parcel: Parcel;
+        events: ParcelEvent[];
+        shipment: Shipment | null;
+      };
+      setParcel(d.parcel);
+      setEvents(d.events);
+      setShipment(d.shipment);
+    }
+  };
+
+  const handleConfirmPickup = async () => {
+    if (!parcel || parcel.status !== "arrived_us") return;
+    if (!confirm("确认你已领取此包裹？确认后状态变为「已取件」。")) return;
+    setConfirming(true);
+    setConfirmError(null);
+    const res = await fetch(
+      `/api/shipping/parcels/${parcel.id}/confirm-pickup`,
+      { method: "POST" },
+    );
+    if (!res.ok) {
+      const e = (await res.json().catch(() => ({}))) as { error?: string };
+      setConfirmError(e.error ?? "确认失败，请重试或联系运营。");
+      setConfirming(false);
+      return;
+    }
+    await reloadDetail();
+    setConfirming(false);
   };
 
   if (loading || authLoading) {
@@ -222,6 +257,61 @@ export default function ParcelDetailPage() {
         {/* Pickup instructions (arrived_us only) */}
         {parcel.status === "arrived_us" && (
           <PickupInstructionsCard shipment={shipment} />
+        )}
+
+        {/* Pickup confirm — QR for officer 核销 + self-confirm button */}
+        {parcel.status === "arrived_us" && (
+          <section
+            className="brutal-container p-5"
+            style={{ background: "var(--cream)" }}
+          >
+            <h2
+              className="font-display text-lg tracking-[0.15em] mb-3"
+              style={{ color: "var(--black)" }}
+            >
+              确认取件 · PICKUP
+            </h2>
+            <p className="text-xs mb-4" style={{ color: "var(--mid)" }}>
+              到现场把取件码报给 BIA 运营核销；或自己点「确认取件」。
+            </p>
+            {parcel.pickup_token && (
+              <div
+                className="mb-4 p-3 border-[3px] border-[var(--black)]"
+                style={{ background: "var(--gold)" }}
+              >
+                <p
+                  className="text-[10px] uppercase tracking-wider"
+                  style={{ color: "var(--black)" }}
+                >
+                  取件码 · PICKUP CODE
+                </p>
+                <p
+                  className="font-display text-3xl tracking-[0.3em]"
+                  style={{
+                    color: "var(--cardinal)",
+                    fontFamily: "var(--font-mono, ui-monospace)",
+                  }}
+                >
+                  {parcel.pickup_token}
+                </p>
+                <p className="text-[10px] mt-1" style={{ color: "var(--black)" }}>
+                  取件时把这串报给运营核销。
+                </p>
+              </div>
+            )}
+            {confirmError && (
+              <p className="text-xs mb-3" style={{ color: "var(--cardinal)" }}>
+                {confirmError}
+              </p>
+            )}
+            <button
+              onClick={handleConfirmPickup}
+              disabled={confirming}
+              className="brutal-btn brutal-btn-primary"
+            >
+              {confirming ? "确认中..." : "确认取件"}
+            </button>
+          </section>
         )}
 
         {/* Photos */}
