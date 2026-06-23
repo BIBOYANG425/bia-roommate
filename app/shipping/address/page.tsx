@@ -120,7 +120,7 @@ function ShippingAddressContent() {
               登录后领取仓库地址
             </h2>
             <p className="text-xs mb-5" style={{ color: "var(--mid)" }}>
-              仅限 USC 邮箱登录
+              支持 USC / UC Berkeley / Stanford 邮箱登录
             </p>
             <button
               onClick={() => setShowAuth(true)}
@@ -242,8 +242,8 @@ function ShippingAddressContent() {
                   仓库地址暂未配置
                 </h2>
                 <p className="text-xs" style={{ color: "var(--mid)" }}>
-                  BIA 运营还没开通国内仓库。先把 member ID 记下，开通后第一时间
-                  通知你。
+                  BIA 运营还没开通国内仓库。先把 member ID 记下，开通后会在群里 /
+                  本页公布。
                 </p>
               </section>
             )}

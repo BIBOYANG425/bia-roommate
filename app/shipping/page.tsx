@@ -336,7 +336,7 @@ function ShippingDashboardContent() {
               登录后查看你的包裹
             </p>
             <p className="text-xs mb-4" style={{ color: "var(--mid)" }}>
-              仅限 USC 邮箱登录。
+              支持 USC / UC Berkeley / Stanford 邮箱登录。
             </p>
             <button
               onClick={() => setShowAuth(true)}
