@@ -1,5 +1,6 @@
+import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { enforceIpRateLimit } from "@/lib/api/ip-rate-limit";
+import { enforceIpRateLimit, getClientIp } from "@/lib/api/ip-rate-limit";
 
 // Forwards web-chat requests to the George Express backend (the same backend
 // that powers iMessage and WeChat). The backend lives in bia-roommate/george/
@@ -43,10 +44,28 @@ const MESSAGE_TOO_LONG_MESSAGE =
 // clamp both the request rate and the message size before forwarding.
 const MAX_MESSAGE_CHARS = 2000;
 
-// userId is client-supplied and keyed into Supabase memory upstream — only
-// forward it when it looks like the ids the web UI mints (`dev-<uuid>`);
-// anything else collapses to the shared anonymous id.
-const SAFE_USER_ID = /^[\w.:-]{1,64}$/;
+// userId is client-supplied and keyed into Supabase memory upstream. Pre-fix
+// the route forwarded it (only lightly regex-validated) verbatim, so a caller
+// could pass a victim's iMessage/WeChat handle as userId and read/write THEIR
+// George memory. We instead hash the client's stable localStorage id into a
+// dedicated `web:` namespace: per-browser conversation continuity is preserved,
+// but the derived id can NEVER collide with a real iMessage handle — closing
+// the cross-user memory-disclosure vector. Anonymous callers (no client id)
+// fall back to a per-IP namespace rather than one shared "web-anon" bucket.
+function deriveBackendUserId(clientUserId: unknown, ip: string): string {
+  // clientUserId comes from an unvalidated JSON body cast — guard against
+  // non-string values (e.g. {"userId": 5}) so .trim() can't throw a 500.
+  const seed =
+    typeof clientUserId === "string" && clientUserId.trim()
+      ? `c:${clientUserId.trim()}`
+      : `ip:${ip}`;
+  const digest = createHash("sha256")
+    .update("george-web-v1")
+    .update(seed)
+    .digest("hex")
+    .slice(0, 32);
+  return `web:${digest}`;
+}
 
 export async function POST(req: NextRequest) {
   // Per-IP limit before any parsing or upstream work.
@@ -84,10 +103,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const safeUserId =
-    typeof userId === "string" && SAFE_USER_ID.test(userId)
-      ? userId
-      : "web-anon";
+  const safeUserId = deriveBackendUserId(userId, getClientIp(req));
 
   // The backend pulls history from Supabase keyed on userId, so we don't
   // forward the client history. We pass a stable userId so the conversation
