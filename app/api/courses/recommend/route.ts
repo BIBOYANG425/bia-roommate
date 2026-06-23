@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getRecommendations } from "@/lib/course-planner/recommender";
 import { runAgent } from "@/lib/course-planner/agent";
 import { corsHeaders, handleOptions } from "@/lib/cors";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 function filterByLevel<T extends { number: string }>(
   courses: T[],
@@ -24,6 +25,18 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const cors = corsHeaders(request);
+
+  // Anonymous endpoint that fans out to paid LLMs in agent mode — rate-limit
+  // per IP to cap cost abuse. Mirrors the /george/api/signup precedent.
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!checkRateLimit(`courses-recommend:${ip}`, { limit: 12, windowMs: 60_000 }).allowed) {
+    return Response.json(
+      { error: "rate_limited" },
+      { status: 429, headers: cors },
+    );
+  }
+
   try {
     const body = await request.json();
     const { interests, semester, units, level, mode } = body ?? {};

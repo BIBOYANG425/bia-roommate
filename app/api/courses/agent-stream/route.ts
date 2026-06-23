@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { runAgentStreaming, type AgentEvent } from "@/lib/course-planner/agent";
 import { corsHeaders, handleOptions } from "@/lib/cors";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { parseIntake } from "./intake";
 
 export async function OPTIONS(request: NextRequest) {
@@ -9,6 +10,17 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const cors = corsHeaders(request);
+
+  // Anonymous, multi-LLM SSE endpoint — rate-limit per IP so it can't be
+  // scripted for unbounded LLM cost. Reject BEFORE opening the stream.
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!checkRateLimit(`courses-agent:${ip}`, { limit: 8, windowMs: 60_000 }).allowed) {
+    return Response.json(
+      { error: "rate_limited" },
+      { status: 429, headers: cors },
+    );
+  }
 
   try {
     const body = await request.json();
