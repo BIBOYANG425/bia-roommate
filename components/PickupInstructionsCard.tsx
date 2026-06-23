@@ -22,7 +22,7 @@ export default function PickupInstructionsCard({ shipment }: Props) {
         className="space-y-2 text-sm list-decimal pl-5"
         style={{ color: "var(--black)" }}
       >
-        <li>George 会通过微信群 / iMessage 通知取件时间和地点</li>
+        <li>取件时间 / 地点会在「我的包裹」更新，也请留意微信群公告</li>
         <li>
           取件时请带好 <strong>学生证</strong> + 报上你的{" "}
           <strong>Member ID</strong>

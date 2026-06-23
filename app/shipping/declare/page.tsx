@@ -241,7 +241,7 @@ function DeclareParcelContent() {
           <p className="text-xs text-white/60 mt-3">
             {editId
               ? "包裹还未入库，可以修改所有字段。"
-              : "Taobao 下单后先预报一下，仓库签收更快、你能收到通知。"}
+              : "Taobao 下单后先预报一下，仓库签收更快、状态随时在「我的包裹」查看。"}
           </p>
         </div>
       </div>
@@ -351,7 +351,7 @@ function DeclareParcelContent() {
                   type="number"
                   value={declaredValue}
                   onChange={(e) => setDeclaredValue(e.target.value)}
-                  placeholder="如：800"
+                  placeholder="按实际价值填写"
                   min="0"
                   max="50000"
                   className="brutal-input"
