@@ -1,4 +1,6 @@
+import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // Forwards web-chat requests to the George Express backend (the same backend
 // that powers iMessage and WeChat). The backend lives in bia-roommate/george/
@@ -31,7 +33,54 @@ interface ChatMessage {
 const SERVICE_UNAVAILABLE_MESSAGE =
   "汪... 我现在正在调教中 👻🐕\n\nGeorge is currently being fine-tuned. The team is sharpening my replies and rolling out new tools. Try me again in a few minutes — I'll be right back.";
 
+// Returned (as a 429, but the chat client reads `response` regardless of HTTP
+// status) when one IP exceeds the per-minute message cap. Keeps George in
+// character instead of surfacing a raw throttling error.
+const RATE_LIMITED_MESSAGE =
+  "汪！你说得太快啦 🐕 给我几秒钟喘口气，马上回来～\n\nWhoa — too many messages too fast. Give me a few seconds and try again.";
+
+function getClientIp(req: NextRequest): string {
+  const first = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  if (first) return first;
+  return (
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("x-real-ip") ??
+    "unknown"
+  );
+}
+
+// Confine every web-relay caller to a dedicated `web:` identity namespace.
+// Pre-fix, this route forwarded the client-supplied userId verbatim, so anyone
+// could pass a victim's iMessage/WeChat handle as userId and read/write THEIR
+// George memory. We hash the client's stable localStorage id into the web
+// namespace: per-browser conversation continuity is preserved, but the derived
+// id can never collide with a real iMessage handle — closing the cross-user
+// memory-disclosure vector. Anonymous callers (no client id) fall back to a
+// per-IP namespace instead of a single shared bucket.
+function deriveBackendUserId(clientUserId: string | undefined, ip: string): string {
+  const seed =
+    clientUserId && clientUserId.trim() ? `c:${clientUserId.trim()}` : `ip:${ip}`;
+  const digest = createHash("sha256")
+    .update("george-web-v1")
+    .update(seed)
+    .digest("hex")
+    .slice(0, 32);
+  return `web:${digest}`;
+}
+
 export async function POST(req: NextRequest) {
+  // Abuse guard: this relay forwards to a paid LLM backend. Rate-limit per IP
+  // and never call the backend for a throttled caller, so the endpoint can't be
+  // scripted for unbounded LLM cost. Limit is generous (campus NAT shares one
+  // IP) but still caps automated abuse to 30 msg/min/IP vs. unbounded.
+  const ip = getClientIp(req);
+  if (!checkRateLimit(`george-chat:${ip}`, { limit: 30, windowMs: 60_000 }).allowed) {
+    return NextResponse.json(
+      { response: RATE_LIMITED_MESSAGE },
+      { status: 429 },
+    );
+  }
+
   const backendUrl = process.env.GEORGE_BACKEND_URL;
   const adminToken = process.env.GEORGE_ADMIN_TOKEN;
 
@@ -64,7 +113,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${adminToken}`,
       },
       body: JSON.stringify({
-        userId: userId || "web-anon",
+        userId: deriveBackendUserId(userId, ip),
         platform: "imessage",
         text: message,
       }),
