@@ -33,6 +33,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# .env.example is the committed env contract — no secrets, names only
 !.env.example
 
 # vercel
