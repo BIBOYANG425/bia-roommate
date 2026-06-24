@@ -992,11 +992,6 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
     [maxPrice, maxDistance, neighborhood, amenity],
   );
 
-  useEffect(() => {
-    setCurrent(0);
-    setImgError(false);
-  }, [maxPrice, maxDistance, neighborhood, amenity]);
-
   const navigate = useCallback(
     (dir: 1 | -1) => {
       if (transitioning || filtered.length === 0) return;
@@ -1012,6 +1007,8 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      const t = e.target as HTMLElement;
+      if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable) return;
       if (e.key === "ArrowRight" || e.key === "ArrowDown") navigate(1);
       if (e.key === "ArrowLeft" || e.key === "ArrowUp") navigate(-1);
     }
@@ -1072,16 +1069,16 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
           <span className="font-display text-[10px] tracking-[0.15em] text-[var(--mid)] shrink-0">
             {language === "zh" ? "筛选" : "FILTER"}
           </span>
-          <select value={maxPrice} onChange={(e) => setMaxPrice(Number(e.target.value))} className="brutal-select text-sm" style={{ minWidth: 120 }}>
+          <select value={maxPrice} onChange={(e) => { setMaxPrice(Number(e.target.value)); setCurrent(0); setImgError(false); }} className="brutal-select text-sm" style={{ minWidth: 120 }}>
             {PRICE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label[language]}</option>)}
           </select>
-          <select value={maxDistance} onChange={(e) => setMaxDistance(Number(e.target.value))} className="brutal-select text-sm" style={{ minWidth: 160 }}>
+          <select value={maxDistance} onChange={(e) => { setMaxDistance(Number(e.target.value)); setCurrent(0); setImgError(false); }} className="brutal-select text-sm" style={{ minWidth: 160 }}>
             {DISTANCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label[language]}</option>)}
           </select>
-          <select value={neighborhood} onChange={(e) => setNeighborhood(e.target.value as Neighborhood | "")} className="brutal-select text-sm" style={{ minWidth: 150 }}>
+          <select value={neighborhood} onChange={(e) => { setNeighborhood(e.target.value as Neighborhood | ""); setCurrent(0); setImgError(false); }} className="brutal-select text-sm" style={{ minWidth: 150 }}>
             {NEIGHBORHOOD_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label[language]}</option>)}
           </select>
-          <select value={amenity} onChange={(e) => setAmenity(e.target.value)} className="brutal-select text-sm" style={{ minWidth: 130 }}>
+          <select value={amenity} onChange={(e) => { setAmenity(e.target.value); setCurrent(0); setImgError(false); }} className="brutal-select text-sm" style={{ minWidth: 130 }}>
             {AMENITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label[language]}</option>)}
           </select>
           <span className="ml-auto font-display text-xs tracking-[0.1em] shrink-0" style={{ color: "var(--mid)" }}>
@@ -1302,7 +1299,7 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
           </div>
 
           {/* Comments */}
-          <CommentsSection aptId={apt.id} seeds={apt.redditSeeds} language={language} />
+          <CommentsSection key={apt.id} aptId={apt.id} seeds={apt.redditSeeds} language={language} />
         </>
       )}
 
