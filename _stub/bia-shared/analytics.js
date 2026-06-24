@@ -1,5 +1,5 @@
 // Local stub for @biboyang425/bia-shared/analytics
 
-function setAnalyticsSink() {}
+function setAnalyticsSink(_sink) {}
 
 module.exports = { setAnalyticsSink };

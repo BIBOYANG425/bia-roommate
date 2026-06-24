@@ -2,8 +2,15 @@
   "name": "@biboyang425/bia-shared",
   "version": "0.3.0",
   "main": "index.js",
+  "types": "index.d.ts",
   "exports": {
-    ".": "./index.js",
-    "./analytics": "./analytics.js"
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./analytics": {
+      "types": "./analytics.d.ts",
+      "default": "./analytics.js"
+    }
   }
 }

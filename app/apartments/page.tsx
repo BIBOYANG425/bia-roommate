@@ -819,7 +819,7 @@ function CommentsSection({ aptId, seeds, language }: { aptId: string; seeds: Red
       .select("id, author_name, content, created_at")
       .eq("apartment_id", aptId)
       .order("created_at", { ascending: false })
-      .then(({ data }) => {
+      .then(({ data }: { data: ApartmentComment[] | null }) => {
         setComments(data || []);
         setLoadingComments(false);
       });
