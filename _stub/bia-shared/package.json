@@ -1,0 +1,9 @@
+{
+  "name": "@biboyang425/bia-shared",
+  "version": "0.3.0",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./analytics": "./analytics.js"
+  }
+}

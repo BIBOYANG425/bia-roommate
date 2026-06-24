@@ -20,6 +20,7 @@ export type ProductLanguage = "zh" | "en";
 export type ProductPage =
   | "roommates"
   | "sublet"
+  | "apartments"
   | "course-planner"
   | "course-rating"
   | "shipping"
@@ -88,6 +89,14 @@ const PRODUCT_NAV_GROUPS: ProductNavGroup[] = [
         description: {
           zh: "公寓和短期转租",
           en: "Apartments and sublets",
+        },
+      },
+      {
+        href: "/apartments",
+        label: { zh: "好公寓", en: "Top Apts" },
+        description: {
+          zh: "洛杉矶精选公寓推荐",
+          en: "Curated LA apartments",
         },
       },
     ],
