@@ -1,12 +1,15 @@
 // /api/shipping/routes
 // GET — public read of active shipping routes + contacts.
-// No auth required. Cached 60s.
+// No auth required. Cached 60s. Uses the ANON client (not service-role): the
+// "Anyone can read active …" RLS policies (20260420 migration) enforce
+// active-only at the DB, so even a dropped .eq filter can't leak inactive rows
+// — and a student-facing public route must not wield the service-role key.
 
 import { NextResponse } from "next/server";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET() {
-  const supabase = createAdminSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
   const [{ data: routes, error: rErr }, { data: contacts, error: cErr }] =
     await Promise.all([
