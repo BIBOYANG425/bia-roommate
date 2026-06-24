@@ -806,7 +806,7 @@ const AMENITY_OPTIONS = [
 
 function CommentsSection({ aptId, seeds, language }: { aptId: string; seeds: RedditSeed[]; language: ProductLanguage }) {
   const [comments, setComments] = useState<ApartmentComment[]>([]);
-  const [loadingComments, setLoadingComments] = useState(false);
+  const [loadingComments, setLoadingComments] = useState(true);
   const [name, setName] = useState("");
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -814,7 +814,6 @@ function CommentsSection({ aptId, seeds, language }: { aptId: string; seeds: Red
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoadingComments(true);
     supabase
       .from("apartment_comments")
       .select("id, author_name, content, created_at")
