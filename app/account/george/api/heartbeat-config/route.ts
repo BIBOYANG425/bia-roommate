@@ -9,6 +9,7 @@ const schema = z.object({
   paused: z.boolean().optional(),
   consent_proactive_messages: z.boolean().optional(),
   consent_anomaly_checkin: z.boolean().optional(),
+  consent_memory: z.boolean().optional(),
 });
 
 export const PUT = authedHandler({
@@ -39,6 +40,9 @@ export const PUT = authedHandler({
     }
     if (typeof body.consent_anomaly_checkin === 'boolean') {
       update.consent_anomaly_checkin = body.consent_anomaly_checkin;
+    }
+    if (typeof body.consent_memory === 'boolean') {
+      update.consent_memory = body.consent_memory;
     }
 
     const { error } = await supabase.from('user_heartbeat_config').upsert(update);

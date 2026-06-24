@@ -4,6 +4,7 @@ import { useState } from 'react';
 interface Config {
   consent_proactive_messages?: boolean | null;
   consent_anomaly_checkin?: boolean | null;
+  consent_memory?: boolean | null;
 }
 
 export default function PrivacySection({
@@ -17,6 +18,7 @@ export default function PrivacySection({
     config?.consent_proactive_messages ?? false,
   );
   const [anomaly, setAnomaly] = useState(config?.consent_anomaly_checkin ?? false);
+  const [memory, setMemory] = useState(config?.consent_memory ?? false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [consentError, setConsentError] = useState('');
@@ -24,6 +26,7 @@ export default function PrivacySection({
   async function updateConsents(
     nextProactive: boolean,
     nextAnomaly: boolean,
+    nextMemory: boolean,
   ) {
     setConsentError('');
     try {
@@ -33,6 +36,7 @@ export default function PrivacySection({
         body: JSON.stringify({
           consent_proactive_messages: nextProactive,
           consent_anomaly_checkin: nextAnomaly,
+          consent_memory: nextMemory,
         }),
       });
       if (!res.ok) {
@@ -87,7 +91,7 @@ export default function PrivacySection({
             checked={proactive}
             onChange={(e) => {
               setProactive(e.target.checked);
-              updateConsents(e.target.checked, anomaly);
+              updateConsents(e.target.checked, anomaly, memory);
             }}
             className="mt-0.5"
           />
@@ -106,7 +110,7 @@ export default function PrivacySection({
             checked={anomaly}
             onChange={(e) => {
               setAnomaly(e.target.checked);
-              updateConsents(proactive, e.target.checked);
+              updateConsents(proactive, e.target.checked, memory);
             }}
             className="mt-0.5"
           />
@@ -116,6 +120,25 @@ export default function PrivacySection({
             </div>
             <div className="text-xs" style={{ color: 'var(--mid)' }}>
               george can ping me if I go quiet for more than 2 weeks
+            </div>
+          </div>
+        </label>
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={memory}
+            onChange={(e) => {
+              setMemory(e.target.checked);
+              updateConsents(proactive, anomaly, e.target.checked);
+            }}
+            className="mt-0.5"
+          />
+          <div>
+            <div className="text-sm" style={{ color: 'var(--black)' }}>
+              remember me
+            </div>
+            <div className="text-xs" style={{ color: 'var(--mid)' }}>
+              george can save what we talk about (major, dorm, interests) to get to know me over time
             </div>
           </div>
         </label>
