@@ -769,6 +769,57 @@ const APARTMENTS: Apartment[] = [
   },
 ];
 
+// ─── Apartment Meta (scores + fun tags) ──────────────────────────────────────
+
+const APT_META: Record<string, {
+  valueScore: 1 | 2 | 3;
+  luxuryScore: 1 | 2 | 3 | 4 | 5;
+  funTags: string[];
+}> = {
+  "circa-la":           { valueScore: 1, luxuryScore: 5, funTags: ["夜景绝佳", "打卡圣地"] },
+  "onyx-dtla":          { valueScore: 3, luxuryScore: 2, funTags: ["学生社区", "周末Party首选"] },
+  "apex-holland":       { valueScore: 2, luxuryScore: 2, funTags: ["研究生友好", "景观超越价格"] },
+  "eden-dtla":          { valueScore: 2, luxuryScore: 3, funTags: ["健身狂热者", "宠物天堂"] },
+  "wren-dtla":          { valueScore: 3, luxuryScore: 3, funTags: ["共享办公友好", "燃气灶特供"] },
+  "olive-dtla":         { valueScore: 2, luxuryScore: 2, funTags: ["中文圈", "USC必选"] },
+  "1133-hope":          { valueScore: 2, luxuryScore: 2, funTags: ["0门槛入住", "4B超值分摊"] },
+  "south-park-windsor": { valueScore: 3, luxuryScore: 2, funTags: ["0门槛入住", "视频看房先行"] },
+  "the-met":            { valueScore: 2, luxuryScore: 3, funTags: ["设计感极强", "适合上班族"] },
+  "aven-dtla":          { valueScore: 1, luxuryScore: 4, funTags: ["酒店式体验", "出片必去"] },
+  "alina-holland":      { valueScore: 2, luxuryScore: 3, funTags: ["步行99分", "维修神速"] },
+  "888-grand-hope":     { valueScore: 2, luxuryScore: 4, funTags: ["夜景绝佳", "免租优惠大"] },
+  "beaudry-dtla":       { valueScore: 2, luxuryScore: 5, funTags: ["制高点全景", "最疯狂设施"] },
+  "axis-dtla":          { valueScore: 3, luxuryScore: 2, funTags: ["停车最便宜", "实惠之选"] },
+  "thea-dtla":          { valueScore: 3, luxuryScore: 5, funTags: ["史诗级优惠", "泳池之王"] },
+  "sentral-dtla":       { valueScore: 2, luxuryScore: 3, funTags: ["实习生首选", "拎包入住"] },
+  "trademark-dtla":     { valueScore: 2, luxuryScore: 3, funTags: ["网红建筑", "近Little Tokyo"] },
+  "metro-417":          { valueScore: 3, luxuryScore: 3, funTags: ["百年历史感", "时光倒流"] },
+  "emerson-dtla":       { valueScore: 2, luxuryScore: 4, funTags: ["文艺气息", "艺术区邻居"] },
+  "be-dtla":            { valueScore: 2, luxuryScore: 3, funTags: ["社交达人", "夜生活首选"] },
+  "30sixty":            { valueScore: 3, luxuryScore: 2, funTags: ["美食天堂", "屋顶火坑"] },
+  "atlas-house":        { valueScore: 3, luxuryScore: 2, funTags: ["史诗级优惠", "全区最实惠"] },
+  "gemma-south":        { valueScore: 3, luxuryScore: 3, funTags: ["文化沉浸", "地铁神速"] },
+  "gemma-north":        { valueScore: 3, luxuryScore: 3, funTags: ["韩国城深度游", "设施共享双倍"] },
+  "nari-koreatown":     { valueScore: 1, luxuryScore: 4, funTags: ["创作者天堂", "内容拍摄基地"] },
+};
+
+const VALUE_LABELS: Record<1 | 2 | 3, { zh: string; en: string; color: string }> = {
+  1: { zh: "溢价", en: "Premium", color: "#cc4400" },
+  2: { zh: "适中", en: "Fair", color: "#888888" },
+  3: { zh: "超值", en: "Best Value", color: "#2a8a2a" },
+};
+
+const LUXURY_STARS = ["", "★☆☆☆☆", "★★☆☆☆", "★★★☆☆", "★★★★☆", "★★★★★"] as const;
+
+const STATIC_RANKING = [...APARTMENTS]
+  .map((apt) => ({
+    id: apt.id,
+    name: apt.name,
+    accentColor: apt.accentColor,
+    score: apt.redditSeeds.reduce((s, r) => s + r.score, 0),
+  }))
+  .sort((a, b) => b.score - a.score);
+
 // ─── Filter Constants ──────────────────────────────────────────────────────────
 
 const PRICE_OPTIONS = [
@@ -801,6 +852,196 @@ const AMENITY_OPTIONS = [
   { label: { zh: "允许宠物", en: "Pet-Friendly" }, value: "允许宠物" },
   { label: { zh: "家具齐全", en: "Furnished" }, value: "家具齐全" },
 ];
+
+// ─── Static Leaderboard ───────────────────────────────────────────────────────
+
+function StaticLeaderboard({ language }: { language: ProductLanguage }) {
+  return (
+    <>
+      <style>{`
+        @keyframes lb-scroll { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+        .lb-track { animation: lb-scroll 14s linear infinite; }
+        .lb-track:hover { animation-play-state: paused; }
+      `}</style>
+      <div className="border-[3px] border-[var(--black)]" style={{ width: 210, background: "var(--black)", overflow: "hidden" }}>
+        <div className="border-b-[2px] border-white/20 px-3 py-2 flex items-center gap-2">
+          <span style={{ color: "#f0c040", fontSize: 11 }}>▲</span>
+          <p className="font-display text-[10px] tracking-[0.2em] text-white">
+            {language === "zh" ? "口碑排行榜" : "TOP RATED"}
+          </p>
+        </div>
+        <div style={{ height: 200, overflow: "hidden" }}>
+          <div className="lb-track">
+            {[...STATIC_RANKING, ...STATIC_RANKING].map((item, i) => (
+              <div key={i} className="flex items-center gap-2 px-3 py-2 border-b border-white/10">
+                <span className="font-display text-[11px] w-5 text-center" style={{ color: "#f0c040" }}>
+                  {(i % STATIC_RANKING.length) + 1}
+                </span>
+                <span className="font-display text-xs text-white flex-1 truncate">{item.name}</span>
+                <span className="font-display text-[10px]" style={{ color: item.accentColor }}>
+                  {item.score >= 1000 ? `${(item.score / 1000).toFixed(1)}k` : item.score}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Vote Buttons ─────────────────────────────────────────────────────────────
+
+function VoteButtons({ aptId, language }: { aptId: string; language: ProductLanguage }) {
+  const [counts, setCounts] = useState<{ up: number; down: number } | null>(null);
+  const [myVote, setMyVote] = useState<"up" | "down" | null>(null);
+  const [voting, setVoting] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(`bia_vote_${aptId}`) as "up" | "down" | null;
+    setMyVote(stored);
+    supabase
+      .from("apartment_votes")
+      .select("vote")
+      .eq("apartment_id", aptId)
+      .then(({ data }: { data: { vote: string }[] | null }) => {
+        if (!data) return;
+        setCounts({
+          up: data.filter((d) => d.vote === "up").length,
+          down: data.filter((d) => d.vote === "down").length,
+        });
+      });
+  }, [aptId]);
+
+  async function handleVote(vote: "up" | "down") {
+    if (voting) return;
+    setVoting(true);
+    let fp = localStorage.getItem("bia_voter_fp");
+    if (!fp) {
+      fp = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem("bia_voter_fp", fp);
+    }
+    if (myVote === vote) {
+      await supabase.from("apartment_votes").delete().eq("apartment_id", aptId).eq("voter_fingerprint", fp);
+      localStorage.removeItem(`bia_vote_${aptId}`);
+      setMyVote(null);
+      setCounts((prev) => prev ? { ...prev, [vote]: Math.max(0, prev[vote] - 1) } : null);
+    } else {
+      await supabase.from("apartment_votes").upsert(
+        { apartment_id: aptId, vote, voter_fingerprint: fp },
+        { onConflict: "apartment_id,voter_fingerprint" },
+      );
+      localStorage.setItem(`bia_vote_${aptId}`, vote);
+      setCounts((prev) => prev ? {
+        up: vote === "up" ? prev.up + 1 : myVote === "up" ? prev.up - 1 : prev.up,
+        down: vote === "down" ? prev.down + 1 : myVote === "down" ? prev.down - 1 : prev.down,
+      } : { up: vote === "up" ? 1 : 0, down: vote === "down" ? 1 : 0 });
+      setMyVote(vote);
+    }
+    setVoting(false);
+  }
+
+  const btn = (vote: "up" | "down", emoji: string) => (
+    <button
+      type="button"
+      onClick={() => handleVote(vote)}
+      disabled={voting}
+      className="flex items-center gap-1.5 border-[2px] px-3 py-1.5 font-display text-xs tracking-wider transition-colors disabled:opacity-50"
+      style={{
+        borderColor: myVote === vote ? (vote === "up" ? "#2a8a2a" : "#cc4400") : "var(--black)",
+        background: myVote === vote ? (vote === "up" ? "#2a8a2a" : "#cc4400") : "transparent",
+        color: myVote === vote ? "white" : "var(--black)",
+      }}
+    >
+      {emoji} {counts ? counts[vote] : "–"}
+    </button>
+  );
+
+  return (
+    <div className="flex items-center gap-2">
+      {btn("up", "👍")}
+      {btn("down", "👎")}
+      <span className="text-[10px]" style={{ color: "var(--mid)" }}>
+        {language === "zh" ? "社区评分" : "COMMUNITY"}
+      </span>
+    </div>
+  );
+}
+
+// ─── Dynamic Leaderboard ──────────────────────────────────────────────────────
+
+interface VoteRank {
+  aptId: string;
+  name: string;
+  accentColor: string;
+  up: number;
+  down: number;
+  net: number;
+}
+
+function DynamicLeaderboard({ language }: { language: ProductLanguage }) {
+  const [ranks, setRanks] = useState<VoteRank[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("apartment_votes")
+      .select("apartment_id, vote")
+      .then(({ data }: { data: { apartment_id: string; vote: string }[] | null }) => {
+        if (!data) return;
+        const counts: Record<string, { up: number; down: number }> = {};
+        for (const row of data) {
+          if (!counts[row.apartment_id]) counts[row.apartment_id] = { up: 0, down: 0 };
+          if (row.vote === "up") counts[row.apartment_id].up++;
+          else counts[row.apartment_id].down++;
+        }
+        const sorted = Object.entries(counts)
+          .map(([aptId, c]) => {
+            const apt = APARTMENTS.find((a) => a.id === aptId);
+            if (!apt) return null;
+            return { aptId, name: apt.name, accentColor: apt.accentColor, ...c, net: c.up - c.down };
+          })
+          .filter((x): x is VoteRank => x !== null)
+          .sort((a, b) => b.net - a.net)
+          .slice(0, 5);
+        setRanks(sorted);
+      });
+  }, []);
+
+  if (ranks.length === 0) return null;
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 pb-6 sm:px-6">
+      <div className="border-[3px] border-[var(--black)]" style={{ background: "var(--beige)" }}>
+        <div className="border-b-[3px] border-[var(--black)] px-5 py-3 flex items-center gap-3">
+          <span className="font-display text-sm tracking-[0.15em]" style={{ color: "var(--black)" }}>
+            {language === "zh" ? "用户投票榜" : "COMMUNITY VOTES"}
+          </span>
+          <span className="font-display text-[10px] tracking-[0.1em]" style={{ color: "var(--mid)" }}>
+            {language === "zh" ? "实时动态" : "LIVE"}
+          </span>
+        </div>
+        <div className="flex overflow-x-auto">
+          {ranks.map((rank, i) => (
+            <div
+              key={rank.aptId}
+              className="flex-1 min-w-[140px] border-r-[3px] border-[var(--black)] last:border-r-0 px-4 py-4"
+            >
+              <span className="font-display text-2xl" style={{ color: rank.accentColor }}>#{i + 1}</span>
+              <p className="font-display text-sm text-[var(--black)] truncate mt-1">{rank.name}</p>
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                <span className="text-[11px]" style={{ color: "var(--mid)" }}>👍 {rank.up}</span>
+                <span className="text-[11px]" style={{ color: "var(--mid)" }}>👎 {rank.down}</span>
+              </div>
+              <span className="font-display text-[10px] tracking-wider mt-1 block" style={{ color: rank.net >= 0 ? "#2a8a2a" : "#cc4400" }}>
+                {rank.net >= 0 ? "+" : ""}{rank.net} {language === "zh" ? "净赞" : "net"}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Comments Section ─────────────────────────────────────────────────────────
 
@@ -975,6 +1216,8 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
   const [maxDistance, setMaxDistance] = useState(99);
   const [neighborhood, setNeighborhood] = useState<Neighborhood | "">("");
   const [amenity, setAmenity] = useState("");
+  const [minValue, setMinValue] = useState(0);
+  const [minLuxury, setMinLuxury] = useState(0);
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -986,9 +1229,11 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
         if (apt.distanceFromUSC > maxDistance) return false;
         if (neighborhood && apt.neighborhood !== neighborhood) return false;
         if (amenity && !apt.amenities.includes(amenity)) return false;
+        if (minValue && (APT_META[apt.id]?.valueScore ?? 2) < minValue) return false;
+        if (minLuxury && (APT_META[apt.id]?.luxuryScore ?? 2) < minLuxury) return false;
         return true;
       }),
-    [maxPrice, maxDistance, neighborhood, amenity],
+    [maxPrice, maxDistance, neighborhood, amenity, minValue, minLuxury],
   );
 
   const navigate = useCallback(
@@ -1051,7 +1296,8 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
               ))}
             </ul>
           </div>
-          <div>
+          <div className="flex flex-col items-end gap-3">
+            <StaticLeaderboard language={language} />
             <a
               href="#browse"
               className="inline-flex min-h-11 items-center justify-center border-[3px] border-[var(--black)] bg-[var(--cardinal)] px-5 font-display text-sm tracking-[0.08em] text-white transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5"
@@ -1079,6 +1325,16 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
           </select>
           <select value={amenity} onChange={(e) => { setAmenity(e.target.value); setCurrent(0); setImgError(false); }} className="brutal-select text-sm" style={{ minWidth: 130 }}>
             {AMENITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label[language]}</option>)}
+          </select>
+          <select value={minValue} onChange={(e) => { setMinValue(Number(e.target.value)); setCurrent(0); setImgError(false); }} className="brutal-select text-sm" style={{ minWidth: 110 }}>
+            <option value={0}>{language === "zh" ? "全部性价比" : "Any Value"}</option>
+            <option value={3}>{language === "zh" ? "超值" : "Best Value"}</option>
+            <option value={2}>{language === "zh" ? "适中+" : "Fair+"}</option>
+          </select>
+          <select value={minLuxury} onChange={(e) => { setMinLuxury(Number(e.target.value)); setCurrent(0); setImgError(false); }} className="brutal-select text-sm" style={{ minWidth: 110 }}>
+            <option value={0}>{language === "zh" ? "全部奢华度" : "Any Luxury"}</option>
+            <option value={4}>{language === "zh" ? "★★★★+" : "★★★★+"}</option>
+            <option value={3}>{language === "zh" ? "★★★+" : "★★★+"}</option>
           </select>
           <span className="ml-auto font-display text-xs tracking-[0.1em] shrink-0" style={{ color: "var(--mid)" }}>
             {filtered.length} {language === "zh" ? "个公寓" : "apartments"}
@@ -1176,7 +1432,24 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
                       {apt.tags.map((tag) => (
                         <span key={tag} className="brutal-tag">{tag}</span>
                       ))}
+                      {APT_META[apt.id]?.funTags.map((tag) => (
+                        <span key={tag} className="brutal-tag" style={{ background: "var(--black)", color: "white" }}>{tag}</span>
+                      ))}
                     </div>
+                    {APT_META[apt.id] && (() => {
+                      const meta = APT_META[apt.id];
+                      const vl = VALUE_LABELS[meta.valueScore];
+                      return (
+                        <div className="mt-2 flex items-center gap-2 flex-wrap">
+                          <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider border-[2px]" style={{ borderColor: vl.color, color: vl.color }}>
+                            {language === "zh" ? `性价比 ${vl.zh}` : `VALUE: ${vl.en}`}
+                          </span>
+                          <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider border-[2px] border-[var(--mid)]" style={{ color: "var(--mid)" }}>
+                            {language === "zh" ? "奢华度 " : "LUXURY "}{LUXURY_STARS[meta.luxuryScore]}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Notes */}
@@ -1273,7 +1546,10 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
             </div>
 
             {/* Navigation */}
-            <div className="mt-5 flex items-center gap-3 pb-6">
+            <div className="mt-5 flex items-center gap-3">
+              <VoteButtons aptId={apt.id} language={language} />
+            </div>
+            <div className="mt-3 flex items-center gap-3 pb-6">
               <button type="button" onClick={() => navigate(-1)} disabled={filtered.length <= 1} className="brutal-btn brutal-btn-ghost px-4 py-2 text-sm disabled:opacity-30">
                 ← {language === "zh" ? "上一个" : "PREV"}
               </button>
@@ -1301,6 +1577,9 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
           <CommentsSection key={apt.id} aptId={apt.id} seeds={apt.redditSeeds} language={language} />
         </>
       )}
+
+      {/* Dynamic Vote Leaderboard */}
+      <DynamicLeaderboard language={language} />
 
       {/* Marquee */}
       <div className="overflow-hidden border-y-[3px] border-[var(--black)]" style={{ background: "var(--cardinal)", color: "white" }}>
