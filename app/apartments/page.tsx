@@ -1,6 +1,15 @@
 "use client";
 
-import { useState, useMemo, Suspense, useEffect, useCallback } from "react";
+import {
+  useState,
+  useMemo,
+  Suspense,
+  useEffect,
+  useCallback,
+  createContext,
+  useContext,
+  type ReactNode,
+} from "react";
 import { supabase } from "@/lib/supabase";
 import ProductShell, { type ProductLanguage } from "@/components/ProductShell";
 
@@ -890,54 +899,135 @@ function StaticLeaderboard({ language }: { language: ProductLanguage }) {
   );
 }
 
+// ─── Vote Tallies (shared) ────────────────────────────────────────────────────
+// A single server-side aggregate query (the apartment_vote_tallies view) feeds
+// BOTH the per-card VoteButtons and the DynamicLeaderboard — instead of every
+// card downloading the whole votes table and tallying in the browser. refresh()
+// runs after each vote so the leaderboard updates live; applyDelta() gives the
+// clicked card instant optimistic feedback before the refetch lands.
+
+type VoteTally = { up: number; down: number };
+
+interface VoteTalliesValue {
+  tallies: Record<string, VoteTally>;
+  loaded: boolean;
+  refresh: () => Promise<void>;
+  applyDelta: (aptId: string, dUp: number, dDown: number) => void;
+}
+
+const VoteTalliesContext = createContext<VoteTalliesValue | null>(null);
+
+function useVoteTallies(): VoteTalliesValue {
+  const ctx = useContext(VoteTalliesContext);
+  if (!ctx)
+    throw new Error("useVoteTallies must be used within a VoteTalliesProvider");
+  return ctx;
+}
+
+function VoteTalliesProvider({ children }: { children: ReactNode }) {
+  const [tallies, setTallies] = useState<Record<string, VoteTally>>({});
+  const [loaded, setLoaded] = useState(false);
+
+  const refresh = useCallback(async () => {
+    const { data } = await supabase
+      .from("apartment_vote_tallies")
+      .select("apartment_id, up, down");
+    if (data) {
+      const next: Record<string, VoteTally> = {};
+      for (const row of data as {
+        apartment_id: string;
+        up: number | null;
+        down: number | null;
+      }[]) {
+        next[row.apartment_id] = { up: row.up ?? 0, down: row.down ?? 0 };
+      }
+      setTallies(next);
+    }
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const applyDelta = useCallback(
+    (aptId: string, dUp: number, dDown: number) => {
+      setTallies((prev) => {
+        const cur = prev[aptId] ?? { up: 0, down: 0 };
+        return {
+          ...prev,
+          [aptId]: {
+            up: Math.max(0, cur.up + dUp),
+            down: Math.max(0, cur.down + dDown),
+          },
+        };
+      });
+    },
+    [],
+  );
+
+  const value = useMemo<VoteTalliesValue>(
+    () => ({ tallies, loaded, refresh, applyDelta }),
+    [tallies, loaded, refresh, applyDelta],
+  );
+
+  return (
+    <VoteTalliesContext.Provider value={value}>
+      {children}
+    </VoteTalliesContext.Provider>
+  );
+}
+
+// Anonymous voter fingerprint stored in localStorage. Kept at module scope so
+// the React Compiler lint does not flag Math.random()/Date.now() as impure
+// calls during component render.
+function voterFingerprint(): string {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
 // ─── Vote Buttons ─────────────────────────────────────────────────────────────
 
 function VoteButtons({ aptId, language }: { aptId: string; language: ProductLanguage }) {
-  const [counts, setCounts] = useState<{ up: number; down: number } | null>(null);
+  const { tallies, loaded, applyDelta, refresh } = useVoteTallies();
   const [myVote, setMyVote] = useState<"up" | "down" | null>(null);
   const [voting, setVoting] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(`bia_vote_${aptId}`) as "up" | "down" | null;
-    setMyVote(stored);
-    supabase
-      .from("apartment_votes")
-      .select("vote")
-      .eq("apartment_id", aptId)
-      .then(({ data }: { data: { vote: string }[] | null }) => {
-        if (!data) return;
-        setCounts({
-          up: data.filter((d) => d.vote === "up").length,
-          down: data.filter((d) => d.vote === "down").length,
-        });
-      });
+    setMyVote(localStorage.getItem(`bia_vote_${aptId}`) as "up" | "down" | null);
   }, [aptId]);
+
+  // null until the first fetch lands (renders "–"); {0,0} once loaded with no votes.
+  const counts = tallies[aptId] ?? (loaded ? { up: 0, down: 0 } : null);
 
   async function handleVote(vote: "up" | "down") {
     if (voting) return;
     setVoting(true);
     let fp = localStorage.getItem("bia_voter_fp");
     if (!fp) {
-      fp = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      fp = voterFingerprint();
       localStorage.setItem("bia_voter_fp", fp);
     }
     if (myVote === vote) {
+      // Toggle the vote off.
       await supabase.from("apartment_votes").delete().eq("apartment_id", aptId).eq("voter_fingerprint", fp);
       localStorage.removeItem(`bia_vote_${aptId}`);
       setMyVote(null);
-      setCounts((prev) => prev ? { ...prev, [vote]: Math.max(0, prev[vote] - 1) } : null);
+      applyDelta(aptId, vote === "up" ? -1 : 0, vote === "down" ? -1 : 0);
     } else {
       await supabase.from("apartment_votes").upsert(
         { apartment_id: aptId, vote, voter_fingerprint: fp },
         { onConflict: "apartment_id,voter_fingerprint" },
       );
       localStorage.setItem(`bia_vote_${aptId}`, vote);
-      setCounts((prev) => prev ? {
-        up: vote === "up" ? prev.up + 1 : myVote === "up" ? prev.up - 1 : prev.up,
-        down: vote === "down" ? prev.down + 1 : myVote === "down" ? prev.down - 1 : prev.down,
-      } : { up: vote === "up" ? 1 : 0, down: vote === "down" ? 1 : 0 });
+      // Remove the previous vote's contribution, add the new one.
+      applyDelta(
+        aptId,
+        (vote === "up" ? 1 : 0) - (myVote === "up" ? 1 : 0),
+        (vote === "down" ? 1 : 0) - (myVote === "down" ? 1 : 0),
+      );
       setMyVote(vote);
     }
+    await refresh(); // reconcile with the server so the leaderboard goes live
     setVoting(false);
   }
 
@@ -980,32 +1070,28 @@ interface VoteRank {
 }
 
 function DynamicLeaderboard({ language }: { language: ProductLanguage }) {
-  const [ranks, setRanks] = useState<VoteRank[]>([]);
+  const { tallies } = useVoteTallies();
 
-  useEffect(() => {
-    supabase
-      .from("apartment_votes")
-      .select("apartment_id, vote")
-      .then(({ data }: { data: { apartment_id: string; vote: string }[] | null }) => {
-        if (!data) return;
-        const counts: Record<string, { up: number; down: number }> = {};
-        for (const row of data) {
-          if (!counts[row.apartment_id]) counts[row.apartment_id] = { up: 0, down: 0 };
-          if (row.vote === "up") counts[row.apartment_id].up++;
-          else counts[row.apartment_id].down++;
-        }
-        const sorted = Object.entries(counts)
-          .map(([aptId, c]) => {
-            const apt = APARTMENTS.find((a) => a.id === aptId);
-            if (!apt) return null;
-            return { aptId, name: apt.name, accentColor: apt.accentColor, ...c, net: c.up - c.down };
-          })
-          .filter((x): x is VoteRank => x !== null)
-          .sort((a, b) => b.net - a.net)
-          .slice(0, 5);
-        setRanks(sorted);
-      });
-  }, []);
+  const ranks = useMemo<VoteRank[]>(
+    () =>
+      Object.entries(tallies)
+        .map(([aptId, c]) => {
+          const apt = APARTMENTS.find((a) => a.id === aptId);
+          if (!apt) return null;
+          return {
+            aptId,
+            name: apt.name,
+            accentColor: apt.accentColor,
+            up: c.up,
+            down: c.down,
+            net: c.up - c.down,
+          };
+        })
+        .filter((x): x is VoteRank => x !== null)
+        .sort((a, b) => b.net - a.net)
+        .slice(0, 5),
+    [tallies],
+  );
 
   if (ranks.length === 0) return null;
 
@@ -1269,7 +1355,8 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
   };
 
   return (
-    <>
+    <VoteTalliesProvider>
+      <>
       {/* Header */}
       <section className="border-b-[3px] border-[var(--black)]" style={{ background: "var(--cream)" }}>
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-7 sm:px-6 sm:py-10 lg:grid-cols-[1fr_auto] lg:items-end">
@@ -1598,7 +1685,8 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
           {language === "zh" ? "BIA 好公寓 — 洛杉矶精选住房推荐" : "BIA TOP APARTMENTS — CURATED LA HOUSING"}
         </p>
       </footer>
-    </>
+      </>
+    </VoteTalliesProvider>
   );
 }
 
