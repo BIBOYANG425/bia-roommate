@@ -8,6 +8,8 @@
 // Registration is idempotent here: an already-registered phone falls back to
 // a user lookup and returns the existing assignment.
 
+import { canonicalizePhone } from "@biboyang425/bia-shared/phone";
+
 const SPECTRUM_BASE = "https://spectrum.photon.codes";
 
 export type SignupOutcome =
@@ -15,24 +17,17 @@ export type SignupOutcome =
   | { ok: false; error: "invalid_phone" | "pool_unavailable" | "spectrum_error" };
 
 /**
- * Normalize phone input to E.164 (+<country><number>). Any explicit country
- * code (a leading "+" or the "00" international prefix) is preserved, so +86
- * (China), +44, +33, etc. all work. A bare North-American number (10 digits, or
- * 11 starting with 1) defaults to +1. Returns null if it is not a plausible
- * E.164 (8-15 digits after the "+"). Must agree with george's normalizeHandle()
- * so the registered phone matches the iMessage handle the agent sees.
+ * Normalize phone input to canonical E.164. Delegates to the SINGLE shared
+ * canonicalizer (`@biboyang425/bia-shared/phone`, parity-vectored against
+ * george's normalizeHandle) so the registered phone is byte-identical to the
+ * iMessage handle the agent stores — the two paths can no longer drift (the
+ * drift was the +86→+853 identity fork). A bare North-American number defaults
+ * to US; an explicit country code (typed "+", a full foreign number) is
+ * trusted. Returns null when the input can't be canonicalized.
  */
 export function normalizePhone(raw: string): string | null {
-  let d = raw.replace(/[^\d+]/g, "");
-  if (!d.startsWith("+") && d.startsWith("00")) d = `+${d.slice(2)}`;
-  if (!d.startsWith("+")) {
-    if (d.length === 10) d = `+1${d}`;
-    else if (d.length === 11 && d.startsWith("1")) d = `+${d}`;
-    else return null; // bare number with no country code we can infer
-  }
-  const digits = d.slice(1);
-  if (digits.length < 8 || digits.length > 15) return null; // E.164 bounds
-  return `+${digits}`;
+  const result = canonicalizePhone(raw, { defaultCountry: "US" });
+  return result.ok ? result.e164 : null;
 }
 
 function authHeader(projectId: string, projectSecret: string): string {
