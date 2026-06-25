@@ -10,7 +10,7 @@ export const SITE = {
   fullName: "Bridging Internationals Association",
   title: "BIA | Bridging Internationals Association",
   description:
-    "USC international student community — cultural bridge-building, tech & innovation, career development. Est. 2024.",
+    "BIA is a USC international student community at the intersection of humanity, technology, and art — helping young people connect, experience, and belong. Est. 2024.",
   email: "uscbia@usc.edu",
   foundingYear: "2024",
   // Only verified profiles belong here — a wrong sameAs hurts entity matching.
