@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { authedHandler } from "@/lib/api/authed-handler";
 import { parcelCreateSchema } from "@/lib/schemas/parcel";
+import { filterOwnedPhotos } from "@/lib/shipping/photo-path";
 import {
   PARCEL_CATEGORY_OPTIONS,
   CN_CARRIER_OPTIONS,
@@ -78,9 +79,9 @@ export const POST = authedHandler({
       declaredValue = Math.round(n);
     }
 
-    const photos = (body.photos ?? [])
-      .filter((p): p is string => typeof p === "string" && p.length > 0)
-      .slice(0, 6);
+    // Only keep photo paths the caller owns (`${user.id}/...`) — never trust
+    // client-supplied paths, which the officer console signs with service-role.
+    const photos = filterOwnedPhotos(body.photos, user.id);
 
     const userNotes = (body.user_notes ?? "").trim();
 

@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { authedHandler } from "@/lib/api/authed-handler";
 import { parcelPatchSchema } from "@/lib/schemas/parcel";
+import { filterOwnedPhotos } from "@/lib/shipping/photo-path";
 import {
   PARCEL_CATEGORY_OPTIONS,
   CN_CARRIER_OPTIONS,
@@ -143,9 +144,8 @@ export const PATCH = authedHandler<typeof parcelPatchSchema, Params>({
     }
 
     if (body.photos !== undefined) {
-      patch.photos = body.photos
-        .filter((p): p is string => typeof p === "string" && p.length > 0)
-        .slice(0, 6);
+      // Only keep paths the caller owns (`${user.id}/...`); see photo-path.ts.
+      patch.photos = filterOwnedPhotos(body.photos, user.id);
     }
 
     if (body.user_notes !== undefined) {

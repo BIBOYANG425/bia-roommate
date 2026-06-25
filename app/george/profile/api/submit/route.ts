@@ -4,14 +4,16 @@
 // + user_heartbeat_instructions). Also reconciles the students row.
 //
 // Slice B simplification: no interactive sign-in yet. We mint (or fetch) a
-// confirmed auth.users row by form email via the admin API, link
-// students.user_id to it, and merge any orphan student row keyed by the
-// pending user's imessage_handle. pending_users.status flips to 'completed'
-// at the end. Real OAuth sign-in replaces the implicit user creation in
-// Slice F.
-// Header last reviewed: 2026-06-12
+// confirmed auth.users row by form email via the admin API, then call the
+// reconcile_identity RPC (the single atomic merge primitive) with that auth id
+// + the canonical phone to create/backfill/merge the one canonical students row
+// (re-pointing FKs, merging user_profiles, guarding the two-auth-accounts case).
+// pending_users.status flips to 'completed' at the end. Real OAuth sign-in
+// replaces the implicit user creation in Slice F.
+// Header last reviewed: 2026-06-24
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { canonicalizePhone } from '@biboyang425/bia-shared/phone';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -90,65 +92,30 @@ export async function POST(req: NextRequest) {
     userId = found.id;
   }
 
-  // Reconcile students rows. Two possible existing rows could be linked to
-  // the same person:
-  //   - Row A: keyed by imessage_handle, often has user_id=NULL (orphan from
-  //            old iMessage activity before auth existed)
-  //   - Row B: keyed by user_id, linked to the auth.users row matching the
-  //            form email
-  // If both exist as distinct rows, we MERGE: delete the imessage-only orphan
-  // and re-attach its imessage_id to the auth-linked row. If only one exists,
-  // we just link the missing field. If neither, fresh insert.
-  const { data: authStudent } = await supabase
-    .from('students')
-    .select('id, imessage_id')
-    .eq('user_id', userId)
-    .maybeSingle();
-  const imessageHandle = pending.imessage_handle;
-  const { data: imsgStudent } = imessageHandle
-    ? await supabase
-        .from('students')
-        .select('id, user_id')
-        .eq('imessage_id', imessageHandle)
-        .maybeSingle()
-    : { data: null };
+  // Reconcile the students row via the single, atomic, idempotent merge primitive
+  // (reconcile_identity, spec §4) — replaces the old inline 4-branch delete+attach,
+  // which had no guard against stealing a phone already bound to a DIFFERENT auth
+  // account (and was a non-transactional delete+update). One call creates /
+  // backfills / merges by canonical phone OR this auth account, re-pointing every
+  // FK child and merging user_profiles, then returns the canonical students row.
+  // The handle is canonicalized so it matches what george stores (defensive — new
+  // signups already store canonical handles via normalizePhone).
+  const rawHandle = pending.imessage_handle as string | null;
+  const canon = rawHandle ? canonicalizePhone(rawHandle) : null;
+  const canonicalHandle = canon?.ok ? canon.e164 : rawHandle;
 
-  let primaryStudentId: string;
-  if (authStudent && imsgStudent && authStudent.id !== imsgStudent.id) {
-    const { error: delErr } = await supabase.from('students').delete().eq('id', imsgStudent.id);
-    if (delErr) return NextResponse.json({ error: `student merge delete: ${delErr.message}` }, { status: 500 });
-    const { error: updErr } = await supabase
-      .from('students')
-      .update({ imessage_id: imessageHandle })
-      .eq('id', authStudent.id);
-    if (updErr) return NextResponse.json({ error: `student merge attach: ${updErr.message}` }, { status: 500 });
-    primaryStudentId = authStudent.id;
-  } else if (authStudent) {
-    if (imessageHandle && authStudent.imessage_id !== imessageHandle) {
-      const { error: attachErr } = await supabase
-        .from('students')
-        .update({ imessage_id: imessageHandle })
-        .eq('id', authStudent.id);
-      if (attachErr) return NextResponse.json({ error: `student attach imsg: ${attachErr.message}` }, { status: 500 });
-    }
-    primaryStudentId = authStudent.id;
-  } else if (imsgStudent) {
-    const { error: linkErr } = await supabase
-      .from('students')
-      .update({ user_id: userId })
-      .eq('id', imsgStudent.id);
-    if (linkErr) return NextResponse.json({ error: `student link auth: ${linkErr.message}` }, { status: 500 });
-    primaryStudentId = imsgStudent.id;
-  } else {
-    const { data: inserted, error: insErr } = await supabase
-      .from('students')
-      .insert({ user_id: userId, imessage_id: imessageHandle })
-      .select('id')
-      .single();
-    if (insErr || !inserted) {
-      return NextResponse.json({ error: `student insert: ${insErr?.message ?? 'no row'}` }, { status: 500 });
-    }
-    primaryStudentId = inserted.id;
+  const { data: reconciled, error: recErr } = await supabase.rpc('reconcile_identity', {
+    p_auth_user_id: userId,
+    p_phone_e164: canonicalHandle,
+    p_email: email,
+  });
+  if (recErr) {
+    return NextResponse.json({ error: `reconcile: ${recErr.message}` }, { status: 500 });
+  }
+  const reconciledRow = Array.isArray(reconciled) ? reconciled[0] : reconciled;
+  const primaryStudentId = (reconciledRow as { student_id?: string } | null | undefined)?.student_id;
+  if (!primaryStudentId) {
+    return NextResponse.json({ error: 'reconcile: no student row returned' }, { status: 500 });
   }
 
   const interestsArray = interests.categories;
