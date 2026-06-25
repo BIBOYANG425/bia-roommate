@@ -1085,38 +1085,14 @@ const AMENITY_OPTIONS = [
   { label: { zh: "家具齐全", en: "Furnished" }, value: "家具齐全" },
 ];
 
-// ─── Static Leaderboard ───────────────────────────────────────────────────────
-
-function StaticLeaderboard({ language }: { language: ProductLanguage }) {
-  return (
-    <>
-      <style>{`
-        @keyframes lb-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .lb-track { animation: lb-scroll 30s linear infinite; }
-        .lb-track:hover { animation-play-state: paused; }
-      `}</style>
-      <div className="border-[3px] border-[var(--black)]" style={{ width: 210, background: "var(--black)", overflow: "hidden" }}>
-        <div className="border-b-[2px] border-white/20 px-3 py-2 flex items-center gap-2">
-          <span style={{ color: "#f0c040", fontSize: 11 }}>▲</span>
-          <p className="font-display text-[10px] tracking-[0.2em] text-white">
-            {language === "zh" ? "口碑排行榜" : "TOP RATED"}
-          </p>
-        </div>
-        <div style={{ height: 200, overflow: "hidden" }}>
-          <div className="lb-track">
-            {[...STATIC_RANKING, ...STATIC_RANKING].map((item, i) => (
-              <div key={`${item.id}-${i}`} className="flex items-center gap-2 px-3 py-2 border-b border-white/10">
-                <span className="font-display text-[11px] w-5 text-center" style={{ color: "#f0c040" }}>
-                  {(i % STATIC_RANKING.length) + 1}
-                </span>
-                <span className="font-display text-xs text-white flex-1 truncate">{item.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
+// Module-level: not called during render, so impure calls are safe here
+function getOrCreateVoterFingerprint(): string {
+  let fp = localStorage.getItem("bia_voter_fp");
+  if (!fp) {
+    fp = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem("bia_voter_fp", fp);
+  }
+  return fp;
 }
 
 // ─── Vote Buttons ─────────────────────────────────────────────────────────────
@@ -1145,11 +1121,7 @@ function VoteButtons({ aptId, language }: { aptId: string; language: ProductLang
   async function handleVote(vote: "up" | "down") {
     if (voting) return;
     setVoting(true);
-    let fp = localStorage.getItem("bia_voter_fp");
-    if (!fp) {
-      fp = Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem("bia_voter_fp", fp);
-    }
+    const fp = getOrCreateVoterFingerprint();
     if (myVote === vote) {
       await supabase.from("apartment_votes").delete().eq("apartment_id", aptId).eq("voter_fingerprint", fp);
       localStorage.removeItem(`bia_vote_${aptId}`);
@@ -1193,81 +1165,6 @@ function VoteButtons({ aptId, language }: { aptId: string; language: ProductLang
       <span className="text-[10px]" style={{ color: "var(--mid)" }}>
         {language === "zh" ? "社区评分" : "COMMUNITY"}
       </span>
-    </div>
-  );
-}
-
-// ─── Dynamic Leaderboard ──────────────────────────────────────────────────────
-
-interface VoteRank {
-  aptId: string;
-  name: string;
-  accentColor: string;
-  up: number;
-  down: number;
-  net: number;
-}
-
-function DynamicLeaderboard({ language }: { language: ProductLanguage }) {
-  const [ranks, setRanks] = useState<VoteRank[]>([]);
-
-  useEffect(() => {
-    supabase
-      .from("apartment_votes")
-      .select("apartment_id, vote")
-      .then(({ data }: { data: { apartment_id: string; vote: string }[] | null }) => {
-        if (!data) return;
-        const counts: Record<string, { up: number; down: number }> = {};
-        for (const row of data) {
-          if (!counts[row.apartment_id]) counts[row.apartment_id] = { up: 0, down: 0 };
-          if (row.vote === "up") counts[row.apartment_id].up++;
-          else counts[row.apartment_id].down++;
-        }
-        const sorted = Object.entries(counts)
-          .map(([aptId, c]) => {
-            const apt = APARTMENTS.find((a) => a.id === aptId);
-            if (!apt) return null;
-            return { aptId, name: apt.name, accentColor: apt.accentColor, ...c, net: c.up - c.down };
-          })
-          .filter((x): x is VoteRank => x !== null)
-          .sort((a, b) => b.net - a.net)
-          .slice(0, 5);
-        setRanks(sorted);
-      });
-  }, []);
-
-  if (ranks.length === 0) return null;
-
-  return (
-    <div className="mx-auto max-w-6xl px-4 pb-6 sm:px-6">
-      <div className="border-[3px] border-[var(--black)]" style={{ background: "var(--beige)" }}>
-        <div className="border-b-[3px] border-[var(--black)] px-5 py-3 flex items-center gap-3">
-          <span className="font-display text-sm tracking-[0.15em]" style={{ color: "var(--black)" }}>
-            {language === "zh" ? "用户投票榜" : "COMMUNITY VOTES"}
-          </span>
-          <span className="font-display text-[10px] tracking-[0.1em]" style={{ color: "var(--mid)" }}>
-            {language === "zh" ? "实时动态" : "LIVE"}
-          </span>
-        </div>
-        <div className="flex overflow-x-auto">
-          {ranks.map((rank, i) => (
-            <div
-              key={rank.aptId}
-              className="flex-1 min-w-[140px] border-r-[3px] border-[var(--black)] last:border-r-0 px-4 py-4"
-            >
-              <span className="font-display text-2xl" style={{ color: rank.accentColor }}>#{i + 1}</span>
-              <p className="font-display text-sm text-[var(--black)] truncate mt-1">{rank.name}</p>
-              <div className="mt-2 flex items-center gap-2 flex-wrap">
-                <span className="text-[11px]" style={{ color: "var(--mid)" }}>👍 {rank.up}</span>
-                <span className="text-[11px]" style={{ color: "var(--mid)" }}>👎 {rank.down}</span>
-              </div>
-              <span className="font-display text-[10px] tracking-wider mt-1 block" style={{ color: rank.net >= 0 ? "#2a8a2a" : "#cc4400" }}>
-                {rank.net >= 0 ? "+" : ""}{rank.net} {language === "zh" ? "净赞" : "net"}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
@@ -1451,6 +1348,7 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
   const [transitioning, setTransitioning] = useState(false);
   const [imgError, setImgError] = useState(false);
   const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navGenRef = useRef(0);
 
   const filtered = useMemo(
     () =>
@@ -1466,17 +1364,14 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
     [maxPrice, maxDistance, neighborhood, amenity, minValue, minLuxury],
   );
 
-  // Cancel any in-flight navigation when filters change or component unmounts
+  // Invalidate any in-flight navigation when filters change (no setState in effect body)
   useEffect(() => {
-    if (navTimerRef.current !== null) {
-      clearTimeout(navTimerRef.current);
-      navTimerRef.current = null;
-      setTransitioning(false);
-    }
+    navGenRef.current += 1;
   }, [filtered]);
 
   useEffect(() => {
     return () => {
+      navGenRef.current += 1; // invalidate on unmount
       if (navTimerRef.current !== null) clearTimeout(navTimerRef.current);
     };
   }, []);
@@ -1486,8 +1381,14 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
       if (transitioning || filtered.length === 0) return;
       setTransitioning(true);
       setImgError(false);
+      const gen = navGenRef.current;
       navTimerRef.current = setTimeout(() => {
         navTimerRef.current = null;
+        if (navGenRef.current !== gen) {
+          // Filter changed while animating — unblock navigation without updating current
+          setTransitioning(false);
+          return;
+        }
         setCurrent((prev) => (prev + dir + filtered.length) % filtered.length);
         setTransitioning(false);
       }, 180);
