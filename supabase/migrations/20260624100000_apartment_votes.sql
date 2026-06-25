@@ -17,8 +17,9 @@ create policy "anyone can read votes"
 create policy "anyone can insert votes"
   on apartment_votes for insert with check (true);
 
-create policy "anyone can update own vote"
-  on apartment_votes for update using (true) with check (true);
+-- UPDATE is intentionally omitted: vote changes are handled via upsert (INSERT ... ON CONFLICT DO UPDATE)
+-- which the database enforces through the apartment_votes_unique constraint without exposing a
+-- permissive UPDATE policy. Direct UPDATE access is not granted to anonymous clients.
 
 create policy "anyone can delete own vote"
   on apartment_votes for delete using (true);

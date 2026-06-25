@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Suspense, useEffect, useCallback } from "react";
+import { useState, useMemo, Suspense, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import ProductShell, { type ProductLanguage } from "@/components/ProductShell";
 
@@ -1105,7 +1105,7 @@ function StaticLeaderboard({ language }: { language: ProductLanguage }) {
         <div style={{ height: 200, overflow: "hidden" }}>
           <div className="lb-track">
             {[...STATIC_RANKING, ...STATIC_RANKING].map((item, i) => (
-              <div key={i} className="flex items-center gap-2 px-3 py-2 border-b border-white/10">
+              <div key={`${item.id}-${i}`} className="flex items-center gap-2 px-3 py-2 border-b border-white/10">
                 <span className="font-display text-[11px] w-5 text-center" style={{ color: "#f0c040" }}>
                   {(i % STATIC_RANKING.length) + 1}
                 </span>
@@ -1450,6 +1450,7 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const filtered = useMemo(
     () =>
@@ -1465,12 +1466,28 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
     [maxPrice, maxDistance, neighborhood, amenity, minValue, minLuxury],
   );
 
+  // Cancel any in-flight navigation when filters change or component unmounts
+  useEffect(() => {
+    if (navTimerRef.current !== null) {
+      clearTimeout(navTimerRef.current);
+      navTimerRef.current = null;
+      setTransitioning(false);
+    }
+  }, [filtered]);
+
+  useEffect(() => {
+    return () => {
+      if (navTimerRef.current !== null) clearTimeout(navTimerRef.current);
+    };
+  }, []);
+
   const navigate = useCallback(
     (dir: 1 | -1) => {
       if (transitioning || filtered.length === 0) return;
       setTransitioning(true);
       setImgError(false);
-      setTimeout(() => {
+      navTimerRef.current = setTimeout(() => {
+        navTimerRef.current = null;
         setCurrent((prev) => (prev + dir + filtered.length) % filtered.length);
         setTransitioning(false);
       }, 180);
@@ -1552,7 +1569,7 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
           <div className="overflow-hidden flex-1">
             <div className="lb-track flex gap-0">
               {[...STATIC_RANKING, ...STATIC_RANKING].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 px-5 py-2.5 border-r border-white/10 shrink-0">
+                <div key={`${item.id}-${i}`} className="flex items-center gap-2 px-5 py-2.5 border-r border-white/10 shrink-0">
                   <span className="font-display text-[11px]" style={{ color: "#f0c040" }}>
                     #{(i % STATIC_RANKING.length) + 1}
                   </span>
