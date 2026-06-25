@@ -14,8 +14,11 @@ alter table apartment_votes enable row level security;
 create policy "anyone can read votes"
   on apartment_votes for select using (true);
 
-create policy "anyone can upsert votes"
+create policy "anyone can insert votes"
   on apartment_votes for insert with check (true);
 
-create policy "owner can delete own vote"
+create policy "anyone can update own vote"
+  on apartment_votes for update using (true) with check (true);
+
+create policy "anyone can delete own vote"
   on apartment_votes for delete using (true);
