@@ -1095,43 +1095,6 @@ const AMENITY_OPTIONS = [
   { label: { zh: "家具齐全", en: "Furnished" }, value: "家具齐全" },
 ];
 
-// ─── Static Leaderboard ───────────────────────────────────────────────────────
-
-function StaticLeaderboard({ language }: { language: ProductLanguage }) {
-  return (
-    <>
-      <style>{`
-        @keyframes lb-scroll { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
-        .lb-track { animation: lb-scroll 14s linear infinite; }
-        .lb-track:hover { animation-play-state: paused; }
-      `}</style>
-      <div className="border-[3px] border-[var(--black)]" style={{ width: 210, background: "var(--black)", overflow: "hidden" }}>
-        <div className="border-b-[2px] border-white/20 px-3 py-2 flex items-center gap-2">
-          <span style={{ color: "#f0c040", fontSize: 11 }}>▲</span>
-          <p className="font-display text-[10px] tracking-[0.2em] text-white">
-            {language === "zh" ? "口碑排行榜" : "TOP RATED"}
-          </p>
-        </div>
-        <div style={{ height: 200, overflow: "hidden" }}>
-          <div className="lb-track">
-            {[...STATIC_RANKING, ...STATIC_RANKING].map((item, i) => (
-              <div key={i} className="flex items-center gap-2 px-3 py-2 border-b border-white/10">
-                <span className="font-display text-[11px] w-5 text-center" style={{ color: "#f0c040" }}>
-                  {(i % STATIC_RANKING.length) + 1}
-                </span>
-                <span className="font-display text-xs text-white flex-1 truncate min-w-0">{item.name}</span>
-                <span className="font-display text-[10px] shrink-0" style={{ color: item.accentColor }}>
-                  {item.score >= 1000 ? `${(item.score / 1000).toFixed(1)}k` : item.score}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
 // ─── Vote Tallies (shared) ────────────────────────────────────────────────────
 // A single server-side aggregate (the get_apartment_vote_tallies() definer fn)
 // feeds BOTH the per-card VoteButtons and the DynamicLeaderboard — instead of
@@ -1144,7 +1107,6 @@ type VoteTally = { up: number; down: number };
 
 interface VoteTalliesValue {
   tallies: Record<string, VoteTally>;
-  loaded: boolean;
   refresh: () => Promise<void>;
   applyDelta: (aptId: string, dUp: number, dDown: number) => void;
 }
@@ -1158,32 +1120,37 @@ function useVoteTallies(): VoteTalliesValue {
   return ctx;
 }
 
+// Fetch the aggregated tallies from the locked votes table (definer fn).
+async function fetchVoteTallies(): Promise<Record<string, VoteTally>> {
+  const { data } = await supabase.rpc("get_apartment_vote_tallies");
+  const next: Record<string, VoteTally> = {};
+  if (data) {
+    for (const row of data as {
+      apartment_id: string;
+      up: number | null;
+      down: number | null;
+    }[]) {
+      next[row.apartment_id] = {
+        up: Number(row.up ?? 0),
+        down: Number(row.down ?? 0),
+      };
+    }
+  }
+  return next;
+}
+
 function VoteTalliesProvider({ children }: { children: ReactNode }) {
   const [tallies, setTallies] = useState<Record<string, VoteTally>>({});
-  const [loaded, setLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
-    const { data } = await supabase.rpc("get_apartment_vote_tallies");
-    if (data) {
-      const next: Record<string, VoteTally> = {};
-      for (const row of data as {
-        apartment_id: string;
-        up: number | null;
-        down: number | null;
-      }[]) {
-        next[row.apartment_id] = {
-          up: Number(row.up ?? 0),
-          down: Number(row.down ?? 0),
-        };
-      }
-      setTallies(next);
-    }
-    setLoaded(true);
+    setTallies(await fetchVoteTallies());
   }, []);
 
+  // Initial load. setState in the async .then keeps it out of the synchronous
+  // effect body (avoids the set-state-in-effect lint).
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    fetchVoteTallies().then(setTallies);
+  }, []);
 
   const applyDelta = useCallback(
     (aptId: string, dUp: number, dDown: number) => {
@@ -1202,8 +1169,8 @@ function VoteTalliesProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<VoteTalliesValue>(
-    () => ({ tallies, loaded, refresh, applyDelta }),
-    [tallies, loaded, refresh, applyDelta],
+    () => ({ tallies, refresh, applyDelta }),
+    [tallies, refresh, applyDelta],
   );
 
   return (
@@ -1229,12 +1196,12 @@ function getOrCreateVoterFingerprint(): string {
 
 function VoteButtons({ aptId, language }: { aptId: string; language: ProductLanguage }) {
   const { tallies, applyDelta, refresh } = useVoteTallies();
-  const [myVote, setMyVote] = useState<"up" | "down" | null>(null);
+  // VoteButtons is keyed by aptId (it remounts per apartment), so a lazy
+  // initializer reads the stored vote without a setState-in-effect.
+  const [myVote, setMyVote] = useState<"up" | "down" | null>(
+    () => localStorage.getItem(`bia_vote_${aptId}`) as "up" | "down" | null,
+  );
   const [voting, setVoting] = useState(false);
-
-  useEffect(() => {
-    setMyVote(localStorage.getItem(`bia_vote_${aptId}`) as "up" | "down" | null);
-  }, [aptId]);
 
   const counts = tallies[aptId] ?? { up: 0, down: 0 };
 
