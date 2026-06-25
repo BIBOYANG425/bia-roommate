@@ -583,9 +583,7 @@ export default function LandingPage() {
             </div>
             <nav className="mb-6 flex flex-wrap gap-x-5 gap-y-2 text-xs opacity-70">
               {[
-                { en: "About", zh: "关于", href: "/about" },
                 { en: "Team", zh: "团队", href: "/team" },
-                { en: "Events", zh: "活动", href: "/events" },
                 { en: "Sponsors", zh: "合作伙伴", href: "/sponsors" },
                 { en: "Contact", zh: "联系我们", href: "/contact" },
                 { en: "FAQ", zh: "常见问题", href: "/faq" },
