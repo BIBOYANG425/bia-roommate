@@ -1099,12 +1099,12 @@ function getOrCreateVoterFingerprint(): string {
 
 function VoteButtons({ aptId, language }: { aptId: string; language: ProductLanguage }) {
   const [counts, setCounts] = useState<{ up: number; down: number }>({ up: 0, down: 0 });
-  const [myVote, setMyVote] = useState<"up" | "down" | null>(null);
+  const [myVote, setMyVote] = useState<"up" | "down" | null>(
+    () => localStorage.getItem(`bia_vote_${aptId}`) as "up" | "down" | null,
+  );
   const [voting, setVoting] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(`bia_vote_${aptId}`) as "up" | "down" | null;
-    setMyVote(stored);
     supabase
       .from("apartment_votes")
       .select("vote")
