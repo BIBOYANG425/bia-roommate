@@ -60,7 +60,7 @@ export default function OpengraphImage() {
             color: "rgba(255,255,255,0.8)",
           }}
         >
-          uscbia.com · Est. {SITE.foundingYear}
+          {`uscbia.com · Est. ${SITE.foundingYear}`}
         </div>
       </div>
     ),
