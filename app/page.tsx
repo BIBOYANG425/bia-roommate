@@ -83,10 +83,10 @@ export default function LandingPage() {
                   </span>
                 </Link>
                 <div className="hidden sm:flex gap-4 text-sm text-gray-200 items-center">
-                  <Link href="/#mission" className="link-hover py-3 px-1">
+                  <Link href="/about" className="link-hover py-3 px-1">
                     {t.nav.about[lang]}
                   </Link>
-                  <Link href="/hackathon" className="link-hover py-3 px-1">
+                  <Link href="/events" className="link-hover py-3 px-1">
                     {t.nav.events[lang]}
                   </Link>
                   <Link
@@ -143,14 +143,14 @@ export default function LandingPage() {
             {menuOpen && (
               <div className="sm:hidden flex flex-col px-6 pb-4 text-sm text-gray-200">
                 <Link
-                  href="/#mission"
+                  href="/about"
                   className="py-3 border-b border-white/10"
                   onClick={() => setMenuOpen(false)}
                 >
                   {t.nav.about[lang]}
                 </Link>
                 <Link
-                  href="/hackathon"
+                  href="/events"
                   className="py-3 border-b border-white/10"
                   onClick={() => setMenuOpen(false)}
                 >
@@ -545,13 +545,13 @@ export default function LandingPage() {
                   {t.footer.home[lang]}
                 </Link>
                 <Link
-                  href="/#mission"
+                  href="/about"
                   className="hover:text-[#A0D7D1] transition-colors link-hover py-2"
                 >
                   {t.nav.about[lang]}
                 </Link>
                 <Link
-                  href="/hackathon"
+                  href="/events"
                   className="hover:text-[#A0D7D1] transition-colors link-hover py-2"
                 >
                   {t.nav.events[lang]}
