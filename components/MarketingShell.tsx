@@ -11,6 +11,7 @@ const NAV = [
   { href: "/team", label: "Team" },
   { href: "/events", label: "Events" },
   { href: "/sponsors", label: "Sponsors" },
+  { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -99,6 +100,11 @@ export default function MarketingShell({
               <li>
                 <Link href="/privacy" className="hover:opacity-60" style={{ color: "rgba(255,255,255,0.85)" }}>
                   Privacy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="hover:opacity-60" style={{ color: "rgba(255,255,255,0.85)" }}>
+                  Terms
                 </Link>
               </li>
             </ul>

@@ -15,6 +15,8 @@ const PUBLIC_ROUTES: {
   { path: "/events", priority: 0.8, changeFrequency: "weekly" },
   { path: "/sponsors", priority: 0.7, changeFrequency: "monthly" },
   { path: "/contact", priority: 0.7, changeFrequency: "yearly" },
+  { path: "/faq", priority: 0.6, changeFrequency: "monthly" },
+  { path: "/terms", priority: 0.3, changeFrequency: "yearly" },
   { path: "/apartments", priority: 0.8, changeFrequency: "weekly" },
   { path: "/roommates", priority: 0.8, changeFrequency: "weekly" },
   { path: "/course-planner", priority: 0.7, changeFrequency: "monthly" },

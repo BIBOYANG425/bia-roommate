@@ -5,7 +5,11 @@
 // Header last reviewed: 2026-06-25
 
 export const SITE = {
-  url: "https://uscbia.com",
+  // Canonical = the domain the site actually serves on. The apex (uscbia.com)
+  // 307-redirects to www, so www is canonical; using it keeps sitemap/canonical
+  // URLs non-redirecting. Flip back to the apex if Vercel is reconfigured to
+  // make uscbia.com primary.
+  url: "https://www.uscbia.com",
   name: "BIA",
   fullName: "Bridging Internationals Association",
   title: "BIA | Bridging Internationals Association",
