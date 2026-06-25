@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getArticleBySlug } from "@/lib/articles";
+import { SITE } from "@/lib/seo";
 
 // Render at request time so CI's placeholder Supabase env doesn't trip
 // build-time prerender. Production response is fast — one anon query
@@ -60,6 +61,30 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   return (
     <main className="min-h-screen bg-[#F9FAF7] text-[#171717]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            headline: article.title,
+            ...(article.excerpt ? { description: article.excerpt } : {}),
+            ...(article.cover_image_url ? { image: article.cover_image_url } : {}),
+            datePublished: article.published_at,
+            inLanguage: article.language,
+            mainEntityOfPage: {
+              "@type": "WebPage",
+              "@id": `${SITE.url}/blog/${slug}`,
+            },
+            author: { "@type": "Organization", name: SITE.fullName, url: SITE.url },
+            publisher: {
+              "@type": "Organization",
+              name: SITE.fullName,
+              logo: { "@type": "ImageObject", url: `${SITE.url}/icon.png` },
+            },
+          }),
+        }}
+      />
       <article className="mx-auto max-w-3xl px-6 py-24 sm:py-32">
         <Link
           href="/blog"
