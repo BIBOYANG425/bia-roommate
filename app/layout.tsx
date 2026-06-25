@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Inter, Instrument_Serif } from "next/font/google";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/AuthProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import FeedbackButton from "@/components/FeedbackButton";
+import { SITE, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import "./globals.css";
 
 const playlistScript = localFont({
@@ -35,9 +36,47 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "BIA | Bridging Internationals Association",
-  description:
-    "USC international student community — cultural bridge-building, tech & innovation, career development. Est. 2024.",
+  metadataBase: new URL(SITE.url),
+  title: { default: SITE.title, template: "%s | BIA" },
+  description: SITE.description,
+  applicationName: SITE.name,
+  keywords: [
+    "BIA",
+    "Bridging Internationals Association",
+    "USC international students",
+    "USC Chinese students",
+    "USC student community",
+    "USC apartments",
+    "USC course planner",
+    "USC roommates",
+  ],
+  authors: [{ name: SITE.fullName }],
+  creator: SITE.fullName,
+  publisher: SITE.fullName,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: SITE.fullName,
+    title: SITE.title,
+    description: SITE.description,
+    url: SITE.url,
+    locale: "zh_CN",
+    alternateLocale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE.title,
+    description: SITE.description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#990000",
 };
 
 export default function RootLayout({
@@ -63,6 +102,18 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd()),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(websiteJsonLd()),
+          }}
+        />
         <LanguageProvider>
           <AuthProvider>
             {children}
