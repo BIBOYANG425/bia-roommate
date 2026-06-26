@@ -39,12 +39,12 @@ export const t = {
   },
   mission: {
     heading: {
-      en: "Where bridging global communities starts.",
-      zh: "全球社区连接，从这里开始。",
+      en: "Reshaping how young people connect, experience, and belong.",
+      zh: "重塑年轻人连接、体验与归属的方式。",
     },
     desc: {
-      en: "Our vision is to empower international voices at USC by fostering an inclusive environment that intersects technology, professional growth, and shared experiences. We are building the foundational network for global ambition.",
-      zh: "我们的愿景是通过营造一个融合科技、职业成长和共同经历的包容环境，赋能USC的国际学生群体。我们正在为全球化的雄心壮志构建基础网络。",
+      en: "BIA is a student-led community that began at USC, working at the intersection of humanity, technology, and art. We don't just gather people — we design the conditions for meaningful encounters, turning a place that feels unfamiliar into a life that feels like your own.",
+      zh: "BIA 是一个起源于 USC 的学生社区，扎根于人文、科技与艺术的交汇点。我们不只是把人聚在一起，更为有意义的相遇创造条件——把一个起初陌生的地方，变成真正属于你的生活。",
     },
   },
   services: {
@@ -131,6 +131,27 @@ export const t = {
       zh: "500+ 参与者加入了我们的旗舰科技峰会——使用前沿 AI 工具构建真实产品，突破边界。",
     },
     cta: { en: "Check It Out", zh: "了解详情" },
+  },
+  george: {
+    badge: { en: "AI Agent · Now in beta", zh: "AI 助手 · Beta 内测中" },
+    heading: {
+      en: "Meet George — your BIA agent.",
+      zh: "认识 George —— 你的 BIA 智能助手。",
+    },
+    desc: {
+      en: "USC's campus ghost dog, in AI form. Ask George anything about events, courses, housing, and campus life — right inside iMessage. Join the waitlist for early access.",
+      zh: "USC 的校园幽灵狗，化身 AI。活动、选课、租房、校园生活，尽管问 George——就在 iMessage 里。加入候补名单，抢先体验。",
+    },
+    capabilities: {
+      en: ["Events", "Courses", "Housing", "Social", "Campus tips"],
+      zh: ["活动", "选课", "租房", "社交", "校园攻略"],
+    },
+    cta: { en: "Join the waitlist", zh: "加入候补名单" },
+    learn: { en: "Learn about George", zh: "了解 George" },
+    note: {
+      en: "iMessage · Web chat · WeChat soon",
+      zh: "iMessage · 网页版 · 微信即将上线",
+    },
   },
   blog: {
     heading: { en: "Latest Dispatches", zh: "最新动态" },

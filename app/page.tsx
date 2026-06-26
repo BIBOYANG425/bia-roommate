@@ -100,7 +100,7 @@ export default function LandingPage() {
                     {t.nav.blog[lang]}
                   </Link>
                   <Link
-                    href="/george"
+                    href="/george/about"
                     className="link-hover py-3 px-1 inline-flex items-center gap-1"
                   >
                     {t.nav.george[lang]}
@@ -172,7 +172,7 @@ export default function LandingPage() {
                   {t.nav.blog[lang]}
                 </Link>
                 <Link
-                  href="/george"
+                  href="/george/about"
                   className="py-3 border-b border-white/10"
                   onClick={() => setMenuOpen(false)}
                 >
@@ -228,7 +228,7 @@ export default function LandingPage() {
           </div>
 
           {/* Bottom Left CTA */}
-          <div className="absolute bottom-10 sm:bottom-16 left-6 sm:left-16 z-20 max-w-md">
+          <div className="absolute bottom-10 sm:bottom-16 left-6 sm:left-16 right-6 sm:right-auto z-20 max-w-md">
             <GlassSurface
               width="100%"
               height="auto"
@@ -295,7 +295,7 @@ export default function LandingPage() {
           {/* ─── Mission Section ─── */}
           <section
             id="mission"
-            className="scroll-mt-24 py-24 sm:py-32 px-6 sm:px-16 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative"
+            className="scroll-mt-24 py-24 sm:py-32 px-6 sm:px-16 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-8 md:gap-16 relative"
           >
             <div className="w-full md:w-1/2 rounded-3xl overflow-hidden aspect-square md:aspect-[4/3] bg-[#1F1F29] shadow-xl border border-black/5 relative group">
               <Image
@@ -327,7 +327,7 @@ export default function LandingPage() {
                 <p className="text-[#999] text-sm uppercase tracking-widest">{t.services.subtitle[lang]}</p>
               </div>
 
-              <div className="flex flex-col lg:flex-row gap-16 items-center">
+              <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center">
                 {/* Left: Folder visual */}
                 <div className="flex flex-col items-center lg:w-2/5">
                   <Folder
@@ -370,6 +370,86 @@ export default function LandingPage() {
                   })}
                   <div className="mt-4 pt-4 border-t border-black/5">
                     <p className="text-[#999] text-xs">{t.services.builtBy[lang]}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ─── George — AI agent waitlist ─── */}
+          <section className="relative overflow-hidden bg-[#1F1F29] py-24 sm:py-32 px-6 sm:px-16">
+            <div className="max-w-5xl mx-auto flex flex-col-reverse lg:flex-row items-center gap-10 lg:gap-16">
+              {/* Copy */}
+              <div className="w-full lg:w-3/5 text-white">
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 border border-white/30 rounded-full text-xs font-semibold uppercase tracking-wider mb-6">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                  {t.george.badge[lang]}
+                </span>
+                <h2 className="heading-serif text-4xl sm:text-5xl mb-5 leading-tight">
+                  {t.george.heading[lang]}
+                </h2>
+                <p className="text-white/70 text-lg leading-relaxed max-w-lg mb-6 font-light">
+                  {t.george.desc[lang]}
+                </p>
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {t.george.capabilities[lang].map((c) => (
+                    <span
+                      key={c}
+                      className="text-xs text-white/80 border border-white/15 rounded-full px-3 py-1"
+                      style={{ fontFamily: "var(--font-display-zh)" }}
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+                  <BorderGlow
+                    edgeSensitivity={5}
+                    glowColor="160 215 209"
+                    backgroundColor="transparent"
+                    borderRadius={10}
+                    glowRadius={35}
+                    glowIntensity={1.2}
+                    coneSpread={35}
+                    animated
+                    colors={["#A0D7D1", "#6DD4D4", "#ffffff"]}
+                  >
+                    <a
+                      href="https://forms.gle/qZfbiKdmasN6jid5A"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group bg-white/95 text-[#1F1F29] px-8 py-3.5 rounded-[10px] hover:bg-white transition-all duration-200 font-bold text-sm tracking-wide uppercase inline-flex items-center gap-2.5 min-h-[48px]"
+                    >
+                      {t.george.cta[lang]}
+                      <ArrowIcon />
+                    </a>
+                  </BorderGlow>
+                  <Link
+                    href="/george/about"
+                    className="text-sm text-white/60 hover:text-white transition-colors link-hover py-2"
+                  >
+                    {t.george.learn[lang]}
+                  </Link>
+                  <span className="text-xs text-white/40 w-full sm:w-auto">
+                    {t.george.note[lang]}
+                  </span>
+                </div>
+              </div>
+              {/* Ghost mark */}
+              <div className="w-full lg:w-2/5 flex justify-center">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 blur-3xl rounded-full"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(160,215,209,0.35), transparent 70%)",
+                    }}
+                  ></div>
+                  <div
+                    className="relative text-[120px] sm:text-[180px] leading-none select-none drop-shadow-2xl"
+                    aria-hidden
+                  >
+                    👻
                   </div>
                 </div>
               </div>
@@ -452,7 +532,7 @@ export default function LandingPage() {
                   colors={["#A0D7D1", "#6DD4D4", "#ffffff"]}
                 >
                   <Link
-                    href="/hackathon"
+                    href="/events"
                     className="group bg-white/95 text-[#1F1F29] px-8 py-3.5 rounded-[10px] hover:bg-white transition-all duration-200 font-bold text-sm tracking-wide uppercase inline-flex items-center gap-2.5 min-h-[48px]"
                   >
                     {t.hackathon.cta[lang]}
@@ -537,7 +617,7 @@ export default function LandingPage() {
         >
           <div className="max-w-7xl mx-auto px-6 sm:px-16 w-full">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10 border-b border-white/20 pb-12 mb-8">
-              <div className="flex gap-6 text-sm font-medium">
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium">
                 <Link
                   href="/"
                   className="hover:text-[#A0D7D1] transition-colors link-hover py-2"
