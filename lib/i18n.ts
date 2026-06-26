@@ -132,27 +132,6 @@ export const t = {
     },
     cta: { en: "Check It Out", zh: "了解详情" },
   },
-  george: {
-    badge: { en: "AI Agent · Now in beta", zh: "AI 助手 · Beta 内测中" },
-    heading: {
-      en: "Meet George — your BIA agent.",
-      zh: "认识 George —— 你的 BIA 智能助手。",
-    },
-    desc: {
-      en: "USC's campus ghost dog, in AI form. Ask George anything about events, courses, housing, and campus life — right inside iMessage. Join the waitlist for early access.",
-      zh: "USC 的校园幽灵狗，化身 AI。活动、选课、租房、校园生活，尽管问 George——就在 iMessage 里。加入候补名单，抢先体验。",
-    },
-    capabilities: {
-      en: ["Events", "Courses", "Housing", "Social", "Campus tips"],
-      zh: ["活动", "选课", "租房", "社交", "校园攻略"],
-    },
-    cta: { en: "Join the waitlist", zh: "加入候补名单" },
-    learn: { en: "Learn about George", zh: "了解 George" },
-    note: {
-      en: "iMessage · Web chat · WeChat soon",
-      zh: "iMessage · 网页版 · 微信即将上线",
-    },
-  },
   blog: {
     heading: { en: "Latest Dispatches", zh: "最新动态" },
     byline: { en: "By BIA Editorial Team", zh: "BIA 编辑部" },
