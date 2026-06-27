@@ -8,13 +8,9 @@ import BorderGlow from "@/components/BorderGlow";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/components/LanguageProvider";
 
-// Real application exit. The page previously pointed every "Apply" CTA at the
-// in-page "#apply" anchor, which scrolled to a section whose own button looped
-// back to the same anchor — a dead self-reference with no way to actually apply.
-// Wired to the published BIA contact. Swap to a recruiting Google Form URL if/when
-// one exists (then set the anchors to target="_blank" rel="noopener noreferrer").
-const APPLY_URL =
-  "mailto:bia@usc.edu?subject=BIA%20Membership%20Application&body=Name%3A%0AMajor%2FYear%3A%0AWhy%20BIA%3A%0A";
+// Real application exit — the BIA 2026 membership application (Google Form).
+// Every "Apply" CTA points here and opens in a new tab (target/rel on each anchor).
+const APPLY_URL = "https://forms.gle/7U9PARWtecUoVFgF6";
 
 function ArrowIcon({ size = 14 }: { size?: number }) {
   return (
@@ -160,6 +156,8 @@ export default function JoinPage() {
                 </div>
                 <a
                   href={APPLY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="bg-white/90 text-[#171717] hover:bg-white px-5 py-2.5 rounded-lg transition-all duration-200 flex items-center shadow-lg font-semibold text-sm tracking-wide min-h-[44px]"
                 >
                   {t.join.apply.cta[lang]}
@@ -261,6 +259,8 @@ export default function JoinPage() {
               >
                 <a
                   href={APPLY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group bg-white text-[#0D0D0F] px-10 py-4 rounded-[10px] text-sm font-bold tracking-wide uppercase hover:bg-white/90 transition-all duration-200 inline-flex items-center gap-3 min-h-[52px]"
                 >
                   {t.join.hero.cta[lang]}
@@ -481,6 +481,8 @@ export default function JoinPage() {
               >
                 <a
                   href={APPLY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group bg-white text-[#0D0D0F] px-12 py-4.5 rounded-[12px] hover:bg-white/90 transition-all duration-200 inline-flex items-center gap-3 font-bold text-base tracking-wide min-h-[56px]"
                 >
                   {t.join.apply.cta[lang]}
