@@ -155,6 +155,143 @@ export const t = {
       zh: "如果你感兴趣，欢迎加入我们",
     },
   },
+  about: {
+    hero: {
+      kicker: {
+        en: "Student-led · From USC · Est. 2024",
+        zh: "学生主导 · 始于 USC · 创立于 2024",
+      },
+      title: {
+        en: "Humanity, technology & art — reshaping how young people connect, experience, and belong.",
+        zh: "人文、科技与艺术——重塑年轻人连接、体验与归属的方式。",
+      },
+      desc: {
+        en: "BIA is a student-led community starting from USC, exploring how humanity, technology, and art can reshape the way young people connect, experience, and belong.",
+        zh: "BIA 是一个起源于 USC 的学生社区，探索人文、科技与艺术如何重塑年轻人连接、体验与归属的方式。",
+      },
+    },
+    entry: {
+      kicker: { en: "The entry point", zh: "那个入口" },
+      p1: {
+        en: "We began with a simple observation: when someone enters a new school, a new city, or a new culture, what they lack is often not information, but a trusted way to make sense of it. There are endless posts, group chats, platforms, and recommendations — yet the harder questions remain.",
+        zh: "我们从一个简单的观察开始：当一个人进入一所新学校、一座新城市、一种新文化，他们缺的往往不是信息，而是一种可信赖的、把这一切理顺的方式。帖子、群聊、平台、推荐无穷无尽——但更难的问题依然悬而未决。",
+      },
+      quote: {
+        en: "What is worth going to? Who should I meet? Where do I start? How do I turn a place that feels unfamiliar into a life that feels like my own?",
+        zh: "什么值得去？该认识谁？从哪里开始？怎样把一个陌生的地方，变成真正属于自己的生活？",
+      },
+      statement: {
+        en: "BIA exists to become that entry point.",
+        zh: "BIA 的存在，就是为了成为那个入口。",
+      },
+      p2: {
+        en: "Rooted in the lived experience of international and Chinese-background students at USC, BIA is not just a social club, a tech club, or a traditional student organization. We are an experience-driven community that brings together lifestyle, creativity, technology, career exploration, and human connection.",
+        zh: "扎根于 USC 国际与华人背景学生的真实经历，BIA 不只是社交社团、科技社团或传统学生组织。我们是一个以体验驱动的社区，融合生活方式、创造力、科技、职业探索与人与人的连接。",
+      },
+      p3: {
+        en: "We care about the moments that make a new environment feel real: the first event where you meet people you actually want to see again, the conversation that changes how you think about your future, the city experience that makes LA feel less distant, the creative project that turns an idea into something visible. Community is not just about gathering people — it is about designing the conditions for meaningful encounters to happen.",
+        zh: "我们在意那些让陌生环境变得真实的瞬间：第一次遇到你真心想再见的人的活动、一次改变你对未来想象的对话、一次让 LA 不再遥远的城市体验、一个把想法变成可见之物的创作。社区不只是把人聚在一起——而是为有意义的相遇创造条件。",
+      },
+    },
+    lenses: {
+      kicker: { en: "People · Technology · Art", zh: "人 · 科技 · 艺术" },
+      intro: {
+        en: "Our work sits at the intersection of people, technology, and art.",
+        zh: "我们的工作，落在人、科技与艺术的交汇处。",
+      },
+      items: [
+        {
+          n: { en: "Humanity", zh: "人文" },
+          role: { en: "why we exist", zh: "我们为何存在" },
+          body: {
+            en: "We care about belonging, identity, friendship, ambition, and the emotional experience of entering a new environment.",
+            zh: "我们在意归属、身份、友谊、野心，以及进入一个新环境时的情感体验。",
+          },
+        },
+        {
+          n: { en: "Technology", zh: "科技" },
+          role: { en: "how we imagine connection", zh: "我们如何想象连接" },
+          body: {
+            en: "Not a cold tool, but a way to make discovery, recommendation, and community more personal, intuitive, and alive.",
+            zh: "不是冰冷的工具，而是让发现、推荐与社区更个人、更直觉、更有生命力的一种方式。",
+          },
+        },
+        {
+          n: { en: "Art", zh: "艺术" },
+          role: { en: "how we shape experience", zh: "我们如何塑造体验" },
+          body: {
+            en: "From visual identity to event atmosphere, from storytelling to spatial design — the way something feels is part of what makes it matter.",
+            zh: "从视觉识别到活动氛围，从叙事到空间设计——一件事给人的感受，本身就是它意义的一部分。",
+          },
+        },
+      ],
+    },
+    questions: {
+      kicker: { en: "Larger than one campus", zh: "不止于一所校园" },
+      intro: {
+        en: "BIA starts at USC, but the questions we care about are bigger.",
+        zh: "BIA 始于 USC，但我们在意的问题，远比这更大。",
+      },
+      items: [
+        {
+          en: "How do young people find their place in a new environment?",
+          zh: "年轻人如何在陌生环境中找到自己的位置？",
+        },
+        {
+          en: "How do communities form in an age of fragmented attention?",
+          zh: "在注意力被碎片化的时代，社区如何形成？",
+        },
+        {
+          en: "How can technology make human connection warmer rather than colder?",
+          zh: "科技如何让人与人的连接更温暖，而非更冰冷？",
+        },
+        {
+          en: "How can art turn ordinary gatherings into experiences people remember?",
+          zh: "艺术如何把平常的聚会，变成人们会记住的体验？",
+        },
+      ],
+    },
+    numbers: {
+      kicker: { en: "By the numbers", zh: "用数字说话" },
+      items: [
+        {
+          value: "1,500+",
+          label: {
+            en: "Community members across 4 class-year groups",
+            zh: "横跨 4 个年级群的社区成员",
+          },
+        },
+        {
+          value: "3,500+",
+          label: {
+            en: "Followers across WeChat, Xiaohongshu & Instagram",
+            zh: "微信、小红书与 Instagram 的关注者",
+          },
+        },
+        {
+          value: "80+",
+          label: {
+            en: "Cohort fellows, selected through 4 interview rounds",
+            zh: "经 4 轮面试选出的 cohort 成员",
+          },
+        },
+        {
+          value: "15+",
+          label: {
+            en: "Events each year, flagships drawing 300–500+",
+            zh: "每年活动，旗舰场吸引 300–500+ 人",
+          },
+        },
+      ],
+    },
+    closing: {
+      statement: {
+        en: "From USC to LA, from campus life to city culture, from one gathering to a longer sense of belonging — BIA is here to explore what the next generation of community can become.",
+        zh: "从 USC 到 LA，从校园生活到城市文化，从一次聚会到更长久的归属——BIA 在这里，探索下一代社区可以成为什么。",
+      },
+      cta: { en: "Join BIA →", zh: "加入 BIA →" },
+    },
+  },
   join: {
     hero: {
       badge: { en: "Fall 2026 Cohort", zh: "2026秋季招新" },

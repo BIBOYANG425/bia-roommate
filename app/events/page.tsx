@@ -132,16 +132,25 @@ export default function EventsPage() {
     <div className="relative min-h-screen bg-[#F9FAF7] text-[#171717] overflow-x-hidden font-sans">
       <SiteNav />
 
-      {/* ─── Hero (dark band) ─── */}
-      <section className="bg-[#1F1F29] text-white px-6 sm:px-16 pt-36 sm:pt-44 pb-20 sm:pb-28">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-[#C9A96E] text-xs uppercase tracking-[0.2em] font-semibold">
+      {/* ─── Hero (dark band, image) ─── */}
+      <section className="relative overflow-hidden bg-[#1F1F29] text-white px-6 sm:px-16 pt-36 sm:pt-44 pb-20 sm:pb-28">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/hackathon/full-room.jpg"
+            alt="A full room of students at a BIA event"
+            fill
+            className="object-cover opacity-25"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1F1F29]/85 via-[#1F1F29]/85 to-[#1F1F29]" />
+        </div>
+        <div className="relative z-10 max-w-6xl mx-auto">
+          <p className="text-[#E0C089] text-xs uppercase tracking-[0.2em] font-semibold">
             20+ events since 2024 · flagships of 300–500+
           </p>
           <h1 className="heading-serif mt-4 text-5xl sm:text-7xl leading-[0.95] text-white">
             Events
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-white/85">
             From recruiting sessions and office tours to hackathons, tailgates, and
             rooftop socials, BIA runs a full calendar — in LA and across China — that
             connects, grows, and celebrates USC&apos;s international student community.
@@ -161,7 +170,7 @@ export default function EventsPage() {
           <h2 className="heading-serif mt-3 text-4xl sm:text-5xl leading-tight text-[#171717]">
             {UPCOMING.title}
           </h2>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-[#646464]">
+          <p className="mt-4 max-w-2xl text-lg leading-8 text-[#3a3a3a]">
             {UPCOMING.blurb}
           </p>
 
@@ -186,7 +195,7 @@ export default function EventsPage() {
                 <p className="mt-1.5 text-sm uppercase tracking-wide font-semibold text-[#71031f]">
                   {s.when}
                 </p>
-                <p className="mt-2 text-base leading-6 text-[#646464]">
+                <p className="mt-2 text-base leading-6 text-[#3a3a3a]">
                   {s.venue || "Venue TBA"}
                 </p>
               </div>
@@ -199,7 +208,7 @@ export default function EventsPage() {
           <div className="mt-3 flex items-center justify-between gap-3 rounded-[28px] border border-black/5 bg-white p-6 shadow-[0_12px_44px_rgba(0,0,0,0.10)]">
             <div>
               <p className="heading-serif text-2xl text-[#171717]">HUSH @ INS Park</p>
-              <p className="mt-1 text-base text-[#646464]">INS Park, Shanghai</p>
+              <p className="mt-1 text-base text-[#3a3a3a]">INS Park, Shanghai</p>
             </div>
             <p className="shrink-0 text-sm uppercase tracking-wide font-semibold text-[#71031f]">
               Aug 3
@@ -211,7 +220,7 @@ export default function EventsPage() {
       {/* ─── Featured ─── */}
       <section className="py-24 sm:py-32 px-6 sm:px-16 bg-white/40 border-y border-black/5">
         <div className="max-w-6xl mx-auto">
-          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#999]">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#8a8a8a]">
             Featured
           </p>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -234,7 +243,7 @@ export default function EventsPage() {
                     {e.when}
                   </p>
                   <h3 className="heading-serif mt-2 text-xl leading-7 text-[#171717]">{e.title}</h3>
-                  <p className="mt-2 text-base leading-7 text-[#646464]">{e.body}</p>
+                  <p className="mt-2 text-base leading-7 text-[#3a3a3a]">{e.body}</p>
                 </div>
               </div>
             ))}
@@ -245,7 +254,7 @@ export default function EventsPage() {
       {/* ─── Full timeline ─── */}
       <section className="py-24 sm:py-32 px-6 sm:px-16">
         <div className="max-w-3xl mx-auto">
-          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#999]">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#8a8a8a]">
             Every event · Summer 2024 → today
           </p>
           {TERMS.map((t) => (
@@ -263,7 +272,7 @@ export default function EventsPage() {
                     <div className="flex-1">
                       <span className="text-lg leading-snug font-medium text-[#171717]">{e.title}</span>
                       {e.detail && (
-                        <span className="ml-2 text-base text-[#646464]">— {e.detail}</span>
+                        <span className="ml-2 text-base text-[#3a3a3a]">— {e.detail}</span>
                       )}
                     </div>
                   </div>
@@ -277,7 +286,7 @@ export default function EventsPage() {
       {/* ─── What we host ─── */}
       <section className="py-24 sm:py-32 px-6 sm:px-16 bg-white/40 border-y border-black/5">
         <div className="max-w-6xl mx-auto">
-          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#999]">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#8a8a8a]">
             What we host
           </p>
           <div className="mt-8 grid gap-6 md:grid-cols-2">
@@ -287,7 +296,7 @@ export default function EventsPage() {
                 className="rounded-[28px] border border-black/5 bg-white p-8 shadow-[0_12px_44px_rgba(0,0,0,0.10)]"
               >
                 <h3 className="heading-serif text-2xl text-[#171717]">{f.title}</h3>
-                <p className="mt-3 text-base leading-7 text-[#646464]">{f.body}</p>
+                <p className="mt-3 text-base leading-7 text-[#3a3a3a]">{f.body}</p>
               </div>
             ))}
           </div>
@@ -298,7 +307,7 @@ export default function EventsPage() {
       <section className="py-24 sm:py-32 px-6 sm:px-16">
         <div className="max-w-3xl mx-auto rounded-[28px] border border-[#C9A96E]/30 bg-[#C9A96E]/10 p-10 text-center">
           <p className="heading-serif text-3xl text-[#171717]">More on the way</p>
-          <p className="mx-auto mt-3 max-w-md text-base leading-7 text-[#646464]">
+          <p className="mx-auto mt-3 max-w-md text-base leading-7 text-[#3a3a3a]">
             We&apos;re planning the next season now. Follow{" "}
             <a
               href="https://www.instagram.com/bia_usc/"

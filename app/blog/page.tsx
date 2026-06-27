@@ -32,20 +32,20 @@ export default async function BlogIndexPage() {
       <section className="mx-auto max-w-4xl px-6 py-24 sm:py-32">
         {/* ─── Header ─── */}
         <div className="mb-16 text-center">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-[#A0D7D1]">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-[#4F938C]">
             BIA Editorial
           </p>
           <h1 className="heading-serif text-5xl leading-[1.05] text-[#171717] sm:text-6xl">
             Latest Dispatches
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[#646464]">
+          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[#3a3a3a]">
             Stories, notes, and updates from the BIA community.
           </p>
         </div>
 
         {/* ─── Posts ─── */}
         {articles.length === 0 ? (
-          <p className="text-center text-base text-[#646464]">No posts yet.</p>
+          <p className="text-center text-base text-[#3a3a3a]">No posts yet.</p>
         ) : (
           <ul className="space-y-8">
             {articles.map((article) => (
@@ -67,7 +67,7 @@ export default async function BlogIndexPage() {
                   )}
 
                   <div className="p-8 sm:p-10">
-                    <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#A0D7D1]">
+                    <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#4F938C]">
                       {[formatDate(article.published_at), languageLabel(article.language)]
                         .filter(Boolean)
                         .join(" · ")}
@@ -76,7 +76,7 @@ export default async function BlogIndexPage() {
                       {article.title}
                     </h2>
                     {article.excerpt && (
-                      <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#646464]">
+                      <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#3a3a3a]">
                         {article.excerpt}
                       </p>
                     )}
