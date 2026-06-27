@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import ScrollFloat from "@/components/ScrollFloat";
@@ -30,6 +30,8 @@ function ArrowIcon() {
     </svg>
   );
 }
+
+const emptySubscribe = () => () => {};
 
 const SERVICE_HREFS = [
   "/roommates",
@@ -87,7 +89,13 @@ export default function LandingPage() {
   const [time, setTime] = useState("");
   const { language: lang, setLanguage: setLang } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [toolsReady, setToolsReady] = useState(false);
+  // false on the server + first hydration render, true afterward — keeps the
+  // ScrollStack client-only without a setState-in-effect (see render below).
+  const toolsReady = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 
   useEffect(() => {
     const updateTime = () =>
@@ -101,13 +109,6 @@ export default function LandingPage() {
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, []);
-
-  // ScrollStack mounts client-only (after hydration). Rendering it during SSR
-  // let its useLayoutEffect mutate the DOM mid-hydration, which React 19
-  // mis-reconciled into a duplicate card stack. SSR shows the static fallback.
-  useEffect(() => {
-    setToolsReady(true);
   }, []);
 
   return (
