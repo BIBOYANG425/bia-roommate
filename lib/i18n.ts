@@ -292,6 +292,209 @@ export const t = {
       cta: { en: "Join BIA →", zh: "加入 BIA →" },
     },
   },
+  events: {
+    hero: {
+      kicker: {
+        en: "USC & across China · Since 2024",
+        zh: "USC 与中国各地 · 始于 2024",
+      },
+      title: {
+        en: "Events That Turn Community Into Real Life",
+        zh: "活动，让社区成为真实的生活",
+      },
+      desc1: {
+        en: "At BIA, events are not just dates on a calendar. They are designed moments where people meet, express themselves, explore the city, and discover new ways to belong.",
+        zh: "在 BIA，活动不只是日历上的日期。它们是精心设计的瞬间——人们在这里相遇、表达自己、探索城市，并发现新的归属方式。",
+      },
+      desc2: {
+        en: "From social experiences and city nights to creative workshops, career conversations, builder gatherings, and future-focused salons, our events bring together lifestyle, technology, art, and opportunity in ways that feel alive.",
+        zh: "从社交体验、城市之夜，到创意工作坊、职业对话、创造者聚会与面向未来的沙龙——我们的活动把生活方式、科技、艺术与机会，以一种鲜活的方式聚到一起。",
+      },
+      desc3: {
+        en: "We create spaces where students can show who they are, find people with similar energy, and turn a new environment into something personal.",
+        zh: "我们创造这样的空间：让学生展现真实的自己，遇见同频的人，并把一个陌生的环境，变成真正属于自己的东西。",
+      },
+    },
+    upcoming: {
+      label: { en: "Upcoming", zh: "即将开始" },
+      title: { en: "New Student Mixer · 新生见面会", zh: "新生见面会 · New Student Mixer" },
+      blurb: {
+        en: "Welcome, Trojans — meet your incoming class before you arrive on campus.",
+        zh: "欢迎，Trojans——在抵达校园之前，先认识你的同届新生。",
+      },
+      perks: [
+        { en: "Practical welcome pack", zh: "实用新生大礼包" },
+        { en: "Icebreakers & finding your people", zh: "破冰互动 · 找到你的同伴" },
+        { en: "Q&A with USC upperclassmen", zh: "USC 学长学姐 Q&A" },
+        { en: "Live DJI Pocket 4 raffle", zh: "现场抽奖 DJI Pocket 4" },
+      ],
+      sessions: [
+        {
+          city: "Beijing · 北京",
+          when: { en: "Jun 27 · 3:00 PM", zh: "6月27日 · 下午3:00" },
+          venue: { en: "Grand Millennium Hotel, Chaoyang", zh: "北京朝阳千禧大酒店" },
+        },
+        {
+          city: "Shenzhen · 深圳",
+          when: { en: "Jul 5 · 3:00 PM", zh: "7月5日 · 下午3:00" },
+          venue: { en: "", zh: "" },
+        },
+        {
+          city: "Shanghai · 上海",
+          when: { en: "Jul 11 · 12:00 PM", zh: "7月11日 · 中午12:00" },
+          venue: { en: "InterContinental Jing'an", zh: "静安洲际酒店" },
+        },
+      ],
+      venueTBA: { en: "Venue TBA", zh: "场地待定" },
+      alsoLabel: { en: "Also coming up", zh: "同样即将开始" },
+      hush: {
+        title: "HUSH @ INS Park",
+        venue: { en: "INS Park, Shanghai", zh: "上海 INS 新乐园" },
+        date: { en: "Aug 3", zh: "8月3日" },
+      },
+    },
+    featuredLabel: { en: "Featured", zh: "精选活动" },
+    featured: [
+      {
+        title: { en: "BIA Hackathon: Build with Trae × Minimax", zh: "BIA 黑客松：用 Trae × Minimax 开发" },
+        when: { en: "Spring 2026", zh: "2026 春" },
+        body: {
+          en: "Our flagship build at USC — $1,500 in prizes and a ByteDance internship track, powered by Trae and Minimax.",
+          zh: "我们在 USC 的旗舰开发活动——$1,500 奖金与字节跳动实习直通通道，由 Trae 与 Minimax 提供支持。",
+        },
+        image: "/hackathon/group-photo.jpg",
+      },
+      {
+        title: { en: "Founders vs Investors: Roderick Dong", zh: "创始人 vs 投资人：Roderick Dong" },
+        when: { en: "Fall 2025", zh: "2025 秋" },
+        body: {
+          en: "A live founders-vs-investors talk with Roderick Dong — former YC China founding team, backer of five $1B+ unicorns, Forbes 30 Under 30.",
+          zh: "与 Roderick Dong 的创始人对话投资人现场分享——YC 中国创始团队成员、5 家十亿美元独角兽背后的投资人、福布斯 30 Under 30。",
+        },
+        image: "/blog-yc-china.jpg",
+      },
+      {
+        title: { en: "miHoYo 2026 Campus Recruiting", zh: "miHoYo 2026 校园招聘" },
+        when: { en: "Fall 2025", zh: "2025 秋" },
+        body: {
+          en: "An exclusive miHoYo recruiting and info session for USC students — online and in person at the Interactive Media Building.",
+          zh: "面向 USC 学生的 miHoYo 专属招聘与宣讲会——线上及 Interactive Media Building 线下同步进行。",
+        },
+        image: "/blog-mihoyo.jpg",
+      },
+    ],
+    archiveLabel: { en: "Every event · Summer 2024 → today", zh: "全部活动 · 2024 夏 → 至今" },
+    terms: [
+      {
+        term: { en: "Spring 2026", zh: "2026 春" },
+        events: [
+          { date: { en: "Mar 28", zh: "3月28日" }, title: { en: "BIA Hackathon · Build with Trae × Minimax", zh: "BIA 黑客松 · 用 Trae × Minimax 开发" }, detail: { en: "USC · $1,500 prizes + ByteDance internship", zh: "USC · $1,500 奖金 + 字节跳动实习" } },
+          { date: { en: "Feb 20", zh: "2月20日" }, title: { en: "Chinese New Year Rave Night", zh: "新春电音之夜" }, detail: { en: "Year of the Horse party", zh: "马年派对" } },
+        ],
+      },
+      {
+        term: { en: "Fall 2025", zh: "2025 秋" },
+        events: [
+          { date: { en: "Nov 18", zh: "11月18日" }, title: { en: "Founders vs Investors: Roderick Dong", zh: "创始人 vs 投资人：Roderick Dong" }, detail: { en: "ex-YC China · Forbes 30 Under 30", zh: "前 YC 中国 · 福布斯 30 Under 30" } },
+          { date: { en: "Nov", zh: "11月" }, title: { en: "UCB × USC Esports Showdown", zh: "UCB × USC 电竞对决" }, detail: { en: "vs UC Berkeley · livestreamed", zh: "对阵 UC Berkeley · 全程直播" } },
+          { date: { en: "Nov 1", zh: "11月1日" }, title: { en: "BIA Halloween Party", zh: "BIA 万圣节派对" }, detail: { en: "Downtown LA", zh: "洛杉矶市中心" } },
+          { date: { en: "Sep 18", zh: "9月18日" }, title: { en: "miHoYo 2026 Campus Recruiting", zh: "miHoYo 2026 校园招聘" }, detail: { en: "USC-exclusive session · IMB", zh: "USC 专场 · IMB" } },
+          { date: { en: "Aug 29", zh: "8月29日" }, title: { en: "Sunset Party @ Hope DTLA", zh: "日落派对 @ Hope DTLA" }, detail: { en: "free welcome dinner for new students", zh: "新生免费迎新晚餐" } },
+        ],
+      },
+      {
+        term: { en: "Summer 2025", zh: "2025 夏" },
+        events: [
+          { date: { en: "Aug 4", zh: "8月4日" }, title: { en: "Summer Enterprise Tour · Meituan", zh: "暑期企业参访 · 美团" }, detail: { en: "Beijing HQ office tour", zh: "北京总部参访" } },
+          { date: { en: "Jul 28", zh: "7月28日" }, title: { en: "Summer Enterprise Tour · Midea", zh: "暑期企业参访 · 美的" }, detail: { en: "Shunde office tour", zh: "顺德总部参访" } },
+          { date: { en: "Jul 21", zh: "7月21日" }, title: { en: "Summer Enterprise Tour · Alibaba Taotian", zh: "暑期企业参访 · 阿里巴巴淘天" }, detail: { en: "with UC Berkeley & MIT", zh: "联合 UC Berkeley 与 MIT" } },
+          { date: { en: "Jul 18", zh: "7月18日" }, title: { en: "Summer Enterprise Tour · miHoYo", zh: "暑期企业参访 · miHoYo" }, detail: { en: "Shanghai office tour", zh: "上海总部参访" } },
+          { date: { en: "Jul 6", zh: "7月6日" }, title: { en: "New Student Meetup · Beijing", zh: "新生见面会 · 北京" }, detail: { en: "Kempinski Hotel", zh: "凯宾斯基酒店" } },
+          { date: { en: "Jun 29", zh: "6月29日" }, title: { en: "New Student Meetup · Shanghai", zh: "新生见面会 · 上海" }, detail: { en: "InterContinental Jing'an", zh: "静安洲际酒店" } },
+        ],
+      },
+      {
+        term: { en: "Spring 2025", zh: "2025 春" },
+        events: [
+          { date: { en: "Apr 4", zh: "4月4日" }, title: { en: "April Fools' Party", zh: "愚人节派对" }, detail: { en: "BIA 1st anniversary", zh: "BIA 一周年" } },
+        ],
+      },
+      {
+        term: { en: "Fall 2024", zh: "2024 秋" },
+        events: [
+          { date: { en: "Nov 23", zh: "11月23日" }, title: { en: "USC vs. UCLA Tailgate", zh: "USC vs. UCLA Tailgate" }, detail: { en: "Roadside Tacos", zh: "Roadside Tacos" } },
+          { date: { en: "Nov 17", zh: "11月17日" }, title: { en: "BIA Pool Championship", zh: "BIA 桌球锦标赛" }, detail: { en: "Koreatown", zh: "韩国城" } },
+          { date: { en: "Nov 8", zh: "11月8日" }, title: { en: "KPOP Random Dance", zh: "KPOP 随机舞蹈" }, detail: { en: "USC Village", zh: "USC Village" } },
+          { date: { en: "Nov 2", zh: "11月2日" }, title: { en: "The Duke's Macabre Banquet", zh: "公爵的暗夜宴会" }, detail: { en: "Halloween party", zh: "万圣节派对" } },
+          { date: { en: "Oct 25", zh: "10月25日" }, title: { en: "USC vs. Rutgers Tailgate", zh: "USC vs. Rutgers Tailgate" }, detail: { en: "BIA's first tailgate", zh: "BIA 首场 tailgate" } },
+          { date: { en: "Oct 9", zh: "10月9日" }, title: { en: "BIA Movie Night", zh: "BIA 电影之夜" }, detail: { en: "Now You See Me 2 · THH 301", zh: "惊天魔盗团2 · THH 301" } },
+          { date: { en: "Sep 25", zh: "9月25日" }, title: { en: "Mid-Autumn Night Market", zh: "中秋夜市" }, detail: { en: "Soho Warehouse, DTLA", zh: "Soho Warehouse, DTLA" } },
+        ],
+      },
+      {
+        term: { en: "Summer 2024", zh: "2024 夏" },
+        events: [
+          { date: { en: "Aug 30", zh: "8月30日" }, title: { en: "Midsummer Madness", zh: "仲夏狂欢" }, detail: { en: "summer sunset party", zh: "夏日日落派对" } },
+          { date: { en: "Jul 4–5", zh: "7月4–5日" }, title: { en: "New Student Meetups · China", zh: "新生见面会 · 中国" }, detail: { en: "Shenzhen & Shanghai", zh: "深圳与上海" } },
+        ],
+      },
+    ],
+    categoriesLabel: { en: "Three kinds of moments", zh: "三种瞬间" },
+    categories: [
+      {
+        title: { en: "Experience", zh: "体验" },
+        tagline: {
+          en: "For the nights that make a new city feel like yours.",
+          zh: "那些让一座新城市变得属于你的夜晚。",
+        },
+        body: {
+          en: "Social gatherings, mixers, city experiences, cultural moments, and lifestyle-driven events that help people meet, express themselves, and build real memories.",
+          zh: "社交聚会、破冰之夜、城市体验、文化时刻，以及由生活方式驱动的活动——帮助人们相遇、表达自己、留下真实的记忆。",
+        },
+      },
+      {
+        title: { en: "Create", zh: "创造" },
+        tagline: {
+          en: "For the people who want to make things, not just attend them.",
+          zh: "为那些想动手创造、而不只是到场的人。",
+        },
+        body: {
+          en: "Workshops, creative labs, build nights, design sessions, and experimental projects at the intersection of technology, art, and community.",
+          zh: "工作坊、创意实验室、build night、设计夜与实验性项目——在科技、艺术与社区的交汇处。",
+        },
+      },
+      {
+        title: { en: "Future", zh: "未来" },
+        tagline: {
+          en: "For the conversations that open new paths.",
+          zh: "那些为你打开新路径的对话。",
+        },
+        body: {
+          en: "Career talks, founder dinners, AI and tech salons, networking events, and industry conversations that help students explore where they want to go next.",
+          zh: "职业分享、创始人晚宴、AI 与科技沙龙、networking 与行业对话——帮助学生探索下一步想去的方向。",
+        },
+      },
+    ],
+    more: {
+      statement: {
+        en: "Every event is a doorway into the community. Some begin with a conversation, some with a project, some with a night out — but all of them are designed to help people find better connections, better experiences, and a stronger sense of direction.",
+        zh: "每一场活动，都是通向社区的一扇门。有的始于一次对话，有的始于一个项目，有的始于一个夜晚——但它们都被设计来，帮助人们找到更好的连接、更好的体验，以及更清晰的方向。",
+      },
+      pre: { en: "Follow ", zh: "关注 " },
+      post: { en: " so you don't miss the next one.", zh: "，不错过下一场。" },
+    },
+  },
+  blog: {
+    kicker: { en: "BIA Editorial", zh: "BIA 编辑部" },
+    title: { en: "Latest Dispatches", zh: "最新动态" },
+    subtitle: {
+      en: "Stories, notes, and updates from the BIA community.",
+      zh: "来自 BIA 社区的故事、笔记与近况。",
+    },
+    empty: { en: "No posts yet.", zh: "还没有文章。" },
+    langEn: { en: "English", zh: "英文" },
+    langZh: { en: "中文", zh: "中文" },
+  },
   join: {
     hero: {
       badge: { en: "Fall 2026 Cohort", zh: "2026秋季招新" },

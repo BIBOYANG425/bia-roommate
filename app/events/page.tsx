@@ -1,133 +1,17 @@
-import type { Metadata } from "next";
+"use client";
 import Image from "next/image";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/components/LanguageProvider";
 
-export const metadata: Metadata = {
-  title: "Events",
-  description:
-    "BIA has hosted 20+ events since 2024 for USC international students — company office tours and recruiting, startup talks, AI hackathons, tailgates, parties, and new-student meetups across LA and China.",
-  alternates: { canonical: "/events" },
-};
-
-// Next up — the new-student mixer, shown prominently at the top.
-const UPCOMING = {
-  title: "New Student Mixer · 新生见面会",
-  blurb:
-    "Welcome, Trojans — meet your incoming class before you arrive on campus.",
-  perks: [
-    "Practical welcome pack",
-    "Icebreakers & finding your people",
-    "Q&A with USC upperclassmen",
-    "Live DJI Pocket 4 raffle",
-  ],
-  sessions: [
-    { city: "Beijing · 北京", when: "Jun 27 · 3:00 PM", venue: "Grand Millennium Hotel, Chaoyang" },
-    { city: "Shenzhen · 深圳", when: "Jul 5 · 3:00 PM", venue: "" },
-    { city: "Shanghai · 上海", when: "Jul 11 · 12:00 PM", venue: "InterContinental Jing'an" },
-  ],
-};
-
-// Three flagships we have photography for — shown as featured cards.
-const FEATURED = [
-  {
-    title: "BIA Hackathon: Build with Trae × Minimax",
-    when: "Spring 2026",
-    body: "Our flagship build at USC — $1,500 in prizes and a ByteDance internship track, powered by Trae and Minimax.",
-    image: "/hackathon/group-photo.jpg",
-  },
-  {
-    title: "Founders vs Investors: Roderick Dong",
-    when: "Fall 2025",
-    body: "A live founders-vs-investors talk with Roderick Dong — former YC China founding team, backer of five $1B+ unicorns, Forbes 30 Under 30.",
-    image: "/blog-yc-china.jpg",
-  },
-  {
-    title: "miHoYo 2026 Campus Recruiting",
-    when: "Fall 2025",
-    body: "An exclusive miHoYo recruiting and info session for USC students — online and in person at the Interactive Media Building.",
-    image: "/blog-mihoyo.jpg",
-  },
-];
-
-// Full archive, grouped by academic term (newest first). Dates as on the
-// original posters; year lives in the term header.
-const TERMS = [
-  {
-    term: "Spring 2026",
-    events: [
-      { date: "Mar 28", title: "BIA Hackathon · Build with Trae × Minimax", detail: "USC · $1,500 prizes + ByteDance internship" },
-      { date: "Feb 20", title: "Chinese New Year Rave Night", detail: "Year of the Horse party" },
-    ],
-  },
-  {
-    term: "Fall 2025",
-    events: [
-      { date: "Nov 18", title: "Founders vs Investors: Roderick Dong", detail: "ex-YC China · Forbes 30 Under 30" },
-      { date: "Nov", title: "UCB × USC Esports Showdown", detail: "vs UC Berkeley · livestreamed" },
-      { date: "Nov 1", title: "BIA Halloween Party", detail: "Downtown LA" },
-      { date: "Sep 18", title: "miHoYo 2026 Campus Recruiting", detail: "USC-exclusive session · IMB" },
-      { date: "Aug 29", title: "Sunset Party @ Hope DTLA", detail: "free welcome dinner for new students" },
-    ],
-  },
-  {
-    term: "Summer 2025",
-    events: [
-      { date: "Aug 4", title: "Summer Enterprise Tour · Meituan", detail: "Beijing HQ office tour" },
-      { date: "Jul 28", title: "Summer Enterprise Tour · Midea", detail: "Shunde office tour" },
-      { date: "Jul 21", title: "Summer Enterprise Tour · Alibaba Taotian", detail: "with UC Berkeley & MIT" },
-      { date: "Jul 18", title: "Summer Enterprise Tour · miHoYo", detail: "Shanghai office tour" },
-      { date: "Jul 6", title: "New Student Meetup · Beijing", detail: "Kempinski Hotel" },
-      { date: "Jun 29", title: "New Student Meetup · Shanghai", detail: "InterContinental Jing'an" },
-    ],
-  },
-  {
-    term: "Spring 2025",
-    events: [
-      { date: "Apr 4", title: "April Fools' Party", detail: "BIA 1st anniversary" },
-    ],
-  },
-  {
-    term: "Fall 2024",
-    events: [
-      { date: "Nov 23", title: "USC vs. UCLA Tailgate", detail: "Roadside Tacos" },
-      { date: "Nov 17", title: "BIA Pool Championship", detail: "Koreatown" },
-      { date: "Nov 8", title: "KPOP Random Dance", detail: "USC Village" },
-      { date: "Nov 2", title: "The Duke's Macabre Banquet", detail: "Halloween party" },
-      { date: "Oct 25", title: "USC vs. Rutgers Tailgate", detail: "BIA's first tailgate" },
-      { date: "Oct 9", title: "BIA Movie Night", detail: "Now You See Me 2 · THH 301" },
-      { date: "Sep 25", title: "Mid-Autumn Night Market", detail: "Soho Warehouse, DTLA" },
-    ],
-  },
-  {
-    term: "Summer 2024",
-    events: [
-      { date: "Aug 30", title: "Midsummer Madness", detail: "summer sunset party" },
-      { date: "Jul 4–5", title: "New Student Meetups · China", detail: "Shenzhen & Shanghai" },
-    ],
-  },
-];
-
-const FORMATS = [
-  {
-    title: "Company tours & recruiting",
-    body: "Office tours and recruiting sessions with companies across tech, gaming, and lifestyle — from miHoYo and Alibaba to Meituan and Midea — connecting members directly to opportunities.",
-  },
-  {
-    title: "Startup & innovation talks",
-    body: "Founder talks and ecosystem events exploring startups, venture, and emerging technology.",
-  },
-  {
-    title: "AI hackathons",
-    body: "Hands-on hackathons where members build real products and showcase what the community can create.",
-  },
-  {
-    title: "Tailgates, parties & socials",
-    body: "Tailgates, holiday parties, night markets, and new-student meetups — in LA and across China — that help international students find their people.",
-  },
-];
+// Experience · Create · Future — gold / teal / wine.
+const CATEGORY_ACCENTS = ["#C9A96E", "#A0D7D1", "#71031f"];
 
 export default function EventsPage() {
+  const { language: lang } = useLanguage();
+  const e = t.events;
+
   return (
     <div className="relative min-h-screen bg-[#F9FAF7] text-[#171717] overflow-x-hidden font-sans">
       <SiteNav />
@@ -139,79 +23,106 @@ export default function EventsPage() {
             src="/hackathon/full-room.jpg"
             alt="A full room of students at a BIA event"
             fill
-            className="object-cover opacity-25"
+            className="object-cover opacity-[0.28]"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1F1F29]/85 via-[#1F1F29]/85 to-[#1F1F29]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1F1F29]/82 via-[#1F1F29]/85 to-[#1F1F29]" />
         </div>
-        <div className="relative z-10 max-w-6xl mx-auto">
+        <div className="relative z-10 max-w-4xl mx-auto">
           <p className="text-[#E0C089] text-xs uppercase tracking-[0.2em] font-semibold">
-            20+ events since 2024 · flagships of 300–500+
+            {e.hero.kicker[lang]}
           </p>
-          <h1 className="heading-serif mt-4 text-5xl sm:text-7xl leading-[0.95] text-white">
-            Events
+          <h1 className="heading-serif mt-5 text-4xl sm:text-6xl leading-[1.05] text-white">
+            {e.hero.title[lang]}
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-white/85">
-            From recruiting sessions and office tours to hackathons, tailgates, and
-            rooftop socials, BIA runs a full calendar — in LA and across China — that
-            connects, grows, and celebrates USC&apos;s international student community.
-          </p>
+          <div className="mt-7 max-w-2xl space-y-5 text-lg leading-8 text-white/85">
+            <p>{e.hero.desc1[lang]}</p>
+            <p>{e.hero.desc2[lang]}</p>
+            <p>{e.hero.desc3[lang]}</p>
+          </div>
         </div>
       </section>
 
-      {/* ─── Upcoming (light, warm gold accents) ─── */}
+      {/* ─── Three kinds of moments: Experience · Create · Future ─── */}
+      <section className="py-24 sm:py-32 px-6 sm:px-16 bg-white/40 border-y border-black/5">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#8a8a8a]">
+            {e.categoriesLabel[lang]}
+          </p>
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
+            {e.categories.map((c, i) => (
+              <div
+                key={c.title.en}
+                className="flex flex-col rounded-[28px] border border-black/5 bg-white p-8 shadow-[0_12px_44px_rgba(0,0,0,0.10)]"
+              >
+                <span
+                  className="h-1.5 w-12 rounded-full"
+                  style={{ backgroundColor: CATEGORY_ACCENTS[i] }}
+                />
+                <h3 className="heading-serif mt-5 text-3xl text-[#171717]">{c.title[lang]}</h3>
+                <p className="heading-serif mt-3 text-lg leading-7 text-[#71031f]">
+                  {c.tagline[lang]}
+                </p>
+                <p className="mt-4 text-base leading-7 text-[#4a4a4a]">{c.body[lang]}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Upcoming ─── */}
       <section className="py-24 sm:py-32 px-6 sm:px-16">
         <div className="max-w-6xl mx-auto">
           <div className="inline-flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-[#C9A96E]" />
             <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#C9A96E]">
-              Upcoming
+              {e.upcoming.label[lang]}
             </p>
           </div>
           <h2 className="heading-serif mt-3 text-4xl sm:text-5xl leading-tight text-[#171717]">
-            {UPCOMING.title}
+            {e.upcoming.title[lang]}
           </h2>
           <p className="mt-4 max-w-2xl text-lg leading-8 text-[#3a3a3a]">
-            {UPCOMING.blurb}
+            {e.upcoming.blurb[lang]}
           </p>
 
           <div className="mt-6 flex flex-wrap gap-2.5">
-            {UPCOMING.perks.map((p) => (
+            {e.upcoming.perks.map((p) => (
               <span
-                key={p}
+                key={p.en}
                 className="rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 px-4 py-1.5 text-sm font-medium text-[#171717]"
               >
-                {p}
+                {p[lang]}
               </span>
             ))}
           </div>
 
           <div className="mt-8 grid gap-6 sm:grid-cols-3">
-            {UPCOMING.sessions.map((s) => (
+            {e.upcoming.sessions.map((s) => (
               <div
                 key={s.city}
                 className="rounded-[28px] border border-black/5 bg-white p-6 shadow-[0_12px_44px_rgba(0,0,0,0.10)]"
               >
                 <p className="heading-serif text-2xl text-[#171717]">{s.city}</p>
                 <p className="mt-1.5 text-sm uppercase tracking-wide font-semibold text-[#71031f]">
-                  {s.when}
+                  {s.when[lang]}
                 </p>
                 <p className="mt-2 text-base leading-6 text-[#3a3a3a]">
-                  {s.venue || "Venue TBA"}
+                  {s.venue[lang] || e.upcoming.venueTBA[lang]}
                 </p>
               </div>
             ))}
           </div>
 
           <p className="mt-12 text-xs uppercase tracking-[0.2em] font-semibold text-[#C9A96E]">
-            Also coming up
+            {e.upcoming.alsoLabel[lang]}
           </p>
           <div className="mt-3 flex items-center justify-between gap-3 rounded-[28px] border border-black/5 bg-white p-6 shadow-[0_12px_44px_rgba(0,0,0,0.10)]">
             <div>
-              <p className="heading-serif text-2xl text-[#171717]">HUSH @ INS Park</p>
-              <p className="mt-1 text-base text-[#3a3a3a]">INS Park, Shanghai</p>
+              <p className="heading-serif text-2xl text-[#171717]">{e.upcoming.hush.title}</p>
+              <p className="mt-1 text-base text-[#3a3a3a]">{e.upcoming.hush.venue[lang]}</p>
             </div>
             <p className="shrink-0 text-sm uppercase tracking-wide font-semibold text-[#71031f]">
-              Aug 3
+              {e.upcoming.hush.date[lang]}
             </p>
           </div>
         </div>
@@ -221,18 +132,18 @@ export default function EventsPage() {
       <section className="py-24 sm:py-32 px-6 sm:px-16 bg-white/40 border-y border-black/5">
         <div className="max-w-6xl mx-auto">
           <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#8a8a8a]">
-            Featured
+            {e.featuredLabel[lang]}
           </p>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURED.map((e) => (
+            {e.featured.map((f) => (
               <div
-                key={e.title}
+                key={f.image}
                 className="flex flex-col overflow-hidden rounded-[28px] border border-black/5 bg-white shadow-[0_12px_44px_rgba(0,0,0,0.10)]"
               >
                 <div className="relative aspect-[4/3] w-full overflow-hidden">
                   <Image
-                    src={e.image}
-                    alt={e.title}
+                    src={f.image}
+                    alt={f.title[lang]}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover"
@@ -240,10 +151,12 @@ export default function EventsPage() {
                 </div>
                 <div className="flex flex-1 flex-col p-6">
                   <p className="text-xs uppercase tracking-[0.12em] font-semibold text-[#71031f]">
-                    {e.when}
+                    {f.when[lang]}
                   </p>
-                  <h3 className="heading-serif mt-2 text-xl leading-7 text-[#171717]">{e.title}</h3>
-                  <p className="mt-2 text-base leading-7 text-[#3a3a3a]">{e.body}</p>
+                  <h3 className="heading-serif mt-2 text-xl leading-7 text-[#171717]">
+                    {f.title[lang]}
+                  </h3>
+                  <p className="mt-2 text-base leading-7 text-[#3a3a3a]">{f.body[lang]}</p>
                 </div>
               </div>
             ))}
@@ -251,29 +164,31 @@ export default function EventsPage() {
         </div>
       </section>
 
-      {/* ─── Full timeline ─── */}
+      {/* ─── Full archive ─── */}
       <section className="py-24 sm:py-32 px-6 sm:px-16">
         <div className="max-w-3xl mx-auto">
           <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#8a8a8a]">
-            Every event · Summer 2024 → today
+            {e.archiveLabel[lang]}
           </p>
-          {TERMS.map((t) => (
-            <div key={t.term} className="mt-12 first:mt-8">
-              <h3 className="heading-serif text-3xl leading-tight text-[#171717]">{t.term}</h3>
+          {e.terms.map((term) => (
+            <div key={term.term.en} className="mt-12 first:mt-8">
+              <h3 className="heading-serif text-3xl leading-tight text-[#171717]">
+                {term.term[lang]}
+              </h3>
               <div className="mt-4 border-t border-black/10">
-                {t.events.map((e) => (
+                {term.events.map((ev) => (
                   <div
-                    key={e.title}
+                    key={ev.title.en}
                     className="flex items-baseline gap-3 border-b border-black/10 py-4 sm:gap-4"
                   >
                     <span className="w-[72px] shrink-0 text-sm uppercase tracking-wide font-semibold text-[#71031f] sm:w-20">
-                      {e.date}
+                      {ev.date[lang]}
                     </span>
                     <div className="flex-1">
-                      <span className="text-lg leading-snug font-medium text-[#171717]">{e.title}</span>
-                      {e.detail && (
-                        <span className="ml-2 text-base text-[#3a3a3a]">— {e.detail}</span>
-                      )}
+                      <span className="text-lg leading-snug font-medium text-[#171717]">
+                        {ev.title[lang]}
+                      </span>
+                      <span className="ml-2 text-base text-[#3a3a3a]">— {ev.detail[lang]}</span>
                     </div>
                   </div>
                 ))}
@@ -283,32 +198,14 @@ export default function EventsPage() {
         </div>
       </section>
 
-      {/* ─── What we host ─── */}
-      <section className="py-24 sm:py-32 px-6 sm:px-16 bg-white/40 border-y border-black/5">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#8a8a8a]">
-            What we host
-          </p>
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
-            {FORMATS.map((f) => (
-              <div
-                key={f.title}
-                className="rounded-[28px] border border-black/5 bg-white p-8 shadow-[0_12px_44px_rgba(0,0,0,0.10)]"
-              >
-                <h3 className="heading-serif text-2xl text-[#171717]">{f.title}</h3>
-                <p className="mt-3 text-base leading-7 text-[#3a3a3a]">{f.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── More on the way ─── */}
+      {/* ─── Closing: every event is a doorway ─── */}
       <section className="py-24 sm:py-32 px-6 sm:px-16">
-        <div className="max-w-3xl mx-auto rounded-[28px] border border-[#C9A96E]/30 bg-[#C9A96E]/10 p-10 text-center">
-          <p className="heading-serif text-3xl text-[#171717]">More on the way</p>
-          <p className="mx-auto mt-3 max-w-md text-base leading-7 text-[#3a3a3a]">
-            We&apos;re planning the next season now. Follow{" "}
+        <div className="max-w-3xl mx-auto text-center">
+          <p className="heading-serif text-2xl sm:text-[32px] leading-[1.4] text-[#171717]">
+            {e.more.statement[lang]}
+          </p>
+          <p className="mt-8 text-base leading-7 text-[#4a4a4a]">
+            {e.more.pre[lang]}
             <a
               href="https://www.instagram.com/bia_usc/"
               target="_blank"
@@ -316,8 +213,8 @@ export default function EventsPage() {
               className="font-semibold text-[#71031f] underline underline-offset-2"
             >
               @bia_usc
-            </a>{" "}
-            so you don&apos;t miss the next one.
+            </a>
+            {e.more.post[lang]}
           </p>
         </div>
       </section>
