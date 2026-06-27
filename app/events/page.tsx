@@ -131,11 +131,11 @@ export default function EventsPage() {
     <MarketingShell>
       <section className="border-b-[3px]" style={{ borderColor: "var(--black)", background: "var(--cardinal)", color: "white" }}>
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <p className="font-display text-[12px] tracking-[0.2em] uppercase" style={{ color: "var(--gold)" }}>
+          <p className="font-display text-[15px] tracking-[0.2em] uppercase" style={{ color: "var(--gold)" }}>
             20+ events since 2024 · flagships of 300–500+
           </p>
-          <h1 className="mt-3 font-display text-[40px] leading-[0.95] sm:text-[64px]">Events</h1>
-          <p className="mt-5 max-w-2xl text-base leading-7" style={{ color: "rgba(255,255,255,0.85)" }}>
+          <h1 className="mt-3 font-display text-[44px] leading-[0.95] sm:text-[68px]">Events</h1>
+          <p className="mt-5 max-w-2xl text-lg leading-8" style={{ color: "rgba(255,255,255,0.9)" }}>
             From recruiting sessions and office tours to hackathons, tailgates, and
             rooftop socials, BIA runs a full calendar — in LA and across China — that
             connects, grows, and celebrates USC&apos;s international student community.
@@ -147,20 +147,20 @@ export default function EventsPage() {
       <section className="border-b-[3px]" style={{ borderColor: "var(--black)", background: "var(--gold)" }}>
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
           <div className="inline-flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--cardinal)" }}></span>
-            <p className="font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--cardinal)" }}>
+            <span className="h-2 w-2 rounded-full" style={{ background: "var(--cardinal)" }}></span>
+            <p className="font-display text-[14px] tracking-[0.2em] uppercase" style={{ color: "var(--cardinal)" }}>
               Upcoming
             </p>
           </div>
-          <h2 className="mt-2 font-display text-3xl leading-tight sm:text-4xl" style={{ color: "var(--black)" }}>
+          <h2 className="mt-2 font-display text-4xl leading-tight sm:text-5xl" style={{ color: "var(--black)" }}>
             {UPCOMING.title}
           </h2>
-          <p className="mt-3 max-w-2xl text-base leading-7" style={{ color: "var(--black)" }}>
+          <p className="mt-3 max-w-2xl text-lg leading-8" style={{ color: "var(--black)" }}>
             {UPCOMING.blurb}
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             {UPCOMING.perks.map((p) => (
-              <span key={p} className="border-[2px] px-3 py-1 text-xs" style={{ borderColor: "var(--black)", color: "var(--black)" }}>
+              <span key={p} className="border-[2px] px-3.5 py-1.5 text-sm" style={{ borderColor: "var(--black)", color: "var(--black)" }}>
                 {p}
               </span>
             ))}
@@ -168,26 +168,26 @@ export default function EventsPage() {
           <div className="mt-7 grid gap-4 sm:grid-cols-3">
             {UPCOMING.sessions.map((s) => (
               <div key={s.city} className="border-[3px] p-5" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
-                <p className="font-display text-xl">{s.city}</p>
-                <p className="mt-1 font-display text-[12px] uppercase tracking-wide" style={{ color: "var(--cardinal)" }}>
+                <p className="font-display text-2xl">{s.city}</p>
+                <p className="mt-1 font-display text-[14px] uppercase tracking-wide" style={{ color: "var(--cardinal)" }}>
                   {s.when}
                 </p>
-                <p className="mt-2 text-sm leading-5" style={{ color: "var(--mid)" }}>
+                <p className="mt-2 text-base leading-6" style={{ color: "var(--mid)" }}>
                   {s.venue || "Venue TBA"}
                 </p>
               </div>
             ))}
           </div>
 
-          <p className="mt-10 font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--cardinal)" }}>
+          <p className="mt-10 font-display text-[14px] tracking-[0.2em] uppercase" style={{ color: "var(--cardinal)" }}>
             Also coming up
           </p>
           <div className="mt-3 flex items-center justify-between gap-3 border-[3px] p-5" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
             <div>
-              <p className="font-display text-xl">HUSH @ INS Park</p>
-              <p className="mt-1 text-sm" style={{ color: "var(--mid)" }}>INS Park, Shanghai</p>
+              <p className="font-display text-2xl">HUSH @ INS Park</p>
+              <p className="mt-1 text-base" style={{ color: "var(--mid)" }}>INS Park, Shanghai</p>
             </div>
-            <p className="shrink-0 font-display text-[12px] uppercase tracking-wide" style={{ color: "var(--cardinal)" }}>
+            <p className="shrink-0 font-display text-[14px] uppercase tracking-wide" style={{ color: "var(--cardinal)" }}>
               Aug 3
             </p>
           </div>
@@ -197,7 +197,7 @@ export default function EventsPage() {
       {/* Featured */}
       <section className="border-b-[3px]" style={{ borderColor: "var(--black)", background: "var(--beige)" }}>
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-          <h2 className="font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
+          <h2 className="font-display text-[14px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
             Featured
           </h2>
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -213,11 +213,11 @@ export default function EventsPage() {
                   />
                 </div>
                 <div className="flex flex-1 flex-col p-5">
-                  <p className="font-display text-[11px] tracking-[0.12em] uppercase" style={{ color: "var(--cardinal)" }}>
+                  <p className="font-display text-[13px] tracking-[0.12em] uppercase" style={{ color: "var(--cardinal)" }}>
                     {e.when}
                   </p>
-                  <h3 className="mt-2 font-display text-lg leading-6">{e.title}</h3>
-                  <p className="mt-2 text-sm leading-6" style={{ color: "var(--mid)" }}>{e.body}</p>
+                  <h3 className="mt-2 font-display text-xl leading-7">{e.title}</h3>
+                  <p className="mt-2 text-base leading-7" style={{ color: "var(--mid)" }}>{e.body}</p>
                 </div>
               </div>
             ))}
@@ -227,26 +227,26 @@ export default function EventsPage() {
 
       {/* Full timeline */}
       <section className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
-        <h2 className="font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
+        <h2 className="font-display text-[14px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
           Every event · Summer 2024 → today
         </h2>
         {TERMS.map((t) => (
           <div key={t.term} className="mt-10 first:mt-8">
-            <h3 className="font-display text-2xl">{t.term}</h3>
+            <h3 className="font-display text-[28px] leading-tight">{t.term}</h3>
             <div className="mt-3 border-t-[3px]" style={{ borderColor: "var(--black)" }}>
               {t.events.map((e) => (
                 <div
                   key={e.title}
-                  className="flex items-baseline gap-3 border-b py-3 sm:gap-4"
+                  className="flex items-baseline gap-3 border-b py-3.5 sm:gap-4"
                   style={{ borderColor: "rgba(0,0,0,0.08)" }}
                 >
-                  <span className="w-14 shrink-0 font-display text-[11px] uppercase tracking-wide sm:w-16" style={{ color: "var(--cardinal)" }}>
+                  <span className="w-[72px] shrink-0 font-display text-[14px] uppercase tracking-wide sm:w-20" style={{ color: "var(--cardinal)" }}>
                     {e.date}
                   </span>
                   <div className="flex-1">
-                    <span className="font-display text-base leading-tight">{e.title}</span>
+                    <span className="font-display text-lg leading-snug">{e.title}</span>
                     {e.detail && (
-                      <span className="ml-2 text-sm" style={{ color: "var(--mid)" }}>
+                      <span className="ml-2 text-base" style={{ color: "var(--mid)" }}>
                         — {e.detail}
                       </span>
                     )}
@@ -261,14 +261,14 @@ export default function EventsPage() {
       {/* What we host */}
       <section className="border-t-[3px]" style={{ borderColor: "var(--black)", background: "var(--beige)" }}>
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-          <h2 className="font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
+          <h2 className="font-display text-[14px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
             What we host
           </h2>
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             {FORMATS.map((f) => (
               <div key={f.title} className="border-[3px] p-6" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
-                <h3 className="font-display text-xl">{f.title}</h3>
-                <p className="mt-3 text-sm leading-6" style={{ color: "var(--mid)" }}>{f.body}</p>
+                <h3 className="font-display text-2xl">{f.title}</h3>
+                <p className="mt-3 text-base leading-7" style={{ color: "var(--mid)" }}>{f.body}</p>
               </div>
             ))}
           </div>
@@ -278,8 +278,8 @@ export default function EventsPage() {
       {/* What's next */}
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <div className="border-[3px] p-8 text-center" style={{ borderColor: "var(--black)", background: "var(--gold)" }}>
-          <p className="font-display text-2xl" style={{ color: "var(--black)" }}>More on the way</p>
-          <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: "var(--black)" }}>
+          <p className="font-display text-[28px]" style={{ color: "var(--black)" }}>More on the way</p>
+          <p className="mx-auto mt-2 max-w-md text-base" style={{ color: "var(--black)" }}>
             We&apos;re planning the next season now. Follow{" "}
             <a href="https://www.instagram.com/bia_usc/" target="_blank" rel="noopener noreferrer" className="underline">
               @bia_usc
