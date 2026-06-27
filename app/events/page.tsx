@@ -178,6 +178,19 @@ export default function EventsPage() {
               </div>
             ))}
           </div>
+
+          <p className="mt-10 font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--cardinal)" }}>
+            Also coming up
+          </p>
+          <div className="mt-3 flex items-center justify-between gap-3 border-[3px] p-5" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
+            <div>
+              <p className="font-display text-xl">HUSH @ INS Park</p>
+              <p className="mt-1 text-sm" style={{ color: "var(--mid)" }}>INS Park, Shanghai</p>
+            </div>
+            <p className="shrink-0 font-display text-[12px] uppercase tracking-wide" style={{ color: "var(--cardinal)" }}>
+              Aug 3
+            </p>
+          </div>
         </div>
       </section>
 
