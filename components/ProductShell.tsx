@@ -296,7 +296,6 @@ export default function ProductShell({
                   <button
                     type="button"
                     onClick={() => setOpenGroup(open ? null : navGroup.id)}
-                    onFocus={() => setOpenGroup(navGroup.id)}
                     onKeyDown={(event) => {
                       if (event.key === "Escape") setOpenGroup(null);
                     }}
@@ -463,6 +462,16 @@ export default function ProductShell({
           </div>
         </div>
       </header>
+
+      {openGroup && (
+        <button
+          type="button"
+          aria-hidden
+          tabIndex={-1}
+          onClick={() => setOpenGroup(null)}
+          className="fixed inset-0 z-30 hidden cursor-default lg:block"
+        />
+      )}
 
       <main>{children({ school, setSchool, language, setLanguage })}</main>
 
