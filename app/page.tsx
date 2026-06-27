@@ -31,10 +31,63 @@ function ArrowIcon() {
   );
 }
 
+const SERVICE_HREFS = [
+  "/roommates",
+  "/course-planner",
+  "/course-rating",
+  "/sublet",
+  "/usc-group",
+];
+
+function ToolCard({
+  href,
+  char,
+  title,
+  sub,
+  desc,
+  open,
+  index,
+}: {
+  href: string;
+  char: string;
+  title: string;
+  sub: string;
+  desc: string;
+  open: string;
+  index: number;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex h-full w-full flex-col justify-between p-8 sm:p-10"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#8B0A2A] to-[#71031f] flex items-center justify-center text-white text-2xl font-bold shrink-0 shadow-sm" style={{ fontFamily: "var(--font-display-zh)" }}>
+          {char}
+        </div>
+        <span className="text-xs text-[#999] uppercase tracking-widest">
+          {String(index + 1).padStart(2, "0")} / 05
+        </span>
+      </div>
+      <div>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-2">
+          <h3 className="text-2xl sm:text-3xl font-semibold text-[#171717]" style={{ fontFamily: "var(--font-display-zh)" }}>{title}</h3>
+          <span className="text-[11px] text-[#999] uppercase tracking-wider">{sub}</span>
+        </div>
+        <p className="text-base text-[#646464] leading-relaxed max-w-xl">{desc}</p>
+        <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#71031f] transition-all group-hover:gap-3">
+          {open} <ArrowIcon />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 export default function LandingPage() {
   const [time, setTime] = useState("");
   const { language: lang, setLanguage: setLang } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [toolsReady, setToolsReady] = useState(false);
 
   useEffect(() => {
     const updateTime = () =>
@@ -48,6 +101,13 @@ export default function LandingPage() {
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // ScrollStack mounts client-only (after hydration). Rendering it during SSR
+  // let its useLayoutEffect mutate the DOM mid-hydration, which React 19
+  // mis-reconciled into a duplicate card stack. SSR shows the static fallback.
+  useEffect(() => {
+    setToolsReady(true);
   }, []);
 
   return (
@@ -332,49 +392,53 @@ export default function LandingPage() {
                 <p className="text-[#999] text-xs">{t.services.builtBy[lang]}</p>
               </div>
 
-              <ScrollStack
-                useWindowScroll
-                itemDistance={70}
-                itemStackDistance={26}
-                baseScale={0.88}
-                itemScale={0.035}
-                stackPosition="22%"
-                scaleEndPosition="12%"
-              >
-                {t.services.items.map((svc, idx) => {
-                  const hrefs = ["/roommates", "/course-planner", "/course-rating", "/sublet", "/usc-group"];
-                  return (
+              {toolsReady ? (
+                <ScrollStack
+                  useWindowScroll
+                  itemDistance={70}
+                  itemStackDistance={26}
+                  baseScale={0.88}
+                  itemScale={0.035}
+                  stackPosition="22%"
+                  scaleEndPosition="12%"
+                >
+                  {t.services.items.map((svc, idx) => (
                     <ScrollStackItem
                       key={svc.title.en}
                       itemClassName="rounded-[28px] border border-black/5 bg-white shadow-[0_12px_44px_rgba(0,0,0,0.10)] overflow-hidden"
                     >
-                      <Link
-                        href={hrefs[idx]}
-                        className="group flex h-full w-full flex-col justify-between p-8 sm:p-10"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#8B0A2A] to-[#71031f] flex items-center justify-center text-white text-2xl font-bold shrink-0 shadow-sm" style={{ fontFamily: "var(--font-display-zh)" }}>
-                            {svc.title[lang].charAt(0)}
-                          </div>
-                          <span className="text-xs text-[#999] uppercase tracking-widest">
-                            {String(idx + 1).padStart(2, "0")} / 05
-                          </span>
-                        </div>
-                        <div>
-                          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-2">
-                            <h3 className="text-2xl sm:text-3xl font-semibold text-[#171717]" style={{ fontFamily: "var(--font-display-zh)" }}>{svc.title[lang]}</h3>
-                            <span className="text-[11px] text-[#999] uppercase tracking-wider">{svc.sub[lang]}</span>
-                          </div>
-                          <p className="text-base text-[#646464] leading-relaxed max-w-xl">{svc.desc[lang]}</p>
-                          <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#71031f] transition-all group-hover:gap-3">
-                            {t.services.open[lang]} <ArrowIcon />
-                          </span>
-                        </div>
-                      </Link>
+                      <ToolCard
+                        href={SERVICE_HREFS[idx]}
+                        char={svc.title[lang].charAt(0)}
+                        title={svc.title[lang]}
+                        sub={svc.sub[lang]}
+                        desc={svc.desc[lang]}
+                        open={t.services.open[lang]}
+                        index={idx}
+                      />
                     </ScrollStackItem>
-                  );
-                })}
-              </ScrollStack>
+                  ))}
+                </ScrollStack>
+              ) : (
+                <div className="flex flex-col gap-[70px]">
+                  {t.services.items.map((svc, idx) => (
+                    <div
+                      key={svc.title.en}
+                      className="h-[16.5rem] overflow-hidden rounded-[28px] border border-black/5 bg-white shadow-[0_12px_44px_rgba(0,0,0,0.10)] sm:h-[19rem]"
+                    >
+                      <ToolCard
+                        href={SERVICE_HREFS[idx]}
+                        char={svc.title[lang].charAt(0)}
+                        title={svc.title[lang]}
+                        sub={svc.sub[lang]}
+                        desc={svc.desc[lang]}
+                        open={t.services.open[lang]}
+                        index={idx}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
 
