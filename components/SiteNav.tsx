@@ -6,7 +6,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import GlassSurface from "@/components/GlassSurface";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/components/LanguageProvider";
 
@@ -40,17 +39,7 @@ export default function SiteNav() {
 
   return (
     <div className="fixed top-6 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none">
-      <GlassSurface
-        width="100%"
-        height="auto"
-        borderRadius={16}
-        brightness={12}
-        opacity={0.9}
-        blur={14}
-        displace={0.3}
-        backgroundOpacity={0.45}
-        className="text-white w-full max-w-4xl pointer-events-auto shadow-2xl transition-all duration-300"
-      >
+      <div className="text-white w-full max-w-4xl pointer-events-auto rounded-2xl border border-white/10 bg-[#1f1f29]/70 backdrop-blur-xl shadow-2xl transition-all duration-300">
         <div className="w-full flex flex-col">
           <nav className="w-full py-3 px-6 flex items-center justify-between">
             <div className="flex items-center gap-6">
@@ -133,7 +122,7 @@ export default function SiteNav() {
             </div>
           )}
         </div>
-      </GlassSurface>
+      </div>
     </div>
   );
 }
