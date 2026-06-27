@@ -159,8 +159,8 @@ export const t = {
       badge: { en: "Fall 2026 Cohort", zh: "2026秋季招新" },
       title: { en: "Membership", zh: "成员体系" },
       desc: {
-        en: "A selective community of builders, operators, and bridge-makers at USC.",
-        zh: "USC 精选的建设者、运营者和连接者社区。",
+        en: "A selective community of people who are unreasonably good at something — and a little restless to build what's next.",
+        zh: "USC 精选的社区——汇聚在某件事上格外出色、又有点不安于现状、想做出下一个东西的人。",
       },
       cta: { en: "Apply Now", zh: "立即申请" },
     },
@@ -177,73 +177,61 @@ export const t = {
       },
     ],
     structure: {
-      heading: { en: "How We're Built", zh: "组织架构" },
+      heading: { en: "How you grow here", zh: "你在这里如何成长" },
       subtitle: {
-        en: "Flat structure. Real ownership. Every member ships.",
-        zh: "扁平架构。真正的所有权。每位成员都在交付。",
+        en: "Everyone ships from day one. You grow by owning more, not waiting longer.",
+        zh: "从第一天起，人人都在交付。你靠承担更多而成长，而不是论资排辈。",
       },
     },
     tiers: [
       {
         name: { en: "Intern", zh: "实习成员" },
-        tag: { en: "Entry", zh: "入门" },
+        tag: { en: "First semester", zh: "第一学期" },
         desc: {
-          en: "New members start here. Rotate across projects, learn different functions, and find where you fit.",
-          zh: "新成员从这里开始。轮转不同项目，学习不同职能，找到自己的位置。",
+          en: "Where everyone starts. Jump into real projects, try every side of BIA, and find the work and the people that click.",
+          zh: "每个人的起点。投入真实项目，尝试 BIA 的每一面，找到让你心动的工作和伙伴。",
         },
         perks: [
-          { en: "Rotate across active projects", zh: "轮转参与各活跃项目" },
-          { en: "Exposure to all job functions", zh: "接触所有职能方向" },
-          { en: "Mentorship from Fellows", zh: "获得 Fellow 指导" },
-          { en: "Access to all BIA events", zh: "参加所有 BIA 活动" },
+          { en: "Hands on real projects from week one", zh: "第一周就上手真实项目" },
+          { en: "Try it all — design, build, events, partnerships", zh: "全都试试——设计、开发、活动、合作" },
+          { en: "A Fellow in your corner", zh: "有一位 Fellow 罩着你" },
+          { en: "All-access to every BIA event", zh: "畅通参加所有 BIA 活动" },
         ],
         promotion: {
-          en: "Automatically promoted to Fellow after one semester.",
-          zh: "一学期后自动晋升为 Fellow。",
+          en: "Become a Fellow after your first semester.",
+          zh: "第一学期后成为 Fellow。",
         },
       },
       {
         name: { en: "Fellow", zh: "正式成员" },
-        tag: { en: "Project Lead", zh: "项目负责人" },
+        tag: { en: "Owns the work", zh: "掌舵项目" },
         desc: {
-          en: "The backbone of BIA. Fellows lead projects, host events, and shape the direction of the organization.",
-          zh: "BIA 的中坚力量。Fellow 领导项目、举办活动，塑造组织方向。",
+          en: "The heart of BIA. You own what you make — projects, events, and where we go next.",
+          zh: "BIA 的核心。你拥有自己做的一切——项目、活动，以及我们下一步走向哪里。",
         },
         perks: [
-          { en: "Lead and own your projects", zh: "领导并拥有你的项目" },
-          {
-            en: "Propose new initiatives to E-Board",
-            zh: "向 E-Board 提出新项目提案",
-          },
-          {
-            en: "Host 1 external + 1 internal event per semester",
-            zh: "每学期举办1场外部+1场内部活动",
-          },
-          { en: "Mentor incoming Interns", zh: "指导新入职的 Intern" },
+          { en: "Own a project end to end", zh: "从头到尾拥有一个项目" },
+          { en: "Pitch new ideas and make them real", zh: "提出新点子并把它变成现实" },
+          { en: "Run events 300–500 people show up to", zh: "操办 300–500 人到场的活动" },
+          { en: "Bring up the next class of members", zh: "带出下一届成员" },
         ],
         promotion: {
-          en: "Fellows can be elected to E-Board by the team.",
-          zh: "Fellow 可被团队选举进入 E-Board。",
+          en: "Fellows can be elected onto the E-Board.",
+          zh: "Fellow 可被选入执行委员会。",
         },
       },
       {
         name: { en: "E-Board", zh: "执行委员会" },
-        tag: { en: "Leadership", zh: "领导层" },
+        tag: { en: "Steers the ship", zh: "掌舵全局" },
         desc: {
-          en: "Four people. Strategic direction, flagship events, and final say on new projects. The buck stops here.",
-          zh: "四人团队。战略方向、旗舰活动、新项目最终审批。最终责任在此。",
+          en: "Four people holding the vision — where the big calls on strategy, flagships, and what we become get made.",
+          zh: "四个人守着愿景——战略、旗舰活动、我们将成为什么，重大决定都在这里诞生。",
         },
         perks: [
-          { en: "Set BIA's strategic direction", zh: "制定 BIA 战略方向" },
-          { en: "Approve new project proposals", zh: "审批新项目提案" },
-          {
-            en: "Host flagship events each semester",
-            zh: "每学期举办旗舰活动",
-          },
-          {
-            en: "Represent BIA to sponsors & partners",
-            zh: "代表 BIA 对接赞助商与合作伙伴",
-          },
+          { en: "Set where BIA goes next", zh: "决定 BIA 的下一步" },
+          { en: "Greenlight the boldest ideas", zh: "为最大胆的想法开绿灯" },
+          { en: "Lead the flagship moments of the year", zh: "主导一年中的旗舰时刻" },
+          { en: "Sit across from sponsors and partners", zh: "与赞助商和合作伙伴面对面" },
         ],
         promotion: {
           en: "",
@@ -294,43 +282,43 @@ export const t = {
         {
           q: { en: "What is BIA?", zh: "什么是 BIA？" },
           a: {
-            en: "Bridging Internationals Association is a selective student community at USC. We build real products, host large-scale events, and connect international students with industry through technology, cultural exchange, and professional development.",
-            zh: "Bridging Internationals Association 是 USC 的精选学生社区。我们打造真实产品、举办大型活动，并通过科技、文化交流和职业发展将国际学生与行业连接。",
+            en: "A student-led community at USC building experiences, products, and a place to belong — part studio, part crew, part launchpad. We turn strangers into friends and ideas into things you can touch.",
+            zh: "一个起源于 USC 的学生社区，打造体验、产品和归属感——一半是工作室，一半是死党，一半是起飞的跑道。我们让陌生人变成朋友，让想法变成看得见摸得着的东西。",
           },
         },
         {
-          q: { en: "Do I need prior experience?", zh: "我需要有经验吗？" },
+          q: { en: "Do I need experience?", zh: "我需要有经验吗？" },
           a: {
-            en: "No. We select for curiosity, initiative, and taste — not credentials. Members come from all majors. What matters is what you want to build and your willingness to ship.",
-            zh: "不需要。我们看重的是好奇心、主动性和品味——而非背景。成员来自各个专业。重要的是你想做什么以及你的执行力。",
+            en: "No résumé filter. We care that you're genuinely great at something — design, building, storytelling, gathering people — and hungry to make things that matter. Every major welcome.",
+            zh: "不看简历门槛。我们在意的是你在某件事上真的出色——设计、创造、讲故事、把人聚到一起——并且渴望做出有意义的东西。欢迎所有专业。",
           },
         },
         {
           q: { en: "What's the time commitment?", zh: "时间投入是多少？" },
           a: {
-            en: "Around 5-8 hours per week including team meetings, project work, and events. Academics always come first.",
-            zh: "每周约 5-8 小时，包括团队会议、项目工作和活动。学业始终优先。",
+            en: "A few hours a week, flexing with what you take on. Academics come first, always.",
+            zh: "每周几个小时，随你承担的事情而变。学业永远第一。",
           },
         },
         {
           q: { en: "Can freshmen apply?", zh: "新生可以申请吗？" },
           a: {
-            en: "Yes. Some of our strongest members joined as freshmen. Class year doesn't matter — drive does.",
-            zh: "可以。我们最优秀的一些成员就是大一加入的。年级不重要——驱动力才重要。",
+            en: "Absolutely. Some of our best joined as freshmen. We care about drive, not class year.",
+            zh: "当然。我们最优秀的一些成员就是大一加入的。我们看重驱动力，而不是年级。",
           },
         },
         {
           q: { en: "How selective is it?", zh: "竞争激烈吗？" },
           a: {
-            en: "We keep cohorts small to maintain quality. Each cycle we receive significantly more applications than spots available. But if you're the right fit, we'll know.",
-            zh: "我们保持小规模以确保质量。每轮收到的申请远超名额。但如果你合适，我们会看到。",
+            en: "We keep each class small so it stays real. Far more applications than spots — but if you're a fit, we'll feel it. So will you.",
+            zh: "我们保持每届规模小，才够真实。申请远多于名额——但如果你合适，我们会感觉到，你也会。",
           },
         },
         {
           q: { en: "What happens after I'm accepted?", zh: "被录取后会怎样？" },
           a: {
-            en: "You join as an Intern, rotate across active projects to find your fit, get paired with a Fellow mentor, and after one semester you're automatically promoted to Fellow with full project ownership.",
-            zh: "你以 Intern 身份加入，在各项目间轮转找到适合的方向，配对 Fellow 导师。一学期后自动晋升为 Fellow，获得完整的项目所有权。",
+            en: "You start as an Intern: dive into real projects, find your lane and your people, and grow into a Fellow with full ownership after your first semester.",
+            zh: "你以实习成员身份加入：投入真实项目，找到自己的方向和伙伴，第一学期后成长为拥有完整所有权的 Fellow。",
           },
         },
       ],
