@@ -4,12 +4,25 @@ The design language of the home page (`app/page.tsx`), distilled into a referenc
 so other pages — the membership page, future marketing pages — can be reworked to
 match it instead of drifting.
 
-> **Two systems live in this repo.** This doc covers the **Landing system**
-> (soft, editorial, glassy — light base with full-bleed dark bands). The
-> **Brutalist system** (3px borders, hard offset shadows, Bebas Neue, uppercase)
-> powers the *tools* pages (`/roommates`, `/course-planner`, …) and the
-> `MarketingShell` pages (`/about`, `/events`). Don't mix them on one page.
+> **Two systems live in this repo.** The **Landing system** (this doc — soft,
+> editorial, glassy; light base with full-bleed dark bands) is the **default for
+> every outward-facing page**: home, about, events, **membership**, blog, and all
+> marketing pages. The **Brutalist system** (3px borders, hard offset shadows,
+> Bebas Neue, uppercase) is reserved for **新生服务 only** — the student-tools
+> pages (`/roommates`, `/course-planner`, `/course-rating`, `/sublet`,
+> `/usc-group`, `/apartments`) and the `ProductShell`. Don't mix them on one page.
 > Tokens for both live in `app/globals.css`.
+>
+> *Heads-up: `/about` and `/events` currently render in a bordered
+> `MarketingShell` style that predates this rule — they should migrate to the
+> Landing system too.*
+
+> **One nav, one footer.** Every Landing-system page shares the **same top nav and
+> footer** — a single `SiteNav` + `SiteFooter` (the glass floating navbar + the
+> footer from the home page) so links never drift. Canonical links: About →
+> `/about`, Events → `/events`, 新生服务 → `/roommates`, Blog → `/blog`,
+> George 👻 → `/george/about`, Join Us → `/join`. Don't hand-copy the navbar onto a
+> page (that's how membership ended up with a stale George link).
 
 ---
 
