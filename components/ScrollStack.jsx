@@ -7,6 +7,10 @@ import { useLayoutEffect, useRef, useCallback } from 'react';
 import Lenis from 'lenis';
 import './ScrollStack.css';
 
+// Stable default so the prop is optional to TS consumers without churning the
+// effect deps (an inline default would change identity every render).
+const NOOP = () => {};
+
 export const ScrollStackItem = ({ children, itemClassName = '' }) => (
   <div className={`scroll-stack-card ${itemClassName}`.trim()}>{children}</div>
 );
@@ -24,7 +28,7 @@ const ScrollStack = ({
   rotationAmount = 0,
   blurAmount = 0,
   useWindowScroll = false,
-  onStackComplete
+  onStackComplete = NOOP
 }) => {
   const scrollerRef = useRef(null);
   const stackCompletedRef = useRef(false);
