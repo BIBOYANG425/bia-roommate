@@ -15,6 +15,7 @@ export const t = {
     },
     back: { en: "Back to home", zh: "返回首页" },
     badge: { en: "Soon", zh: "敬请期待" },
+    waitlist: { en: "Join the waitlist", zh: "加入候补名单" },
   },
   nav: {
     about: { en: "About", zh: "关于我们" },

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import MarketingShell from "@/components/MarketingShell";
+import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 import { SITE } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -44,17 +45,19 @@ const STATS = [
 
 export default function AboutPage() {
   return (
-    <MarketingShell>
-      {/* Hero */}
-      <section className="border-b-[3px]" style={{ borderColor: "var(--black)", background: "var(--cardinal)", color: "white" }}>
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-          <p className="font-display text-[12px] tracking-[0.2em] uppercase" style={{ color: "var(--gold)" }}>
+    <div className="relative min-h-screen bg-[#F9FAF7] text-[#171717] overflow-x-hidden font-sans">
+      <SiteNav />
+
+      {/* ─── Hero (dark band) ─── */}
+      <section className="relative bg-[#1F1F29] text-white px-6 sm:px-16 pt-40 pb-24 sm:pt-48 sm:pb-32">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#C9A96E] font-semibold">
             Student-led · From USC · Est. {SITE.foundingYear}
           </p>
-          <h1 className="mt-4 font-display text-[40px] leading-[1] sm:text-[64px]">
+          <h1 className="heading-serif mt-6 text-white text-4xl sm:text-6xl leading-[1.05] tracking-tight">
             Humanity, technology &amp; art — reshaping how young people connect, experience, and belong.
           </h1>
-          <p className="mt-6 max-w-3xl text-base leading-7 sm:text-lg" style={{ color: "rgba(255,255,255,0.85)" }}>
+          <p className="mt-6 max-w-3xl text-base sm:text-lg leading-8 text-white/70 font-light">
             BIA is a student-led community starting from USC, exploring how
             humanity, technology, and art can reshape the way young people
             connect, experience, and belong.
@@ -62,117 +65,133 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* The entry point */}
-      <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-        <h2 className="font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
-          The entry point
-        </h2>
-        <div className="mt-5 space-y-5 text-base leading-7" style={{ color: "var(--black)" }}>
-          <p>
-            We began with a simple observation: when someone enters a new
-            school, a new city, or a new culture, what they lack is often not
-            information, but a trusted way to make sense of it. There are endless
-            posts, group chats, platforms, and recommendations — yet the harder
-            questions remain.
+      {/* ─── The entry point ─── */}
+      <section className="py-24 sm:py-32 px-6 sm:px-16">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#999] font-semibold">
+            The entry point
           </p>
-          <p className="border-l-[3px] pl-5 font-display text-xl leading-8" style={{ borderColor: "var(--cardinal)" }}>
-            What is worth going to? Who should I meet? Where do I start? How do I
-            turn a place that feels unfamiliar into a life that feels like my own?
-          </p>
-          <p className="font-display text-2xl" style={{ color: "var(--cardinal)" }}>
-            BIA exists to become that entry point.
-          </p>
-          <p>
-            Rooted in the lived experience of international and Chinese-background
-            students at USC, BIA is not just a social club, a tech club, or a
-            traditional student organization. We are an experience-driven
-            community that brings together lifestyle, creativity, technology,
-            career exploration, and human connection.
-          </p>
-          <p>
-            We care about the moments that make a new environment feel real: the
-            first event where you meet people you actually want to see again, the
-            conversation that changes how you think about your future, the city
-            experience that makes LA feel less distant, the creative project that
-            turns an idea into something visible. Community is not just about
-            gathering people — it is about designing the conditions for
-            meaningful encounters to happen.
-          </p>
+          <div className="mt-6 space-y-6 text-base leading-8 text-[#646464]">
+            <p>
+              We began with a simple observation: when someone enters a new
+              school, a new city, or a new culture, what they lack is often not
+              information, but a trusted way to make sense of it. There are endless
+              posts, group chats, platforms, and recommendations — yet the harder
+              questions remain.
+            </p>
+            <p className="heading-serif border-l-2 border-[#71031f] pl-6 text-xl sm:text-2xl leading-9 text-[#171717]">
+              What is worth going to? Who should I meet? Where do I start? How do I
+              turn a place that feels unfamiliar into a life that feels like my own?
+            </p>
+            <p className="heading-serif text-2xl sm:text-3xl text-[#71031f]">
+              BIA exists to become that entry point.
+            </p>
+            <p>
+              Rooted in the lived experience of international and Chinese-background
+              students at USC, BIA is not just a social club, a tech club, or a
+              traditional student organization. We are an experience-driven
+              community that brings together lifestyle, creativity, technology,
+              career exploration, and human connection.
+            </p>
+            <p>
+              We care about the moments that make a new environment feel real: the
+              first event where you meet people you actually want to see again, the
+              conversation that changes how you think about your future, the city
+              experience that makes LA feel less distant, the creative project that
+              turns an idea into something visible. Community is not just about
+              gathering people — it is about designing the conditions for
+              meaningful encounters to happen.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Three lenses */}
-      <section className="border-y-[3px]" style={{ borderColor: "var(--black)", background: "var(--beige)" }}>
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <h2 className="font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
+      {/* ─── Three lenses ─── */}
+      <section className="py-24 sm:py-32 px-6 sm:px-16 bg-white/40 border-y border-black/5">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#999] font-semibold">
             People · Technology · Art
-          </h2>
-          <p className="mt-3 max-w-2xl text-base leading-7" style={{ color: "var(--black)" }}>
+          </p>
+          <p className="mt-4 max-w-2xl text-base leading-8 text-[#646464]">
             Our work sits at the intersection of people, technology, and art.
           </p>
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
             {LENSES.map((l) => (
-              <div key={l.n} className="border-[3px] p-6" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
-                <h3 className="font-display text-2xl">{l.n}</h3>
-                <p className="mt-1 font-display text-[11px] tracking-[0.12em] uppercase" style={{ color: "var(--cardinal)" }}>
+              <div
+                key={l.n}
+                className="rounded-[28px] border border-black/5 bg-white shadow-[0_12px_44px_rgba(0,0,0,0.10)] p-8"
+              >
+                <h3 className="heading-serif text-3xl text-[#171717]">{l.n}</h3>
+                <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-[#71031f] font-semibold">
                   {l.role}
                 </p>
-                <p className="mt-3 text-sm leading-6" style={{ color: "var(--mid)" }}>{l.body}</p>
+                <p className="mt-4 text-sm leading-7 text-[#646464]">{l.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* The bigger questions */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <h2 className="font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
-          Larger than one campus
-        </h2>
-        <p className="mt-3 max-w-2xl text-base leading-7" style={{ color: "var(--black)" }}>
-          BIA starts at USC, but the questions we care about are bigger.
-        </p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {QUESTIONS.map((q) => (
-            <div key={q} className="border-[3px] p-5 font-display text-lg leading-7" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
-              {q}
-            </div>
-          ))}
+      {/* ─── The bigger questions ─── */}
+      <section className="py-24 sm:py-32 px-6 sm:px-16">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#999] font-semibold">
+            Larger than one campus
+          </p>
+          <p className="mt-4 max-w-2xl text-base leading-8 text-[#646464]">
+            BIA starts at USC, but the questions we care about are bigger.
+          </p>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2">
+            {QUESTIONS.map((q) => (
+              <div
+                key={q}
+                className="rounded-[28px] border border-black/5 bg-white shadow-[0_12px_44px_rgba(0,0,0,0.10)] p-8 heading-serif text-lg sm:text-xl leading-8 text-[#171717]"
+              >
+                {q}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* By the numbers */}
-      <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-        <h2 className="font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
-          By the numbers
-        </h2>
-        <div className="mt-6 grid gap-px sm:grid-cols-2 lg:grid-cols-4" style={{ background: "var(--black)", border: "3px solid var(--black)" }}>
-          {STATS.map((s) => (
-            <div key={s.label} className="p-6" style={{ background: "var(--cream)" }}>
-              <p className="font-display text-4xl" style={{ color: "var(--cardinal)" }}>{s.value}</p>
-              <p className="mt-2 text-sm leading-5" style={{ color: "var(--mid)" }}>{s.label}</p>
-            </div>
-          ))}
+      {/* ─── By the numbers ─── */}
+      <section className="py-24 sm:py-32 px-6 sm:px-16 bg-white/40 border-y border-black/5">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#999] font-semibold">
+            By the numbers
+          </p>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {STATS.map((s) => (
+              <div
+                key={s.label}
+                className="rounded-[28px] border border-black/5 bg-white shadow-[0_12px_44px_rgba(0,0,0,0.10)] p-8"
+              >
+                <p className="heading-serif text-4xl sm:text-5xl text-[#171717]">{s.value}</p>
+                <p className="mt-3 text-sm leading-6 text-[#646464]">{s.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Closing / CTA */}
-      <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-        <div className="border-[3px] p-8 sm:p-12" style={{ borderColor: "var(--black)", background: "var(--gold)" }}>
-          <p className="max-w-3xl font-display text-2xl leading-9 sm:text-3xl" style={{ color: "var(--black)" }}>
+      {/* ─── Closing / CTA (dark band) ─── */}
+      <section className="py-24 sm:py-32 px-6 sm:px-16 bg-[#1F1F29] text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="heading-serif text-2xl sm:text-3xl md:text-4xl leading-[1.3] text-white">
             From USC to LA, from campus life to city culture, from one gathering
             to a longer sense of belonging — BIA is here to explore what the next
             generation of community can become.
           </p>
           <Link
             href="/join"
-            className="mt-6 inline-block border-[3px] px-8 py-3 font-display tracking-[0.1em] uppercase text-white"
-            style={{ borderColor: "var(--black)", background: "var(--cardinal)" }}
+            className="mt-10 inline-flex items-center gap-2 bg-white text-[#1F1F29] px-10 py-4 rounded-[12px] text-sm font-bold uppercase tracking-wide hover:bg-white/90 transition-all duration-200 min-h-[52px]"
           >
             Join BIA →
           </Link>
         </div>
       </section>
-    </MarketingShell>
+
+      <SiteFooter />
+    </div>
   );
 }

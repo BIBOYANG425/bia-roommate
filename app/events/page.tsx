@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import MarketingShell from "@/components/MarketingShell";
+import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Events",
@@ -128,14 +129,19 @@ const FORMATS = [
 
 export default function EventsPage() {
   return (
-    <MarketingShell>
-      <section className="border-b-[3px]" style={{ borderColor: "var(--black)", background: "var(--cardinal)", color: "white" }}>
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <p className="font-display text-[15px] tracking-[0.2em] uppercase" style={{ color: "var(--gold)" }}>
+    <div className="relative min-h-screen bg-[#F9FAF7] text-[#171717] overflow-x-hidden font-sans">
+      <SiteNav />
+
+      {/* ─── Hero (dark band) ─── */}
+      <section className="bg-[#1F1F29] text-white px-6 sm:px-16 pt-36 sm:pt-44 pb-20 sm:pb-28">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-[#C9A96E] text-xs uppercase tracking-[0.2em] font-semibold">
             20+ events since 2024 · flagships of 300–500+
           </p>
-          <h1 className="mt-3 font-display text-[44px] leading-[0.95] sm:text-[68px]">Events</h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8" style={{ color: "rgba(255,255,255,0.9)" }}>
+          <h1 className="heading-serif mt-4 text-5xl sm:text-7xl leading-[0.95] text-white">
+            Events
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
             From recruiting sessions and office tours to hackathons, tailgates, and
             rooftop socials, BIA runs a full calendar — in LA and across China — that
             connects, grows, and celebrates USC&apos;s international student community.
@@ -143,67 +149,78 @@ export default function EventsPage() {
         </div>
       </section>
 
-      {/* Upcoming */}
-      <section className="border-b-[3px]" style={{ borderColor: "var(--black)", background: "var(--gold)" }}>
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+      {/* ─── Upcoming (light, warm gold accents) ─── */}
+      <section className="py-24 sm:py-32 px-6 sm:px-16">
+        <div className="max-w-6xl mx-auto">
           <div className="inline-flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full" style={{ background: "var(--cardinal)" }}></span>
-            <p className="font-display text-[14px] tracking-[0.2em] uppercase" style={{ color: "var(--cardinal)" }}>
+            <span className="h-2 w-2 rounded-full bg-[#C9A96E]" />
+            <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#C9A96E]">
               Upcoming
             </p>
           </div>
-          <h2 className="mt-2 font-display text-4xl leading-tight sm:text-5xl" style={{ color: "var(--black)" }}>
+          <h2 className="heading-serif mt-3 text-4xl sm:text-5xl leading-tight text-[#171717]">
             {UPCOMING.title}
           </h2>
-          <p className="mt-3 max-w-2xl text-lg leading-8" style={{ color: "var(--black)" }}>
+          <p className="mt-4 max-w-2xl text-lg leading-8 text-[#646464]">
             {UPCOMING.blurb}
           </p>
-          <div className="mt-5 flex flex-wrap gap-2">
+
+          <div className="mt-6 flex flex-wrap gap-2.5">
             {UPCOMING.perks.map((p) => (
-              <span key={p} className="border-[2px] px-3.5 py-1.5 text-sm" style={{ borderColor: "var(--black)", color: "var(--black)" }}>
+              <span
+                key={p}
+                className="rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 px-4 py-1.5 text-sm font-medium text-[#171717]"
+              >
                 {p}
               </span>
             ))}
           </div>
-          <div className="mt-7 grid gap-4 sm:grid-cols-3">
+
+          <div className="mt-8 grid gap-6 sm:grid-cols-3">
             {UPCOMING.sessions.map((s) => (
-              <div key={s.city} className="border-[3px] p-5" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
-                <p className="font-display text-2xl">{s.city}</p>
-                <p className="mt-1 font-display text-[14px] uppercase tracking-wide" style={{ color: "var(--cardinal)" }}>
+              <div
+                key={s.city}
+                className="rounded-[28px] border border-black/5 bg-white p-6 shadow-[0_12px_44px_rgba(0,0,0,0.10)]"
+              >
+                <p className="heading-serif text-2xl text-[#171717]">{s.city}</p>
+                <p className="mt-1.5 text-sm uppercase tracking-wide font-semibold text-[#71031f]">
                   {s.when}
                 </p>
-                <p className="mt-2 text-base leading-6" style={{ color: "var(--mid)" }}>
+                <p className="mt-2 text-base leading-6 text-[#646464]">
                   {s.venue || "Venue TBA"}
                 </p>
               </div>
             ))}
           </div>
 
-          <p className="mt-10 font-display text-[14px] tracking-[0.2em] uppercase" style={{ color: "var(--cardinal)" }}>
+          <p className="mt-12 text-xs uppercase tracking-[0.2em] font-semibold text-[#C9A96E]">
             Also coming up
           </p>
-          <div className="mt-3 flex items-center justify-between gap-3 border-[3px] p-5" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-[28px] border border-black/5 bg-white p-6 shadow-[0_12px_44px_rgba(0,0,0,0.10)]">
             <div>
-              <p className="font-display text-2xl">HUSH @ INS Park</p>
-              <p className="mt-1 text-base" style={{ color: "var(--mid)" }}>INS Park, Shanghai</p>
+              <p className="heading-serif text-2xl text-[#171717]">HUSH @ INS Park</p>
+              <p className="mt-1 text-base text-[#646464]">INS Park, Shanghai</p>
             </div>
-            <p className="shrink-0 font-display text-[14px] uppercase tracking-wide" style={{ color: "var(--cardinal)" }}>
+            <p className="shrink-0 text-sm uppercase tracking-wide font-semibold text-[#71031f]">
               Aug 3
             </p>
           </div>
         </div>
       </section>
 
-      {/* Featured */}
-      <section className="border-b-[3px]" style={{ borderColor: "var(--black)", background: "var(--beige)" }}>
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-          <h2 className="font-display text-[14px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
+      {/* ─── Featured ─── */}
+      <section className="py-24 sm:py-32 px-6 sm:px-16 bg-white/40 border-y border-black/5">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#999]">
             Featured
-          </h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          </p>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURED.map((e) => (
-              <div key={e.title} className="flex flex-col border-[3px]" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
-                <div className="relative aspect-[4/3] w-full overflow-hidden border-b-[3px]" style={{ borderColor: "var(--black)" }}>
+              <div
+                key={e.title}
+                className="flex flex-col overflow-hidden rounded-[28px] border border-black/5 bg-white shadow-[0_12px_44px_rgba(0,0,0,0.10)]"
+              >
+                <div className="relative aspect-[4/3] w-full overflow-hidden">
                   <Image
                     src={e.image}
                     alt={e.title}
@@ -212,12 +229,12 @@ export default function EventsPage() {
                     className="object-cover"
                   />
                 </div>
-                <div className="flex flex-1 flex-col p-5">
-                  <p className="font-display text-[13px] tracking-[0.12em] uppercase" style={{ color: "var(--cardinal)" }}>
+                <div className="flex flex-1 flex-col p-6">
+                  <p className="text-xs uppercase tracking-[0.12em] font-semibold text-[#71031f]">
                     {e.when}
                   </p>
-                  <h3 className="mt-2 font-display text-xl leading-7">{e.title}</h3>
-                  <p className="mt-2 text-base leading-7" style={{ color: "var(--mid)" }}>{e.body}</p>
+                  <h3 className="heading-serif mt-2 text-xl leading-7 text-[#171717]">{e.title}</h3>
+                  <p className="mt-2 text-base leading-7 text-[#646464]">{e.body}</p>
                 </div>
               </div>
             ))}
@@ -225,69 +242,78 @@ export default function EventsPage() {
         </div>
       </section>
 
-      {/* Full timeline */}
-      <section className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
-        <h2 className="font-display text-[14px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
-          Every event · Summer 2024 → today
-        </h2>
-        {TERMS.map((t) => (
-          <div key={t.term} className="mt-10 first:mt-8">
-            <h3 className="font-display text-[28px] leading-tight">{t.term}</h3>
-            <div className="mt-3 border-t-[3px]" style={{ borderColor: "var(--black)" }}>
-              {t.events.map((e) => (
-                <div
-                  key={e.title}
-                  className="flex items-baseline gap-3 border-b py-3.5 sm:gap-4"
-                  style={{ borderColor: "rgba(0,0,0,0.08)" }}
-                >
-                  <span className="w-[72px] shrink-0 font-display text-[14px] uppercase tracking-wide sm:w-20" style={{ color: "var(--cardinal)" }}>
-                    {e.date}
-                  </span>
-                  <div className="flex-1">
-                    <span className="font-display text-lg leading-snug">{e.title}</span>
-                    {e.detail && (
-                      <span className="ml-2 text-base" style={{ color: "var(--mid)" }}>
-                        — {e.detail}
-                      </span>
-                    )}
+      {/* ─── Full timeline ─── */}
+      <section className="py-24 sm:py-32 px-6 sm:px-16">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#999]">
+            Every event · Summer 2024 → today
+          </p>
+          {TERMS.map((t) => (
+            <div key={t.term} className="mt-12 first:mt-8">
+              <h3 className="heading-serif text-3xl leading-tight text-[#171717]">{t.term}</h3>
+              <div className="mt-4 border-t border-black/10">
+                {t.events.map((e) => (
+                  <div
+                    key={e.title}
+                    className="flex items-baseline gap-3 border-b border-black/10 py-4 sm:gap-4"
+                  >
+                    <span className="w-[72px] shrink-0 text-sm uppercase tracking-wide font-semibold text-[#71031f] sm:w-20">
+                      {e.date}
+                    </span>
+                    <div className="flex-1">
+                      <span className="text-lg leading-snug font-medium text-[#171717]">{e.title}</span>
+                      {e.detail && (
+                        <span className="ml-2 text-base text-[#646464]">— {e.detail}</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </section>
 
-      {/* What we host */}
-      <section className="border-t-[3px]" style={{ borderColor: "var(--black)", background: "var(--beige)" }}>
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-          <h2 className="font-display text-[14px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
+      {/* ─── What we host ─── */}
+      <section className="py-24 sm:py-32 px-6 sm:px-16 bg-white/40 border-y border-black/5">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#999]">
             What we host
-          </h2>
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
+          </p>
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
             {FORMATS.map((f) => (
-              <div key={f.title} className="border-[3px] p-6" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
-                <h3 className="font-display text-2xl">{f.title}</h3>
-                <p className="mt-3 text-base leading-7" style={{ color: "var(--mid)" }}>{f.body}</p>
+              <div
+                key={f.title}
+                className="rounded-[28px] border border-black/5 bg-white p-8 shadow-[0_12px_44px_rgba(0,0,0,0.10)]"
+              >
+                <h3 className="heading-serif text-2xl text-[#171717]">{f.title}</h3>
+                <p className="mt-3 text-base leading-7 text-[#646464]">{f.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* What's next */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <div className="border-[3px] p-8 text-center" style={{ borderColor: "var(--black)", background: "var(--gold)" }}>
-          <p className="font-display text-[28px]" style={{ color: "var(--black)" }}>More on the way</p>
-          <p className="mx-auto mt-2 max-w-md text-base" style={{ color: "var(--black)" }}>
+      {/* ─── More on the way ─── */}
+      <section className="py-24 sm:py-32 px-6 sm:px-16">
+        <div className="max-w-3xl mx-auto rounded-[28px] border border-[#C9A96E]/30 bg-[#C9A96E]/10 p-10 text-center">
+          <p className="heading-serif text-3xl text-[#171717]">More on the way</p>
+          <p className="mx-auto mt-3 max-w-md text-base leading-7 text-[#646464]">
             We&apos;re planning the next season now. Follow{" "}
-            <a href="https://www.instagram.com/bia_usc/" target="_blank" rel="noopener noreferrer" className="underline">
+            <a
+              href="https://www.instagram.com/bia_usc/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-[#71031f] underline underline-offset-2"
+            >
               @bia_usc
             </a>{" "}
             so you don&apos;t miss the next one.
           </p>
         </div>
       </section>
-    </MarketingShell>
+
+      <SiteFooter />
+    </div>
   );
 }

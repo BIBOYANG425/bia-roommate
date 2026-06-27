@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 import { getPublishedArticles } from "@/lib/articles";
 
 // Render at request time so CI's placeholder Supabase env doesn't trip
@@ -24,35 +26,36 @@ export default async function BlogIndexPage() {
   const articles = await getPublishedArticles();
 
   return (
-    <main className="min-h-screen bg-[#F9FAF7] text-[#171717]">
+    <div className="relative min-h-screen bg-[#F9FAF7] text-[#171717] overflow-x-hidden font-sans">
+      <SiteNav />
+
       <section className="mx-auto max-w-4xl px-6 py-24 sm:py-32">
-        <div className="mb-14 border-b border-black/10 pb-10">
-          <Link
-            href="/"
-            className="mb-8 inline-flex text-sm font-medium text-[#646464] transition-colors hover:text-[#171717]"
-          >
-            Back to BIA
-          </Link>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#A0D7D1]">
+        {/* ─── Header ─── */}
+        <div className="mb-16 text-center">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-[#A0D7D1]">
             BIA Editorial
           </p>
-          <h1 className="heading-serif max-w-2xl text-5xl leading-tight text-[#171717] sm:text-6xl">
+          <h1 className="heading-serif text-5xl leading-[1.05] text-[#171717] sm:text-6xl">
             Latest Dispatches
           </h1>
+          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[#646464]">
+            Stories, notes, and updates from the BIA community.
+          </p>
         </div>
 
+        {/* ─── Posts ─── */}
         {articles.length === 0 ? (
-          <p className="text-base text-[#646464]">No posts yet.</p>
+          <p className="text-center text-base text-[#646464]">No posts yet.</p>
         ) : (
-          <ul className="space-y-12">
+          <ul className="space-y-8">
             {articles.map((article) => (
-              <li
-                key={article.id}
-                className="border-b border-black/10 pb-12 last:border-0"
-              >
-                <Link href={`/blog/${article.slug}`} className="group block">
+              <li key={article.id}>
+                <Link
+                  href={`/blog/${article.slug}`}
+                  className="group block overflow-hidden rounded-[28px] border border-black/5 bg-white shadow-[0_12px_44px_rgba(0,0,0,0.10)] transition-shadow duration-300 hover:shadow-[0_18px_56px_rgba(0,0,0,0.14)]"
+                >
                   {article.cover_image_url && (
-                    <div className="relative mb-6 aspect-[16/9] w-full overflow-hidden rounded-2xl border border-black/5 bg-gray-100">
+                    <div className="relative aspect-[16/9] w-full overflow-hidden bg-gray-100">
                       <Image
                         src={article.cover_image_url}
                         alt=""
@@ -63,25 +66,29 @@ export default async function BlogIndexPage() {
                     </div>
                   )}
 
-                  <h2 className="heading-serif text-3xl font-medium leading-snug text-[#2C2C2C] transition-colors group-hover:text-[#6CB7AF] sm:text-4xl">
-                    {article.title}
-                  </h2>
-                  {article.excerpt && (
-                    <p className="mt-3 max-w-2xl text-base leading-relaxed text-[#646464]">
-                      {article.excerpt}
+                  <div className="p-8 sm:p-10">
+                    <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#A0D7D1]">
+                      {[formatDate(article.published_at), languageLabel(article.language)]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </p>
-                  )}
-                  <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#A0D7D1]">
-                    {[formatDate(article.published_at), languageLabel(article.language)]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
+                    <h2 className="heading-serif text-3xl font-medium leading-snug text-[#171717] transition-colors group-hover:text-[#6CB7AF] sm:text-4xl">
+                      {article.title}
+                    </h2>
+                    {article.excerpt && (
+                      <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#646464]">
+                        {article.excerpt}
+                      </p>
+                    )}
+                  </div>
                 </Link>
               </li>
             ))}
           </ul>
         )}
       </section>
-    </main>
+
+      <SiteFooter />
+    </div>
   );
 }
