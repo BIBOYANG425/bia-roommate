@@ -12,9 +12,11 @@ type Bilingual = { en: string; zh: string };
 export default function ComingSoon({
   name,
   tagline,
+  waitlist,
 }: {
   name: Bilingual;
   tagline?: Bilingual;
+  waitlist?: { href: string };
 }) {
   const { language: lang } = useLanguage();
 
@@ -42,12 +44,28 @@ export default function ComingSoon({
         {(tagline ?? t.comingSoon.body)[lang]}
       </p>
 
-      <Link
-        href="/"
-        className="relative mt-11 inline-flex items-center gap-2 bg-[#171717] text-white px-7 py-3 rounded-xl text-sm font-semibold tracking-wide transition-colors duration-200 hover:bg-[#171717]/90 min-h-[44px]"
-      >
-        {t.comingSoon.back[lang]}
-      </Link>
+      <div className="relative mt-11 flex flex-wrap items-center justify-center gap-3">
+        {waitlist && (
+          <a
+            href={waitlist.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-[#171717] text-white px-7 py-3 rounded-xl text-sm font-semibold tracking-wide transition-colors duration-200 hover:bg-[#171717]/90 min-h-[44px]"
+          >
+            {t.comingSoon.waitlist[lang]}
+          </a>
+        )}
+        <Link
+          href="/"
+          className={`inline-flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-semibold tracking-wide transition-colors duration-200 min-h-[44px] ${
+            waitlist
+              ? "border border-[#171717]/15 text-[#171717] hover:bg-[#171717]/5"
+              : "bg-[#171717] text-white hover:bg-[#171717]/90"
+          }`}
+        >
+          {t.comingSoon.back[lang]}
+        </Link>
+      </div>
     </main>
   );
 }

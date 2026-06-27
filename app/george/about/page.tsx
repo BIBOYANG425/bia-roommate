@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import ComingSoon from "@/components/ComingSoon";
+import { isComingSoon } from "@/lib/features";
 
 export const metadata: Metadata = {
   title: "George Tirebiter · BIA AI Companion",
@@ -108,6 +110,18 @@ const CHANNELS = [
 ];
 
 export default function GeorgePage() {
+  if (isComingSoon("george")) {
+    return (
+      <ComingSoon
+        name={{ en: "George", zh: "George" }}
+        tagline={{
+          en: "Your USC-savvy BIA agent — coming soon. Join the waitlist for early access.",
+          zh: "你的 BIA 智能助手，懂 USC 的一切——即将上线。加入候补名单，抢先体验。",
+        }}
+        waitlist={{ href: "https://forms.gle/qZfbiKdmasN6jid5A" }}
+      />
+    );
+  }
   return (
     <div className="min-h-screen bg-[#F9FAF7] text-[#171717] font-sans">
       {/* Top bar */}

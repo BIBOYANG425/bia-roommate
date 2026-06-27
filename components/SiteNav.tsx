@@ -11,11 +11,11 @@ import { t } from "@/lib/i18n";
 import { useLanguage } from "@/components/LanguageProvider";
 
 const NAV_LINKS = [
-  { href: "/about", key: "about", zhFont: false, ghost: false },
-  { href: "/events", key: "events", zhFont: false, ghost: false },
-  { href: "/roommates", key: "freshmanServices", zhFont: true, ghost: false },
-  { href: "/blog", key: "blog", zhFont: false, ghost: false },
-  { href: "/george/about", key: "george", zhFont: false, ghost: true },
+  { href: "/about", key: "about", zhFont: false },
+  { href: "/events", key: "events", zhFont: false },
+  { href: "/roommates", key: "freshmanServices", zhFont: true },
+  { href: "/blog", key: "blog", zhFont: false },
+  { href: "/george/about", key: "george", zhFont: false },
 ] as const;
 
 export default function SiteNav() {
@@ -73,11 +73,6 @@ export default function SiteNav() {
                     style={l.zhFont ? { fontFamily: "var(--font-display-zh)" } : undefined}
                   >
                     {t.nav[l.key][lang]}
-                    {l.ghost && (
-                      <span aria-hidden className="text-base leading-none">
-                        👻
-                      </span>
-                    )}
                   </Link>
                 ))}
               </div>
@@ -120,7 +115,6 @@ export default function SiteNav() {
                   onClick={() => setMenuOpen(false)}
                 >
                   {t.nav[l.key][lang]}
-                  {l.ghost && <span aria-hidden>👻</span>}
                 </Link>
               ))}
               <button
