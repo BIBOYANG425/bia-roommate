@@ -144,6 +144,15 @@ export const t = {
       { en: "Startup 101 with YC China Founders", zh: "YC 中国创始人的创业课" },
       { en: "Welcome, Class of 2030!", zh: "欢迎，2030 届新生！" },
     ],
+    // Blog index page chrome (components/BlogIndex.tsx).
+    kicker: { en: "BIA Editorial", zh: "BIA 编辑部" },
+    subtitle: {
+      en: "Stories, notes, and updates from the BIA community.",
+      zh: "来自 BIA 社区的故事、笔记与近况。",
+    },
+    empty: { en: "No posts yet.", zh: "还没有文章。" },
+    langEn: { en: "English", zh: "英文" },
+    langZh: { en: "中文", zh: "中文" },
   },
   cta: {
     heading: {
@@ -483,17 +492,6 @@ export const t = {
       pre: { en: "Follow ", zh: "关注 " },
       post: { en: " so you don't miss the next one.", zh: "，不错过下一场。" },
     },
-  },
-  blog: {
-    kicker: { en: "BIA Editorial", zh: "BIA 编辑部" },
-    title: { en: "Latest Dispatches", zh: "最新动态" },
-    subtitle: {
-      en: "Stories, notes, and updates from the BIA community.",
-      zh: "来自 BIA 社区的故事、笔记与近况。",
-    },
-    empty: { en: "No posts yet.", zh: "还没有文章。" },
-    langEn: { en: "English", zh: "英文" },
-    langZh: { en: "中文", zh: "中文" },
   },
   join: {
     hero: {

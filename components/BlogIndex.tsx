@@ -32,7 +32,7 @@ export default function BlogIndex({ articles }: { articles: PublishedArticleSumm
           {b.kicker[lang]}
         </p>
         <h1 className="heading-serif text-5xl leading-[1.05] text-[#171717] sm:text-6xl">
-          {b.title[lang]}
+          {b.heading[lang]}
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[#3a3a3a]">
           {b.subtitle[lang]}
