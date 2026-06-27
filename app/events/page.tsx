@@ -9,6 +9,24 @@ export const metadata: Metadata = {
   alternates: { canonical: "/events" },
 };
 
+// Next up — the new-student mixer, shown prominently at the top.
+const UPCOMING = {
+  title: "New Student Mixer · 新生见面会",
+  blurb:
+    "Welcome, Trojans — meet your incoming class before you arrive on campus.",
+  perks: [
+    "Practical welcome pack",
+    "Icebreakers & finding your people",
+    "Q&A with USC upperclassmen",
+    "Live DJI Pocket 4 raffle",
+  ],
+  sessions: [
+    { city: "Beijing · 北京", when: "Jun 27 · 3:00 PM", venue: "Grand Millennium Hotel, Chaoyang" },
+    { city: "Shenzhen · 深圳", when: "Jul 5 · 3:00 PM", venue: "" },
+    { city: "Shanghai · 上海", when: "Jul 11 · 12:00 PM", venue: "InterContinental Jing'an" },
+  ],
+};
+
 // Three flagships we have photography for — shown as featured cards.
 const FEATURED = [
   {
@@ -122,6 +140,44 @@ export default function EventsPage() {
             rooftop socials, BIA runs a full calendar — in LA and across China — that
             connects, grows, and celebrates USC&apos;s international student community.
           </p>
+        </div>
+      </section>
+
+      {/* Upcoming */}
+      <section className="border-b-[3px]" style={{ borderColor: "var(--black)", background: "var(--gold)" }}>
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+          <div className="inline-flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--cardinal)" }}></span>
+            <p className="font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--cardinal)" }}>
+              Upcoming
+            </p>
+          </div>
+          <h2 className="mt-2 font-display text-3xl leading-tight sm:text-4xl" style={{ color: "var(--black)" }}>
+            {UPCOMING.title}
+          </h2>
+          <p className="mt-3 max-w-2xl text-base leading-7" style={{ color: "var(--black)" }}>
+            {UPCOMING.blurb}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {UPCOMING.perks.map((p) => (
+              <span key={p} className="border-[2px] px-3 py-1 text-xs" style={{ borderColor: "var(--black)", color: "var(--black)" }}>
+                {p}
+              </span>
+            ))}
+          </div>
+          <div className="mt-7 grid gap-4 sm:grid-cols-3">
+            {UPCOMING.sessions.map((s) => (
+              <div key={s.city} className="border-[3px] p-5" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
+                <p className="font-display text-xl">{s.city}</p>
+                <p className="mt-1 font-display text-[12px] uppercase tracking-wide" style={{ color: "var(--cardinal)" }}>
+                  {s.when}
+                </p>
+                <p className="mt-2 text-sm leading-5" style={{ color: "var(--mid)" }}>
+                  {s.venue || "Venue TBA"}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
