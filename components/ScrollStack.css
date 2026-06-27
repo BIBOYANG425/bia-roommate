@@ -1,0 +1,58 @@
+/* ScrollStack (React Bits) — adapted for BIA.
+   We drive it with useWindowScroll, so the scroller itself must NOT be an
+   internal overflow container (otherwise it makes a nested scrollbar and the
+   stack math breaks). Card visuals are applied per-item via Tailwind
+   (itemClassName); this file only owns the structural bits the JS depends on. */
+
+.scroll-stack-scroller {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-stack-inner {
+  padding: 6vh 0 22vh;
+}
+
+.scroll-stack-card {
+  position: relative;
+  width: 100%;
+  height: 19rem;
+  box-sizing: border-box;
+  transform-origin: top center;
+  will-change: transform, filter;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+@media (max-width: 640px) {
+  .scroll-stack-inner {
+    padding: 4vh 0 18vh;
+  }
+  .scroll-stack-card {
+    height: 16.5rem;
+  }
+}
+
+.scroll-stack-end {
+  width: 100%;
+  height: 1px;
+}
+
+/* Lenis smooth-scroll helpers (window mode). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
