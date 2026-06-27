@@ -5,68 +5,94 @@ import MarketingShell from "@/components/MarketingShell";
 export const metadata: Metadata = {
   title: "Events",
   description:
-    "BIA hosts 15+ events a year for USC international students — company recruiting sessions, startup talks, AI hackathons, orientation, and socials, with flagships drawing 300–500+ attendees.",
+    "BIA has hosted 20+ events since 2024 for USC international students — company office tours and recruiting, startup talks, AI hackathons, tailgates, parties, and new-student meetups across LA and China.",
   alternates: { canonical: "/events" },
 };
 
-// Fall 2025 → Spring 2026 season, newest first. Events with a real photo use it;
-// the rest render as a brand-colored poster card (accent gradient).
-const PAST_EVENTS = [
+// Three flagships we have photography for — shown as featured cards.
+const FEATURED = [
   {
     title: "BIA Hackathon: Build with Trae × Minimax",
-    date: "March 28, 2026",
-    meta: "$1,500 in prizes",
-    body: "Our flagship build at USC — teams shipped real products with Trae and Minimax, competing for $1,500 in prizes and a ByteDance internship track.",
+    when: "Spring 2026",
+    body: "Our flagship build at USC — $1,500 in prizes and a ByteDance internship track, powered by Trae and Minimax.",
     image: "/hackathon/group-photo.jpg",
   },
   {
-    title: "Chinese New Year Rave Night",
-    date: "February 20, 2026",
-    meta: "New Year party",
-    body: "BIA's Lunar New Year rave — music, lights, and community to bring in the Year of the Horse.",
-    accent: "linear-gradient(135deg,#8B0A2A,#C8102E)",
-  },
-  {
-    title: "UCB × USC Esports Showdown",
-    date: "November 2025",
-    meta: "USC × UC Berkeley",
-    body: "An inter-university esports showdown against UC Berkeley, livestreamed across three weekends in November.",
-    accent: "linear-gradient(135deg,#6D28D9,#DB2777)",
-  },
-  {
     title: "Founders vs Investors: Roderick Dong",
-    date: "November 18, 2025",
-    meta: "Forbes 30 Under 30",
-    body: "A live founders-vs-investors conversation with Roderick Dong (董科含) — former YC China founding team, backer of five $1B+ unicorns, Forbes 30 Under 30.",
+    when: "Fall 2025",
+    body: "A live founders-vs-investors talk with Roderick Dong — former YC China founding team, backer of five $1B+ unicorns, Forbes 30 Under 30.",
     image: "/blog-yc-china.jpg",
   },
   {
-    title: "BIA Halloween Party",
-    date: "November 1, 2025",
-    meta: "Downtown LA",
-    body: "Games, drinks, and costumes at BIA's signature Halloween party in Downtown LA.",
-    accent: "linear-gradient(135deg,#1F1F29,#7F1D1D)",
-  },
-  {
     title: "miHoYo 2026 Campus Recruiting",
-    date: "September 18, 2025",
-    meta: "USC-exclusive session",
-    body: "An exclusive miHoYo campus recruiting and info session for USC students — online and in person at the Interactive Media Building.",
+    when: "Fall 2025",
+    body: "An exclusive miHoYo recruiting and info session for USC students — online and in person at the Interactive Media Building.",
     image: "/blog-mihoyo.jpg",
   },
+];
+
+// Full archive, grouped by academic term (newest first). Dates as on the
+// original posters; year lives in the term header.
+const TERMS = [
   {
-    title: "Sunset Party @ Hope DTLA",
-    date: "August 29, 2025",
-    meta: "Free · welcome dinner",
-    body: "Our welcome dinner for incoming USC students — a free rooftop sunset gathering in DTLA, the first meal of the year on us.",
-    accent: "linear-gradient(135deg,#F59E0B,#EA580C)",
+    term: "Spring 2026",
+    events: [
+      { date: "Mar 28", title: "BIA Hackathon · Build with Trae × Minimax", detail: "USC · $1,500 prizes + ByteDance internship" },
+      { date: "Feb 20", title: "Chinese New Year Rave Night", detail: "Year of the Horse party" },
+    ],
+  },
+  {
+    term: "Fall 2025",
+    events: [
+      { date: "Nov 18", title: "Founders vs Investors: Roderick Dong", detail: "ex-YC China · Forbes 30 Under 30" },
+      { date: "Nov", title: "UCB × USC Esports Showdown", detail: "vs UC Berkeley · livestreamed" },
+      { date: "Nov 1", title: "BIA Halloween Party", detail: "Downtown LA" },
+      { date: "Sep 18", title: "miHoYo 2026 Campus Recruiting", detail: "USC-exclusive session · IMB" },
+      { date: "Aug 29", title: "Sunset Party @ Hope DTLA", detail: "free welcome dinner for new students" },
+    ],
+  },
+  {
+    term: "Summer 2025",
+    events: [
+      { date: "Aug 4", title: "Summer Enterprise Tour · Meituan", detail: "Beijing HQ office tour" },
+      { date: "Jul 28", title: "Summer Enterprise Tour · Midea", detail: "Shunde office tour" },
+      { date: "Jul 21", title: "Summer Enterprise Tour · Alibaba Taotian", detail: "with UC Berkeley & MIT" },
+      { date: "Jul 18", title: "Summer Enterprise Tour · miHoYo", detail: "Shanghai office tour" },
+      { date: "Jul 6", title: "New Student Meetup · Beijing", detail: "Kempinski Hotel" },
+      { date: "Jun 29", title: "New Student Meetup · Shanghai", detail: "InterContinental Jing'an" },
+    ],
+  },
+  {
+    term: "Spring 2025",
+    events: [
+      { date: "Apr 4", title: "April Fools' Party", detail: "BIA 1st anniversary" },
+    ],
+  },
+  {
+    term: "Fall 2024",
+    events: [
+      { date: "Nov 23", title: "USC vs. UCLA Tailgate", detail: "Roadside Tacos" },
+      { date: "Nov 17", title: "BIA Pool Championship", detail: "Koreatown" },
+      { date: "Nov 8", title: "KPOP Random Dance", detail: "USC Village" },
+      { date: "Nov 2", title: "The Duke's Macabre Banquet", detail: "Halloween party" },
+      { date: "Oct 25", title: "USC vs. Rutgers Tailgate", detail: "BIA's first tailgate" },
+      { date: "Oct 9", title: "BIA Movie Night", detail: "Now You See Me 2 · THH 301" },
+      { date: "Sep 25", title: "Mid-Autumn Night Market", detail: "Soho Warehouse, DTLA" },
+    ],
+  },
+  {
+    term: "Summer 2024",
+    events: [
+      { date: "Aug 30", title: "Midsummer Madness", detail: "summer sunset party" },
+      { date: "Jul 4–5", title: "New Student Meetups · China", detail: "Shenzhen & Shanghai" },
+    ],
   },
 ];
 
 const FORMATS = [
   {
-    title: "Company sessions & recruiting",
-    body: "Sharing sessions and recruiting events with companies across business, entertainment, and tech — connecting members directly to opportunities.",
+    title: "Company tours & recruiting",
+    body: "Office tours and recruiting sessions with companies across tech, gaming, and lifestyle — from miHoYo and Alibaba to Meituan and Midea — connecting members directly to opportunities.",
   },
   {
     title: "Startup & innovation talks",
@@ -77,8 +103,8 @@ const FORMATS = [
     body: "Hands-on hackathons where members build real products and showcase what the community can create.",
   },
   {
-    title: "Orientation & socials",
-    body: "New-student orientation, parties, and community socials that help international students find their footing and their people.",
+    title: "Tailgates, parties & socials",
+    body: "Tailgates, holiday parties, night markets, and new-student meetups — in LA and across China — that help international students find their people.",
   },
 ];
 
@@ -88,49 +114,40 @@ export default function EventsPage() {
       <section className="border-b-[3px]" style={{ borderColor: "var(--black)", background: "var(--cardinal)", color: "white" }}>
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <p className="font-display text-[12px] tracking-[0.2em] uppercase" style={{ color: "var(--gold)" }}>
-            15+ events a year · flagships of 300–500+
+            20+ events since 2024 · flagships of 300–500+
           </p>
           <h1 className="mt-3 font-display text-[40px] leading-[0.95] sm:text-[64px]">Events</h1>
           <p className="mt-5 max-w-2xl text-base leading-7" style={{ color: "rgba(255,255,255,0.85)" }}>
-            From recruiting sessions to hackathons to rooftop socials, BIA runs a
-            full calendar of events that connect, grow, and celebrate USC&apos;s
-            international student community.
+            From recruiting sessions and office tours to hackathons, tailgates, and
+            rooftop socials, BIA runs a full calendar — in LA and across China — that
+            connects, grows, and celebrates USC&apos;s international student community.
           </p>
         </div>
       </section>
 
-      {/* Recent events — Fall 2025 → Spring 2026 */}
+      {/* Featured */}
       <section className="border-b-[3px]" style={{ borderColor: "var(--black)", background: "var(--beige)" }}>
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
           <h2 className="font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
-            Recent events · Fall 2025 – Spring 2026
+            Featured
           </h2>
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {PAST_EVENTS.map((e) => (
+            {FEATURED.map((e) => (
               <div key={e.title} className="flex flex-col border-[3px]" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
                 <div className="relative aspect-[4/3] w-full overflow-hidden border-b-[3px]" style={{ borderColor: "var(--black)" }}>
-                  {e.image ? (
-                    <Image
-                      src={e.image}
-                      alt={e.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center p-5 text-center" style={{ background: e.accent }}>
-                      <span className="font-display text-xl leading-tight text-white">{e.title}</span>
-                    </div>
-                  )}
+                  <Image
+                    src={e.image}
+                    alt={e.title}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover"
+                  />
                 </div>
                 <div className="flex flex-1 flex-col p-5">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-display text-[11px] tracking-[0.12em] uppercase" style={{ color: "var(--cardinal)" }}>
-                      {e.date}
-                    </p>
-                    <p className="text-[11px]" style={{ color: "var(--mid)" }}>{e.meta}</p>
-                  </div>
-                  {e.image && <h3 className="mt-2 font-display text-lg leading-6">{e.title}</h3>}
+                  <p className="font-display text-[11px] tracking-[0.12em] uppercase" style={{ color: "var(--cardinal)" }}>
+                    {e.when}
+                  </p>
+                  <h3 className="mt-2 font-display text-lg leading-6">{e.title}</h3>
                   <p className="mt-2 text-sm leading-6" style={{ color: "var(--mid)" }}>{e.body}</p>
                 </div>
               </div>
@@ -139,23 +156,58 @@ export default function EventsPage() {
         </div>
       </section>
 
-      {/* What we host */}
-      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+      {/* Full timeline */}
+      <section className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
         <h2 className="font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
-          What we host
+          Every event · Summer 2024 → today
         </h2>
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-          {FORMATS.map((f) => (
-            <div key={f.title} className="border-[3px] p-6" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
-              <h3 className="font-display text-xl">{f.title}</h3>
-              <p className="mt-3 text-sm leading-6" style={{ color: "var(--mid)" }}>{f.body}</p>
+        {TERMS.map((t) => (
+          <div key={t.term} className="mt-10 first:mt-8">
+            <h3 className="font-display text-2xl">{t.term}</h3>
+            <div className="mt-3 border-t-[3px]" style={{ borderColor: "var(--black)" }}>
+              {t.events.map((e) => (
+                <div
+                  key={e.title}
+                  className="flex items-baseline gap-3 border-b py-3 sm:gap-4"
+                  style={{ borderColor: "rgba(0,0,0,0.08)" }}
+                >
+                  <span className="w-14 shrink-0 font-display text-[11px] uppercase tracking-wide sm:w-16" style={{ color: "var(--cardinal)" }}>
+                    {e.date}
+                  </span>
+                  <div className="flex-1">
+                    <span className="font-display text-base leading-tight">{e.title}</span>
+                    {e.detail && (
+                      <span className="ml-2 text-sm" style={{ color: "var(--mid)" }}>
+                        — {e.detail}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+        ))}
+      </section>
+
+      {/* What we host */}
+      <section className="border-t-[3px]" style={{ borderColor: "var(--black)", background: "var(--beige)" }}>
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+          <h2 className="font-display text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--mid)" }}>
+            What we host
+          </h2>
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            {FORMATS.map((f) => (
+              <div key={f.title} className="border-[3px] p-6" style={{ borderColor: "var(--black)", background: "var(--cream)" }}>
+                <h3 className="font-display text-xl">{f.title}</h3>
+                <p className="mt-3 text-sm leading-6" style={{ color: "var(--mid)" }}>{f.body}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* What's next */}
-      <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <div className="border-[3px] p-8 text-center" style={{ borderColor: "var(--black)", background: "var(--gold)" }}>
           <p className="font-display text-2xl" style={{ color: "var(--black)" }}>More on the way</p>
           <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: "var(--black)" }}>
