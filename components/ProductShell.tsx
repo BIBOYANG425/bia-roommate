@@ -249,6 +249,7 @@ export default function ProductShell({
   const { user, loading, isAdmin, signOut } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
   const [openGroup, setOpenGroup] = useState<ProductGroup | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [school, setSchoolState] = useState<ProductSchool>(() =>
     resolveInitialProductSchool(searchParams.get("school")),
   );
@@ -262,7 +263,7 @@ export default function ProductShell({
 
   return (
     <div
-      className="min-h-screen pb-20 lg:pb-0"
+      className="min-h-screen"
       style={{ background: "var(--beige)" }}
     >
       <header className="sticky top-0 z-40 hidden border-b border-[rgba(26,20,16,0.16)] bg-[rgba(250,246,236,0.94)] backdrop-blur lg:block">
@@ -459,8 +460,77 @@ export default function ProductShell({
                   {copy.signIn}
                 </button>
               ))}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              aria-label="Menu"
+              aria-expanded={mobileMenuOpen}
+              className="flex h-10 w-10 items-center justify-center border border-[var(--black)] text-[var(--black)]"
+            >
+              <span className="text-lg leading-none">{mobileMenuOpen ? "✕" : "☰"}</span>
+            </button>
           </div>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="max-h-[72vh] overflow-y-auto border-t border-[rgba(26,20,16,0.16)]">
+            <label className="flex items-center gap-2 border-b border-[rgba(26,20,16,0.1)] px-4 py-3">
+              <span className="font-display text-[11px] uppercase tracking-[0.12em] text-[var(--mid)]">
+                {copy.school}
+              </span>
+              <select
+                value={school}
+                onChange={(event) =>
+                  setSchool(event.target.value as ProductSchool)
+                }
+                className="flex-1 bg-transparent text-sm font-bold text-[var(--black)] outline-none"
+                aria-label={copy.chooseSchool}
+              >
+                {SCHOOL_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {PRODUCT_NAV_GROUPS.map((navGroup) => (
+              <div
+                key={navGroup.id}
+                className="border-b border-[rgba(26,20,16,0.1)] last:border-b-0"
+              >
+                <p className="px-4 pb-1 pt-3 font-display text-[11px] uppercase tracking-[0.12em] text-[var(--mid)]">
+                  {navGroup.label[language]}
+                </p>
+                {navGroup.items.map((item) => {
+                  const itemActive = isActivePath(pathname, item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-4 py-2.5"
+                      style={
+                        itemActive
+                          ? {
+                              color: "var(--cardinal)",
+                              background: "rgba(255,255,255,0.55)",
+                            }
+                          : { color: "var(--black)" }
+                      }
+                    >
+                      <span className="block font-display text-base tracking-[0.04em]">
+                        {item.label[language]}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-[var(--mid)]">
+                        {item.description[language]}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        )}
       </header>
 
       {openGroup && (
@@ -475,25 +545,15 @@ export default function ProductShell({
 
       <main>{children({ school, setSchool, language, setLanguage })}</main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-4 border-t border-[rgba(26,20,16,0.18)] bg-[rgba(250,246,236,0.96)] backdrop-blur lg:hidden">
-        {PRODUCT_NAV_GROUPS.map((navGroup) => {
-          const active = group === navGroup.id;
-          return (
-            <Link
-              key={navGroup.id}
-              href={navGroup.href}
-              className="flex items-center justify-center border-r border-[rgba(26,20,16,0.12)] px-1 text-center font-display text-[10px] tracking-[0.06em] last:border-r-0"
-              style={
-                active
-                  ? { color: "var(--cardinal)" }
-                  : { color: "var(--mid)" }
-              }
-            >
-              {navGroup.label[language]}
-            </Link>
-          );
-        })}
-      </nav>
+      {mobileMenuOpen && (
+        <button
+          type="button"
+          aria-hidden
+          tabIndex={-1}
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-30 cursor-default lg:hidden"
+        />
+      )}
 
       <AuthModal
         isOpen={showAuth}
