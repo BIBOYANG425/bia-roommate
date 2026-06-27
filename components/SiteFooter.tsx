@@ -3,6 +3,7 @@
 // The single footer for every Landing-system page. Unified links so they never
 // drift across pages. (The home page keeps its own scroll-reveal treatment but
 // the same links; everyone else renders this standard dark band.)
+import Image from "next/image";
 import Link from "next/link";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -24,8 +25,16 @@ const SOCIALS = [
 export default function SiteFooter() {
   const { language: lang } = useLanguage();
   return (
-    <footer className="bg-[#1F1F29] text-white px-6 sm:px-16 py-16">
-      <div className="max-w-7xl mx-auto">
+    <footer className="relative bg-[#1F1F29] text-white px-6 sm:px-16 py-16 overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/footer-night.jpg"
+          alt="USC campus at night"
+          fill
+          className="object-cover object-bottom opacity-40"
+        />
+      </div>
+      <div className="relative z-10 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10 border-b border-white/15 pb-12 mb-8">
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium">
             <Link href="/" className="hover:text-[#A0D7D1] transition-colors link-hover py-2">

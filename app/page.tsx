@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import ScrollFloat from "@/components/ScrollFloat";
@@ -7,6 +7,7 @@ import GlassSurface from "@/components/GlassSurface";
 import BorderGlow from "@/components/BorderGlow";
 import ScrollStack, { ScrollStackItem } from "@/components/ScrollStack";
 import { BlogPreview } from "@/components/BlogPreview";
+import SiteNav from "@/components/SiteNav";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/components/LanguageProvider";
 
@@ -86,9 +87,7 @@ function ToolCard({
 }
 
 export default function LandingPage() {
-  const [time, setTime] = useState("");
-  const { language: lang, setLanguage: setLang } = useLanguage();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { language: lang } = useLanguage();
   // false on the server + first hydration render, true afterward — keeps the
   // ScrollStack client-only without a setState-in-effect (see render below).
   const toolsReady = useSyncExternalStore(
@@ -97,160 +96,11 @@ export default function LandingPage() {
     () => false,
   );
 
-  useEffect(() => {
-    const updateTime = () =>
-      setTime(
-        new Date().toLocaleTimeString("en-US", {
-          timeZone: "America/Los_Angeles",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      );
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="relative min-h-screen bg-[#F9FAF7] text-[#171717] overflow-x-hidden font-sans">
       <main className="relative z-10 flex flex-col bg-transparent">
         {/* ─── Floating Navbar ─── */}
-        <div className="fixed top-6 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none">
-          <GlassSurface
-            width="100%"
-            height="auto"
-            borderRadius={16}
-            brightness={12}
-            opacity={0.9}
-            blur={14}
-            displace={0.3}
-            backgroundOpacity={0.45}
-            className="text-white w-full max-w-4xl pointer-events-auto shadow-2xl transition-all duration-300"
-          >
-            <div className="w-full flex flex-col">
-            <nav className="w-full py-3 px-6 flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <Link href="/" className="flex items-center gap-2">
-                  <Image
-                    src="/logo.png"
-                    alt="BIA"
-                    width={32}
-                    height={26}
-                    className="object-contain"
-                    style={{ height: "auto" }}
-                  />
-                  <span className="heading-serif text-xl tracking-tight">
-                    BIA
-                  </span>
-                </Link>
-                <div className="hidden sm:flex gap-4 text-sm text-gray-200 items-center">
-                  <Link href="/about" className="link-hover py-3 px-1">
-                    {t.nav.about[lang]}
-                  </Link>
-                  <Link href="/events" className="link-hover py-3 px-1">
-                    {t.nav.events[lang]}
-                  </Link>
-                  <Link
-                    href="/roommates"
-                    className="link-hover py-3 px-1"
-                    style={{ fontFamily: "var(--font-display-zh)" }}
-                  >
-                    {t.nav.freshmanServices[lang]}
-                  </Link>
-                  <Link href="/blog" className="link-hover py-3 px-1">
-                    {t.nav.blog[lang]}
-                  </Link>
-                  <Link
-                    href="/george/about"
-                    className="link-hover py-3 px-1 inline-flex items-center gap-1"
-                  >
-                    {t.nav.george[lang]}
-                    <span aria-hidden className="text-base leading-none">
-                      👻
-                    </span>
-                  </Link>
-                  <Link href="/join" className="link-hover py-3 px-1">
-                    {t.nav.joinUs[lang]}
-                  </Link>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <button
-                  onClick={() => setLang(lang === "en" ? "zh" : "en")}
-                  className="hidden sm:flex items-center gap-1.5 border border-white/20 px-4 py-2.5 rounded-full text-xs text-white/80 hover:text-white hover:border-white/40 transition-colors cursor-pointer min-h-[44px]"
-                >
-                  {lang === "en" ? "中文" : "EN"}
-                </button>
-                <div className="hidden sm:flex items-center gap-2 opacity-80 border border-white/20 px-3 py-1 rounded-full text-xs">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
-                  LA {time || "..."}
-                </div>
-                <Link
-                  href="/join"
-                  className="bg-white/90 text-[#171717] hover:bg-white px-5 py-2.5 rounded-lg transition-all duration-200 flex items-center shadow-lg font-semibold text-sm tracking-wide min-h-[44px]"
-                >
-                  {t.nav.joinUs[lang]}
-                </Link>
-                <button
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  aria-label="Menu"
-                  aria-expanded={menuOpen}
-                  className="sm:hidden flex items-center justify-center border border-white/20 rounded-lg text-white/90 min-h-[44px] min-w-[44px] text-xl leading-none"
-                >
-                  {menuOpen ? "✕" : "☰"}
-                </button>
-              </div>
-            </nav>
-            {menuOpen && (
-              <div className="sm:hidden flex flex-col px-6 pb-4 text-sm text-gray-200">
-                <Link
-                  href="/about"
-                  className="py-3 border-b border-white/10"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {t.nav.about[lang]}
-                </Link>
-                <Link
-                  href="/events"
-                  className="py-3 border-b border-white/10"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {t.nav.events[lang]}
-                </Link>
-                <Link
-                  href="/roommates"
-                  className="py-3 border-b border-white/10"
-                  style={{ fontFamily: "var(--font-display-zh)" }}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {t.nav.freshmanServices[lang]}
-                </Link>
-                <Link
-                  href="/blog"
-                  className="py-3 border-b border-white/10"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {t.nav.blog[lang]}
-                </Link>
-                <Link
-                  href="/george/about"
-                  className="py-3 border-b border-white/10"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {t.nav.george[lang]}{" "}
-                  <span aria-hidden>👻</span>
-                </Link>
-                <button
-                  onClick={() => setLang(lang === "en" ? "zh" : "en")}
-                  className="py-3 text-left text-white/80"
-                >
-                  {lang === "en" ? "中文" : "EN"}
-                </button>
-              </div>
-            )}
-            </div>
-          </GlassSurface>
-        </div>
+        <SiteNav />
 
         {/* ─── Hero Section (sticky, gets covered by content) ─── */}
         <section className="sticky top-0 z-10 h-[95vh] w-full flex items-center justify-center overflow-hidden bg-[#1F1F29]">
