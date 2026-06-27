@@ -100,7 +100,7 @@ export default function LandingPage() {
                     {t.nav.blog[lang]}
                   </Link>
                   <Link
-                    href="/george"
+                    href="/george/about"
                     className="link-hover py-3 px-1 inline-flex items-center gap-1"
                   >
                     {t.nav.george[lang]}
@@ -172,7 +172,7 @@ export default function LandingPage() {
                   {t.nav.blog[lang]}
                 </Link>
                 <Link
-                  href="/george"
+                  href="/george/about"
                   className="py-3 border-b border-white/10"
                   onClick={() => setMenuOpen(false)}
                 >
@@ -228,7 +228,7 @@ export default function LandingPage() {
           </div>
 
           {/* Bottom Left CTA */}
-          <div className="absolute bottom-10 sm:bottom-16 left-6 sm:left-16 z-20 max-w-md">
+          <div className="absolute bottom-10 sm:bottom-16 left-6 sm:left-16 right-6 sm:right-auto z-20 max-w-md">
             <GlassSurface
               width="100%"
               height="auto"
@@ -295,7 +295,7 @@ export default function LandingPage() {
           {/* ─── Mission Section ─── */}
           <section
             id="mission"
-            className="scroll-mt-24 py-24 sm:py-32 px-6 sm:px-16 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative"
+            className="scroll-mt-24 py-24 sm:py-32 px-6 sm:px-16 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-8 md:gap-16 relative"
           >
             <div className="w-full md:w-1/2 rounded-3xl overflow-hidden aspect-square md:aspect-[4/3] bg-[#1F1F29] shadow-xl border border-black/5 relative group">
               <Image
@@ -327,7 +327,7 @@ export default function LandingPage() {
                 <p className="text-[#999] text-sm uppercase tracking-widest">{t.services.subtitle[lang]}</p>
               </div>
 
-              <div className="flex flex-col lg:flex-row gap-16 items-center">
+              <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center">
                 {/* Left: Folder visual */}
                 <div className="flex flex-col items-center lg:w-2/5">
                   <Folder
@@ -452,7 +452,7 @@ export default function LandingPage() {
                   colors={["#A0D7D1", "#6DD4D4", "#ffffff"]}
                 >
                   <Link
-                    href="/hackathon"
+                    href="/events"
                     className="group bg-white/95 text-[#1F1F29] px-8 py-3.5 rounded-[10px] hover:bg-white transition-all duration-200 font-bold text-sm tracking-wide uppercase inline-flex items-center gap-2.5 min-h-[48px]"
                   >
                     {t.hackathon.cta[lang]}
@@ -537,7 +537,7 @@ export default function LandingPage() {
         >
           <div className="max-w-7xl mx-auto px-6 sm:px-16 w-full">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10 border-b border-white/20 pb-12 mb-8">
-              <div className="flex gap-6 text-sm font-medium">
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium">
                 <Link
                   href="/"
                   className="hover:text-[#A0D7D1] transition-colors link-hover py-2"

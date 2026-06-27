@@ -39,12 +39,12 @@ export const t = {
   },
   mission: {
     heading: {
-      en: "Where bridging global communities starts.",
-      zh: "全球社区连接，从这里开始。",
+      en: "Reshaping how young people connect, experience, and belong.",
+      zh: "重塑年轻人连接、体验与归属的方式。",
     },
     desc: {
-      en: "Our vision is to empower international voices at USC by fostering an inclusive environment that intersects technology, professional growth, and shared experiences. We are building the foundational network for global ambition.",
-      zh: "我们的愿景是通过营造一个融合科技、职业成长和共同经历的包容环境，赋能USC的国际学生群体。我们正在为全球化的雄心壮志构建基础网络。",
+      en: "BIA is a student-led community that began at USC, working at the intersection of humanity, technology, and art. We don't just gather people — we design the conditions for meaningful encounters, turning a place that feels unfamiliar into a life that feels like your own.",
+      zh: "BIA 是一个起源于 USC 的学生社区，扎根于人文、科技与艺术的交汇点。我们不只是把人聚在一起，更为有意义的相遇创造条件——把一个起初陌生的地方，变成真正属于你的生活。",
     },
   },
   services: {
