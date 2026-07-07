@@ -1,6 +1,12 @@
 import { defineConfig, build, type Plugin } from "vite";
 import { resolve } from "path";
-import { writeFileSync, mkdirSync, copyFileSync, existsSync } from "fs";
+import {
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  copyFileSync,
+  existsSync,
+} from "fs";
 
 // Build content script and service worker separately as IIFE (no ES module imports)
 function buildNonModuleEntries(): Plugin {
@@ -66,45 +72,49 @@ function buildNonModuleEntries(): Plugin {
         }
       }
 
-      // Generate production manifest.json
-      const manifest = {
-        manifest_version: 3,
-        key: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvIm6mgbKkUtH6utxb4f9OyZ/QUaNKfrrDi5sXHEOVwCF/bnxNgTIJnHmoAlV9TXoKyPA+2S4B5j8u+M/aPOSiSeR18kEqsL26Y52HOGqhnDxKoWpivH5+L/ZkIhRcAvHsgQdo94lgf37ZUpRRI+f/ipEdq0hrItquq3qLpFMQC3/zNHFBUYtnhgAXZS4HRwrv/RqEKXhag8DziUncXZniLPBebyn/PFh+afD6B5r4hXRCfuwf+u3GTvHzE/AzQ+jKus4a8Ic94nl8YkJCDSg00eoULxpSWTZWaxqguDpnG7l3eKJ6fJJTXr7i/UlvX31NwxssvPt7YXoQo42+AE9lwIDAQAB",
-        name: "BIA Course Helper",
-        version: "1.0.3",
-        description:
-          "RMP ratings, schedule optimization, and course discovery for USC students — by BIA",
-        permissions: ["storage", "identity"],
-        host_permissions: [
-          "https://webreg.usc.edu/*",
-          "https://classes.usc.edu/*",
-          "https://bia-roommate.vercel.app/*",
-        ],
-        background: {
-          service_worker: "background/service-worker.js",
-        },
-        content_scripts: [
-          {
-            matches: ["https://webreg.usc.edu/*", "https://classes.usc.edu/*"],
-            js: ["content/index.js"],
-            css: ["content/styles.css"],
-            run_at: "document_idle",
-          },
-        ],
-        action: {
-          default_popup: "popup.html",
-          default_icon: {
-            "16": "icons/icon-16.png",
-            "48": "icons/icon-48.png",
-            "128": "icons/icon-128.png",
-          },
-        },
-        icons: {
-          "16": "icons/icon-16.png",
-          "48": "icons/icon-48.png",
-          "128": "icons/icon-128.png",
-        },
-      };
+      // Generate the production manifest from the single sources of truth:
+      //   • structure  → extension/manifest.json (source manifest)
+      //   • version    → extension/package.json (npm-canonical)
+      // Source-relative paths (src/*.ts) are rewritten to their built dist
+      // equivalents, so there is no hand-maintained manifest literal to drift.
+      const pkg = JSON.parse(
+        readFileSync(resolve(__dirname, "package.json"), "utf-8"),
+      ) as { version: string };
+      const source = JSON.parse(
+        readFileSync(resolve(__dirname, "manifest.json"), "utf-8"),
+      ) as Record<string, unknown>;
+
+      // src/foo/bar.ts → foo/bar.js ; src/foo/x.css → foo/x.css ; icons/* unchanged
+      const toDistPath = (p: string): string =>
+        p.replace(/^src\//, "").replace(/\.ts$/, ".js");
+
+      const manifest: Record<string, unknown> = { ...source };
+      manifest.version = pkg.version;
+
+      const background = manifest.background as
+        | { service_worker: string; type?: string }
+        | undefined;
+      if (background) {
+        // Built as an IIFE (not an ES module) for the MV3 ephemeral lifecycle.
+        const { type: _dropModuleType, ...rest } = background;
+        manifest.background = {
+          ...rest,
+          service_worker: toDistPath(background.service_worker),
+        };
+      }
+
+      if (Array.isArray(manifest.content_scripts)) {
+        manifest.content_scripts = (
+          manifest.content_scripts as Array<{
+            js?: string[];
+            css?: string[];
+          }>
+        ).map((cs) => ({
+          ...cs,
+          ...(Array.isArray(cs.js) ? { js: cs.js.map(toDistPath) } : {}),
+          ...(Array.isArray(cs.css) ? { css: cs.css.map(toDistPath) } : {}),
+        }));
+      }
 
       writeFileSync(
         resolve(distDir, "manifest.json"),

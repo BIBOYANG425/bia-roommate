@@ -3,7 +3,7 @@
 // Orchestrated by lib/course-planner/agent.ts. Owns department / number / GE
 // canonicalization — keep normalization rules here, not in callers.
 //
-// Header last reviewed: 2026-04-16
+// Header last reviewed: 2026-07-07
 
 import {
   tokenize,
@@ -12,6 +12,7 @@ import {
   getDepartmentMatches,
 } from "./interest-map";
 import { GE_MAP } from "./ge-map";
+import { filterByUnits, fetchGeCourses } from "./filters";
 
 export interface RecommendedCourse {
   department: string;
@@ -300,16 +301,14 @@ export async function getRecommendations(
 
   const gePromises = Object.entries(GE_MAP).map(
     async ([geCode, { requirementPrefix, categoryPrefix }]) => {
-      try {
-        const res = await fetch(
-          `https://classes.usc.edu/api/Courses/GeCoursesByTerm?termCode=${semester}&geRequirementPrefix=${requirementPrefix}&categoryPrefix=${categoryPrefix}`,
-          { signal: AbortSignal.timeout(5000) },
-        );
-        if (!res.ok) return [];
-        const data = await res.json();
-        const courses = data.courses || [];
-        return courses
-          .filter((c: any) =>
+      const courses = await fetchGeCourses(
+        semester,
+        requirementPrefix,
+        categoryPrefix,
+        5000,
+      );
+      return courses
+        .filter((c: any) =>
             c.sections?.some(
               (s: any) =>
                 !s.isCancelled && s.schedule?.some((sch: any) => sch.startTime),
@@ -326,9 +325,6 @@ export async function getRecommendations(
             geTag: geCode,
             sectionTopics: extractSectionTopics(c.sections || []),
           }));
-      } catch {
-        return [];
-      }
     },
   );
 
@@ -458,8 +454,5 @@ export async function getRecommendations(
 
   // Sort by relevance, filter by units if specified, return top 15
   scored.sort((a, b) => b.relevanceScore - a.relevanceScore);
-  const filtered = unitsFilter
-    ? scored.filter((c) => c.units === unitsFilter)
-    : scored;
-  return filtered.slice(0, 15);
+  return filterByUnits(scored, unitsFilter).slice(0, 15);
 }

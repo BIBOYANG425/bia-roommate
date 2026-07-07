@@ -461,6 +461,10 @@ export default function AgentChat({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [results, setResults] = useState<AgentRecommendation[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Set when a filter (level / units / prof floor) or the ranker leaves zero
+  // matches. Distinct from `error` — it renders a calm "loosen your filters"
+  // empty state, not a red failure box.
+  const [noResults, setNoResults] = useState<string | null>(null);
   const [selectedCourses, setSelectedCourses] = useState<Set<string>>(
     new Set(),
   );
@@ -582,8 +586,14 @@ export default function AgentChat({
                   addMessage({ id, role: "agent", content: event.message });
                   break;
                 case "results":
+                  // Populate the VIEW only. Selection is an explicit user
+                  // action — the page's selected-courses state is driven solely
+                  // by the "CONTINUE WITH N SELECTED" button below, never by the
+                  // stream auto-adding the top results.
                   setResults(event.data);
-                  onResults(event.data);
+                  break;
+                case "no_results":
+                  setNoResults(event.message);
                   break;
                 case "clarification": {
                   // Render chip-row follow-up and STOP this stream. The user
@@ -615,6 +625,8 @@ export default function AgentChat({
     return () => {
       controller.abort();
     };
+    // `onResults` is intentionally NOT a dependency: the stream no longer calls
+    // it. Selection flows only through the explicit Continue button.
   }, [
     activeInterests,
     semester,
@@ -623,7 +635,6 @@ export default function AgentChat({
     thinking,
     intake,
     addMessage,
-    onResults,
   ]);
 
   // If the parent feeds us a wholly new query (user went back and re-searched),
@@ -634,6 +645,7 @@ export default function AgentChat({
     setMessages([]);
     setResults(null);
     setError(null);
+    setNoResults(null);
   }, [interests]);
 
   function toggleChip(qKey: string, chip: string, multi?: boolean) {
@@ -662,6 +674,7 @@ export default function AgentChat({
     const augmented = `${interests}. ${parts.join(". ")}`;
     setMessages([]);
     setError(null);
+    setNoResults(null);
     setClarification(null);
     setActiveInterests(augmented);
   }
@@ -847,7 +860,11 @@ export default function AgentChat({
         )}
 
         {/* Loading indicator when no results yet and no error */}
-        {!results && !error && !clarification && messages.length > 0 && (
+        {!results &&
+          !error &&
+          !noResults &&
+          !clarification &&
+          messages.length > 0 && (
           <div className="flex items-center gap-2 py-2 px-1">
             <div className="flex gap-1">
               <span
@@ -884,6 +901,46 @@ export default function AgentChat({
             }}
           >
             {error}
+          </div>
+        )}
+
+        {/* No matches — filters were too tight. Calm empty state (not an
+            error), with a path back to loosen the constraints. */}
+        {noResults && (
+          <div
+            className="px-4 py-4 border-[2px] text-sm flex flex-col gap-3"
+            style={{
+              borderColor: "var(--beige)",
+              background: "color-mix(in srgb, var(--gold) 8%, white)",
+              color: "var(--black)",
+              borderRadius: "8px",
+            }}
+          >
+            <div>
+              <div
+                className="font-display text-[11px] tracking-wider mb-1"
+                style={{ color: "var(--mid)" }}
+              >
+                NO MATCHES
+              </div>
+              {noResults}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                abortRef.current?.abort();
+                onBack();
+              }}
+              className="self-start font-display text-[11px] tracking-wider px-3 py-1.5 border-[2px] transition-all"
+              style={{
+                borderColor: "var(--cardinal)",
+                background: "white",
+                color: "var(--cardinal)",
+                borderRadius: "4px",
+              }}
+            >
+              ← ADJUST FILTERS
+            </button>
           </div>
         )}
       </div>

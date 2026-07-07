@@ -40,7 +40,14 @@ export const POST = authedHandler<undefined, Params>({
       if (msg.includes("not_authenticated")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      // Anything else (missing RPC / PostgREST / raw Postgres error) is an
+      // infra problem, not a caller problem. Log it server-side and return a
+      // generic 503 so we never leak raw Postgres text to the client.
+      console.error("student_confirm_pickup failed", error);
+      return NextResponse.json(
+        { error: "服务暂时不可用，请稍后再试。" },
+        { status: 503 },
+      );
     }
 
     return NextResponse.json({ parcel: data });

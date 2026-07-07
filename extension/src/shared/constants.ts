@@ -1,10 +1,15 @@
 import type { ExtensionSettings } from "./types";
 import { DEFAULT_SETTINGS } from "./types";
+import { version } from "../../package.json";
 
 export const BIA_API_BASE = "https://bia-roommate.vercel.app";
 
-/** Keep in sync with manifest.json and vite built manifest */
-export const EXTENSION_VERSION = "1.0.3";
+/**
+ * Single source of truth for the extension version is extension/package.json.
+ * The built dist manifest is generated from it (see vite.config.ts), and this
+ * value is derived from it too — no hand-maintained duplicates.
+ */
+export const EXTENSION_VERSION = version;
 
 /** USC term codes: YYYY + 1/2/3 = Spring / Summer / Fall */
 export const SEMESTER_OPTIONS = [

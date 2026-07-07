@@ -10,7 +10,13 @@
 // passed, which is what fixes the "English modal in 中文 mode" bug at every
 // call site without prop-drilling.
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 
 export type Language = "en" | "zh";
 
@@ -44,6 +50,18 @@ function writeStoredLanguage(language: Language) {
   }
 }
 
+// In-memory subscribers so a setLanguage() call re-renders every consumer.
+// The stored value itself lives in localStorage; this set only carries the
+// "something changed" signal for useSyncExternalStore.
+const listeners = new Set<() => void>();
+
+function subscribeLanguage(onChange: () => void): () => void {
+  listeners.add(onChange);
+  return () => {
+    listeners.delete(onChange);
+  };
+}
+
 type LanguageContextValue = {
   language: Language;
   setLanguage: (language: Language) => void;
@@ -59,14 +77,21 @@ export function useLanguage() {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(
+  // The server snapshot is always DEFAULT_LANGUAGE (SSR has no localStorage),
+  // so the first client render matches the server-rendered HTML and React
+  // hydrates cleanly. Immediately after hydration React re-reads the client
+  // snapshot (the stored preference) and re-renders, switching returning zh
+  // users to 中文 without the hydration mismatch the old initializer threw.
+  const language = useSyncExternalStore(
+    subscribeLanguage,
     resolveInitialLanguage,
+    () => DEFAULT_LANGUAGE,
   );
 
-  function setLanguage(next: Language) {
-    setLanguageState(next);
+  const setLanguage = useCallback((next: Language) => {
     writeStoredLanguage(next);
-  }
+    listeners.forEach((notify) => notify());
+  }, []);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage }}>

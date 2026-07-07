@@ -1,22 +1,8 @@
 import { NextRequest } from "next/server";
 import { getRecommendations } from "@/lib/course-planner/recommender";
 import { runAgent } from "@/lib/course-planner/agent";
+import { filterByLevel } from "@/lib/course-planner/filters";
 import { corsHeaders, handleOptions } from "@/lib/cors";
-
-function filterByLevel<T extends { number: string }>(
-  courses: T[],
-  level: string | undefined,
-): T[] {
-  if (!level) return courses;
-  return courses.filter((c) => {
-    const num = parseInt(c.number, 10);
-    if (isNaN(num)) return true;
-    if (level === "lower") return num >= 100 && num <= 299;
-    if (level === "upper") return num >= 300 && num <= 499;
-    if (level === "graduate") return num >= 500;
-    return true;
-  });
-}
 
 export async function OPTIONS(request: NextRequest) {
   return handleOptions(request) ?? new Response(null, { status: 204 });

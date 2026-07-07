@@ -11,6 +11,8 @@ import ProductShell from "@/components/ProductShell";
 import {
   SHIPPING_METHOD_META,
   SHIPPING_METHOD_ORDER,
+  UNKNOWN_SHIPPING_METHOD_META,
+  metaFor,
   type ShippingMethod,
   type ShippingRoute,
   type ShippingContact,
@@ -94,7 +96,11 @@ function TermsContent() {
           {sortedRoutes.length > 0 ? (
             <div className="space-y-3">
               {sortedRoutes.map((r) => {
-                const meta = SHIPPING_METHOD_META[r.method as ShippingMethod];
+                const meta = metaFor(
+                  SHIPPING_METHOD_META,
+                  r.method,
+                  UNKNOWN_SHIPPING_METHOD_META,
+                );
                 return (
                   <div
                     key={r.id}

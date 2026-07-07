@@ -1,6 +1,11 @@
 "use client";
 
-import { PARCEL_STATUS_META, type ParcelStatus } from "@/lib/types";
+import {
+  PARCEL_STATUS_META,
+  UNKNOWN_PARCEL_STATUS_META,
+  metaFor,
+  type ParcelStatus,
+} from "@/lib/types";
 
 const TONE_STYLES: Record<
   (typeof PARCEL_STATUS_META)[ParcelStatus]["tone"],
@@ -19,7 +24,7 @@ export default function ParcelStatusPill({
   status: ParcelStatus;
   size?: "sm" | "md";
 }) {
-  const meta = PARCEL_STATUS_META[status];
+  const meta = metaFor(PARCEL_STATUS_META, status, UNKNOWN_PARCEL_STATUS_META);
   const tone = TONE_STYLES[meta.tone];
   const pad = size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-3 py-1 text-xs";
 

@@ -180,7 +180,9 @@ export default function LikedYou({
                   {channels.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3">
                       {channels.map((ch, i) => {
-                        const meta = CONTACT_PLATFORM_META[ch.platform];
+                        const meta =
+                          CONTACT_PLATFORM_META[ch.platform] ??
+                          CONTACT_PLATFORM_META.other;
                         const key = `${p.id}-${i}`;
                         return (
                           <button

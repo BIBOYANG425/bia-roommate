@@ -7,20 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/components/LanguageProvider";
-
-const SECONDARY = [
-  { en: "Team", zh: "团队", href: "/team" },
-  { en: "Sponsors", zh: "合作伙伴", href: "/sponsors" },
-  { en: "Contact", zh: "联系我们", href: "/contact" },
-  { en: "FAQ", zh: "常见问题", href: "/faq" },
-  { en: "Privacy", zh: "隐私政策", href: "/privacy" },
-  { en: "Terms", zh: "服务条款", href: "/terms" },
-];
-
-const SOCIALS = [
-  { label: "Insta", href: "https://www.instagram.com/bia_usc/" },
-  { label: "小红书", href: "https://xhslink.com/m/2t4EzpZAKAc" },
-];
+import { SECONDARY_LINKS, SOCIAL_LINKS } from "@/lib/nav-links";
 
 export default function SiteFooter() {
   const { language: lang } = useLanguage();
@@ -55,7 +42,7 @@ export default function SiteFooter() {
             </Link>
           </div>
           <div className="flex gap-6">
-            {SOCIALS.map((s) => (
+            {SOCIAL_LINKS.map((s) => (
               <a
                 key={s.label}
                 href={s.href}
@@ -69,7 +56,7 @@ export default function SiteFooter() {
           </div>
         </div>
         <nav className="mb-6 flex flex-wrap gap-x-5 gap-y-2 text-xs opacity-70">
-          {SECONDARY.map((l) => (
+          {SECONDARY_LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}

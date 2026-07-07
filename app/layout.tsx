@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/AuthProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
+import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import FeedbackButton from "@/components/FeedbackButton";
 import { SITE, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import "./globals.css";
@@ -122,7 +123,10 @@ export default function RootLayout({
         </LanguageProvider>
         {/* Film grain overlay */}
         <div className="grain" aria-hidden="true" />
+        {/* Vercel Web Analytics + PostHog are separate sinks. PostHog no-ops
+            entirely when NEXT_PUBLIC_POSTHOG_KEY is unset (see posthog-sink). */}
         <Analytics />
+        <AnalyticsProvider />
       </body>
     </html>
   );

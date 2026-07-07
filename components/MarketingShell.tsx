@@ -1,25 +1,43 @@
+"use client";
+
 import Link from "next/link";
 import { SITE } from "@/lib/seo";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/components/LanguageProvider";
+import { SECONDARY_LINKS } from "@/lib/nav-links";
 
 // Shared chrome for the public "legitimacy" pages (About / Team / Events /
-// Sponsors / Contact). Server component — no interactivity, so it renders on
-// the server and stays crawlable. Consistent header + footer across these
-// pages is itself a trust signal.
+// Sponsors / Contact). Client component so the header can carry the same en/zh
+// language toggle as SiteNav and render bilingual labels; the page content it
+// wraps is still server-rendered (passed in as `children`) and stays crawlable.
+// A consistent header + footer across these pages is itself a trust signal.
 
-const NAV = [
-  { href: "/about", label: "About" },
-  { href: "/team", label: "Team" },
-  { href: "/events", label: "Events" },
-  { href: "/sponsors", label: "Sponsors" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/contact", label: "Contact" },
+const secondary = (href: string) =>
+  SECONDARY_LINKS.find((l) => l.href === href)!;
+
+// Primary top-nav for the legitimacy pages. About/Events reuse the shared
+// nav dictionary; the rest reuse the shared secondary-link data so labels
+// never drift from the footer.
+const NAV: { href: string; en: string; zh: string }[] = [
+  { href: "/about", en: t.nav.about.en, zh: t.nav.about.zh },
+  secondary("/team"),
+  { href: "/events", en: t.nav.events.en, zh: t.nav.events.zh },
+  secondary("/sponsors"),
+  secondary("/faq"),
+  secondary("/contact"),
 ];
+
+const PRIVACY = secondary("/privacy");
+const TERMS = secondary("/terms");
 
 export default function MarketingShell({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { language: lang, setLanguage: setLang } = useLanguage();
+  const label = (l: { en: string; zh: string }) => (lang === "zh" ? l.zh : l.en);
+
   return (
     <div
       className="min-h-screen flex flex-col"
@@ -41,15 +59,23 @@ export default function MarketingShell({
                 className="font-display text-[11px] tracking-[0.12em] uppercase hover:opacity-60"
                 style={{ color: "var(--mid)" }}
               >
-                {item.label}
+                {label(item)}
               </Link>
             ))}
+            <button
+              type="button"
+              onClick={() => setLang(lang === "en" ? "zh" : "en")}
+              className="border-[2px] px-3 py-1.5 font-display text-[11px] tracking-[0.12em] uppercase hover:opacity-60 cursor-pointer"
+              style={{ borderColor: "var(--black)", color: "var(--black)" }}
+            >
+              {lang === "en" ? "中文" : "EN"}
+            </button>
             <Link
               href="/join"
               className="border-[2px] px-3 py-1.5 font-display text-[11px] tracking-[0.12em] uppercase text-white"
               style={{ borderColor: "var(--black)", background: "var(--cardinal)" }}
             >
-              Join
+              {label(t.nav.joinUs)}
             </Link>
           </nav>
         </div>
@@ -76,7 +102,7 @@ export default function MarketingShell({
               {NAV.map((item) => (
                 <li key={item.href}>
                   <Link href={item.href} className="hover:opacity-60" style={{ color: "rgba(255,255,255,0.85)" }}>
-                    {item.label}
+                    {label(item)}
                   </Link>
                 </li>
               ))}
@@ -98,13 +124,13 @@ export default function MarketingShell({
                 </a>
               </li>
               <li>
-                <Link href="/privacy" className="hover:opacity-60" style={{ color: "rgba(255,255,255,0.85)" }}>
-                  Privacy
+                <Link href={PRIVACY.href} className="hover:opacity-60" style={{ color: "rgba(255,255,255,0.85)" }}>
+                  {label(PRIVACY)}
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="hover:opacity-60" style={{ color: "rgba(255,255,255,0.85)" }}>
-                  Terms
+                <Link href={TERMS.href} className="hover:opacity-60" style={{ color: "rgba(255,255,255,0.85)" }}>
+                  {label(TERMS)}
                 </Link>
               </li>
             </ul>

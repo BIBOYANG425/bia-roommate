@@ -549,7 +549,9 @@ export default function OnboardingFlow() {
 
                 <div className="space-y-3 mb-3">
                   {formData.contactChannels.map((ch, i) => {
-                    const meta = CONTACT_PLATFORM_META[ch.platform];
+                    const meta =
+                      CONTACT_PLATFORM_META[ch.platform] ??
+                      CONTACT_PLATFORM_META.other;
                     return (
                       <div
                         key={i}
@@ -729,19 +731,19 @@ export default function OnboardingFlow() {
                 </button>
               )}
             </div>
-            {errors.general && (
-              <div
-                className="mt-3 p-3 border-[2px] text-xs"
-                style={{
-                  borderColor: "var(--cardinal)",
-                  color: "var(--cardinal)",
-                  background: "color-mix(in srgb, var(--cardinal) 5%, white)",
-                }}
-              >
-                SAVE FAILED: {errors.general}
-              </div>
-            )}
           </div>
+          {errors.general && (
+            <div
+              className="mt-3 p-3 border-[2px] text-xs"
+              style={{
+                borderColor: "var(--cardinal)",
+                color: "var(--cardinal)",
+                background: "color-mix(in srgb, var(--cardinal) 5%, white)",
+              }}
+            >
+              SAVE FAILED: {errors.general}
+            </div>
+          )}
         </div>
       </div>
     </div>

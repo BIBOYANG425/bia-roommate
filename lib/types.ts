@@ -249,6 +249,30 @@ export const SHIPPING_METHOD_META: Record<
   },
 };
 
+/**
+ * Safe lookup into a `*_META` record for a key that came from the database and
+ * may not be one of the known enum values (schema drift, a status added on the
+ * admin side before the client ships, or a NULL column). Returns `fallback`
+ * instead of `undefined`, so a render never crashes reading `.label`/`.icon`
+ * off an unknown value — the value surfaces as a neutral label/pill instead.
+ */
+export function metaFor<K extends string, V>(
+  map: Record<K, V>,
+  key: string | null | undefined,
+  fallback: V,
+): V {
+  if (key == null) return fallback;
+  return (map as Record<string, V>)[key] ?? fallback;
+}
+
+/** Neutral fallback for a shipping method not present in SHIPPING_METHOD_META. */
+export const UNKNOWN_SHIPPING_METHOD_META: (typeof SHIPPING_METHOD_META)[ShippingMethod] =
+  {
+    label: "未知方式",
+    labelEn: "Unknown",
+    icon: "📦",
+  };
+
 export interface ShippingRoute {
   id: string;
   method: ShippingMethod;
@@ -548,3 +572,11 @@ export const PARCEL_STATUS_META: Record<
     tone: "bad",
   },
 };
+
+/** Neutral fallback for a parcel status not present in PARCEL_STATUS_META. */
+export const UNKNOWN_PARCEL_STATUS_META: (typeof PARCEL_STATUS_META)[ParcelStatus] =
+  {
+    label: "未知状态",
+    hint: "状态未知，请联系 BIA 运营核实",
+    tone: "pending",
+  };
