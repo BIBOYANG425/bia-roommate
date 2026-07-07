@@ -10,6 +10,7 @@ import { BlogPreview } from "@/components/BlogPreview";
 import SiteNav from "@/components/SiteNav";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/components/LanguageProvider";
+import { SECONDARY_LINKS, SOCIAL_LINKS } from "@/lib/nav-links";
 
 function ArrowIcon() {
   return (
@@ -482,10 +483,7 @@ export default function LandingPage() {
                 </Link>
               </div>
               <div className="flex gap-6">
-                {[
-                  { label: "Insta", href: "https://www.instagram.com/bia_usc/" },
-                  { label: "小红书", href: "https://xhslink.com/m/2t4EzpZAKAc" },
-                ].map((social) => (
+                {SOCIAL_LINKS.map((social) => (
                   <a
                     key={social.label}
                     href={social.href}
@@ -499,14 +497,7 @@ export default function LandingPage() {
               </div>
             </div>
             <nav className="mb-6 flex flex-wrap gap-x-5 gap-y-2 text-xs opacity-70">
-              {[
-                { en: "Team", zh: "团队", href: "/team" },
-                { en: "Sponsors", zh: "合作伙伴", href: "/sponsors" },
-                { en: "Contact", zh: "联系我们", href: "/contact" },
-                { en: "FAQ", zh: "常见问题", href: "/faq" },
-                { en: "Privacy", zh: "隐私政策", href: "/privacy" },
-                { en: "Terms", zh: "服务条款", href: "/terms" },
-              ].map((l) => (
+              {SECONDARY_LINKS.map((l) => (
                 <Link
                   key={l.href}
                   href={l.href}
