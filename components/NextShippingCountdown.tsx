@@ -8,6 +8,8 @@
 import { useEffect, useState } from "react";
 import {
   SHIPPING_METHOD_META,
+  UNKNOWN_SHIPPING_METHOD_META,
+  metaFor,
   type ShippingRoute,
 } from "@/lib/types";
 
@@ -60,7 +62,11 @@ function RouteCountdown({
   now: number;
   prominent?: boolean;
 }) {
-  const meta = SHIPPING_METHOD_META[route.method];
+  const meta = metaFor(
+    SHIPPING_METHOD_META,
+    route.method,
+    UNKNOWN_SHIPPING_METHOD_META,
+  );
   const hasDate = !!route.next_departure_date;
   // next_departure_date is YYYY-MM-DD; target the end of that day so we don't
   // prematurely show "expired" at midnight UTC for an admin-set local date.

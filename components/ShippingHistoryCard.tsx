@@ -5,6 +5,8 @@
 
 import {
   SHIPPING_METHOD_META,
+  UNKNOWN_SHIPPING_METHOD_META,
+  metaFor,
   type ShipmentHistoryEntry,
 } from "@/lib/types";
 
@@ -82,7 +84,11 @@ export default function ShippingHistoryCard({ entries }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {entries.map((entry) => {
           const methodMeta = entry.dominant_method
-            ? SHIPPING_METHOD_META[entry.dominant_method]
+            ? metaFor(
+                SHIPPING_METHOD_META,
+                entry.dominant_method,
+                UNKNOWN_SHIPPING_METHOD_META,
+              )
             : null;
           const weightKg = (entry.total_weight_grams / 1000).toFixed(1);
           return (

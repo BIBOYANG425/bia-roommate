@@ -729,19 +729,19 @@ export default function OnboardingFlow() {
                 </button>
               )}
             </div>
-            {errors.general && (
-              <div
-                className="mt-3 p-3 border-[2px] text-xs"
-                style={{
-                  borderColor: "var(--cardinal)",
-                  color: "var(--cardinal)",
-                  background: "color-mix(in srgb, var(--cardinal) 5%, white)",
-                }}
-              >
-                SAVE FAILED: {errors.general}
-              </div>
-            )}
           </div>
+          {errors.general && (
+            <div
+              className="mt-3 p-3 border-[2px] text-xs"
+              style={{
+                borderColor: "var(--cardinal)",
+                color: "var(--cardinal)",
+                background: "color-mix(in srgb, var(--cardinal) 5%, white)",
+              }}
+            >
+              SAVE FAILED: {errors.general}
+            </div>
+          )}
         </div>
       </div>
     </div>

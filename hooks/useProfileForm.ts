@@ -52,6 +52,77 @@ export interface ProfileFormErrors {
   general: string | null;
 }
 
+/**
+ * Pure form validation shared by the hook's `validate`. A profile is valid when
+ * every required text field is non-empty AND the visitor left at least one way
+ * to be reached — either a structured contact channel OR the legacy free-text
+ * `contact` field. The legacy /submit page only writes `contact` (it has no
+ * channel UI), so requiring a non-empty channel there dead-locked its submit
+ * button; accepting either source fixes that without changing the channel-based
+ * onboarding flow.
+ */
+export function validateProfileForm(
+  formData: ProfileFormData,
+  requiredFields: (keyof ProfileFormData)[] = ["name"],
+): boolean {
+  for (const key of requiredFields) {
+    const val = formData[key];
+    if (typeof val === "string" && !val.trim()) return false;
+  }
+  const hasChannel = formData.contactChannels.some((c) => c.value.trim());
+  const hasLegacyContact = formData.contact.trim().length > 0;
+  return hasChannel || hasLegacyContact;
+}
+
+/**
+ * Pure database-payload builder shared by the hook's `buildPayload`. Note:
+ * `visible: true` for every year (SANCTIONED behavior change) — profiles are
+ * shown regardless of year. Previously non-新生 profiles were persisted with
+ * `visible: false` and silently hidden from the roommate directory.
+ */
+export function buildProfilePayload(
+  formData: ProfileFormData,
+  avatarUrl: string | null,
+) {
+  const finalSleep =
+    formData.sleepHabit === "__custom__"
+      ? formData.customSleep.trim() || null
+      : formData.sleepHabit || null;
+
+  // Strip empty-value channels before persisting.
+  const channels = formData.contactChannels
+    .map((c) => ({ ...c, value: c.value.trim() }))
+    .filter((c) => c.value.length > 0);
+
+  // `contact` stays for backward-compat readers. Pack the channels as a
+  // "label: value" list so old cards still show something meaningful.
+  const contactText = channels
+    .map((c) => `${c.platform}: ${c.value}`)
+    .join(" · ");
+
+  return {
+    name: formData.name.trim(),
+    avatar_url: avatarUrl || formData.avatarUrl.trim() || null,
+    school: formData.school || null,
+    gender: formData.gender || null,
+    major: formData.major.trim() || null,
+    year: formData.year || null,
+    enrollment_term:
+      formData.year === "新生" ? formData.enrollmentTerm || null : null,
+    contact: contactText || formData.contact.trim(),
+    contact_channels: channels,
+    sleep_habit: finalSleep,
+    clean_level: formData.cleanLevel || null,
+    noise_level: formData.noiseLevel || null,
+    music_habit: formData.musicHabit || null,
+    study_style: formData.studyStyle || null,
+    hobbies: formData.hobbies.trim() || null,
+    tags: formData.tags.length > 0 ? formData.tags : null,
+    bio: formData.bio.trim() || null,
+    visible: true,
+  };
+}
+
 interface UseProfileFormOptions {
   maxTags?: number;
 }
@@ -93,14 +164,7 @@ export function useProfileForm(options: UseProfileFormOptions = {}) {
 
   /** Validate that required fields are filled. Returns true if valid. */
   function validate(requiredFields?: (keyof ProfileFormData)[]): boolean {
-    const required = requiredFields ?? ["name"];
-    for (const key of required) {
-      const val = formData[key];
-      if (typeof val === "string" && !val.trim()) return false;
-    }
-    // At least one non-empty contact channel is required.
-    if (!formData.contactChannels.some((c) => c.value.trim())) return false;
-    return true;
+    return validateProfileForm(formData, requiredFields ?? ["name"]);
   }
 
   const addContactChannel = useCallback((platform: ContactPlatform) => {
@@ -149,43 +213,7 @@ export function useProfileForm(options: UseProfileFormOptions = {}) {
 
   /** Build the database payload from current form state. */
   function buildPayload(avatarUrl: string | null) {
-    const finalSleep =
-      formData.sleepHabit === "__custom__"
-        ? formData.customSleep.trim() || null
-        : formData.sleepHabit || null;
-
-    // Strip empty-value channels before persisting.
-    const channels = formData.contactChannels
-      .map((c) => ({ ...c, value: c.value.trim() }))
-      .filter((c) => c.value.length > 0);
-
-    // `contact` stays for backward-compat readers. Pack the channels as a
-    // "label: value" list so old cards still show something meaningful.
-    const contactText = channels
-      .map((c) => `${c.platform}: ${c.value}`)
-      .join(" · ");
-
-    return {
-      name: formData.name.trim(),
-      avatar_url: avatarUrl || formData.avatarUrl.trim() || null,
-      school: formData.school || null,
-      gender: formData.gender || null,
-      major: formData.major.trim() || null,
-      year: formData.year || null,
-      enrollment_term:
-        formData.year === "新生" ? formData.enrollmentTerm || null : null,
-      contact: contactText || formData.contact.trim(),
-      contact_channels: channels,
-      sleep_habit: finalSleep,
-      clean_level: formData.cleanLevel || null,
-      noise_level: formData.noiseLevel || null,
-      music_habit: formData.musicHabit || null,
-      study_style: formData.studyStyle || null,
-      hobbies: formData.hobbies.trim() || null,
-      tags: formData.tags.length > 0 ? formData.tags : null,
-      bio: formData.bio.trim() || null,
-      visible: formData.year === "新生",
-    };
+    return buildProfilePayload(formData, avatarUrl);
   }
 
   return {

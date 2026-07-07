@@ -17,6 +17,9 @@ import {
 import {
   PARCEL_STATUS_META,
   SHIPPING_METHOD_META,
+  UNKNOWN_PARCEL_STATUS_META,
+  UNKNOWN_SHIPPING_METHOD_META,
+  metaFor,
   type Parcel,
   type ParcelEvent,
   type Shipment,
@@ -236,7 +239,7 @@ export default function ParcelDetailPage() {
             <ParcelStatusPill status={parcel.status} />
           </div>
           <p className="text-xs text-white/60 mt-4">
-            {PARCEL_STATUS_META[parcel.status].hint}
+            {metaFor(PARCEL_STATUS_META, parcel.status, UNKNOWN_PARCEL_STATUS_META).hint}
           </p>
         </div>
       </div>
@@ -384,7 +387,7 @@ export default function ParcelDetailPage() {
             {parcel.shipping_method && (
               <Fact
                 label="运输方式"
-                value={`${SHIPPING_METHOD_META[parcel.shipping_method].icon} ${SHIPPING_METHOD_META[parcel.shipping_method].label}`}
+                value={`${metaFor(SHIPPING_METHOD_META, parcel.shipping_method, UNKNOWN_SHIPPING_METHOD_META).icon} ${metaFor(SHIPPING_METHOD_META, parcel.shipping_method, UNKNOWN_SHIPPING_METHOD_META).label}`}
               />
             )}
             {parcel.category && (
@@ -520,8 +523,8 @@ export default function ParcelDetailPage() {
                   <div className="flex-1">
                     <span style={{ color: "var(--black)" }}>
                       {ev.from_status
-                        ? `${PARCEL_STATUS_META[ev.from_status].label} → ${PARCEL_STATUS_META[ev.to_status].label}`
-                        : PARCEL_STATUS_META[ev.to_status].label}
+                        ? `${metaFor(PARCEL_STATUS_META, ev.from_status, UNKNOWN_PARCEL_STATUS_META).label} → ${metaFor(PARCEL_STATUS_META, ev.to_status, UNKNOWN_PARCEL_STATUS_META).label}`
+                        : metaFor(PARCEL_STATUS_META, ev.to_status, UNKNOWN_PARCEL_STATUS_META).label}
                     </span>
                     {ev.note && (
                       <p className="text-xs mt-1" style={{ color: "var(--mid)" }}>
