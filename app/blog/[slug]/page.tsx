@@ -1,4 +1,4 @@
-import { ArticleRenderer } from "@biboyang425/bia-shared";
+import { ArticleRenderer } from "@biboyang425/bia-shared/react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
