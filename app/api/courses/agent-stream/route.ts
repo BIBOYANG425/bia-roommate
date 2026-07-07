@@ -2,6 +2,11 @@ import { NextRequest } from "next/server";
 import { runAgentStreaming, type AgentEvent } from "@/lib/course-planner/agent";
 import { corsHeaders, handleOptions } from "@/lib/cors";
 import { parseIntake } from "./intake";
+import { checkAgentRateLimit, clientIpFromHeaders } from "./rate-limit";
+
+/** Hard cap on the freeform interests string. Defense in depth vs the
+ *  interpreter's own slice(0,500) and the recommender prompt cap. */
+const MAX_INTERESTS_LEN = 500;
 
 export async function OPTIONS(request: NextRequest) {
   return handleOptions(request) ?? new Response(null, { status: 204 });
@@ -9,6 +14,23 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const cors = corsHeaders(request);
+
+  // Per-IP sliding-window abuse guard — this is the most expensive route in the
+  // app (multiple LLM calls + catalog/RMP/Reddit fan-out per request).
+  const ip = clientIpFromHeaders(request.headers);
+  const rl = checkAgentRateLimit(`agent-stream:${ip}`);
+  if (!rl.allowed) {
+    return Response.json(
+      {
+        error:
+          "Too many AI searches in a short window — give it a minute and try again.",
+      },
+      {
+        status: 429,
+        headers: { ...cors, "Retry-After": String(rl.retryAfterSeconds) },
+      },
+    );
+  }
 
   try {
     const body = await request.json();
@@ -21,6 +43,10 @@ export async function POST(request: NextRequest) {
         { status: 400, headers: cors },
       );
     }
+
+    // Cap length before it reaches the agent (interpreter + recommender both
+    // build prompts from this string).
+    const cappedInterests = interests.slice(0, MAX_INTERESTS_LEN);
 
     const hasLLMKey = !!(
       process.env.ANTHROPIC_API_KEY ||
@@ -55,7 +81,17 @@ export async function POST(request: NextRequest) {
               if (levelFilter === "graduate") return num >= 500;
               return true;
             });
-            event = { ...event, data: filtered };
+            // Level chip wiped out a non-empty ranking → explicit empty state
+            // so the UI shows "loosen your filters" instead of hanging dots.
+            if (filtered.length === 0 && event.data.length > 0) {
+              event = {
+                type: "no_results",
+                message:
+                  "No ranked courses match your LEVEL filter. Try a different level.",
+              };
+            } else {
+              event = { ...event, data: filtered };
+            }
           }
           const data = JSON.stringify(event);
           controller.enqueue(encoder.encode(`data: ${data}\n\n`));
@@ -63,7 +99,7 @@ export async function POST(request: NextRequest) {
 
         try {
           await runAgentStreaming(
-            interests,
+            cappedInterests,
             semesterCode,
             baseUrl,
             unitsFilter,

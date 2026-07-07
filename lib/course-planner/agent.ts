@@ -31,6 +31,7 @@ import {
   extractJSON,
 } from "./agent/llm-client";
 import { sanitizeCommunityHighlights } from "./agent/sanitize";
+import { unitsMatch } from "./units";
 
 // ─── Re-exports for backward compatibility ───
 
@@ -339,13 +340,9 @@ async function researchUSCCatalog(
     // either can't take (no prereqs) or shouldn't (grad seminars).
     if (Number.isFinite(numVal) && numVal >= yearCap) return false;
     // Compare units numerically — USC catalog sometimes returns "4.0" while
-    // chip values are "4". String equality drops valid matches; parseFloat
-    // normalizes both sides.
-    if (wantedUnits && units) {
-      const u = parseFloat(units);
-      const w = parseFloat(wantedUnits);
-      if (Number.isFinite(u) && Number.isFinite(w) && u !== w) return false;
-    }
+    // chip values are "4". String equality drops valid matches; unitsMatch
+    // normalizes both sides via parseFloat.
+    if (wantedUnits && units && !unitsMatch(units, wantedUnits)) return false;
     return true;
   }
 
@@ -638,6 +635,25 @@ async function researchRMP(
   }
 }
 
+// Hard prof-rating floor. Applied AFTER researchRMP has enriched instructors,
+// and ONLY when the user explicitly set a PROF BAR chip (intake.profRatingFloor).
+// A course survives when its best-rated professor meets the floor. Courses with
+// NO rated professor DROP: without a rating we can't prove they meet the bar,
+// and keeping them would silently defeat a hard constraint the user asked for.
+// When no floor is set, callers skip this and the soft RMP bonus in researchRMP
+// stands.
+function applyProfRatingFloor(
+  courses: ResearchedCourse[],
+  floor: number | null,
+): ResearchedCourse[] {
+  if (floor === null) return courses;
+  return courses.filter((c) =>
+    c.instructors.some(
+      (i) => typeof i.rating === "number" && i.rating >= floor,
+    ),
+  );
+}
+
 // Agent 2d: Peer Ratings — fetches BIA course rating aggregates
 async function researchPeerRatings(
   courses: ResearchedCourse[],
@@ -672,6 +688,21 @@ async function researchPeerRatings(
   } catch {
     // Peer ratings are optional
   }
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Word-boundary matcher for a course code in free Reddit text. Substring
+// matching ("CSCI 100".includes("CSCI 10")) wrongly attaches a CSCI 100 post to
+// CSCI 10, so we anchor on a leading word boundary and a trailing negative
+// lookahead: the number must NOT be followed by another alphanumeric. Optional
+// whitespace between prefix and number matches both "CSCI 100" and "CSCI100".
+function buildCourseCodeMatcher(department: string, number: string): RegExp {
+  const dept = escapeRegExp(department.trim());
+  const num = escapeRegExp(number.trim());
+  return new RegExp(`\\b${dept}\\s*${num}(?![0-9A-Za-z])`, "i");
 }
 
 // Agent 2c: Reddit — follows redditInstructions
@@ -731,17 +762,22 @@ async function researchReddit(
 
   const results = await Promise.all(searches);
 
-  // Match posts to courses by exact course code presence in title or body.
+  // Precompute one word-boundary matcher per course so we test each post
+  // against a real regex (not a substring) — see buildCourseCodeMatcher.
+  const matchers = courses.map((c) => ({
+    course: c,
+    re: buildCourseCodeMatcher(c.department, c.number),
+  }));
+
+  // Match posts to courses by word-boundary course-code presence in title/body.
   for (const posts of results) {
     for (const post of posts) {
       if (post.score < 1) continue;
       if (!post.url) continue; // never store an insight we can't link to
-      const text = `${post.title} ${post.selftext}`.toUpperCase();
+      const text = `${post.title} ${post.selftext}`;
 
-      for (const c of courses) {
-        const courseCode = `${c.department} ${c.number}`.toUpperCase();
-        const courseCodeSmashed = `${c.department}${c.number}`.toUpperCase();
-        if (text.includes(courseCode) || text.includes(courseCodeSmashed)) {
+      for (const { course: c, re } of matchers) {
+        if (re.test(text)) {
           if (
             c.redditPosts.length < 4 &&
             !c.redditPosts.some((p) => p.url === post.url)
@@ -923,7 +959,11 @@ async function recommend(
   });
 
   const profile = query.studentProfile;
-  const userMessage = `STUDENT INPUT: "${interestText}"
+  // Defense in depth: even though the SSE route caps interests to 500 chars,
+  // recommend() is also reachable via runAgent(). Cap again so an oversized
+  // interests string can never bloat the recommender prompt.
+  const cappedInterest = interestText.slice(0, 500);
+  const userMessage = `STUDENT INPUT: "${cappedInterest}"
 
 INTERPRETER ANALYSIS:
 - Interests: ${profile.interests.join(", ") || "general"}
@@ -957,13 +997,13 @@ ${courseSummaries.join("\n\n")}`;
   } catch {
     // Detect mid-stream truncation by looking for an unterminated last
     // recommendation. The LLM hit max_tokens before closing the JSON array.
-    // Surface this distinctly so the UI can suggest "retry without thinking
-    // mode" or "narrow your query" instead of generic failure.
+    // Surface this distinctly so the UI can suggest "narrow your query"
+    // instead of a generic failure.
     const looksTruncated =
       jsonStr.includes("{") && !jsonStr.trim().endsWith("]");
     throw new Error(
       looksTruncated
-        ? "Recommender output was truncated before completing the recommendation list — try a more specific query or disable deep-thinking mode."
+        ? "Recommender output was truncated before completing the recommendation list — try a more specific query."
         : "Recommender returned malformed JSON — this is usually transient, please retry.",
     );
   }
@@ -1045,7 +1085,7 @@ export async function runAgent(
     };
   }
 
-  const catalogCourses = await researchUSCCatalog(
+  let catalogCourses = await researchUSCCatalog(
     query.catalogInstructions,
     semester,
     baseUrl,
@@ -1062,6 +1102,15 @@ export async function runAgent(
     researchPeerRatings(catalogCourses, baseUrl),
   ]);
 
+  // Hard prof-rating floor (only when the user set the PROF BAR chip).
+  catalogCourses = applyProfRatingFloor(
+    catalogCourses,
+    query.studentConstraints.profRatingFloor,
+  );
+  if (catalogCourses.length === 0) {
+    return { error: "No courses found matching your criteria." };
+  }
+
   const { recommendations: recs } = await recommend(
     interestText,
     query,
@@ -1075,7 +1124,7 @@ export async function runAgent(
       const courseData = catalogCourses.find(
         (c) => c.department === r.department && c.number === r.number,
       );
-      return courseData?.units === unitsFilter;
+      return unitsMatch(courseData?.units, unitsFilter);
     });
   }
 
@@ -1256,11 +1305,29 @@ export async function runAgentStreaming(
     researchPeerRatings(catalogCourses, baseUrl),
   ]);
 
+  // Hard prof-rating floor (only when the user set the PROF BAR chip). If it
+  // wipes out every candidate, surface an explicit empty state instead of
+  // handing the recommender an empty list.
+  if (query.studentConstraints.profRatingFloor !== null) {
+    catalogCourses = applyProfRatingFloor(
+      catalogCourses,
+      query.studentConstraints.profRatingFloor,
+    );
+    if (catalogCourses.length === 0) {
+      emit({
+        type: "no_results",
+        message: `No courses have a professor rated ${query.studentConstraints.profRatingFloor.toFixed(
+          1,
+        )}+ on RateMyProfessors. Try lowering the PROF BAR filter.`,
+      });
+      return;
+    }
+  }
+
   emit({
     type: "recommending",
-    message: thinking
-      ? "Deep-thinking mode: carefully analyzing courses against your preferences..."
-      : "Ranking courses based on your preferences, professor quality, and community feedback...",
+    message:
+      "Ranking courses based on your preferences, professor quality, and community feedback...",
   });
 
   let recommendations: import("./agent/types").AgentRecommendation[];
@@ -1293,12 +1360,31 @@ export async function runAgentStreaming(
   }
 
   if (unitsFilter) {
-    recommendations = recommendations.filter((r) => {
+    const filtered = recommendations.filter((r) => {
       const courseData = catalogCourses.find(
         (c) => c.department === r.department && c.number === r.number,
       );
-      return courseData?.units === unitsFilter;
+      return unitsMatch(courseData?.units, unitsFilter);
     });
+    // The units chip emptied a non-empty ranking → explicit empty state so the
+    // UI can say "loosen your filters" instead of hanging on loading dots.
+    if (filtered.length === 0 && recommendations.length > 0) {
+      emit({
+        type: "no_results",
+        message: `None of the ranked courses are ${unitsFilter} units. Try a different UNITS filter.`,
+      });
+      return;
+    }
+    recommendations = filtered;
+  }
+
+  if (recommendations.length === 0) {
+    emit({
+      type: "no_results",
+      message:
+        "The AI didn't find strong matches for that. Try broadening your interests or loosening your filters.",
+    });
+    return;
   }
 
   emit({ type: "results", data: recommendations });
@@ -1313,5 +1399,7 @@ export const __test = {
   researchRMP,
   researchPeerRatings,
   yearCeiling,
+  applyProfRatingFloor,
+  buildCourseCodeMatcher,
   RECOMMENDER_INPUT_CAP,
 };

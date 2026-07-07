@@ -27,6 +27,23 @@ describe("extractJSON", () => {
     expect(JSON.parse(extractJSON(input, "object"))).toEqual({ foo: "bar" });
   });
 
+  it("strips a fence and IGNORES trailing prose after the closing fence", () => {
+    const input =
+      '```json\n{"isValid": true, "note": "ok"}\n```\n\nHope this helps! Let me know if you want more.';
+    expect(JSON.parse(extractJSON(input, "object"))).toEqual({
+      isValid: true,
+      note: "ok",
+    });
+  });
+
+  it("prefers fenced content even when prose before the fence contains brackets", () => {
+    const input =
+      'Sure, see below {this is not json}:\n```json\n{"isValid": true}\n```\ndone';
+    expect(JSON.parse(extractJSON(input, "object"))).toEqual({
+      isValid: true,
+    });
+  });
+
   it("handles nested objects", () => {
     const input = '{"a": {"b": {"c": 1}}}';
     expect(JSON.parse(extractJSON(input, "object"))).toEqual({
@@ -67,6 +84,14 @@ describe("extractJSON", () => {
     const input = 'Here are the results:\n[{"score": 9.5}]\nEnd.';
     const result = JSON.parse(extractJSON(input, "array"));
     expect(result[0].score).toBe(9.5);
+  });
+
+  it("extracts a fenced array and drops trailing prose after the fence", () => {
+    const input =
+      '```json\n[{"department":"CSCI","number":"100"}]\n```\nThese are ranked by relevance.';
+    const result = JSON.parse(extractJSON(input, "array"));
+    expect(result).toHaveLength(1);
+    expect(result[0].number).toBe("100");
   });
 
   // ─── Error cases ───

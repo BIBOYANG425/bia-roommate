@@ -3,7 +3,7 @@
 // Orchestrated by lib/course-planner/agent.ts. Owns department / number / GE
 // canonicalization — keep normalization rules here, not in callers.
 //
-// Header last reviewed: 2026-04-16
+// Header last reviewed: 2026-07-07
 
 import {
   tokenize,
@@ -12,6 +12,7 @@ import {
   getDepartmentMatches,
 } from "./interest-map";
 import { GE_MAP } from "./ge-map";
+import { unitsMatch } from "./units";
 
 export interface RecommendedCourse {
   department: string;
@@ -459,7 +460,7 @@ export async function getRecommendations(
   // Sort by relevance, filter by units if specified, return top 15
   scored.sort((a, b) => b.relevanceScore - a.relevanceScore);
   const filtered = unitsFilter
-    ? scored.filter((c) => c.units === unitsFilter)
+    ? scored.filter((c) => unitsMatch(c.units, unitsFilter))
     : scored;
   return filtered.slice(0, 15);
 }

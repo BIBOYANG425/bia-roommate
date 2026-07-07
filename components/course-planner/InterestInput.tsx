@@ -89,7 +89,6 @@ export default function InterestInput({
   const [unitsFilter, setUnitsFilter] = useState<string | null>(null);
   const [levelFilter, setLevelFilter] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState<"auto" | "free">("auto");
-  const [thinkingMode, setThinkingMode] = useState(false);
   // Hard-constraint chips (Phase 2.1) — these are the structured intake the
   // interpreter trusts over its own LLM guesses. Phase 2 polish: persist to
   // sessionStorage so a page refresh doesn't lose what the user just picked.
@@ -178,8 +177,11 @@ export default function InterestInput({
     lastSubmitRef.current = now;
 
     // AI mode → launch agent chat interface, passing all UI-captured constraints.
+    // The deep-thinking toggle was removed (no-op on the default provider); we
+    // always pass thinking=false. Server-side plumbing stays intact so a capable
+    // provider can re-enable it later without another UI change.
     if (searchMode === "auto" && onAgentSearch) {
-      onAgentSearch(input.trim(), unitsFilter, thinkingMode, levelFilter, {
+      onAgentSearch(input.trim(), unitsFilter, false, levelFilter, {
         year,
         geNeeded,
         profRatingFloor,
@@ -589,36 +591,6 @@ export default function InterestInput({
           </button>
         </div>
       </div>
-
-      {/* Thinking mode toggle (AI mode only) */}
-      {searchMode === "auto" && (
-        <div className="mb-4">
-          <button
-            onClick={() => setThinkingMode(!thinkingMode)}
-            disabled={loading}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-display tracking-wider border-[1.5px] transition-all"
-            style={{
-              borderColor: thinkingMode ? "var(--gold)" : "var(--beige)",
-              background: thinkingMode
-                ? "color-mix(in srgb, var(--gold) 20%, white)"
-                : "white",
-              color: "var(--black)",
-              borderRadius: "20px",
-              opacity: loading ? 0.5 : 1,
-            }}
-          >
-            <span style={{ fontSize: "14px" }}>
-              {thinkingMode ? "🧠" : "⚡"}
-            </span>
-            {thinkingMode ? "DEEP THINKING ON" : "FAST MODE"}
-          </button>
-          <p className="text-[10px] mt-1 ml-1" style={{ color: "var(--mid)" }}>
-            {thinkingMode
-              ? "AI will reason deeply about course fit — slower but more thoughtful"
-              : "Quick AI analysis — faster results"}
-          </p>
-        </div>
-      )}
 
       {/* Error */}
       {error && (

@@ -161,10 +161,17 @@ export async function callLLMWithRetry(
  * and nested brackets. Much more reliable than regex `/\{[\s\S]*\}/`.
  */
 export function extractJSON(text: string, type: "object" | "array"): string {
-  // Strip markdown code fences
-  const cleaned = text
-    .replace(/```(?:json)?\s*\n?/g, "")
-    .replace(/```\s*$/g, "");
+  // Prefer the contents of the first fenced code block when present. Models
+  // often wrap the JSON in ```json ... ``` and pad it with prose on BOTH sides
+  // — including trailing prose after the closing fence (and prose before that
+  // may itself contain stray brackets). The lazy `[\s\S]*?` stops at the first
+  // closing fence, so trailing prose can never leak into the bracket walk.
+  const fence = text.match(/```(?:json)?\s*\n?([\s\S]*?)```/i);
+  const cleaned = fence
+    ? fence[1]
+    : // No complete fence — strip any dangling fence markers so an unterminated
+      // ``` doesn't confuse the walk, then search the remaining text.
+      text.replace(/```(?:json)?/gi, "");
 
   const open = type === "array" ? "[" : "{";
   const close = type === "array" ? "]" : "}";
