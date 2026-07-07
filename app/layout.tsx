@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bebas_Neue, Inter, Instrument_Serif } from "next/font/google";
+import { Inter, Instrument_Serif } from "next/font/google";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/AuthProvider";
@@ -12,13 +12,6 @@ import "./globals.css";
 const playlistScript = localFont({
   src: "../public/fonts/Playlist-Script.otf",
   variable: "--font-playlist",
-  display: "swap",
-});
-
-const bebasNeue = Bebas_Neue({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-display",
   display: "swap",
 });
 
@@ -88,7 +81,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${bebasNeue.variable} ${interFont.variable} ${instrumentSerif.variable} ${playlistScript.variable}`}
+      className={`${interFont.variable} ${instrumentSerif.variable} ${playlistScript.variable}`}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
