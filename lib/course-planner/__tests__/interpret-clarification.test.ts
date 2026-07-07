@@ -171,13 +171,11 @@ describe("runAgentStreaming — clarification gate", () => {
   });
 
   it("interpreter prompt still documents the CLARIFICATION GATE section", async () => {
-    const { readFileSync } = await import("fs");
-    const src = readFileSync(
-      new URL("../agent.ts", import.meta.url),
-      "utf-8",
-    );
-    expect(src).toContain("CLARIFICATION GATE");
-    expect(src).toContain("needsClarification");
-    expect(src).toContain("clarifyingQuestions");
+    // The prompt strings were extracted to prompts.ts (RG3); assert the section
+    // survives there so the LLM keeps emitting the needsClarification field.
+    const { SYSTEM_PROMPT_INTERPRETER } = await import("../prompts");
+    expect(SYSTEM_PROMPT_INTERPRETER).toContain("CLARIFICATION GATE");
+    expect(SYSTEM_PROMPT_INTERPRETER).toContain("needsClarification");
+    expect(SYSTEM_PROMPT_INTERPRETER).toContain("clarifyingQuestions");
   });
 });

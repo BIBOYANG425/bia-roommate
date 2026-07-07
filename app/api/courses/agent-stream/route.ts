@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { runAgentStreaming, type AgentEvent } from "@/lib/course-planner/agent";
+import { filterByLevel } from "@/lib/course-planner/filters";
 import { corsHeaders, handleOptions } from "@/lib/cors";
 import { parseIntake } from "./intake";
 import { checkAgentRateLimit, clientIpFromHeaders } from "./rate-limit";
@@ -73,14 +74,7 @@ export async function POST(request: NextRequest) {
         function emit(event: AgentEvent) {
           // Filter recommendations by level if specified
           if (levelFilter && event.type === "results") {
-            const filtered = event.data.filter((r) => {
-              const num = parseInt(r.number, 10);
-              if (isNaN(num)) return true;
-              if (levelFilter === "lower") return num >= 100 && num <= 299;
-              if (levelFilter === "upper") return num >= 300 && num <= 499;
-              if (levelFilter === "graduate") return num >= 500;
-              return true;
-            });
+            const filtered = filterByLevel(event.data, levelFilter);
             // Level chip wiped out a non-empty ranking → explicit empty state
             // so the UI shows "loosen your filters" instead of hanging dots.
             if (filtered.length === 0 && event.data.length > 0) {
