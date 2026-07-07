@@ -839,6 +839,14 @@ ${courseSummaries.join("\n\n")}`;
  *                        error, so the route still falls to free mode as before)
  * Progress events (thinking/reasoning/interpreted/researching/…) are ignored.
  * thinking is forced false to match the old runAgent (it never enabled it).
+ *
+ * DEAD PATH — prof-rating floor: the only caller is the recommend route
+ * (app/api/courses/recommend/route.ts), which never threads `intake`, so
+ * `profRatingFloor` is always null here and runAgentStreaming's floor-empty
+ * branch (→ `no_results`) is currently unreachable via runAgent. A future
+ * caller that DID pass a non-null profRatingFloor would get empty-agent
+ * (`{ recommendations: [], mode: "agent" }`), NOT the old free-mode fallback —
+ * because floor-empty maps to `no_results` (empty-but-successful), not `error`.
  */
 export async function runAgent(
   interestText: string,

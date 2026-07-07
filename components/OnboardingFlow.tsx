@@ -549,7 +549,9 @@ export default function OnboardingFlow() {
 
                 <div className="space-y-3 mb-3">
                   {formData.contactChannels.map((ch, i) => {
-                    const meta = CONTACT_PLATFORM_META[ch.platform];
+                    const meta =
+                      CONTACT_PLATFORM_META[ch.platform] ??
+                      CONTACT_PLATFORM_META.other;
                     return (
                       <div
                         key={i}
