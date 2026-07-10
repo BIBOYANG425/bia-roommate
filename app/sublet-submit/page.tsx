@@ -44,6 +44,22 @@ function SubletSubmitContent() {
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
+  const [removedExistingPhotoPaths, setRemovedExistingPhotoPaths] = useState<
+    string[]
+  >([]);
+
+  const storagePathFromPublicUrl = (url: string) => {
+    const marker = "/storage/v1/object/public/sublet-photos/";
+    const markerIndex = url.indexOf(marker);
+    return markerIndex === -1
+      ? null
+      : decodeURIComponent(url.slice(markerIndex + marker.length));
+  };
+
+  const cleanupSubletPhotos = async (paths: string[]) => {
+    if (paths.length === 0) return;
+    await supabase.storage.from("sublet-photos").remove(paths);
+  };
 
   useEffect(() => {
     // Wait for auth: only the owner may preload a listing into the edit form,
@@ -136,23 +152,24 @@ function SubletSubmitContent() {
     setSubmitting(true);
     setError(null);
 
-    let photoUrls: string[] = [];
+    const uploadedPaths: string[] = [];
+    const photoUrls: string[] = [];
     if (photoFiles.length > 0) {
       try {
-        photoUrls = await Promise.all(
-          photoFiles.map(async (file) => {
-            const ext = file.name.split(".").pop();
-            const filePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-            const { data, error: uploadErr } = await supabase.storage
-              .from("sublet-photos")
-              .upload(filePath, file, { cacheControl: "3600", upsert: true });
-            if (uploadErr) throw uploadErr;
-            return supabase.storage
-              .from("sublet-photos")
-              .getPublicUrl(data.path).data.publicUrl;
-          }),
-        );
+        for (const file of photoFiles) {
+          const ext = file.name.split(".").pop();
+          const filePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+          const bucket = supabase.storage.from("sublet-photos");
+          const { data, error: uploadErr } = await bucket.upload(filePath, file, {
+            cacheControl: "3600",
+            upsert: true,
+          });
+          if (uploadErr) throw uploadErr;
+          uploadedPaths.push(data.path);
+          photoUrls.push(bucket.getPublicUrl(data.path).data.publicUrl);
+        }
       } catch {
+        await cleanupSubletPhotos(uploadedPaths);
         setError("PHOTO UPLOAD FAILED — TRY AGAIN");
         setSubmitting(false);
         return;
@@ -190,11 +207,13 @@ function SubletSubmitContent() {
         .eq("user_id", user.id)
         .select();
       if (err) {
+        await cleanupSubletPhotos(uploadedPaths);
         setError(`SUBMISSION FAILED: ${err.message}`);
         setSubmitting(false);
         return;
       }
       if (!updated || updated.length === 0) {
+        await cleanupSubletPhotos(uploadedPaths);
         setError("UPDATE FAILED — LISTING NOT FOUND OR NOT YOURS");
         setSubmitting(false);
         return;
@@ -202,11 +221,14 @@ function SubletSubmitContent() {
     } else {
       const { error: err } = await supabase.from("sublets").insert([formData]);
       if (err) {
+        await cleanupSubletPhotos(uploadedPaths);
         setError(`SUBMISSION FAILED: ${err.message}`);
         setSubmitting(false);
         return;
       }
     }
+
+    await cleanupSubletPhotos(removedExistingPhotoPaths);
 
     router.push(editId ? "/sublet?updated=true" : "/sublet?submitted=true");
   };
@@ -569,11 +591,15 @@ function SubletSubmitContent() {
                   />
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      const path = storagePathFromPublicUrl(src);
+                      if (path) {
+                        setRemovedExistingPhotoPaths((prev) => [...prev, path]);
+                      }
                       setExistingPhotos((prev) =>
                         prev.filter((_, i) => i !== idx),
-                      )
-                    }
+                      );
+                    }}
                     className="absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center border-[2px] border-[var(--black)] font-display text-[10px] hover:bg-[var(--gold)] transition-colors"
                     style={{ background: "var(--cream)" }}
                   >

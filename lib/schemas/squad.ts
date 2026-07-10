@@ -11,7 +11,7 @@ export const squadCreateSchema = z
     contact: z.string().min(1).max(200),
     school: z.string().max(100).optional(),
     location: z.string().max(200).optional(),
-    max_people: z.union([z.number(), z.string()]),
+    max_people: z.coerce.number().int().min(2).max(50),
     deadline: z.string().nullable().optional(),
     gender_restriction: z.string().max(20).optional(),
   })

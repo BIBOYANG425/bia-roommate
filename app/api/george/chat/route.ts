@@ -20,11 +20,6 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-}
-
 // User-facing message returned (as a normal 200 reply) whenever the backend
 // is unreachable or returns an error. Keeps George in character instead of
 // surfacing a raw 502 to the chat UI. Bilingual to match the iMessage voice.
@@ -38,12 +33,14 @@ export async function POST(req: NextRequest) {
   // If env vars aren't configured we treat that the same as "backend down"
   // for the user — they shouldn't see infra errors.
   if (!backendUrl || !adminToken) {
-    return NextResponse.json({ response: SERVICE_UNAVAILABLE_MESSAGE });
+    return NextResponse.json(
+      { response: SERVICE_UNAVAILABLE_MESSAGE },
+      { status: 503 },
+    );
   }
 
   const body = (await req.json()) as {
     message: string;
-    history?: ChatMessage[];
     userId?: string;
   };
   const { message, userId } = body;
@@ -72,21 +69,38 @@ export async function POST(req: NextRequest) {
   } catch {
     // Network failure means the Mac is asleep, cloudflared restarted,
     // or the tunnel hostname rotated. Show the fine-tuning message.
-    return NextResponse.json({ response: SERVICE_UNAVAILABLE_MESSAGE });
+    return NextResponse.json(
+      { response: SERVICE_UNAVAILABLE_MESSAGE },
+      { status: 503 },
+    );
   }
 
   if (!res.ok) {
     // Backend reachable but errored (most often 5xx from the Express
     // backend or a 502 from Cloudflare). Same friendly message.
-    return NextResponse.json({ response: SERVICE_UNAVAILABLE_MESSAGE });
+    return NextResponse.json(
+      { response: SERVICE_UNAVAILABLE_MESSAGE },
+      { status: 502 },
+    );
   }
 
-  const data = (await res.json()) as { response?: string; error?: string };
+  let data: { response?: string; error?: string };
+  try {
+    data = (await res.json()) as { response?: string; error?: string };
+  } catch {
+    return NextResponse.json(
+      { response: SERVICE_UNAVAILABLE_MESSAGE },
+      { status: 502 },
+    );
+  }
   // If the backend returned an empty response or an error string, treat
   // that as "service hiccup" rather than show empty bubbles.
   const reply = data.response ?? data.error ?? "";
   if (!reply.trim()) {
-    return NextResponse.json({ response: SERVICE_UNAVAILABLE_MESSAGE });
+    return NextResponse.json(
+      { response: SERVICE_UNAVAILABLE_MESSAGE },
+      { status: 502 },
+    );
   }
   return NextResponse.json({ response: reply });
 }

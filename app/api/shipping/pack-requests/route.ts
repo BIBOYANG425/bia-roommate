@@ -15,7 +15,6 @@ import { packRequestCreateSchema } from "@/lib/schemas/pack-request";
 import { SHIPPING_METHOD_VALUES } from "@/lib/types";
 
 const METHOD_SET = new Set<string>(SHIPPING_METHOD_VALUES);
-const OPEN_STATUSES = ["pending", "contacted", "approved"] as const;
 
 export const GET = authedHandler({
   handler: async ({ user, supabase }) => {
@@ -36,22 +35,30 @@ export const GET = authedHandler({
 
     // Fetch parcels-per-request via the join table. Two queries is simpler
     // and easier on types than a nested select.
-    const { data: links } = await supabase
+    const { data: links, error: linksError } = await supabase
       .from("pack_request_parcels")
       .select("request_id, parcel_id")
       .in("request_id", ids);
 
+    if (linksError) {
+      return NextResponse.json({ error: linksError.message }, { status: 500 });
+    }
+
     const parcelIds = Array.from(
       new Set((links ?? []).map((l) => l.parcel_id)),
     );
-    const { data: parcels } = parcelIds.length
+    const { data: parcels, error: parcelsError } = parcelIds.length
       ? await supabase
           .from("parcels")
           .select(
             "id, member_id, description, status, shipping_method, weight_grams, photos",
           )
           .in("id", parcelIds)
-      : { data: [] };
+      : { data: [], error: null };
+
+    if (parcelsError) {
+      return NextResponse.json({ error: parcelsError.message }, { status: 500 });
+    }
 
     const parcelById = new Map((parcels ?? []).map((p) => [p.id, p]));
     const parcelsByRequest = new Map<string, unknown[]>();
@@ -81,7 +88,7 @@ export const POST = authedHandler({
     windowMs: 24 * 60 * 60 * 1000,
     message: "一天内最多提交 10 次打包申请，请稍后再试。",
   },
-  handler: async ({ user, supabase, body }) => {
+  handler: async ({ supabase, body }) => {
     const parcelIds = body.parcel_ids;
 
     const preferredMethod = (body.preferred_method ?? "").trim();
@@ -96,98 +103,35 @@ export const POST = authedHandler({
     const contact = (body.contact ?? "").trim();
     const userNote = (body.user_note ?? "").trim();
 
-    // Validate parcels: each must belong to the user AND be received_cn AND
-    // not already linked to a still-open pack request.
-    const { data: parcels, error: pErr } = await supabase
-      .from("parcels")
-      .select("id, status")
-      .in("id", parcelIds)
-      .eq("user_id", user.id);
+    const { data: created, error: rpcError } = await supabase.rpc(
+      "create_pack_request",
+      {
+        p_parcel_ids: parcelIds,
+        p_preferred_method: preferredMethod || null,
+        p_urgency_note: urgencyNote || null,
+        p_contact: contact || null,
+        p_user_note: userNote || null,
+      },
+    );
 
-    if (pErr) {
-      return NextResponse.json({ error: pErr.message }, { status: 500 });
-    }
-    if (!parcels || parcels.length !== parcelIds.length) {
-      return NextResponse.json(
-        { error: "部分包裹不存在或不属于你" },
-        { status: 400 },
-      );
-    }
-    for (const p of parcels) {
-      if (p.status !== "received_cn") {
+    if (rpcError) {
+      if (rpcError.message.includes("pack_request_already_open")) {
         return NextResponse.json(
-          {
-            error:
-              "只能申请打包「仓库已签收」(received_cn) 状态的包裹。其他状态的包裹暂时不能申请。",
-          },
-          { status: 400 },
-        );
-      }
-    }
-
-    // Check no open pack request already owns these parcels.
-    const { data: existingLinks } = await supabase
-      .from("pack_request_parcels")
-      .select("parcel_id, request_id, pack_requests!inner(status)")
-      .in("parcel_id", parcelIds);
-
-    for (const link of (existingLinks as unknown as Array<{
-      parcel_id: string;
-      pack_requests: { status: string } | null;
-    }>) ?? []) {
-      const s = link.pack_requests?.status;
-      if (s && OPEN_STATUSES.includes(s as (typeof OPEN_STATUSES)[number])) {
-        return NextResponse.json(
-          {
-            error: "选中的包裹里至少有一个已经在另一个打包申请中（进行中）。",
-          },
+          { error: "选中的包裹里至少有一个已经在另一个打包申请中（进行中）。" },
           { status: 409 },
         );
       }
+      if (
+        rpcError.message.includes("pack_request_invalid_parcels") ||
+        rpcError.message.includes("pack_request_parcel_not_eligible")
+      ) {
+        return NextResponse.json({ error: rpcError.message }, { status: 400 });
+      }
+      return NextResponse.json({ error: rpcError.message }, { status: 500 });
     }
 
-    // Look up student info for denormalization.
-    const { data: student } = await supabase
-      .from("students")
-      .select("id, member_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    // Create the request row.
-    const { data: created, error: insertErr } = await supabase
-      .from("pack_requests")
-      .insert({
-        user_id: user.id,
-        student_id: student?.id ?? null,
-        member_id: student?.member_id ?? null,
-        preferred_method: preferredMethod || null,
-        urgency_note: urgencyNote || null,
-        contact: contact || null,
-        user_note: userNote || null,
-      })
-      .select()
-      .single();
-
-    if (insertErr || !created) {
-      return NextResponse.json(
-        { error: insertErr?.message ?? "创建申请失败" },
-        { status: 500 },
-      );
-    }
-
-    // Link parcels.
-    const links = parcelIds.map((pid) => ({
-      request_id: created.id,
-      parcel_id: pid,
-    }));
-    const { error: linkErr } = await supabase
-      .from("pack_request_parcels")
-      .insert(links);
-
-    if (linkErr) {
-      // Best-effort rollback: delete the orphan request
-      await supabase.from("pack_requests").delete().eq("id", created.id);
-      return NextResponse.json({ error: linkErr.message }, { status: 500 });
+    if (!created) {
+      return NextResponse.json({ error: "创建申请失败" }, { status: 500 });
     }
 
     return NextResponse.json(created, { status: 201 });
