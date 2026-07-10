@@ -72,12 +72,19 @@ export default function OnboardingFlow() {
 
     async function loadProfile() {
       const supabase = createBrowserSupabaseClient();
-      const { data } = await supabase
+      const { data: existingProfile, error: profileError } = await supabase
         .from("roommate_profiles")
         .select("*")
         .eq("user_id", user!.id)
         .maybeSingle();
 
+      if (profileError) {
+        setError(profileError.message);
+        setProfileLoading(false);
+        return;
+      }
+
+      const data = existingProfile;
       if (data) {
         setExistingId(data.id);
         // Prefer structured channels; fall back to wrapping the old `contact`
@@ -115,7 +122,7 @@ export default function OnboardingFlow() {
     }
 
     loadProfile();
-  }, [user, setForm]);
+  }, [user, setForm, setError]);
 
   /* ── Validation ── */
   function canProceed(): boolean {
@@ -152,7 +159,7 @@ export default function OnboardingFlow() {
     const supabase = createBrowserSupabaseClient();
     const payload = buildPayload(null);
 
-    const { error } = existingId
+    let { error } = existingId
       ? await supabase
           .from("roommate_profiles")
           .update(payload)
@@ -161,6 +168,26 @@ export default function OnboardingFlow() {
       : await supabase
           .from("roommate_profiles")
           .insert({ ...payload, user_id: user!.id });
+
+    if (!existingId && error?.code === "23505") {
+      const { data: duplicate, error: lookupError } = await supabase
+        .from("roommate_profiles")
+        .select("id")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      if (lookupError || !duplicate) {
+        setError(lookupError?.message ?? error.message);
+        setSubmitting(false);
+        return;
+      }
+      setExistingId(duplicate.id);
+      const retry = await supabase
+        .from("roommate_profiles")
+        .update(payload)
+        .eq("id", duplicate.id)
+        .eq("user_id", user!.id);
+      error = retry.error;
+    }
 
     if (error) {
       setError(error.message);

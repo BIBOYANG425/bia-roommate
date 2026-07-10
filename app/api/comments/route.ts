@@ -29,14 +29,18 @@ export const DELETE = authedHandler({
   handler: async ({ user, supabase, body }) => {
     const { id } = body;
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("profile_comments")
       .delete()
       .eq("id", id)
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .select("id");
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
     return NextResponse.json({ deleted: true });
   },

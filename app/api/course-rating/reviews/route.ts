@@ -159,11 +159,12 @@ export const DELETE = authedHandler({
       );
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("course_reviews")
       .delete()
       .eq("id", id)
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .select("id");
 
     if (error) {
       console.error("[course-rating] DELETE error:", error);
@@ -171,6 +172,9 @@ export const DELETE = authedHandler({
         { error: "Failed to delete review" },
         { status: 500 },
       );
+    }
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: "Review not found" }, { status: 404 });
     }
     return NextResponse.json({ deleted: true });
   },

@@ -38,9 +38,6 @@ export default function SubmitPage() {
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [submittedProfileId, setSubmittedProfileId] = useState<string | null>(
-    null,
-  );
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
@@ -75,6 +72,10 @@ export default function SubmitPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate(["name", "contact"])) return;
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -90,9 +91,9 @@ export default function SubmitPage() {
 
     const payload = buildPayload(avatarUrl);
 
-    const { data: inserted, error: err } = await supabase
+    const { error: err } = await supabase
       .from("roommate_profiles")
-      .insert([{ ...payload, user_id: user?.id ?? null }])
+      .insert([{ ...payload, user_id: user.id }])
       .select("id")
       .single();
 
@@ -102,15 +103,7 @@ export default function SubmitPage() {
       return;
     }
 
-    // If already logged in, go straight home
-    if (user) {
-      router.push("/roommates?submitted=true");
-      return;
-    }
-
-    // Show account creation interstitial
-    setSubmittedProfileId(inserted.id);
-    setSubmitting(false);
+    router.push("/roommates?submitted=true");
   };
 
   const canSubmit =
@@ -125,82 +118,6 @@ export default function SubmitPage() {
         ? "var(--stanford-cardinal)"
         : "var(--cardinal)";
   const accent = headerBg;
-
-  // Post-submit interstitial — prompt account creation
-  if (submittedProfileId) {
-    // After sign-up succeeds, link the profile to the new user
-    const handleAuthSuccess = async () => {
-      await new Promise((r) => setTimeout(r, 500));
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-      if (!authUser) {
-        router.push("/roommates?submitted=true");
-        return;
-      }
-      const { error } = await supabase
-        .from("roommate_profiles")
-        .update({ user_id: authUser.id })
-        .eq("id", submittedProfileId)
-        .is("user_id", null);
-      router.push(
-        error
-          ? "/roommates?submitted=true"
-          : "/roommates?submitted=true&linked=true",
-      );
-    };
-
-    return (
-      <main
-        className="min-h-screen flex items-center justify-center p-6"
-        style={{ background: "var(--beige)" }}
-      >
-        <div
-          className="w-full max-w-md border-[3px] border-[var(--black)] p-8 text-center"
-          style={{ background: "#FAF6EC", boxShadow: "8px 8px 0 var(--black)" }}
-        >
-          <div className="text-5xl mb-4">&#10003;</div>
-          <h2
-            className="font-display text-3xl tracking-wider mb-2"
-            style={{ color: "var(--black)" }}
-          >
-            PROFILE DROPPED
-          </h2>
-          <p className="text-sm mb-6" style={{ color: "var(--mid)" }}>
-            Create an account to edit your profile later and save course
-            schedules.
-          </p>
-
-          <button
-            onClick={() => setShowAuthModal(true)}
-            className="w-full py-3 font-display text-sm tracking-wider text-white border-[3px] border-[var(--black)] mb-3 transition-all hover:translate-y-[-2px]"
-            style={{
-              background: "var(--cardinal)",
-              boxShadow: "4px 4px 0 var(--black)",
-            }}
-          >
-            CREATE ACCOUNT
-          </button>
-          <button
-            onClick={() => router.push("/roommates?submitted=true")}
-            className="w-full py-3 font-display text-sm tracking-wider border-[3px] border-[var(--black)] transition-all hover:translate-y-[-2px]"
-            style={{ background: "white", color: "var(--black)" }}
-          >
-            NO THANKS &rarr;
-          </button>
-        </div>
-
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          title="CREATE ACCOUNT"
-          subtitle="Use your school email to create an account"
-          defaultMode="signup"
-          onSuccess={handleAuthSuccess}
-        />
-      </main>
-    );
-  }
 
   return (
     <main className="min-h-screen" style={{ background: "var(--beige)" }}>
@@ -582,6 +499,14 @@ export default function SubmitPage() {
           </button>
         </form>
       </div>
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        title="SIGN IN TO DROP YOUR PROFILE"
+        subtitle="Create an account first so your profile stays yours"
+        defaultMode="signup"
+        onSuccess={() => setShowAuthModal(false)}
+      />
     </main>
   );
 }
