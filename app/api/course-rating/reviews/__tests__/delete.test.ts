@@ -9,7 +9,7 @@ vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: vi.fn(),
 }));
 
-import { DELETE } from "../route";
+import { DELETE, POST } from "../route";
 
 describe("DELETE /api/course-rating/reviews", () => {
   it("returns 404 when ownership filtering affects zero rows", async () => {
@@ -29,5 +29,32 @@ describe("DELETE /api/course-rating/reviews", () => {
 
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ error: "Review not found" });
+  });
+});
+
+describe("POST /api/course-rating/reviews", () => {
+  it("fails closed when the database rate-limit query errors", async () => {
+    const rateLimitResult = Promise.resolve({
+      count: null,
+      error: { message: "count failed" },
+    });
+    const countChain: any = {
+      select: vi.fn(() => countChain),
+      eq: vi.fn(() => countChain),
+      gte: vi.fn(() => rateLimitResult),
+    };
+    const from = vi.fn(() => countChain);
+
+    const response = await (POST as any)({
+      user: { id: "user-1" },
+      supabase: { from },
+      body: { dept: "CSCI" },
+    });
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      error: "Failed to verify review rate limit",
+    });
+    expect(from).toHaveBeenCalledOnce();
   });
 });

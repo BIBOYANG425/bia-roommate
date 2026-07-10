@@ -9,4 +9,8 @@ describe("roommate submission auth contract", () => {
     expect(source).not.toContain("user_id: user?.id ?? null");
     expect(source).not.toContain("is(\"user_id\", null)");
   });
+
+  it("resumes the pending submission with the freshly authenticated user", () => {
+    expect(source).toContain("await persistProfile(authUser.id)");
+  });
 });

@@ -69,14 +69,8 @@ export default function SubmitPage() {
     setAvatarPreview(URL.createObjectURL(file));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate(["name", "contact"])) return;
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
-
+  const persistProfile = async (userId: string) => {
+    if (submitting) return;
     setSubmitting(true);
     setError(null);
 
@@ -93,7 +87,7 @@ export default function SubmitPage() {
 
     const { error: err } = await supabase
       .from("roommate_profiles")
-      .insert([{ ...payload, user_id: user.id }])
+      .insert([{ ...payload, user_id: userId }])
       .select("id")
       .single();
 
@@ -104,6 +98,29 @@ export default function SubmitPage() {
     }
 
     router.push("/roommates?submitted=true");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate(["name", "contact"])) return;
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    await persistProfile(user.id);
+  };
+
+  const handleAuthSuccess = async () => {
+    setShowAuthModal(false);
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !authUser) {
+      setError("SIGN IN SUCCEEDED, BUT YOUR SESSION COULD NOT BE VERIFIED");
+      return;
+    }
+    await persistProfile(authUser.id);
   };
 
   const canSubmit =
@@ -505,7 +522,7 @@ export default function SubmitPage() {
         title="SIGN IN TO DROP YOUR PROFILE"
         subtitle="Create an account first so your profile stays yours"
         defaultMode="signup"
-        onSuccess={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
       />
     </main>
   );
