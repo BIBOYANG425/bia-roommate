@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-export const likeToggleSchema = z.object({
+export const likeIntentSchema = z.object({
   profile_id: z.string().uuid(),
 });
 
-export type LikeToggleInput = z.infer<typeof likeToggleSchema>;
+export type LikeIntentInput = z.infer<typeof likeIntentSchema>;

@@ -237,13 +237,11 @@ export function useAccountData() {
     );
     try {
       const res = await fetch("/api/likes", {
-        method: "POST",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profile_id: profileId }),
       });
       const data = res.ok ? await res.json() : null;
-      // POST toggles; a pending liker is one we haven't liked, so it should
-      // return liked:true. If it somehow toggled off, revert.
       if (!data?.liked) {
         setLikedYou((list) =>
           list.map((p) =>
@@ -261,12 +259,16 @@ export function useAccountData() {
   async function handleUnlike(profileId: string) {
     const prev = likedProfiles;
     setLikedProfiles((p) => p.filter((x) => x.id !== profileId));
-    const { error } = await supabase
-      .from("profile_likes")
-      .delete()
-      .eq("user_id", user!.id)
-      .eq("profile_id", profileId);
-    if (error) setLikedProfiles(prev);
+    try {
+      const res = await fetch("/api/likes", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_id: profileId }),
+      });
+      if (!res.ok) setLikedProfiles(prev);
+    } catch {
+      setLikedProfiles(prev);
+    }
   }
 
   async function handleDeleteSublet(id: string) {

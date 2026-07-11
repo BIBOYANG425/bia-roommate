@@ -129,7 +129,7 @@ export default function ProfileModal({
     setLikeLoading(true);
     try {
       const res = await fetch("/api/likes", {
-        method: "POST",
+        method: liked ? "DELETE" : "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profile_id: profile.id }),
       });
@@ -141,7 +141,7 @@ export default function ProfileModal({
     } finally {
       setLikeLoading(false);
     }
-  }, [profile.id, likeLoading]);
+  }, [profile.id, likeLoading, liked]);
 
   const handleLike = useCallback(() => {
     if (likeLoading) return;

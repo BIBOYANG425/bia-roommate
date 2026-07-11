@@ -51,11 +51,11 @@ export const POST = authedHandler({
     const parsedMaxPeople = parseInt(String(body.max_people), 10);
     if (
       isNaN(parsedMaxPeople) ||
-      parsedMaxPeople < 1 ||
+      parsedMaxPeople < 2 ||
       parsedMaxPeople > 50
     ) {
       return NextResponse.json(
-        { error: "max_people must be between 1 and 50" },
+        { error: "max_people must be between 2 and 50" },
         { status: 400 },
       );
     }
@@ -79,6 +79,12 @@ export const POST = authedHandler({
       .single();
 
     if (error) {
+      if (error.code === "23514") {
+        return NextResponse.json(
+          { error: "max_people must be between 2 and 50" },
+          { status: 400 },
+        );
+      }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json(data);
