@@ -1,0 +1,10 @@
+{
+  "name": "@biboyang425/bia-shared",
+  "version": "0.6.0",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./phone": "./phone.ts",
+    "./analytics": "./analytics.ts"
+  }
+}

@@ -11,6 +11,7 @@ import {
   useContext,
   type ReactNode,
 } from "react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import ProductShell, { type ProductLanguage } from "@/components/ProductShell";
 
@@ -1709,13 +1710,14 @@ function ApartmentsContent({ language }: { language: ProductLanguage }) {
                   style={{ background: apt.gradient }}
                 >
                   {apt.photoUrl && !imgError && (
-                    <img
+                    <Image
                       key={apt.id}
                       src={apt.photoUrl}
                       alt={apt.name}
                       onError={() => setImgError(true)}
-                      loading="lazy"
-                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      style={{ objectFit: "cover" }}
                     />
                   )}
                   {/* Darken overlay when photo loaded */}
