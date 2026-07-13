@@ -1,6 +1,9 @@
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isValidTrojanQuestLocationId } from "@/lib/trojan-quest/locations";
 import { NextRequest } from "next/server";
+
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024; // 10 MB
 
 // GET — load the current user's checkins
 export async function GET() {
@@ -24,16 +27,31 @@ export async function POST(request: NextRequest) {
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const formData = await request.formData();
-  const file    = formData.get("photo")  as File | null;
-  const taskId  = formData.get("taskId") as string | null;
+  const file    = formData.get("photo");
+  const taskId  = formData.get("taskId");
   const isPublic = formData.get("isPublic") !== "false";
 
-  if (!file || !taskId)
+  // Validate runtime types before touching file properties.
+  if (!(file instanceof File) || typeof taskId !== "string" || !taskId)
     return Response.json({ error: "Missing photo or taskId" }, { status: 400 });
+  if (!isValidTrojanQuestLocationId(taskId))
+    return Response.json({ error: "Invalid taskId" }, { status: 400 });
   if (!file.type.startsWith("image/"))
     return Response.json({ error: "File must be an image" }, { status: 400 });
+  // Reject oversized uploads before buffering the whole file into memory.
+  if (file.size > MAX_PHOTO_BYTES)
+    return Response.json({ error: "Image too large (max 10 MB)" }, { status: 413 });
 
   const admin = createAdminSupabaseClient();
+
+  // Look up any existing check-in so its old photo can be cleaned up after replacing.
+  const { data: existing } = await supabase
+    .from("trojan_quest_checkins")
+    .select("photo_path")
+    .eq("user_id", user.id)
+    .eq("task_id", taskId)
+    .maybeSingle();
+
   const ext   = file.name.split(".").pop() ?? "jpg";
   const path  = `checkins/${user.id}/${taskId}/${Date.now()}.${ext}`;
 
@@ -56,8 +74,15 @@ export async function POST(request: NextRequest) {
     .select("id, photo_url, is_public")
     .single();
 
-  if (dbError)
+  if (dbError) {
+    // Roll back the just-uploaded object so it isn't orphaned.
+    await admin.storage.from("trojan-quest").remove([path]);
     return Response.json({ error: dbError.message }, { status: 500 });
+  }
+
+  // Remove the previous photo now that the record points at the new one.
+  if (existing?.photo_path && existing.photo_path !== path)
+    await admin.storage.from("trojan-quest").remove([existing.photo_path]);
 
   return Response.json(data);
 }
@@ -84,7 +109,14 @@ export async function DELETE(request: NextRequest) {
     return Response.json({ error: "Not found" }, { status: 404 });
 
   const admin = createAdminSupabaseClient();
-  await admin.storage.from("trojan-quest").remove([record.photo_path]);
+  // Only delete the DB row if the stored object was actually removed, so we
+  // never lose the photo_path reference while leaving a public object behind.
+  const { error: storageError } = await admin.storage
+    .from("trojan-quest")
+    .remove([record.photo_path]);
+
+  if (storageError)
+    return Response.json({ error: storageError.message }, { status: 500 });
 
   const { error: deleteError } = await supabase
     .from("trojan_quest_checkins")
@@ -108,12 +140,15 @@ export async function PATCH(request: NextRequest) {
   if (!checkinId || typeof isPublic !== "boolean")
     return Response.json({ error: "Missing checkinId or isPublic" }, { status: 400 });
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("trojan_quest_checkins")
     .update({ is_public: isPublic })
     .eq("id", checkinId)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .select("id");
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
+  if (!data || data.length === 0)
+    return Response.json({ error: "Not found" }, { status: 404 });
   return Response.json({ ok: true });
 }

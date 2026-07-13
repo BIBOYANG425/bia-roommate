@@ -85,6 +85,7 @@ const UI = {
   allTasksHeading:  { zh: "全部任务进度", en: "All Tasks" },
   footerText:       { zh: "TROJAN QUEST · USC 校园探索任务卡 · FIGHT ON", en: "TROJAN QUEST · USC CAMPUS EXPLORATION · FIGHT ON" },
   progressLabel:    { zh: "进度", en: "Progress" },
+  confirmDelete:    { zh: "确定要删除这个打卡吗？照片将无法恢复。", en: "Delete this check-in? The photo can't be recovered." },
 } as const;
 
 function u(key: keyof typeof UI, lang: Lang, ...args: number[]): string {
@@ -545,6 +546,7 @@ function TaskCard({
 
   async function handleDelete() {
     if (!task.checkinId) return;
+    if (!window.confirm(UI.confirmDelete[lang])) return;
     setDeleting(true);
     try {
       const res = await fetch("/api/trojan-quest/checkin", {
@@ -829,9 +831,12 @@ function TrojanQuestInner({ language }: { language: Lang }) {
   // Load user's existing checkins when logged in.
   // State is reset on sign-in/out via the remount key on TrojanQuestContent,
   // so this effect only fetches — it never sets state synchronously.
+  // The AbortController cancels an in-flight load if the effect re-runs,
+  // so a slow response can't repopulate stale (e.g. signed-out) state.
   useEffect(() => {
     if (!user) return;
-    fetch("/api/trojan-quest/checkin")
+    const controller = new AbortController();
+    fetch("/api/trojan-quest/checkin", { signal: controller.signal })
       .then(r => r.ok ? r.json() : [])
       .then((checkins: { id: string; task_id: string; photo_url: string; is_public: boolean }[]) => {
         setTasks(prev => prev.map(t => {
@@ -840,7 +845,9 @@ function TrojanQuestInner({ language }: { language: Lang }) {
             ? { ...t, completed: true, checkinId: c.id, checkinPhotoUrl: c.photo_url, checkinIsPublic: c.is_public }
             : t;
         }));
-      });
+      })
+      .catch(() => { /* ignore aborts and transient fetch errors */ });
+    return () => controller.abort();
   }, [user]);
 
   const mainTasks = tasks.filter(t => !["school","dining"].includes(t.category));
