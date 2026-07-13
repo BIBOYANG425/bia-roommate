@@ -31,7 +31,7 @@ const instrumentSerif = Instrument_Serif({
 
 const zcoolXiaoWei = ZCOOL_XiaoWei({
   weight: "400",
-  subsets: ["chinese-simplified"],
+  subsets: ["latin"],
   variable: "--font-zcool",
   display: "swap",
 });
