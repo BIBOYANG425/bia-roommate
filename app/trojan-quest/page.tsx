@@ -87,7 +87,7 @@ const UI = {
   progressLabel:    { zh: "进度", en: "Progress" },
 } as const;
 
-function u<T>(key: keyof typeof UI, lang: Lang, ...args: number[]): string {
+function u(key: keyof typeof UI, lang: Lang, ...args: number[]): string {
   const val = UI[key] as Record<Lang, string | ((...a: number[]) => string)>;
   const fn = val[lang];
   return typeof fn === "function" ? fn(...args) : fn;
@@ -588,7 +588,6 @@ function TaskCard({
   const catBg    = catMeta?.color ?? "#999";
 
   const mapsUrl  = `https://maps.google.com/?q=${task.mapQuery}`;
-  const embedUrl = `https://maps.google.com/maps?q=${task.mapQuery}&output=embed`;
 
   const title = lang === "en" ? task.titleEn : task.title;
   const desc  = lang === "en" ? task.descriptionEn : task.description;
@@ -814,6 +813,12 @@ function CampusMapTab({ tasks, lang }: { tasks: Task[]; lang: Lang }) {
 // ─── Page Content ─────────────────────────────────────────────────────────────
 
 function TrojanQuestContent({ language }: { language: Lang }) {
+  const { user } = useAuth();
+  // Remount on auth change so task state fully resets on sign-in/out.
+  return <TrojanQuestInner key={user?.id ?? "anon"} language={language} />;
+}
+
+function TrojanQuestInner({ language }: { language: Lang }) {
   const lang = language;
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
@@ -821,13 +826,11 @@ function TrojanQuestContent({ language }: { language: Lang }) {
   const [activeCat, setActiveCat] = useState<CategoryId>("all");
   const [activeSchoolCat, setActiveSchoolCat] = useState<CategoryId>("all");
 
-  // Load user's existing checkins when logged in
+  // Load user's existing checkins when logged in.
+  // State is reset on sign-in/out via the remount key on TrojanQuestContent,
+  // so this effect only fetches — it never sets state synchronously.
   useEffect(() => {
-    if (!user) {
-      // Reset completed state on sign-out
-      setTasks(INITIAL_TASKS);
-      return;
-    }
+    if (!user) return;
     fetch("/api/trojan-quest/checkin")
       .then(r => r.ok ? r.json() : [])
       .then((checkins: { id: string; task_id: string; photo_url: string; is_public: boolean }[]) => {
