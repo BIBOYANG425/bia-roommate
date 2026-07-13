@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Bebas_Neue, Inter, Instrument_Serif, ZCOOL_XiaoWei } from "next/font/google";
+import { Inter, Instrument_Serif, ZCOOL_XiaoWei } from "next/font/google";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/AuthProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
+import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import FeedbackButton from "@/components/FeedbackButton";
 import { SITE, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import "./globals.css";
@@ -11,13 +12,6 @@ import "./globals.css";
 const playlistScript = localFont({
   src: "../public/fonts/Playlist-Script.otf",
   variable: "--font-playlist",
-  display: "swap",
-});
-
-const bebasNeue = Bebas_Neue({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-display",
   display: "swap",
 });
 
@@ -94,7 +88,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${bebasNeue.variable} ${interFont.variable} ${instrumentSerif.variable} ${playlistScript.variable} ${zcoolXiaoWei.variable}`}
+      className={`${interFont.variable} ${instrumentSerif.variable} ${playlistScript.variable} ${zcoolXiaoWei.variable}`}
     >
       <head />
       <body>
@@ -118,7 +112,10 @@ export default function RootLayout({
         </LanguageProvider>
         {/* Film grain overlay */}
         <div className="grain" aria-hidden="true" />
+        {/* Vercel Web Analytics + PostHog are separate sinks. PostHog no-ops
+            entirely when NEXT_PUBLIC_POSTHOG_KEY is unset (see posthog-sink). */}
         <Analytics />
+        <AnalyticsProvider />
       </body>
     </html>
   );

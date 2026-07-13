@@ -2,15 +2,15 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import type { SchedulePrefs } from "@/app/course-planner/page";
-import type { Course, Section, RmpRating } from "@/lib/course-planner/types";
-import { parseSectionTimes, formatTime } from "@/lib/course-planner/conflicts";
+import type { Course, Section, RmpRating, TimeSlot } from "@/lib/course-planner/types";
+import { formatTime } from "@/lib/course-planner/conflicts";
 import { COURSE_COLORS } from "@/lib/course-planner/colors";
+import { classifySection } from "@/lib/course-planner/rules";
 import {
-  classifySection,
-  isSectionUsable,
-  rmpScore,
-  comboIsUsable,
-} from "@/lib/course-planner/rules";
+  buildSchedules as solveSchedules,
+  type GeneratedSchedule,
+  type CourseGroup,
+} from "@/shared/schedule-solver";
 import { useAuth } from "@/components/AuthProvider";
 import AuthModal from "@/components/AuthModal";
 import ResultCalendar from "./ResultCalendar";
@@ -29,18 +29,6 @@ function formatDaysShort(dayCode: string): string {
     .split("")
     .map((c) => map[c] || c)
     .join("");
-}
-
-interface ScheduleSection {
-  course: Course;
-  section: Section;
-  colorIndex: number;
-  geTag?: string; // e.g. "GE-A" if this course fulfills a GE
-}
-
-interface GeneratedSchedule {
-  sections: ScheduleSection[];
-  avgRating: number;
 }
 
 interface ResultsViewProps {
@@ -69,10 +57,7 @@ export default function ResultsView({
   >("idle");
   const [scheduleName, setScheduleName] = useState("");
   const [swappingCourse, setSwappingCourse] = useState<string | null>(null);
-  const courseGroupsRef = useRef<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SectionCombo type is scoped inside buildSchedules
-    { label: string; isGE: boolean; geTag?: string; combos: any[] }[]
-  >([]);
+  const courseGroupsRef = useRef<CourseGroup[]>([]);
 
   const buildSchedules = useCallback(async () => {
     setLoading(true);
@@ -193,344 +178,20 @@ export default function ResultsView({
       setRmpData({ ...rmpCache });
       setProgress(70);
 
-      // 3. Generate schedule combinations using backtracking
-      const getRating = (sec: Section): number => rmpScore(sec, rmpCache);
-
-      // Parse time preference filters
-      const earliestMin = prefs.earliestClass
-        ? parseInt(prefs.earliestClass.split(":")[0]) * 60
-        : 0;
-      const doneByMin = prefs.doneBy
-        ? parseInt(prefs.doneBy.split(":")[0]) * 60
-        : 24 * 60;
-
-      // Helper: check if a course number is graduate-level (500+)
-      const isGraduateLevel = (num: string): boolean => {
-        const n = parseInt(num.replace(/[^0-9]/g, ""), 10);
-        return !isNaN(n) && n >= 500;
-      };
-
-      // Build section combos: lecture + linked lab/discussion/quiz
-      type SectionCombo = {
-        course: Course;
-        sections: Section[]; // all sections in the combo
-        allSlots: { day: string; startMin: number; endMin: number }[];
-        rating: number; // lecture instructor rating
-      };
-
-      function buildCombos(course: Course, _geTag?: string): SectionCombo[] {
-        // Keep full sections here so lecture/discussion type detection is correct
-        // (a full lecture must still count as the "primary" type). excludeFull is
-        // applied per-combo below via comboIsUsable, so a full lecture drops the
-        // whole course instead of orphaning its discussion. Only drop cancelled +
-        // (optionally) D-clearance at this stage.
-        const allActive = (course.sections || []).filter((s) =>
-          isSectionUsable(s, {
-            excludeFull: false,
-            hideDClearance: prefs.hideDClearance,
-          }),
-        );
-
-        // Group by type
-        const byType: Record<string, Section[]> = {};
-        for (const s of allActive) {
-          const type = (s.type || "Lecture").toLowerCase();
-          if (!byType[type]) byType[type] = [];
-          byType[type].push(s);
-        }
-
-        const types = Object.keys(byType);
-        if (types.length === 0) return [];
-
-        // Identify primary type (lecture) and secondary types (lab, discussion, quiz)
-        const primaryKey = types.find((t) => t.includes("lecture")) || types[0];
-        const secondaryKeys = types.filter((t) => t !== primaryKey);
-
-        const primaries = byType[primaryKey] || [];
-        if (primaries.length === 0) return [];
-
-        // If no secondary types, each primary is its own combo
-        if (secondaryKeys.length === 0) {
-          return primaries
-            .map((sec) => {
-              const slots = parseSectionTimes(sec.times);
-              return {
-                course,
-                sections: [sec],
-                allSlots: slots,
-                rating: getRating(sec),
-              };
-            })
-            .filter(
-              (c) =>
-                c.allSlots.length > 0 &&
-                comboIsUsable(c.sections, prefs.excludeFull),
-            );
-        }
-
-        // Build combos: for each primary, find compatible secondaries
-        const combos: SectionCombo[] = [];
-
-        for (const primary of primaries) {
-          const primarySlots = parseSectionTimes(primary.times);
-          if (primarySlots.length === 0) continue;
-
-          // Find matching secondaries for each type
-          const secondaryOptions: Section[][] = secondaryKeys.map((key) => {
-            const candidates = byType[key];
-            // Filter by linkCode: match if same linkCode, or if either is null/empty
-            return candidates.filter((s) => {
-              if (!primary.linkCode && !s.linkCode) return true;
-              if (!primary.linkCode || !s.linkCode) return true;
-              return primary.linkCode === s.linkCode;
-            });
-          });
-
-          // Check if any required secondary type has no compatible sections
-          const hasRequired = secondaryKeys.every((key, i) => {
-            // A secondary type is "required" if any section has time slots or is linked
-            const hasTimed = byType[key].some(
-              (s) => parseSectionTimes(s.times).length > 0 || !!s.linkCode,
-            );
-            return !hasTimed || secondaryOptions[i].length > 0;
-          });
-          if (!hasRequired) continue;
-
-          // Generate combos: primary + one from each secondary type
-          // For efficiency, limit secondary exploration
-          function generateCombos(
-            secIdx: number,
-            current: Section[],
-            currentSlots: { day: string; startMin: number; endMin: number }[],
-          ) {
-            if (combos.length >= 30) return;
-            if (secIdx >= secondaryKeys.length) {
-              combos.push({
-                course,
-                sections: [primary, ...current],
-                allSlots: [...currentSlots],
-                rating: getRating(primary),
-              });
-              return;
-            }
-
-            const options = secondaryOptions[secIdx];
-            // If no timed or linked sections for this type, skip it
-            const timedOptions = options.filter(
-              (s) => parseSectionTimes(s.times).length > 0 || !!s.linkCode,
-            );
-            if (timedOptions.length === 0) {
-              generateCombos(secIdx + 1, current, currentSlots);
-              return;
-            }
-
-            for (const sec of timedOptions.slice(0, 8)) {
-              const slots = parseSectionTimes(sec.times);
-              // Check internal conflicts
-              const hasConflict = slots.some((a) =>
-                currentSlots.some(
-                  (b) =>
-                    a.day === b.day &&
-                    a.startMin < b.endMin &&
-                    b.startMin < a.endMin,
-                ),
-              );
-              if (hasConflict) continue;
-
-              current.push(sec);
-              currentSlots.push(...slots);
-              generateCombos(secIdx + 1, current, currentSlots);
-              current.pop();
-              currentSlots.splice(
-                currentSlots.length - slots.length,
-                slots.length,
-              );
-            }
-          }
-
-          generateCombos(0, [], primarySlots);
-        }
-
-        // excludeFull is applied per-combo: a lecture+discussion combo is dropped
-        // if any of its sections is full, so a full lecture removes the whole
-        // course rather than leaving an orphan discussion.
-        return combos.filter((c) => comboIsUsable(c.sections, prefs.excludeFull));
-      }
-
-      // Group courses by the original selection and build combos
-      type CourseGroup = {
-        label: string;
-        isGE: boolean;
-        geTag?: string;
-        combos: SectionCombo[];
-      };
-      const courseGroups: CourseGroup[] = [];
-
-      for (const sel of courses) {
-        let matching = selectionMap[sel.id] || [];
-
-        // Filter out graduate-level courses if preference is set
-        if (prefs.hideGraduate) {
-          matching = matching.filter((c) => !isGraduateLevel(c.number));
-        }
-
-        // Filter out Thematic Option (CORE) courses if preference is set
-        if (prefs.hideThematicOption) {
-          matching = matching.filter(
-            (c) =>
-              c.department.toUpperCase() !== "CORE" &&
-              !c.title.toLowerCase().includes("thematic option"),
-          );
-        }
-
-        if (matching.length > 0) {
-          const isGE = sel.id.startsWith("GE-");
-          const geTag = isGE ? sel.id : undefined;
-          const allCombos: SectionCombo[] = [];
-
-          for (const c of matching) {
-            allCombos.push(...buildCombos(c, geTag));
-          }
-
-          // Sort by rating descending
-          allCombos.sort((a, b) => b.rating - a.rating);
-
-          if (allCombos.length > 0) {
-            courseGroups.push({
-              label: sel.label,
-              isGE,
-              geTag,
-              combos: isGE ? allCombos.slice(0, 40) : allCombos,
-            });
-          }
-        }
-      }
-
-      // Generate top schedules via backtracking with diversity
-      const results: GeneratedSchedule[] = [];
-      const maxResults = 5;
-      const timeout = Date.now() + 25000;
-
-      // Shuffle combos with similar ratings for diversity
-      function shuffleTied<T extends { rating: number }>(arr: T[]): T[] {
-        const copy = [...arr];
-        for (let i = copy.length - 1; i > 0; i--) {
-          // Only shuffle among items with similar ratings (within 0.15)
-          let j = i;
-          while (j > 0 && Math.abs(copy[j - 1].rating - copy[i].rating) < 0.15)
-            j--;
-          const swapIdx = j + Math.floor(Math.random() * (i - j + 1));
-          [copy[i], copy[swapIdx]] = [copy[swapIdx], copy[i]];
-        }
-        return copy;
-      }
-
-      function backtrack(
-        groupIdx: number,
-        selected: ScheduleSection[],
-        totalRating: number,
-        usedSlots: { day: string; startMin: number; endMin: number }[],
-      ) {
-        if (Date.now() > timeout) return;
-        if (results.length >= maxResults * 10) return;
-
-        if (groupIdx >= courseGroups.length) {
-          const ratingCount =
-            selected.filter(
-              (s) =>
-                s.section.type.toLowerCase().includes("lecture") ||
-                !s.section.type,
-            ).length || selected.length;
-          const avg = ratingCount > 0 ? totalRating / ratingCount : 0;
-          results.push({
-            sections: [...selected],
-            avgRating: Math.round(avg * 100) / 100,
-          });
-          return;
-        }
-
-        const group = courseGroups[groupIdx];
-        const baseSlice = group.isGE
-          ? group.combos.slice(0, 20)
-          : group.combos.slice(0, 15);
-        const combosToTry = shuffleTied(baseSlice);
-
-        for (const combo of combosToTry) {
-          // Check time preferences for all slots
-          const meetsPrefs = combo.allSlots.every(
-            (s) => s.startMin >= earliestMin && s.endMin <= doneByMin,
-          );
-          if (!meetsPrefs && (prefs.earliestClass || prefs.doneBy)) continue;
-
-          // Blocked-days: skip any combo meeting on a day the user blocked.
-          if (
-            prefs.blockedDays.length > 0 &&
-            combo.allSlots.some((s) =>
-              (prefs.blockedDays as string[]).includes(s.day),
-            )
-          ) {
-            continue;
-          }
-
-          // Check conflicts with already-selected sections
-          const hasConflict = combo.allSlots.some((newSlot) =>
-            usedSlots.some(
-              (existing) =>
-                existing.day === newSlot.day &&
-                existing.startMin < newSlot.endMin &&
-                newSlot.startMin < existing.endMin,
-            ),
-          );
-          if (hasConflict) continue;
-
-          // Add all sections in the combo
-          const newEntries: ScheduleSection[] = combo.sections.map((sec) => ({
-            course: combo.course,
-            section: sec,
-            colorIndex: groupIdx % COURSE_COLORS.length,
-            geTag: group.geTag,
-          }));
-
-          selected.push(...newEntries);
-          const newSlots = [...usedSlots, ...combo.allSlots];
-
-          backtrack(
-            groupIdx + 1,
-            selected,
-            totalRating + combo.rating,
-            newSlots,
-          );
-
-          selected.splice(
-            selected.length - newEntries.length,
-            newEntries.length,
-          );
-
-          // If we already have enough results, stop exploring this group
-          if (results.length >= maxResults * 10) return;
-        }
-      }
+      // 3. Generate schedule combinations (shared solver — the same framework-free
+      // code path the Chrome extension uses). Network + RMP fetching stays here;
+      // only the pure solve is hoisted to shared/schedule-solver.ts.
+      const { schedules: top, courseGroups } = solveSchedules({
+        selections: courses,
+        selectionMap,
+        rmpCache,
+        prefs,
+        colorCount: COURSE_COLORS.length,
+      });
 
       courseGroupsRef.current = courseGroups;
-      backtrack(0, [], 0, []);
 
       setProgress(95);
-
-      // Sort by average rating and deduplicate, then take top 5
-      results.sort((a, b) => b.avgRating - a.avgRating);
-      const seen = new Set<string>();
-      const top: GeneratedSchedule[] = [];
-      for (const r of results) {
-        const key = r.sections
-          .map((s) => s.section.id)
-          .sort()
-          .join(",");
-        if (!seen.has(key)) {
-          seen.add(key);
-          top.push(r);
-        }
-        if (top.length >= maxResults) break;
-      }
 
       if (top.length === 0) {
         setError("NO VALID SCHEDULE FOUND — TRY ADJUSTING PREFERENCES");
@@ -580,8 +241,7 @@ export default function ResultsView({
           })),
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SectionCombo slot type
-      const hasConflict = newCombo.allSlots.some((newSlot: any) =>
+      const hasConflict = newCombo.allSlots.some((newSlot: TimeSlot) =>
         otherSlots.some(
           (existing) =>
             existing.day === newSlot.day &&
@@ -596,8 +256,7 @@ export default function ResultsView({
       const groupIdx = courseGroupsRef.current.indexOf(group);
       const newSections = [
         ...otherSections,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SectionCombo section type
-        ...newCombo.sections.map((sec: any) => ({
+        ...newCombo.sections.map((sec) => ({
           course: newCombo.course,
           section: sec,
           colorIndex: groupIdx % 8,
@@ -815,11 +474,9 @@ export default function ResultsView({
                           </p>
                           {group.combos
                             .slice(0, 8)
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SectionCombo type scoped in buildSchedules
-                            .map((combo: any, ci: number) => {
+                            .map((combo, ci: number) => {
                               const lec = combo.sections.find(
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Section type scoped in buildSchedules
-                                (sec: any) =>
+                                (sec) =>
                                   sec.type.toLowerCase().includes("lecture") ||
                                   !sec.type,
                               );

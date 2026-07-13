@@ -39,5 +39,13 @@ export async function relayDraft(
   }
 
   const data = await res.json().catch(() => null);
-  return { status: 200, body: { draft: data?.draft ?? data } };
+  const draft = data?.draft ?? data;
+  if (draft?.max_people != null) {
+    const maxPeople = Number(draft.max_people);
+    if (!Number.isInteger(maxPeople) || maxPeople < 2 || maxPeople > 50) {
+      return { status: 502, body: { error: "draft_invalid" } };
+    }
+    draft.max_people = maxPeople;
+  }
+  return { status: 200, body: { draft } };
 }

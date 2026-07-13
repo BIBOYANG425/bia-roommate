@@ -280,8 +280,19 @@ George is a bilingual AI companion deployed on WeChat Official Account and iMess
 │   ├── tests/                  #   Vitest: injection, personality, tools, round-trip
 │   └── Dockerfile              #   Node 20 slim, port 3001
 │
-└── supabase/                   # Database migrations
+└── (no supabase/)              # Schema is owned by bia-admin — see "Database Schema" below
 ```
+
+### Database Schema
+
+The database schema is **owned by [bia-admin](https://github.com/BIBOYANG425/bia-admin)**, not this repo.
+There is intentionally **no `supabase/` directory here**. Migrations live in bia-admin under
+`docs/schema-history/bia-roommate/` and are the single source of truth — they are applied to the shared
+Supabase project from that repo only.
+
+Do **not** add SQL migrations (or a local `supabase/migrations/` directory) to this repo. Stale local
+copies previously drifted from the real schema and could clobber production if `db push`ed. The
+`lib/__tests__/no-local-schema.test.ts` guard fails the suite if a local migrations directory reappears.
 
 ### George Message Flow
 

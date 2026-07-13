@@ -9,7 +9,9 @@ import { useState } from "react";
 import {
   SHIPPING_METHOD_VALUES,
   SHIPPING_METHOD_META,
+  UNKNOWN_SHIPPING_METHOD_META,
   PACK_REQUEST_STATUS_LABELS,
+  metaFor,
   type Parcel,
   type ShippingMethod,
   type PackRequestWithParcels,
@@ -149,8 +151,8 @@ export default function PackRequestSection({
                         className="ml-2 text-xs"
                         style={{ color: "var(--black)" }}
                       >
-                        {SHIPPING_METHOD_META[r.preferred_method].icon}{" "}
-                        {SHIPPING_METHOD_META[r.preferred_method].label}
+                        {metaFor(SHIPPING_METHOD_META, r.preferred_method, UNKNOWN_SHIPPING_METHOD_META).icon}{" "}
+                        {metaFor(SHIPPING_METHOD_META, r.preferred_method, UNKNOWN_SHIPPING_METHOD_META).label}
                       </span>
                     )}
                   </div>
@@ -261,7 +263,7 @@ export default function PackRequestSection({
                       className="text-xs shrink-0"
                       style={{ color: "var(--mid)" }}
                     >
-                      {SHIPPING_METHOD_META[p.shipping_method].icon}
+                      {metaFor(SHIPPING_METHOD_META, p.shipping_method, UNKNOWN_SHIPPING_METHOD_META).icon}
                     </span>
                   )}
                 </label>

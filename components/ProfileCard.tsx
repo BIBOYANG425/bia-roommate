@@ -69,7 +69,7 @@ export default function ProfileCard({
     setLikeLoading(true);
     try {
       const res = await fetch("/api/likes", {
-        method: "POST",
+        method: localLiked ? "DELETE" : "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profile_id: profile.id }),
       });
@@ -81,7 +81,7 @@ export default function ProfileCard({
     } finally {
       setLikeLoading(false);
     }
-  }, [profile.id, likeLoading, onLikeChange]);
+  }, [profile.id, likeLoading, localLiked, onLikeChange]);
 
   const handleLike = useCallback(
     (e: React.MouseEvent) => {

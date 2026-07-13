@@ -351,6 +351,10 @@ export type AgentEvent =
     }
   | { type: "recommending"; message: string }
   | { type: "results"; data: AgentRecommendation[] }
+  /** Emitted when filters (level / units / prof-rating floor) or the ranker
+   *  leave zero matches. The UI renders this as a "no matches — loosen your
+   *  filters" empty state instead of hanging on the loading dots. */
+  | { type: "no_results"; message: string }
   | { type: "clarification"; questions: ClarifyingQuestion[] }
   | { type: "error"; message: string; isRejection?: boolean };
 

@@ -72,12 +72,19 @@ export default function OnboardingFlow() {
 
     async function loadProfile() {
       const supabase = createBrowserSupabaseClient();
-      const { data } = await supabase
+      const { data: existingProfile, error: profileError } = await supabase
         .from("roommate_profiles")
         .select("*")
         .eq("user_id", user!.id)
         .maybeSingle();
 
+      if (profileError) {
+        setError(profileError.message);
+        setProfileLoading(false);
+        return;
+      }
+
+      const data = existingProfile;
       if (data) {
         setExistingId(data.id);
         // Prefer structured channels; fall back to wrapping the old `contact`
@@ -115,7 +122,7 @@ export default function OnboardingFlow() {
     }
 
     loadProfile();
-  }, [user, setForm]);
+  }, [user, setForm, setError]);
 
   /* ── Validation ── */
   function canProceed(): boolean {
@@ -152,7 +159,7 @@ export default function OnboardingFlow() {
     const supabase = createBrowserSupabaseClient();
     const payload = buildPayload(null);
 
-    const { error } = existingId
+    let { error } = existingId
       ? await supabase
           .from("roommate_profiles")
           .update(payload)
@@ -161,6 +168,26 @@ export default function OnboardingFlow() {
       : await supabase
           .from("roommate_profiles")
           .insert({ ...payload, user_id: user!.id });
+
+    if (!existingId && error?.code === "23505") {
+      const { data: duplicate, error: lookupError } = await supabase
+        .from("roommate_profiles")
+        .select("id")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      if (lookupError || !duplicate) {
+        setError(lookupError?.message ?? error.message);
+        setSubmitting(false);
+        return;
+      }
+      setExistingId(duplicate.id);
+      const retry = await supabase
+        .from("roommate_profiles")
+        .update(payload)
+        .eq("id", duplicate.id)
+        .eq("user_id", user!.id);
+      error = retry.error;
+    }
 
     if (error) {
       setError(error.message);
@@ -549,7 +576,9 @@ export default function OnboardingFlow() {
 
                 <div className="space-y-3 mb-3">
                   {formData.contactChannels.map((ch, i) => {
-                    const meta = CONTACT_PLATFORM_META[ch.platform];
+                    const meta =
+                      CONTACT_PLATFORM_META[ch.platform] ??
+                      CONTACT_PLATFORM_META.other;
                     return (
                       <div
                         key={i}
@@ -729,19 +758,19 @@ export default function OnboardingFlow() {
                 </button>
               )}
             </div>
-            {errors.general && (
-              <div
-                className="mt-3 p-3 border-[2px] text-xs"
-                style={{
-                  borderColor: "var(--cardinal)",
-                  color: "var(--cardinal)",
-                  background: "color-mix(in srgb, var(--cardinal) 5%, white)",
-                }}
-              >
-                SAVE FAILED: {errors.general}
-              </div>
-            )}
           </div>
+          {errors.general && (
+            <div
+              className="mt-3 p-3 border-[2px] text-xs"
+              style={{
+                borderColor: "var(--cardinal)",
+                color: "var(--cardinal)",
+                background: "color-mix(in srgb, var(--cardinal) 5%, white)",
+              }}
+            >
+              SAVE FAILED: {errors.general}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -44,14 +44,35 @@ function SubletSubmitContent() {
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
+  const [removedExistingPhotoPaths, setRemovedExistingPhotoPaths] = useState<
+    string[]
+  >([]);
+
+  const storagePathFromPublicUrl = (url: string) => {
+    const marker = "/storage/v1/object/public/sublet-photos/";
+    const markerIndex = url.indexOf(marker);
+    return markerIndex === -1
+      ? null
+      : decodeURIComponent(url.slice(markerIndex + marker.length));
+  };
+
+  const cleanupSubletPhotos = async (paths: string[]) => {
+    if (paths.length === 0) return;
+    await supabase.storage.from("sublet-photos").remove(paths);
+  };
 
   useEffect(() => {
-    if (!editId) return;
+    // Wait for auth: only the owner may preload a listing into the edit form,
+    // so scope the fetch by user_id (a listing that isn't theirs returns no
+    // row and the form stays blank instead of leaking someone else's data).
+    if (!editId || !user) return;
+    const ownerId = user.id;
     async function loadListing() {
       const { data } = await supabase
         .from("sublets")
         .select("*")
         .eq("id", editId)
+        .eq("user_id", ownerId)
         .single();
       if (data) {
         const d = data as SubletListing;
@@ -74,7 +95,7 @@ function SubletSubmitContent() {
       setLoadingEdit(false);
     }
     loadListing();
-  }, [editId]);
+  }, [editId, user]);
 
   const toggleAmenity = (a: string) => {
     setAmenities((prev) =>
@@ -84,7 +105,8 @@ function SubletSubmitContent() {
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const remaining = 6 - photoFiles.length;
+    // The 6-photo cap covers existing (kept) + newly picked photos together.
+    const remaining = 6 - existingPhotos.length - photoFiles.length;
     if (remaining <= 0) return;
 
     const toAdd = files.slice(0, remaining);
@@ -107,9 +129,16 @@ function SubletSubmitContent() {
     setPhotoPreviews((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  // Keep the latest previews in a ref so the unmount cleanup revokes the real
+  // current set. Capturing `photoPreviews` directly in a []-deps effect froze
+  // the empty initial array, leaking every object URL created afterwards.
+  const photoPreviewsRef = useRef<string[]>([]);
   useEffect(() => {
-    return () => photoPreviews.forEach(URL.revokeObjectURL);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    photoPreviewsRef.current = photoPreviews;
+  }, [photoPreviews]);
+  useEffect(() => {
+    return () =>
+      photoPreviewsRef.current.forEach((url) => URL.revokeObjectURL(url));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,23 +152,24 @@ function SubletSubmitContent() {
     setSubmitting(true);
     setError(null);
 
-    let photoUrls: string[] = [];
+    const uploadedPaths: string[] = [];
+    const photoUrls: string[] = [];
     if (photoFiles.length > 0) {
       try {
-        photoUrls = await Promise.all(
-          photoFiles.map(async (file) => {
-            const ext = file.name.split(".").pop();
-            const filePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-            const { data, error: uploadErr } = await supabase.storage
-              .from("sublet-photos")
-              .upload(filePath, file, { cacheControl: "3600", upsert: true });
-            if (uploadErr) throw uploadErr;
-            return supabase.storage
-              .from("sublet-photos")
-              .getPublicUrl(data.path).data.publicUrl;
-          }),
-        );
+        for (const file of photoFiles) {
+          const ext = file.name.split(".").pop();
+          const filePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+          const bucket = supabase.storage.from("sublet-photos");
+          const { data, error: uploadErr } = await bucket.upload(filePath, file, {
+            cacheControl: "3600",
+            upsert: true,
+          });
+          if (uploadErr) throw uploadErr;
+          uploadedPaths.push(data.path);
+          photoUrls.push(bucket.getPublicUrl(data.path).data.publicUrl);
+        }
       } catch {
+        await cleanupSubletPhotos(uploadedPaths);
         setError("PHOTO UPLOAD FAILED — TRY AGAIN");
         setSubmitting(false);
         return;
@@ -166,19 +196,39 @@ function SubletSubmitContent() {
       user_id: user.id,
     };
 
-    const { error: err } = editId
-      ? await supabase
-          .from("sublets")
-          .update(formData)
-          .eq("id", editId)
-          .eq("user_id", user.id)
-      : await supabase.from("sublets").insert([formData]);
-
-    if (err) {
-      setError(`SUBMISSION FAILED: ${err.message}`);
-      setSubmitting(false);
-      return;
+    if (editId) {
+      // `.select()` returns the affected rows. If RLS/ownership blocks the
+      // update, Postgres reports no error but zero rows — treat that as a
+      // failure instead of a silent no-op that "succeeds" and redirects.
+      const { data: updated, error: err } = await supabase
+        .from("sublets")
+        .update(formData)
+        .eq("id", editId)
+        .eq("user_id", user.id)
+        .select();
+      if (err) {
+        await cleanupSubletPhotos(uploadedPaths);
+        setError(`SUBMISSION FAILED: ${err.message}`);
+        setSubmitting(false);
+        return;
+      }
+      if (!updated || updated.length === 0) {
+        await cleanupSubletPhotos(uploadedPaths);
+        setError("UPDATE FAILED — LISTING NOT FOUND OR NOT YOURS");
+        setSubmitting(false);
+        return;
+      }
+    } else {
+      const { error: err } = await supabase.from("sublets").insert([formData]);
+      if (err) {
+        await cleanupSubletPhotos(uploadedPaths);
+        setError(`SUBMISSION FAILED: ${err.message}`);
+        setSubmitting(false);
+        return;
+      }
     }
+
+    await cleanupSubletPhotos(removedExistingPhotoPaths);
 
     router.push(editId ? "/sublet?updated=true" : "/sublet?submitted=true");
   };
@@ -188,7 +238,7 @@ function SubletSubmitContent() {
     apartmentName.trim() &&
     address.trim() &&
     rent &&
-    !isNaN(parseInt(rent, 10)) &&
+    parseInt(rent, 10) > 0 &&
     contact.trim() &&
     posterName.trim() &&
     school &&
@@ -541,11 +591,15 @@ function SubletSubmitContent() {
                   />
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      const path = storagePathFromPublicUrl(src);
+                      if (path) {
+                        setRemovedExistingPhotoPaths((prev) => [...prev, path]);
+                      }
                       setExistingPhotos((prev) =>
                         prev.filter((_, i) => i !== idx),
-                      )
-                    }
+                      );
+                    }}
                     className="absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center border-[2px] border-[var(--black)] font-display text-[10px] hover:bg-[var(--gold)] transition-colors"
                     style={{ background: "var(--cream)" }}
                   >
@@ -600,7 +654,8 @@ function SubletSubmitContent() {
               className="text-[10px] uppercase tracking-wider"
               style={{ color: "var(--mid)" }}
             >
-              {photoFiles.length}/6 PHOTOS — JPG / PNG — MAX 2MB EACH
+              {existingPhotos.length + photoFiles.length}/6 PHOTOS — JPG / PNG —
+              MAX 2MB EACH
             </p>
           </div>
 

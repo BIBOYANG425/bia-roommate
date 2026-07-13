@@ -4,7 +4,12 @@ import { startTransition, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { SHIPPING_METHOD_META, type Parcel } from "@/lib/types";
+import {
+  SHIPPING_METHOD_META,
+  UNKNOWN_SHIPPING_METHOD_META,
+  metaFor,
+  type Parcel,
+} from "@/lib/types";
 import { relativeTime } from "@/lib/utils";
 import ParcelStatusPill from "./ParcelStatusPill";
 
@@ -105,8 +110,8 @@ export default function ParcelCard({
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] uppercase tracking-wider">
           {parcel.shipping_method && (
             <span style={{ color: "var(--cardinal)" }}>
-              {SHIPPING_METHOD_META[parcel.shipping_method].icon}{" "}
-              {SHIPPING_METHOD_META[parcel.shipping_method].label}
+              {metaFor(SHIPPING_METHOD_META, parcel.shipping_method, UNKNOWN_SHIPPING_METHOD_META).icon}{" "}
+              {metaFor(SHIPPING_METHOD_META, parcel.shipping_method, UNKNOWN_SHIPPING_METHOD_META).label}
             </span>
           )}
           {parcel.category && (

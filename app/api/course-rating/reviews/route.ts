@@ -113,11 +113,19 @@ export const POST = authedHandler({
   // Rate limit stays DB-based (count last hour) — the in-memory checkRateLimit
   // can't tell us "did this user post 10 reviews across cold starts".
   handler: async ({ user, supabase, body }) => {
-    const { count } = await supabase
+    const { count, error: countError } = await supabase
       .from("course_reviews")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .gte("created_at", new Date(Date.now() - 3600000).toISOString());
+
+    if (countError) {
+      console.error("[course-rating] rate-limit query failed:", countError);
+      return NextResponse.json(
+        { error: "Failed to verify review rate limit" },
+        { status: 500 },
+      );
+    }
 
     if (count && count >= 10) {
       return NextResponse.json(
@@ -159,11 +167,12 @@ export const DELETE = authedHandler({
       );
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("course_reviews")
       .delete()
       .eq("id", id)
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .select("id");
 
     if (error) {
       console.error("[course-rating] DELETE error:", error);
@@ -171,6 +180,9 @@ export const DELETE = authedHandler({
         { error: "Failed to delete review" },
         { status: 500 },
       );
+    }
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: "Review not found" }, { status: 404 });
     }
     return NextResponse.json({ deleted: true });
   },

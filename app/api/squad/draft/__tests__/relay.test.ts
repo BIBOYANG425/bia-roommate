@@ -78,6 +78,20 @@ describe("relayDraft", () => {
     expect((result.body as { error: string }).error).toBe("draft_unavailable");
   });
 
+  it("rejects a generated one-person squad at the draft boundary", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        makeRes(200, { draft: { category: "拼车", max_people: 1 } }),
+      ),
+    );
+
+    const { relayDraft } = await import("../relay");
+    const result = await relayDraft("一起拼车");
+
+    expect(result).toEqual({ status: 502, body: { error: "draft_invalid" } });
+  });
+
   it("returns 502 draft_unavailable when fetch throws (network failure)", async () => {
     vi.stubGlobal(
       "fetch",

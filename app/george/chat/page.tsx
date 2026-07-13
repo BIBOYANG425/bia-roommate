@@ -57,14 +57,10 @@ export default function GeorgeChatPage() {
     setLoading(true)
 
     try {
-      const history = messages
-        .filter((m) => m.id !== 'welcome')
-        .map((m) => ({ role: m.role, content: m.content }))
-
       const res = await fetch('/api/george/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, history, userId }),
+        body: JSON.stringify({ message: text, userId }),
       })
 
       const data = await res.json()
@@ -87,7 +83,7 @@ export default function GeorgeChatPage() {
       setLoading(false)
       inputRef.current?.focus()
     }
-  }, [input, loading, messages, userId])
+  }, [input, loading, userId])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

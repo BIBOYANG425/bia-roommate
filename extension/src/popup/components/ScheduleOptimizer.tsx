@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import type {
-  Course,
-  SelectedSection,
-  TimeSlot,
-  DayOfWeek,
-} from "../../shared/types";
+import type { Course, SelectedSection } from "../../shared/types";
 import { DEFAULT_SETTINGS } from "../../shared/types";
-import { COURSE_COLORS, getNextColorIndex } from "../../shared/constants";
+import { COURSE_COLORS } from "../../shared/constants";
+// Same framework-free solver the web app's ResultsView runs (SANCTIONED: the
+// extension's schedule scoring converges to site behavior). Lives at the repo
+// root so both the Next build and the extension's tsc compile it.
+import { buildSchedules } from "../../../../shared/schedule-solver";
+import { parseSectionTimes } from "../../../../shared/schedule-conflicts";
 import { MiniCalendar } from "./MiniCalendar";
 
 // ─── GE categories (same as web app) ───
@@ -22,208 +22,10 @@ const GE_CATEGORIES = [
   { code: "GE-H", name: "Global Perspectives II" },
 ] as const;
 
-// ─── Optimizer algorithm ───
-
-const DAY_MAP: Record<string, DayOfWeek> = {
-  M: "Mon",
-  T: "Tue",
-  W: "Wed",
-  H: "Thu",
-  F: "Fri",
-};
-
-function parseTimeToMinutes(time: string): number {
-  const [h, m] = time.split(":").map(Number);
-  return h * 60 + (m || 0);
-}
-
-function parseSectionTimes(
-  times: Course["sections"][number]["times"],
-): TimeSlot[] {
-  const slots: TimeSlot[] = [];
-  for (const t of times) {
-    if (!t.start_time || !t.end_time || !t.day) continue;
-    if (t.day.toUpperCase() === "TBA") continue;
-    const startMin = parseTimeToMinutes(t.start_time);
-    const endMin = parseTimeToMinutes(t.end_time);
-    for (const dayChar of t.day.split("")) {
-      const day = DAY_MAP[dayChar];
-      if (day) slots.push({ day, startMin, endMin });
-    }
-  }
-  return slots;
-}
-
-function slotsConflict(a: TimeSlot, b: TimeSlot): boolean {
-  return a.day === b.day && a.startMin < b.endMin && b.startMin < a.endMin;
-}
-
-// A "combo" is a valid combination of sections for one course:
-// e.g., Lecture + Discussion, or Lecture + Lab, or just Lecture if no linked sections
-interface SectionCombo {
-  course: Course;
-  sections: { section: Course["sections"][number]; slots: TimeSlot[] }[];
-  allSlots: TimeSlot[];
-  score: number;
-}
-
-// Build all valid section combos for a course (lecture + discussion/lab pairs)
-function buildCombos(course: Course): SectionCombo[] {
-  const byType: Record<
-    string,
-    { section: Course["sections"][number]; slots: TimeSlot[] }[]
-  > = {};
-
-  for (const s of course.sections || []) {
-    if (s.isCancelled) continue;
-    // Exclude truly full sections (no seats). Keep "closed registration"
-    // sections (isClosed but seats remain) — user may still get in via
-    // d-clearance, waitlist, or off-cycle add.
-    if (s.capacity > 0 && s.registered >= s.capacity) continue;
-    const slots = parseSectionTimes(s.times);
-    // Keep sections even if TBA — they may be quizzes
-    const type = (s.type || "Lecture").toLowerCase();
-    if (!byType[type]) byType[type] = [];
-    byType[type].push({ section: s, slots });
-  }
-
-  const types = Object.keys(byType);
-  if (types.length === 0) return [];
-
-  // Sort types so Lecture comes first (primary), then others
-  types.sort((a, b) => {
-    if (a === "lecture") return -1;
-    if (b === "lecture") return 1;
-    return a.localeCompare(b);
-  });
-
-  // Filter out types where ALL sections have no time data (TBA-only types like Quiz)
-  const requiredTypes = types.filter((t) =>
-    byType[t].some((s) => s.slots.length > 0),
-  );
-
-  // If no required types, return empty
-  if (requiredTypes.length === 0) return [];
-
-  const combos: SectionCombo[] = [];
-
-  function generate(
-    typeIdx: number,
-    current: { section: Course["sections"][number]; slots: TimeSlot[] }[],
-    currentSlots: TimeSlot[],
-  ) {
-    // Limit total combos for performance
-    if (combos.length >= 50) return;
-
-    if (typeIdx >= requiredTypes.length) {
-      if (current.length > 0) {
-        combos.push({
-          course,
-          sections: [...current],
-          allSlots: [...currentSlots],
-          score: 2.5 * current.length,
-        });
-      }
-      return;
-    }
-
-    for (const entry of byType[requiredTypes[typeIdx]]) {
-      if (entry.slots.length === 0) continue;
-
-      // Check for conflicts within this combo
-      const hasInternalConflict = entry.slots.some((a) =>
-        currentSlots.some((b) => slotsConflict(a, b)),
-      );
-      if (hasInternalConflict) continue;
-
-      current.push(entry);
-      currentSlots.push(...entry.slots);
-      generate(typeIdx + 1, current, currentSlots);
-      current.pop();
-      currentSlots.splice(
-        currentSlots.length - entry.slots.length,
-        entry.slots.length,
-      );
-    }
-  }
-
-  generate(0, [], []);
-  return combos;
-}
-
 interface CourseGroup {
   label: string;
   isGE: boolean;
   options: Course[];
-}
-
-function optimizeSchedule(groups: CourseGroup[]): SelectedSection[] {
-  let bestScore = -1;
-  let bestSections: SelectedSection[] = [];
-  const startTime = Date.now();
-
-  // Pre-compute combo candidates for each group
-  const groupCandidates = groups.map((g) => {
-    const combos: SectionCombo[] = [];
-    const options = g.isGE ? g.options.slice(0, 10) : g.options;
-    for (const course of options) {
-      combos.push(...buildCombos(course));
-    }
-    combos.sort((a, b) => b.score - a.score);
-    return { label: g.label, combos: combos.slice(0, 40) };
-  });
-
-  const current: SelectedSection[] = [];
-  const currentSlots: TimeSlot[] = [];
-
-  function backtrack(idx: number, score: number) {
-    if (Date.now() - startTime > 10000) return;
-    if (idx >= groupCandidates.length) {
-      if (score > bestScore) {
-        bestScore = score;
-        bestSections = [...current];
-      }
-      return;
-    }
-
-    const gc = groupCandidates[idx];
-    const remaining = groupCandidates.length - idx;
-    if (score + remaining * 5.0 * 3 <= bestScore) return;
-
-    for (const combo of gc.combos) {
-      // Check for conflicts with already-selected sections
-      const hasConflict = combo.allSlots.some((a) =>
-        currentSlots.some((b) => slotsConflict(a, b)),
-      );
-      if (hasConflict) continue;
-
-      const usedColors = current.map((s) => s.colorIndex);
-      const courseId = `${combo.course.department}-${combo.course.number}`;
-      const colorIndex = getNextColorIndex(usedColors);
-
-      // Add all sections in the combo (lecture + discussion + lab)
-      const newEntries: SelectedSection[] = combo.sections.map((entry) => ({
-        courseId,
-        courseTitle: combo.course.title,
-        units: combo.course.units,
-        section: entry.section,
-        colorIndex,
-        timeSlots: entry.slots,
-      }));
-
-      current.push(...newEntries);
-      currentSlots.push(...combo.allSlots);
-      backtrack(idx + 1, score + combo.score);
-      current.splice(current.length - newEntries.length, newEntries.length);
-      currentSlots.splice(
-        currentSlots.length - combo.allSlots.length,
-        combo.allSlots.length,
-      );
-    }
-  }
-
-  backtrack(0, 0);
-  return bestSections;
 }
 
 // ─── Main Component ───
@@ -385,7 +187,41 @@ export function ScheduleOptimizer() {
       // Small delay so status renders
       await new Promise((r) => setTimeout(r, 50));
 
-      const result = optimizeSchedule(groups);
+      // Adapt the extension's course groups to the shared solver's inputs. No RMP
+      // data in the extension → an empty cache makes every section score neutrally,
+      // so the solver just returns a conflict-free arrangement.
+      const selections = groups.map((g) => ({ id: g.label, label: g.label }));
+      const selectionMap: Record<string, Course[]> = {};
+      for (const g of groups) selectionMap[g.label] = g.options;
+
+      const { schedules } = buildSchedules({
+        selections,
+        selectionMap,
+        rmpCache: {},
+        prefs: {
+          earliestClass: "",
+          doneBy: "",
+          excludeFull: true,
+          blockedDays: [],
+          hideDClearance,
+          hideGraduate,
+          hideThematicOption,
+        },
+        colorCount: COURSE_COLORS.length,
+        maxResults: 1,
+      });
+
+      const best = schedules[0];
+      const result: SelectedSection[] = best
+        ? best.sections.map((s) => ({
+            courseId: `${s.course.department}-${s.course.number}`,
+            courseTitle: s.course.title,
+            units: s.course.units,
+            section: s.section,
+            colorIndex: s.colorIndex,
+            timeSlots: parseSectionTimes(s.section.times),
+          }))
+        : [];
       setOptimizedSections(result);
 
       if (result.length === 0) {
