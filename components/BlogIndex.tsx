@@ -45,15 +45,15 @@ export default function BlogIndex({ articles }: { articles: PublishedArticleSumm
       ) : (
         <ul className="space-y-8">
           {articles.map((article) => (
-            <li key={article.id}>
+            <li key={article.id as string}>
               <Link
                 href={`/blog/${article.slug}`}
                 className="group block overflow-hidden rounded-[28px] border border-black/5 bg-white shadow-[0_12px_44px_rgba(0,0,0,0.10)] transition-shadow duration-300 hover:shadow-[0_18px_56px_rgba(0,0,0,0.14)]"
               >
-                {article.cover_image_url && (
+                {(article.cover_image_url as string | null | undefined) && (
                   <div className="relative aspect-[16/9] w-full overflow-hidden bg-gray-100">
                     <Image
-                      src={article.cover_image_url}
+                      src={article.cover_image_url as string}
                       alt=""
                       fill
                       sizes="(min-width: 768px) 768px, calc(100vw - 48px)"
@@ -64,16 +64,16 @@ export default function BlogIndex({ articles }: { articles: PublishedArticleSumm
 
                 <div className="p-8 sm:p-10">
                   <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#4F938C]">
-                    {[formatDate(article.published_at), languageLabel(article.language)]
+                    {[formatDate(article.published_at as string | null), languageLabel(article.language as string)]
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
                   <h2 className="heading-serif text-3xl font-medium leading-snug text-[#171717] transition-colors group-hover:text-[#6CB7AF] sm:text-4xl">
                     {article.title}
                   </h2>
-                  {article.excerpt && (
+                  {(article.excerpt as string | null | undefined) && (
                     <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#3a3a3a]">
-                      {article.excerpt}
+                      {article.excerpt as string}
                     </p>
                   )}
                 </div>
