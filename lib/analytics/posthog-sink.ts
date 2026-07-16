@@ -26,14 +26,8 @@ export function createPostHogSink(): AnalyticsSink | null {
     initialized = true;
   }
   return {
-    capture: (event, props) => {
+    track: (event: string, props?: Record<string, unknown>) => {
       posthog.capture(event, props);
-    },
-    identify: (distinctId, traits) => {
-      posthog.identify(distinctId, traits);
-    },
-    reset: () => {
-      posthog.reset();
     },
   };
 }

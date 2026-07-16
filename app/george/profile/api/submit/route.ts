@@ -13,7 +13,7 @@
 // Header last reviewed: 2026-06-24
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
-import { canonicalizePhone } from '@biboyang425/bia-shared/phone';
+import { normalizePhone } from '@/lib/george/spectrum';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -101,8 +101,7 @@ export async function POST(req: NextRequest) {
   // The handle is canonicalized so it matches what george stores (defensive — new
   // signups already store canonical handles via normalizePhone).
   const rawHandle = pending.imessage_handle as string | null;
-  const canon = rawHandle ? canonicalizePhone(rawHandle) : null;
-  const canonicalHandle = canon?.ok ? canon.e164 : rawHandle;
+  const canonicalHandle = rawHandle ? (normalizePhone(rawHandle) ?? rawHandle) : rawHandle;
 
   const { data: reconciled, error: recErr } = await supabase.rpc('reconcile_identity', {
     p_auth_user_id: userId,
