@@ -5,19 +5,47 @@ import { NextRequest } from "next/server";
 
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024; // 10 MB
 
-// GET — load the current user's checkins
+// GET — always returns the latest public photo per task (no id, visible to all).
+//        If authenticated, also returns own checkins (with id, for management).
+//        Own checkin takes precedence over the public preview for the same task.
 export async function GET() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const admin = createAdminSupabaseClient();
 
-  const { data, error } = await supabase
+  // Fetch latest public photo per task (works for everyone)
+  const { data: publicRows } = await admin
+    .from("trojan_quest_checkins")
+    .select("task_id, photo_url")
+    .eq("is_public", true)
+    .order("created_at", { ascending: false });
+
+  const publicByTask = new Map<string, string>();
+  for (const r of publicRows ?? []) {
+    if (!publicByTask.has(r.task_id)) publicByTask.set(r.task_id, r.photo_url);
+  }
+
+  if (!user) {
+    return Response.json(
+      Array.from(publicByTask.entries()).map(([task_id, photo_url]) => ({ task_id, photo_url }))
+    );
+  }
+
+  // Authenticated: fetch own checkins (these carry `id` so the user can manage them)
+  const { data: ownRows, error } = await supabase
     .from("trojan_quest_checkins")
     .select("id, task_id, photo_url, is_public, created_at")
     .eq("user_id", user.id);
-
   if (error) return Response.json({ error: error.message }, { status: 500 });
-  return Response.json(data);
+
+  const ownTaskIds = new Set((ownRows ?? []).map(r => r.task_id));
+
+  // For tasks the user hasn't checked in to, append public previews (no id)
+  const publicPreviews = Array.from(publicByTask.entries())
+    .filter(([task_id]) => !ownTaskIds.has(task_id))
+    .map(([task_id, photo_url]) => ({ task_id, photo_url }));
+
+  return Response.json([...(ownRows ?? []), ...publicPreviews]);
 }
 
 // POST — upload photo + save checkin record

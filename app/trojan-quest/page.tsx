@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type L from "leaflet";
 import ProductShell, { type ProductLanguage } from "@/components/ProductShell";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -123,7 +124,7 @@ const INITIAL_TASKS: Task[] = [
     descriptionEn: "The guardian of USC — your Trojan journey officially starts here. Find him and take your very first photo together.",
     postPrompt: "在 Tommy Trojan 面前你许了什么愿望？", postPromptEn: "What did you wish for standing in front of Tommy Trojan?",
     category: "landmark", cardBg: "#fdf6e3",
-    guideImg: "/trojan-quest/tommy-trojan.png",
+    guideImg: "/trojan-quest/tommy-trojan-hd.png",
     locationHint: "Bovard Auditorium 前 · Trousdale Pkwy",
     mapQuery: "Tommy+Trojan+statue+USC+Los+Angeles+CA",
     completed: false, checkinId: null, checkinPhotoUrl: null, checkinIsPublic: true,
@@ -160,7 +161,7 @@ const INITIAL_TASKS: Task[] = [
     descriptionEn: "USC's oldest and most beautiful library — the Gothic hall looks straight out of a movie. Find the most stunning corner and capture it.",
     postPrompt: "Doheny 里你最喜欢哪个角落？", postPromptEn: "What's your favorite corner inside Doheny?",
     category: "study", cardBg: "#f5f0fb",
-    guideImg: "/trojan-quest/doheny.jpg",
+    guideImg: "/trojan-quest/doheny.png",
     locationHint: "Alumni Park 北侧 · Childs Way",
     mapQuery: "Doheny+Memorial+Library+USC+University+of+Southern+California+Los+Angeles",
     completed: false, checkinId: null, checkinPhotoUrl: null, checkinIsPublic: true,
@@ -301,18 +302,6 @@ const INITIAL_TASKS: Task[] = [
     mapQuery: "Iovine+and+Young+Hall+USC+749+W+34th+St+Los+Angeles+CA",
     completed: false, checkinId: null, checkinPhotoUrl: null, checkinIsPublic: true,
   },
-  {
-    id: "s8",
-    title: "Keck 医学院", titleEn: "Keck School of Medicine",
-    description: "USC医学院，全美顶尖医学研究中心之一。Keck Hospital与医学院园区气势恢宏，感受未来医学先驱们工作的世界。",
-    descriptionEn: "One of America's top medical research centers. The Keck Hospital and medical campus are awe-inspiring — experience the world where future medical pioneers work.",
-    postPrompt: "Keck 医学院有什么值得探索的地方？", postPromptEn: "What's worth exploring around the Keck School of Medicine?",
-    category: "school", cardBg: "#e8f6f8",
-    guideImg: "/trojan-quest/keck.png",
-    locationHint: "Health Sciences Campus · 1975 Zonal Ave",
-    mapQuery: "Keck+School+of+Medicine+USC+1975+Zonal+Ave+Los+Angeles+CA",
-    completed: false, checkinId: null, checkinPhotoUrl: null, checkinIsPublic: true,
-  },
   // ── Dining ─────────────────────────────────────────────────────────────────
   {
     id: "d1",
@@ -336,18 +325,6 @@ const INITIAL_TASKS: Task[] = [
     guideImg: "/trojan-quest/pks.png",
     locationHint: "Parkside · 3771 McClintock Ave",
     mapQuery: "Parkside+Restaurant+USC+Village+3771+McClintock+Ave+Los+Angeles+CA",
-    completed: false, checkinId: null, checkinPhotoUrl: null, checkinIsPublic: true,
-  },
-  {
-    id: "d3",
-    title: "Seeds Marketplace", titleEn: "Seeds Marketplace",
-    description: "Village里最文艺的小超市+外带餐厅，acai bowl和沙拉是招牌，健康又好吃。",
-    descriptionEn: "The most artsy market + grab-and-go spot at Village. Famous for acai bowls and salads — healthy and delicious.",
-    postPrompt: "Seeds 今天有什么值得推荐的？", postPromptEn: "What's worth recommending at Seeds today?",
-    category: "dining", cardBg: "#f1f8e9",
-    guideImg: "",
-    locationHint: "Seeds Marketplace · USC Village 西侧",
-    mapQuery: "Seeds+Marketplace+USC+Village+Los+Angeles+CA",
     completed: false, checkinId: null, checkinPhotoUrl: null, checkinIsPublic: true,
   },
   {
@@ -377,6 +354,61 @@ const INITIAL_TASKS: Task[] = [
 ];
 
 const MAP_LOCATIONS = INITIAL_TASKS.map(t => ({ id: t.id, label: t.title, labelEn: t.titleEn, mapQuery: t.mapQuery }));
+
+// ─── Map pin data ──────────────────────────────────────────────────────────────
+// Coordinates are image pixels on usc-campus-map.png (3301 × 2550), top-left origin.
+// Leaflet CRS.Simple uses [IMG_H - y, x] (y-flipped).
+// null = off this campus map.
+//
+// To fine-tune: open the map, right-click the spot, note pixel coords, update here.
+
+const IMG_W = 3301, IMG_H = 2550;
+
+// Building illustrations shown as popup above pin when selected.
+const MAP_BUILDING_IMGS: Partial<Record<string, string>> = {
+  t1: "/trojan-quest/tommy-trojan-hd.png",   // Tommy Trojan statue
+  t2: "/trojan-quest/village-hd.png",        // USC Village
+  t3: "/trojan-quest/leavey-hd.png",         // Leavey Library
+  t4: "/trojan-quest/doheny-hd.png",         // Doheny Library
+  t5: "/trojan-quest/bookstore-hd.png",      // USC Bookstore
+  t6: "/trojan-quest/fisher-museum.png",     // Fisher Museum of Art
+  t7: "/trojan-quest/coliseum.png",          // LA Memorial Coliseum
+  t8: "/trojan-quest/cinematic-arts-hd.png", // School of Cinematic Arts
+  s1: "/trojan-quest/marshall-hd.png",       // Marshall School of Business
+  s2: "/trojan-quest/vivian-hall.png",       // Viterbi — Vivian Hall
+  s3: "/trojan-quest/annenberg-hd.png",      // Annenberg
+  s4: "/trojan-quest/dornsife-hd.png",       // Dornsife College
+  s5: "/trojan-quest/gould-hd.png",          // Gould School of Law
+  s6: "/trojan-quest/price-hd.png",          // Price School of Public Policy
+  s7: "/trojan-quest/iya-hd.png",            // Iovine and Young Academy
+  d1: "/trojan-quest/evk.png",              // EVK — Everybody's Kitchen
+  d2: "/trojan-quest/pks.png",              // Parkside Restaurant
+  d4: "/trojan-quest/tcc.png",              // Tutor Campus Center Food Court
+  d5: "/trojan-quest/vlg.png",              // VLG — USC Village Dining
+};
+
+// [x, y] in image pixels — scaled from verified grid positions on the 3301×2550 map.
+const MAP_PINS_PX: Record<string, [number, number] | null> = {
+  t1: [1364, 1797],  // Tommy Trojan
+  t2: [1170,  678],  // USC Village
+  t3: [1876, 1525],  // Leavey Library
+  t4: [1686, 1896],  // Doheny Library
+  t6: [ 988, 2256],  // Fisher Museum of Art
+  t8: [ 937, 1038],  // School of Cinematic Arts
+  t5: [1115, 1775],  // USC Bookstore (TCC)
+  t7: [1061, 2358],  // LA Memorial Coliseum
+  s1: [1959, 2233],  // Marshall — Popovich Hall
+  s2: [ 812, 1873],  // Viterbi — Vivian Hall
+  s3: [1037, 1695],  // Annenberg — Wallis Annenberg Hall
+  s4: [ 553, 1503],  // Dornsife — Mudd Hall
+  s5: [1532, 2220],  // Gould School of Law
+  s6: [1736, 2068],  // Price — Lewis Hall
+  s7: [ 780, 2246],  // Iovine and Young Academy
+  d1: [2048, 1620],  // EVK — Everybody's Kitchen
+  d2: [ 257, 2208],  // Parkside Dining Hall
+  d4: [1186, 1843],  // Tutor Campus Center Food Court
+  d5: [1232,  536],  // VLG — USC Village Dining
+};
 
 // ─── Photo Upload ─────────────────────────────────────────────────────────────
 
@@ -413,29 +445,40 @@ function PhotoUpload({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2.5">
       {/* Public/private toggle */}
       <button
         onClick={() => setPub(p => !p)}
-        className="font-display text-[11px] tracking-[0.08em] px-3 py-1.5 border-[2px] border-[var(--black)] self-start transition-colors"
-        style={{ background: pub ? "var(--gold)" : "rgba(26,20,16,0.08)", color: "var(--black)" }}
+        className="text-[11px] px-3 py-1.5 self-start transition-all duration-200"
+        style={{
+          borderRadius: 20,
+          background: pub ? "#FFCC00" : "rgba(0,0,0,0.06)",
+          color: pub ? "#2b2b2b" : "#888",
+          border: "none",
+          fontWeight: 500,
+        }}
       >
         {pub
-          ? (lang === "en" ? "Public" : "公开")
-          : (lang === "en" ? "Private" : "不公开")}
+          ? (lang === "en" ? "🌐 Public" : "🌐 公开")
+          : (lang === "en" ? "🔒 Private" : "🔒 不公开")}
       </button>
       <div className="flex items-center gap-3">
         <input ref={inputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
         <button
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="font-display text-xs tracking-[0.1em] px-4 py-2 border-[2px] border-[var(--black)] disabled:opacity-60"
-          style={{ background: "var(--cardinal)", color: "white" }}
+          className="text-sm font-medium px-5 py-2.5 transition-all duration-200 disabled:opacity-60"
+          style={{
+            borderRadius: 10,
+            background: uploading ? "#c0392b" : "#990000",
+            color: "white",
+            border: "none",
+          }}
         >
           {uploading ? UI.uploading[lang] : UI.uploadBtn[lang]}
         </button>
       </div>
-      {error && <p className="text-[11px]" style={{ color: "var(--cardinal)" }}>{error}</p>}
+      {error && <p className="text-xs" style={{ color: "#990000" }}>{error}</p>}
     </div>
   );
 }
@@ -478,47 +521,68 @@ function PostSection({ locationId, prompt, lang }: { locationId: string; prompt:
   }
 
   return (
-    <div className="border-t-[2px] border-[rgba(26,20,16,0.12)] pt-3 mt-3">
-      <p className="font-display text-[11px] tracking-[0.12em] uppercase mb-2" style={{ color: "var(--mid)" }}>
+    <div className="pt-4 mt-4" style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}>
+      <p className="text-[11px] font-medium uppercase tracking-widest mb-3" style={{ color: "#aaa" }}>
         {prompt}
       </p>
-      <form onSubmit={handleSubmit} className="mb-3">
+      <form onSubmit={handleSubmit} className="mb-4">
         <input
           value={name} onChange={e => setName(e.target.value)}
           placeholder={UI.postNickname[lang]}
-          className="w-full mb-2 px-3 py-2 text-xs border-[2px] border-[rgba(26,20,16,0.2)] bg-white outline-none focus:border-[var(--cardinal)]"
-          style={{ fontFamily: "var(--font-body)" }}
+          className="w-full mb-2 px-3 py-2 text-sm outline-none transition-all duration-200"
+          style={{
+            borderRadius: 8,
+            border: "1px solid rgba(0,0,0,0.1)",
+            background: "rgba(255,255,255,0.8)",
+            fontFamily: "var(--font-body)",
+            color: "#2b2b2b",
+          }}
+          onFocus={e => { e.target.style.borderColor = "#990000"; e.target.style.boxShadow = "0 0 0 3px rgba(153,0,0,0.08)"; }}
+          onBlur={e => { e.target.style.borderColor = "rgba(0,0,0,0.1)"; e.target.style.boxShadow = "none"; }}
         />
         <textarea
           value={content} onChange={e => setContent(e.target.value)}
           placeholder={UI.postPlaceholder[lang]}
           rows={2}
-          className="w-full mb-2 px-3 py-2 text-xs border-[2px] border-[rgba(26,20,16,0.2)] bg-white outline-none focus:border-[var(--cardinal)] resize-none"
-          style={{ fontFamily: "var(--font-body)" }}
+          className="w-full mb-2.5 px-3 py-2 text-sm outline-none resize-none transition-all duration-200"
+          style={{
+            borderRadius: 8,
+            border: "1px solid rgba(0,0,0,0.1)",
+            background: "rgba(255,255,255,0.8)",
+            fontFamily: "var(--font-body)",
+            color: "#2b2b2b",
+          }}
+          onFocus={e => { e.target.style.borderColor = "#990000"; e.target.style.boxShadow = "0 0 0 3px rgba(153,0,0,0.08)"; }}
+          onBlur={e => { e.target.style.borderColor = "rgba(0,0,0,0.1)"; e.target.style.boxShadow = "none"; }}
         />
         <button
           type="submit" disabled={submitting || !content.trim()}
-          className="font-display text-[10px] tracking-[0.1em] px-3 py-1.5 border-[2px] border-[var(--black)] disabled:opacity-50"
-          style={{ background: "var(--gold)", color: "var(--black)" }}
+          className="text-sm font-medium px-4 py-2 transition-all duration-200 disabled:opacity-40"
+          style={{
+            borderRadius: 10,
+            background: "#FFCC00",
+            color: "#2b2b2b",
+            border: "none",
+          }}
         >
           {submitting ? UI.postSubmitting[lang] : UI.postSubmit[lang]}
         </button>
       </form>
       {loading ? (
-        <p className="text-[11px]" style={{ color: "var(--mid)" }}>{UI.postLoading[lang]}</p>
+        <p className="text-xs" style={{ color: "#aaa" }}>{UI.postLoading[lang]}</p>
       ) : posts.length === 0 ? (
-        <p className="text-[11px]" style={{ color: "var(--mid)" }}>{UI.postEmpty[lang]}</p>
+        <p className="text-xs" style={{ color: "#aaa" }}>{UI.postEmpty[lang]}</p>
       ) : (
-        <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+        <div className="flex flex-col gap-2 max-h-52 overflow-y-auto">
           {posts.map(post => (
-            <div key={post.id} className="border border-[rgba(26,20,16,0.12)] px-3 py-2" style={{ background: "rgba(255,255,255,0.7)" }}>
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="font-display text-[10px] tracking-wider" style={{ color: "var(--cardinal)" }}>{post.author_name}</span>
-                <span className="text-[9px]" style={{ color: "var(--mid)" }}>
+            <div key={post.id} className="px-3 py-2.5" style={{ borderRadius: 10, background: "rgba(255,255,255,0.75)", border: "1px solid rgba(0,0,0,0.06)" }}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-semibold" style={{ color: "#990000" }}>{post.author_name}</span>
+                <span className="text-[10px]" style={{ color: "#bbb" }}>
                   {new Date(post.created_at).toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                 </span>
               </div>
-              <p className="text-xs leading-relaxed" style={{ color: "var(--black)" }}>{post.content}</p>
+              <p className="text-xs leading-relaxed" style={{ color: "#444" }}>{post.content}</p>
             </div>
           ))}
         </div>
@@ -598,31 +662,32 @@ function TaskCard({
   return (
     <div
       id={`task-${task.id}`}
-      className="border-[3px] border-[var(--black)] overflow-hidden transition-transform hover:-translate-y-0.5"
+      className="overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
       style={{
-        background: task.completed ? "var(--cream)" : task.cardBg,
-        opacity: task.completed ? 0.88 : 1,
-        boxShadow: "4px 4px 0 rgba(26,20,16,0.18)",
+        borderRadius: 16,
+        background: task.completed ? "#faf8f5" : task.cardBg,
+        boxShadow: "0 2px 16px rgba(0,0,0,0.07)",
+        border: "1px solid rgba(0,0,0,0.06)",
       }}
     >
       {/* Guide image */}
       {task.guideImg && (
-        <div className="relative w-full border-b-[2px] border-[var(--black)] overflow-hidden" style={{ height: 220 }}>
+        <div className="relative w-full overflow-hidden" style={{ height: 220, borderRadius: "16px 16px 0 0" }}>
           <div
             className="absolute"
             style={{ inset: "-8%", backgroundImage: `url(${task.guideImg})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(22px)" }}
           />
-          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.15)" }} />
+          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.08)" }} />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={task.guideImg} alt={title} className="relative w-full h-full block" style={{ objectFit: "contain", zIndex: 1 }} />
           {task.completed && (
-            <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }}>
-              <span className="font-display text-white text-xl tracking-widest border-[3px] border-white px-3 py-1">{UI.checkinDone[lang]}</span>
+            <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.38)", borderRadius: "16px 16px 0 0" }}>
+              <span className="text-white text-lg font-semibold px-4 py-1.5" style={{ borderRadius: 24, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(6px)", border: "1.5px solid rgba(255,255,255,0.5)" }}>{UI.checkinDone[lang]}</span>
             </div>
           )}
           <span
-            className="absolute top-2 left-2 font-display text-[10px] tracking-[0.1em] px-2 py-1 border border-white"
-            style={{ background: catBg, color: "white" }}
+            className="absolute top-3 left-3 text-[11px] font-semibold px-2.5 py-1"
+            style={{ borderRadius: 20, background: catBg, color: "white", backdropFilter: "blur(4px)" }}
           >
             {catLabel}
           </span>
@@ -631,51 +696,66 @@ function TaskCard({
 
       {/* No-image header */}
       {!task.guideImg && (
-        <div className="px-4 py-3 border-b-[2px] border-[var(--black)] flex items-center" style={{ background: catBg }}>
-          <span className="font-display text-sm tracking-[0.1em] text-white">{catLabel}</span>
+        <div className="px-5 py-3 flex items-center" style={{ borderRadius: "16px 16px 0 0", background: catBg }}>
+          <span className="text-sm font-semibold text-white">{catLabel}</span>
         </div>
       )}
 
-      <div className="px-4 py-3">
+      <div className="px-5 py-5">
         <h3
-          className="font-display text-lg leading-tight mb-2"
-          style={{ color: "var(--black)", textDecoration: task.completed ? "line-through" : "none" }}
+          className="font-display text-xl leading-snug mb-2"
+          style={{ color: task.completed ? "#888" : "#2b2b2b", textDecoration: task.completed ? "line-through" : "none" }}
         >
           {title}
         </h3>
-        <p className="text-xs leading-relaxed mb-3" style={{ color: "var(--mid)" }}>{desc}</p>
+        <p className="text-sm leading-relaxed mb-4" style={{ color: "#666", lineHeight: 1.6 }}>{desc}</p>
 
-        <div className="flex items-center gap-3 mb-3 flex-wrap">
-          <span className="text-[11px]" style={{ color: "var(--mid)" }}>{task.locationHint}</span>
+        <div className="flex items-center gap-2.5 mb-4 flex-wrap">
+          <span className="text-xs" style={{ color: "#999" }}>📍 {task.locationHint}</span>
           <a
             href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-display text-[10px] tracking-wider px-2 py-1 border border-[rgba(26,20,16,0.2)] hover:opacity-75"
-            style={{ background: "white", color: "#1a73e8" }}
+            className="text-xs font-medium px-2.5 py-1 transition-all duration-200 hover:opacity-80"
+            style={{ borderRadius: 8, background: "rgba(26,115,232,0.08)", color: "#1a73e8", border: "none" }}
           >
             {UI.openMaps[lang]}
           </a>
         </div>
 
         {/* Progress bar */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="flex-1 h-1.5 border border-[rgba(26,20,16,0.2)]" style={{ background: "rgba(26,20,16,0.08)" }}>
-            <div className="h-full transition-all" style={{ width: task.completed ? "100%" : "0%", background: "var(--cardinal)" }} />
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="flex-1 h-1.5 overflow-hidden" style={{ borderRadius: 4, background: "rgba(0,0,0,0.07)" }}>
+            <div className="h-full transition-all duration-500" style={{ width: task.completed ? "100%" : "0%", borderRadius: 4, background: "#990000" }} />
           </div>
-          <span className="font-display text-[10px] shrink-0" style={{ color: task.completed ? "var(--cardinal)" : "var(--mid)" }}>
+          <span className="text-[11px] shrink-0 font-medium" style={{ color: task.completed ? "#990000" : "#bbb" }}>
             {task.completed ? "1" : "0"}/1
           </span>
         </div>
 
         {/* Completed photo */}
         {task.completed && task.checkinPhotoUrl && (
-          <div className="mb-3">
-            <div className="relative border-[2px] border-[var(--black)] overflow-hidden" style={{ height: 180 }}>
+          <div className="mb-4">
+            <div className="relative overflow-hidden" style={{ height: 180, borderRadius: 12 }}>
               <div className="absolute" style={{ inset: "-8%", backgroundImage: `url(${task.checkinPhotoUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(20px)" }} />
-              <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.12)" }} />
+              <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.08)" }} />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={task.checkinPhotoUrl} alt={lang === "en" ? "Check-in photo" : "打卡照片"} className="relative w-full h-full block" style={{ objectFit: "contain", zIndex: 1 }} />
+            </div>
+          </div>
+        )}
+
+        {/* Community photo preview for unauthenticated users */}
+        {!task.completed && task.checkinPhotoUrl && (
+          <div className="mb-4">
+            <p className="text-[11px] font-medium mb-1.5" style={{ color: "#aaa" }}>
+              {lang === "en" ? "Community check-in" : "他人的打卡"}
+            </p>
+            <div className="relative overflow-hidden" style={{ height: 140, borderRadius: 10 }}>
+              <div className="absolute" style={{ inset: "-8%", backgroundImage: `url(${task.checkinPhotoUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(20px)" }} />
+              <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.08)" }} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={task.checkinPhotoUrl} alt="" className="relative w-full h-full block" style={{ objectFit: "contain", zIndex: 1 }} />
             </div>
           </div>
         )}
@@ -683,44 +763,63 @@ function TaskCard({
         {/* Action */}
         {task.completed ? (
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-display text-xs tracking-[0.1em] px-4 py-2 border-[2px] border-[var(--black)] inline-block" style={{ background: "var(--mid)", color: "white" }}>
+            <span className="text-xs font-semibold px-3 py-1.5" style={{ borderRadius: 20, background: "rgba(153,0,0,0.08)", color: "#990000" }}>
               {UI.taskDone[lang]}
             </span>
-            {/* Public/private toggle */}
-            <button
-              onClick={handleTogglePublic}
-              disabled={toggling}
-              className="font-display text-[11px] tracking-[0.08em] px-3 py-2 border-[2px] border-[var(--black)] transition-colors disabled:opacity-50"
-              style={{ background: task.checkinIsPublic ? "var(--gold)" : "rgba(26,20,16,0.08)", color: "var(--black)" }}
-            >
-              {task.checkinIsPublic
-                ? (lang === "en" ? "Public" : "已公开")
-                : (lang === "en" ? "Private" : "不公开")}
-            </button>
-            {/* Delete */}
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="font-display text-[11px] tracking-[0.08em] px-3 py-2 border-[2px] border-[var(--black)] transition-colors disabled:opacity-50"
-              style={{ background: "white", color: "#c0392b" }}
-            >
-              {deleting
-                ? (lang === "en" ? "Removing..." : "删除中...")
-                : (lang === "en" ? "Remove" : "删除打卡")}
-            </button>
+            {/* Public/private toggle — only for own checkins */}
+            {task.checkinId && (
+              <button
+                onClick={handleTogglePublic}
+                disabled={toggling}
+                className="text-xs font-medium px-3 py-1.5 transition-all duration-200 disabled:opacity-50"
+                style={{
+                  borderRadius: 20,
+                  background: task.checkinIsPublic ? "#FFCC00" : "rgba(0,0,0,0.06)",
+                  color: "#2b2b2b",
+                  border: "none",
+                }}
+              >
+                {task.checkinIsPublic
+                  ? (lang === "en" ? "🌐 Public" : "🌐 已公开")
+                  : (lang === "en" ? "🔒 Private" : "🔒 不公开")}
+              </button>
+            )}
+            {/* Delete — only for own checkins */}
+            {task.checkinId && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-xs font-medium px-3 py-1.5 transition-all duration-200 disabled:opacity-50 hover:opacity-80"
+                style={{
+                  borderRadius: 20,
+                  background: "rgba(192,57,43,0.08)",
+                  color: "#c0392b",
+                  border: "none",
+                }}
+              >
+                {deleting
+                  ? (lang === "en" ? "Removing..." : "删除中...")
+                  : (lang === "en" ? "Remove" : "删除打卡")}
+              </button>
+            )}
           </div>
         ) : (
           <>
             <button
               onClick={handleStart}
-              className="font-display text-xs tracking-[0.1em] px-4 py-2 border-[2px] border-[var(--black)] mb-2 transition-colors"
-              style={{ background: expanded ? "var(--black)" : "var(--cream)", color: expanded ? "white" : "var(--black)" }}
+              className="text-sm font-medium px-5 py-2.5 mb-3 transition-all duration-200 hover:opacity-90"
+              style={{
+                borderRadius: 10,
+                background: expanded ? "#2b2b2b" : "#990000",
+                color: "white",
+                border: "none",
+              }}
             >
               {expanded ? UI.collapse[lang] : UI.startTask[lang]}
             </button>
             {expanded && (
-              <div className="border-t-[2px] border-[rgba(26,20,16,0.15)] pt-3 mb-2">
-                <p className="text-[11px] mb-2" style={{ color: "var(--mid)" }}>{UI.uploadHint[lang]}</p>
+              <div className="pt-4 mb-3" style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}>
+                <p className="text-xs mb-3" style={{ color: "#999" }}>{UI.uploadHint[lang]}</p>
                 <PhotoUpload
                   taskId={task.id}
                   lang={lang}
@@ -738,13 +837,151 @@ function TaskCard({
   );
 }
 
-// ─── Campus Map Tab ───────────────────────────────────────────────────────────
+// ─── Campus Map Tab (Leaflet) ─────────────────────────────────────────────────
 
 function CampusMapTab({ tasks, lang }: { tasks: Task[]; lang: Lang }) {
-  const [selected, setSelected] = useState(MAP_LOCATIONS[0]);
+  const [selected, setSelected] = useState<(typeof MAP_LOCATIONS)[0] | null>(null);
+  const mapDivRef  = useRef<HTMLDivElement>(null);
+  const leafletRef = useRef<{ map: L.Map; markers: Record<string, L.Marker> } | null>(null);
 
-  const embedUrl = `https://maps.google.com/maps?q=${selected.mapQuery}&output=embed`;
-  const openUrl  = `https://maps.google.com/?q=${selected.mapQuery}`;
+  // Inject Leaflet CSS once
+  useEffect(() => {
+    if (document.getElementById("leaflet-css")) return;
+    const link = document.createElement("link");
+    link.id   = "leaflet-css";
+    link.rel  = "stylesheet";
+    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(link);
+  }, []);
+
+  // Init / destroy Leaflet map
+  useEffect(() => {
+    if (!mapDivRef.current || leafletRef.current) return;
+
+    import("leaflet").then(({ default: L }) => {
+      if (!mapDivRef.current || leafletRef.current) return;
+
+      const bounds: L.LatLngBoundsExpression = [[0, 0], [IMG_H, IMG_W]];
+      const toLL = (x: number, y: number): L.LatLngExpression => [IMG_H - y, x];
+
+      const map = L.map(mapDivRef.current!, {
+        crs: L.CRS.Simple,
+        zoomSnap: 0,
+        zoomDelta: 0.35,
+        wheelPxPerZoomLevel: 70,
+        scrollWheelZoom: true,
+        zoomAnimation: true,
+        fadeAnimation: true,
+        doubleClickZoom: true,
+        touchZoom: true,
+        inertia: true,
+        inertiaDeceleration: 3000,
+        inertiaMaxSpeed: 1500,
+        attributionControl: false,
+        zoomControl: false,
+      });
+
+      L.imageOverlay("/trojan-quest/usc-campus-map.png", bounds).addTo(map);
+
+      // fitBounds after paint so Leaflet reads the real container size
+      requestAnimationFrame(() => {
+        map.invalidateSize();
+        map.fitBounds(bounds, { padding: [4, 4] });
+        map.setMinZoom(map.getZoom() - 0.5);
+        map.setMaxZoom(map.getZoom() + 6);
+        // Constrain panning so the image always covers the viewport (no gray borders)
+        map.setMaxBounds(bounds);
+        map.options.maxBoundsViscosity = 1.0;
+      });
+
+      L.control.zoom({ position: "bottomright" }).addTo(map);
+
+      // Custom circular icon
+      const makeIcon = (active: boolean, done: boolean) => L.divIcon({
+        className: "",
+        html: `<div style="
+          width:${active ? 16 : 10}px;height:${active ? 16 : 10}px;
+          background:${active ? "#FFD700" : done ? "#27ae60" : "#990000"};
+          border:2.5px solid white;border-radius:50%;
+          box-shadow:0 2px 8px rgba(0,0,0,.5);
+          transition:all .2s;
+        "></div>`,
+        iconSize:    [active ? 16 : 10, active ? 16 : 10],
+        iconAnchor:  [active ? 8  : 5,  active ? 8  : 5 ],
+        popupAnchor: [0, active ? -12 : -8],
+      });
+
+      const markers: Record<string, L.Marker> = {};
+      let activeId: string | null = null;
+
+      MAP_LOCATIONS.forEach(loc => {
+        const px = MAP_PINS_PX[loc.id];
+        if (!px) return;
+        const t = tasks.find(x => x.id === loc.id);
+        const done = t?.completed ?? false;
+        const buildingImg = MAP_BUILDING_IMGS[loc.id] ?? null;
+        const hint = t?.locationHint ?? "";
+
+        const m = L.marker(toLL(px[0], px[1]), { icon: makeIcon(false, done) }).addTo(map);
+
+        const popupHtml = buildingImg
+          ? `<div style="width:220px;font-family:-apple-system,sans-serif;overflow:hidden">
+               <img src="${buildingImg}" style="width:100%;display:block;background:#f5f0e8" />
+               <div style="padding:10px 12px">
+                 <div style="font-size:13px;font-weight:700;color:#1a1410;margin-bottom:3px">${lang === "en" ? loc.labelEn : loc.label}</div>
+                 <div style="font-size:11px;color:#777">${hint}</div>
+               </div>
+             </div>`
+          : `<div style="padding:10px 12px;font-family:-apple-system,sans-serif;min-width:150px">
+               <div style="font-size:14px;font-weight:700;color:#1a1410">${lang === "en" ? loc.labelEn : loc.label}</div>
+               ${hint ? `<div style="font-size:11px;color:#777;margin-top:4px">${hint}</div>` : ""}
+             </div>`;
+
+        m.bindPopup(popupHtml, { closeButton: true, maxWidth: 240, offset: [0, -4] });
+
+        m.on("click", () => {
+          // Reset previous active
+          if (activeId && markers[activeId]) {
+            const prev = tasks.find(x => x.id === activeId);
+            markers[activeId].setIcon(makeIcon(false, prev?.completed ?? false));
+          }
+          activeId = loc.id;
+          m.setIcon(makeIcon(true, done));
+          setSelected(loc);
+          // Sync sidebar
+          document.querySelectorAll<HTMLElement>("[data-loc-id]").forEach(el => el.classList.remove("loc-active"));
+          document.querySelector<HTMLElement>(`[data-loc-id="${loc.id}"]`)?.classList.add("loc-active");
+        });
+
+        markers[loc.id] = m;
+      });
+
+      leafletRef.current = { map, markers };
+    });
+
+    return () => {
+      leafletRef.current?.map.remove();
+      leafletRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function flyToLoc(loc: (typeof MAP_LOCATIONS)[0]) {
+    const px = MAP_PINS_PX[loc.id];
+    if (!px || !leafletRef.current) return;
+    const { map, markers } = leafletRef.current;
+    const ll: [number, number] = [IMG_H - px[1], px[0]];
+    map.flyTo(ll, map.getZoom(), { duration: 0.6, easeLinearity: 0.35 });
+    setTimeout(() => markers[loc.id]?.openPopup(), 720);
+  }
+
+  function handleSidebarClick(loc: (typeof MAP_LOCATIONS)[0]) {
+    setSelected(s => {
+      if (s?.id === loc.id) return null;
+      flyToLoc(loc);
+      return loc;
+    });
+  }
 
   return (
     <div>
@@ -752,53 +989,26 @@ function CampusMapTab({ tasks, lang }: { tasks: Task[]; lang: Lang }) {
         {UI.mapHeading[lang]}
       </h2>
 
-      <div className="relative border-[3px] border-[var(--black)] overflow-hidden mb-4" style={{ boxShadow: "6px 6px 0 rgba(26,20,16,0.18)" }}>
-        <a
-          href={openUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="absolute top-2 left-2 z-10 flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold"
-          style={{ background: "white", color: "#1a73e8", border: "1px solid rgba(0,0,0,0.15)", boxShadow: "0 1px 4px rgba(0,0,0,0.2)", borderRadius: 2 }}
-        >
-          {UI.openMaps[lang]}
-        </a>
-        <iframe
-          key={selected.id}
-          src={embedUrl}
-          width="100%" height="380"
-          style={{ border: 0, display: "block" }}
-          loading="lazy"
-          allowFullScreen
-          title={`USC Map: ${lang === "en" ? selected.labelEn : selected.label}`}
-        />
-      </div>
+      {/* Leaflet map container */}
+      <div
+        ref={mapDivRef}
+        className="border-[3px] border-[var(--black)] mb-4"
+        style={{ height: 480, boxShadow: "6px 6px 0 rgba(26,20,16,0.18)" }}
+      />
 
-      {(() => {
-        const t = tasks.find(x => x.id === selected.id);
-        return t ? (
-          <div className="border-[2px] border-[var(--black)] px-4 py-3 mb-4" style={{ background: "var(--cream)" }}>
-            <p className="font-display text-sm tracking-wider mb-1" style={{ color: "var(--cardinal)" }}>
-              {lang === "en" ? t.titleEn : t.title}
-            </p>
-            <p className="text-xs" style={{ color: "var(--mid)" }}>{t.locationHint}</p>
-          </div>
-        ) : null;
-      })()}
-
+      {/* Location grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {MAP_LOCATIONS.map(loc => {
           const t = tasks.find(x => x.id === loc.id);
           const done = t?.completed ?? false;
-          const active = selected.id === loc.id;
+          const active = selected?.id === loc.id;
           return (
             <button
               key={loc.id}
-              onClick={() => setSelected(loc)}
+              data-loc-id={loc.id}
+              onClick={() => handleSidebarClick(loc)}
               className="flex items-center gap-2 border-[2px] border-[var(--black)] px-3 py-2 text-left transition-colors"
-              style={{
-                background: active ? "var(--cardinal)" : done ? "rgba(39,174,96,0.1)" : "var(--cream)",
-                color: active ? "white" : "var(--black)",
-              }}
+              style={{ background: active ? "var(--cardinal)" : done ? "rgba(39,174,96,0.1)" : "var(--cream)", color: active ? "white" : "var(--black)" }}
             >
               <span className="text-xs leading-tight font-display tracking-wide truncate">
                 {lang === "en" ? loc.labelEn : loc.label}
@@ -834,16 +1044,19 @@ function TrojanQuestInner({ language }: { language: Lang }) {
   // The AbortController cancels an in-flight load if the effect re-runs,
   // so a slow response can't repopulate stale (e.g. signed-out) state.
   useEffect(() => {
-    if (!user) return;
     const controller = new AbortController();
     fetch("/api/trojan-quest/checkin", { signal: controller.signal })
       .then(r => r.ok ? r.json() : [])
-      .then((checkins: { id: string; task_id: string; photo_url: string; is_public: boolean }[]) => {
+      .then((checkins: { id?: string; task_id: string; photo_url: string; is_public?: boolean }[]) => {
         setTasks(prev => prev.map(t => {
           const c = checkins.find(c => c.task_id === t.id);
-          return c
-            ? { ...t, completed: true, checkinId: c.id, checkinPhotoUrl: c.photo_url, checkinIsPublic: c.is_public }
-            : t;
+          if (!c) return t;
+          if (c.id) {
+            // Own checkin (authenticated)
+            return { ...t, completed: true, checkinId: c.id, checkinPhotoUrl: c.photo_url, checkinIsPublic: c.is_public ?? true };
+          }
+          // Public preview (unauthenticated) — show photo but don't mark as completed
+          return { ...t, checkinPhotoUrl: c.photo_url };
         }));
       })
       .catch(() => { /* ignore aborts and transient fetch errors */ });
@@ -890,29 +1103,29 @@ function TrojanQuestInner({ language }: { language: Lang }) {
     <div className="min-h-screen" style={{ background: "var(--beige)" }}>
 
       {/* Hero */}
-      <section className="border-b-[3px] border-[var(--black)]" style={{ background: "var(--cream)" }}>
-        <div className="max-w-3xl mx-auto px-5 py-6">
-          <p className="font-display text-[11px] tracking-[0.18em] uppercase mb-1" style={{ color: "var(--mid)" }}>
+      <section style={{ background: "var(--cream)", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+        <div className="max-w-3xl mx-auto px-5 py-7">
+          <p className="text-[11px] font-medium tracking-widest uppercase mb-2" style={{ color: "#bbb" }}>
             {UI.heroKicker[lang]}
           </p>
-          <h1 className="font-display text-[38px] sm:text-[50px] leading-[0.9] mb-2" style={{ color: "var(--black)" }}>
+          <h1 className="font-display text-[38px] sm:text-[50px] leading-[0.92] mb-2" style={{ color: "#2b2b2b" }}>
             TROJAN
-            <br /><span style={{ color: "var(--cardinal)" }}>QUEST</span>
+            <br /><span style={{ color: "#990000" }}>QUEST</span>
           </h1>
-          <p className="text-sm mb-4" style={{ color: "var(--mid)" }}>{UI.heroTagline[lang]}</p>
+          <p className="text-sm mb-5" style={{ color: "#888", lineHeight: 1.5 }}>{UI.heroTagline[lang]}</p>
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="border-[2px] border-[var(--black)] px-3 py-1.5" style={{ background: "white" }}>
-              <span className="font-display text-[11px] tracking-wider" style={{ color: "var(--black)" }}>
+            <div className="px-3.5 py-1.5" style={{ borderRadius: 20, background: "rgba(153,0,0,0.07)" }}>
+              <span className="text-xs font-semibold" style={{ color: "#990000" }}>
                 {u("completedOf", lang, completedCount, tasks.length)}
               </span>
             </div>
-            <div className="flex-1 min-w-[100px]">
-              <div className="flex justify-between mb-0.5">
-                <span className="text-[10px]" style={{ color: "var(--mid)" }}>{UI.progressLabel[lang]}</span>
-                <span className="text-[10px]" style={{ color: "var(--mid)" }}>{u("progressOf", lang, completedCount, tasks.length)}</span>
+            <div className="flex-1 min-w-[120px]">
+              <div className="flex justify-between mb-1">
+                <span className="text-[10px]" style={{ color: "#bbb" }}>{UI.progressLabel[lang]}</span>
+                <span className="text-[10px] font-medium" style={{ color: "#999" }}>{u("progressOf", lang, completedCount, tasks.length)}</span>
               </div>
-              <div className="h-2 border border-[rgba(26,20,16,0.2)]" style={{ background: "rgba(26,20,16,0.08)" }}>
-                <div className="h-full transition-all duration-500" style={{ width: `${(completedCount / tasks.length) * 100}%`, background: "var(--cardinal)" }} />
+              <div className="h-2 overflow-hidden" style={{ borderRadius: 4, background: "rgba(0,0,0,0.07)" }}>
+                <div className="h-full transition-all duration-500" style={{ width: `${(completedCount / tasks.length) * 100}%`, borderRadius: 4, background: "#990000" }} />
               </div>
             </div>
           </div>
@@ -920,13 +1133,18 @@ function TrojanQuestInner({ language }: { language: Lang }) {
       </section>
 
       {/* View tabs */}
-      <div className="max-w-3xl mx-auto px-5 pt-5 flex gap-0 overflow-x-auto">
+      <div className="max-w-3xl mx-auto px-5 pt-5 flex gap-2 overflow-x-auto pb-1">
         {VIEWS.map(v => (
           <button
             key={v.key}
             onClick={() => setActiveView(v.key)}
-            className="font-display text-sm tracking-[0.08em] px-5 py-3 border-[3px] border-[var(--black)] -mr-[3px] shrink-0 transition-colors"
-            style={{ background: activeView === v.key ? "var(--cardinal)" : "var(--cream)", color: activeView === v.key ? "white" : "var(--mid)" }}
+            className="text-sm font-medium px-4 py-2 shrink-0 transition-all duration-200"
+            style={{
+              borderRadius: 10,
+              background: activeView === v.key ? "#990000" : "rgba(0,0,0,0.05)",
+              color: activeView === v.key ? "white" : "#666",
+              border: "none",
+            }}
           >
             {(UI[v.labelKey] as Record<Lang, string>)[lang]}
           </button>
@@ -936,15 +1154,21 @@ function TrojanQuestInner({ language }: { language: Lang }) {
       {/* 打卡任务 */}
       {activeView === "tasks" && (
         <section className="max-w-3xl mx-auto px-5 py-6">
-          <div className="flex gap-0 overflow-x-auto mb-6 pb-1">
+          <div className="flex gap-2 overflow-x-auto mb-6 pb-1">
             {TASK_CATEGORIES.map(cat => {
               const label = (UI[cat.labelKey] as Record<Lang, string>)[lang];
+              const active = activeCat === cat.id;
               return (
                 <button
                   key={cat.id}
                   onClick={() => setActiveCat(cat.id)}
-                  className="font-display text-[11px] tracking-[0.08em] px-4 py-2.5 border-[3px] border-[var(--black)] -mr-[3px] shrink-0 whitespace-nowrap transition-colors"
-                  style={{ background: activeCat === cat.id ? cat.color : "var(--cream)", color: activeCat === cat.id ? "white" : "var(--mid)" }}
+                  className="text-xs font-medium px-3.5 py-1.5 shrink-0 whitespace-nowrap transition-all duration-200"
+                  style={{
+                    borderRadius: 20,
+                    background: active ? cat.color : "rgba(0,0,0,0.05)",
+                    color: active ? "white" : "#666",
+                    border: "none",
+                  }}
                 >
                   {label}
                 </button>
@@ -969,15 +1193,21 @@ function TrojanQuestInner({ language }: { language: Lang }) {
             <h2 className="font-display text-[28px] leading-none mb-1" style={{ color: "var(--black)" }}>{UI.schoolsHeading[lang]}</h2>
             <p className="text-sm" style={{ color: "var(--mid)" }}>{UI.schoolsSubtitle[lang]}</p>
           </div>
-          <div className="flex gap-0 mb-6">
+          <div className="flex gap-2 mb-6">
             {SCHOOL_CATEGORIES.map(cat => {
               const label = (UI[cat.labelKey] as Record<Lang, string>)[lang];
+              const active = activeSchoolCat === cat.id;
               return (
                 <button
                   key={cat.id}
                   onClick={() => setActiveSchoolCat(cat.id)}
-                  className="font-display text-[11px] tracking-[0.08em] px-4 py-2.5 border-[3px] border-[var(--black)] -mr-[3px] shrink-0 whitespace-nowrap transition-colors"
-                  style={{ background: activeSchoolCat === cat.id ? cat.color : "var(--cream)", color: activeSchoolCat === cat.id ? "white" : "var(--mid)" }}
+                  className="text-xs font-medium px-3.5 py-1.5 shrink-0 whitespace-nowrap transition-all duration-200"
+                  style={{
+                    borderRadius: 20,
+                    background: active ? cat.color : "rgba(0,0,0,0.05)",
+                    color: active ? "white" : "#666",
+                    border: "none",
+                  }}
                 >
                   {label}
                 </button>
@@ -1005,28 +1235,28 @@ function TrojanQuestInner({ language }: { language: Lang }) {
       {/* 我的进度 */}
       {activeView === "profile" && (
         <section className="max-w-3xl mx-auto px-5 py-6">
-          <div className="border-[3px] border-[var(--black)] p-5 mb-6" style={{ background: "var(--cream)", boxShadow: "6px 6px 0 rgba(26,20,16,0.18)" }}>
-            <p className="font-display text-2xl mb-3" style={{ color: "var(--black)" }}>
+          <div className="p-5 mb-6" style={{ borderRadius: 16, background: "var(--cream)", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.06)" }}>
+            <p className="font-display text-2xl mb-4" style={{ color: "#2b2b2b" }}>
               {u("profileChecked", lang, completedCount, tasks.length)}
             </p>
-            <div className="mb-4">
-              <div className="flex justify-between mb-1">
-                <span className="font-display text-[11px] tracking-wider" style={{ color: "var(--mid)" }}>{UI.profileProgress[lang]}</span>
-                <span className="font-display text-[11px] tracking-wider" style={{ color: "var(--mid)" }}>{u("progressOf", lang, completedCount, tasks.length)}</span>
+            <div className="mb-5">
+              <div className="flex justify-between mb-1.5">
+                <span className="text-xs font-medium" style={{ color: "#aaa" }}>{UI.profileProgress[lang]}</span>
+                <span className="text-xs font-medium" style={{ color: "#888" }}>{u("progressOf", lang, completedCount, tasks.length)}</span>
               </div>
-              <div className="h-3 border-[2px] border-[var(--black)]" style={{ background: "rgba(26,20,16,0.08)" }}>
-                <div className="h-full transition-all duration-700" style={{ width: `${(completedCount / tasks.length) * 100}%`, background: "var(--cardinal)" }} />
+              <div className="h-2.5 overflow-hidden" style={{ borderRadius: 6, background: "rgba(0,0,0,0.07)" }}>
+                <div className="h-full transition-all duration-700" style={{ width: `${(completedCount / tasks.length) * 100}%`, borderRadius: 6, background: "#990000" }} />
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { labelKey: "profileCompleted" as keyof typeof UI, value: completedCount,              bg: "var(--cardinal)", text: "white" },
-                { labelKey: "profileRemaining" as keyof typeof UI, value: tasks.length - completedCount, bg: "var(--gold)",     text: "var(--black)" },
-                { labelKey: "profileTotal"     as keyof typeof UI, value: tasks.length,               bg: "white",           text: "var(--black)" },
+                { labelKey: "profileCompleted" as keyof typeof UI, value: completedCount,              bg: "#990000",  text: "white" },
+                { labelKey: "profileRemaining" as keyof typeof UI, value: tasks.length - completedCount, bg: "#FFCC00", text: "#2b2b2b" },
+                { labelKey: "profileTotal"     as keyof typeof UI, value: tasks.length,               bg: "rgba(0,0,0,0.04)", text: "#2b2b2b" },
               ].map(s => (
-                <div key={s.labelKey} className="border-[2px] border-[var(--black)] p-3 text-center" style={{ background: s.bg }}>
-                  <p className="font-display text-2xl leading-none" style={{ color: s.text }}>{s.value}</p>
-                  <p className="font-display text-[10px] tracking-wider mt-1" style={{ color: s.text === "white" ? "rgba(255,255,255,0.8)" : "var(--mid)" }}>
+                <div key={s.labelKey} className="p-3 text-center" style={{ borderRadius: 12, background: s.bg }}>
+                  <p className="font-display text-2xl leading-none mb-1" style={{ color: s.text }}>{s.value}</p>
+                  <p className="text-[10px] font-medium" style={{ color: s.text === "white" ? "rgba(255,255,255,0.75)" : "#888" }}>
                     {(UI[s.labelKey] as Record<Lang, string>)[lang]}
                   </p>
                 </div>
@@ -1034,14 +1264,14 @@ function TrojanQuestInner({ language }: { language: Lang }) {
             </div>
           </div>
 
-          <h3 className="font-display text-xl mb-4" style={{ color: "var(--black)" }}>{UI.allTasksHeading[lang]}</h3>
-          <div className="border-[3px] border-[var(--black)]" style={{ background: "var(--cream)", boxShadow: "4px 4px 0 rgba(26,20,16,0.15)" }}>
-            {tasks.map(task => (
-              <div key={task.id} className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(26,20,16,0.1)] last:border-b-0" style={{ background: task.completed ? "rgba(153,0,0,0.04)" : "transparent" }}>
-                <div className="w-5 h-5 border-[2px] border-[var(--black)] flex items-center justify-center shrink-0" style={{ background: task.completed ? "var(--cardinal)" : "white" }}>
+          <h3 className="font-display text-xl mb-4" style={{ color: "#2b2b2b" }}>{UI.allTasksHeading[lang]}</h3>
+          <div className="overflow-hidden" style={{ borderRadius: 14, background: "var(--cream)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.06)" }}>
+            {tasks.map((task, i) => (
+              <div key={task.id} className="flex items-center gap-3 px-4 py-3" style={{ background: task.completed ? "rgba(153,0,0,0.03)" : "transparent", borderBottom: i < tasks.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none" }}>
+                <div className="w-5 h-5 flex items-center justify-center shrink-0 transition-all duration-200" style={{ borderRadius: 6, background: task.completed ? "#990000" : "rgba(0,0,0,0.06)" }}>
                   {task.completed && <span className="text-white text-[10px] font-bold">✓</span>}
                 </div>
-                <span className="text-sm flex-1" style={{ color: "var(--black)", textDecoration: task.completed ? "line-through" : "none", opacity: task.completed ? 0.6 : 1 }}>
+                <span className="text-sm flex-1" style={{ color: task.completed ? "#aaa" : "#2b2b2b", textDecoration: task.completed ? "line-through" : "none" }}>
                   {lang === "en" ? task.titleEn : task.title}
                 </span>
               </div>
@@ -1050,8 +1280,8 @@ function TrojanQuestInner({ language }: { language: Lang }) {
         </section>
       )}
 
-      <footer className="border-t-[3px] border-[var(--black)] py-5 text-center mt-4" style={{ background: "var(--cream)" }}>
-        <p className="font-display text-xs tracking-[0.2em]" style={{ color: "var(--mid)" }}>
+      <footer className="py-6 text-center mt-4" style={{ borderTop: "1px solid rgba(0,0,0,0.06)", background: "var(--cream)" }}>
+        <p className="text-[11px] font-medium tracking-widest" style={{ color: "#ccc" }}>
           {UI.footerText[lang]}
         </p>
       </footer>
