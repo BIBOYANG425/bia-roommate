@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Instrument_Serif } from "next/font/google";
+import { Inter, Instrument_Serif, ZCOOL_XiaoWei } from "next/font/google";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/AuthProvider";
@@ -26,6 +26,13 @@ const instrumentSerif = Instrument_Serif({
   weight: "400",
   subsets: ["latin"],
   variable: "--font-display-en",
+  display: "swap",
+});
+
+const zcoolXiaoWei = ZCOOL_XiaoWei({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-zcool",
   display: "swap",
 });
 
@@ -81,20 +88,9 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${interFont.variable} ${instrumentSerif.variable} ${playlistScript.variable}`}
+      className={`${interFont.variable} ${instrumentSerif.variable} ${playlistScript.variable} ${zcoolXiaoWei.variable}`}
     >
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+      <head />
       <body>
         <script
           type="application/ld+json"

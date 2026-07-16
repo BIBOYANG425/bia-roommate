@@ -12,7 +12,7 @@
 "use client";
 
 import { useState } from "react";
-import { canonicalizePhone } from "@biboyang425/bia-shared/phone";
+import { normalizePhone } from "@/lib/george/spectrum";
 
 const COUNTRY_CODES: { dial: string; label: string }[] = [
   { dial: "+1", label: "🇺🇸 +1" },
@@ -52,12 +52,14 @@ export default function GeorgeSignupForm() {
     // concat — that mangled a typed full +86 number under a +853 dropdown into a
     // wrong +853 string (the identity fork). A typed "+" or full foreign number
     // is trusted over the dropdown; reject anything that won't canonicalize.
-    const canon = canonicalizePhone(phone, { dialCode });
-    if (!canon.ok) {
+    const raw = phone.trim().startsWith("+") || phone.trim().startsWith("00")
+      ? phone
+      : `${dialCode}${phone}`;
+    const e164 = normalizePhone(raw);
+    if (!e164) {
       setStep({ name: "error", message: ERROR_COPY.invalid_phone });
       return;
     }
-    const e164 = canon.e164;
     setStep({ name: "loading" });
     try {
       const res = await fetch("/george/api/signup", {

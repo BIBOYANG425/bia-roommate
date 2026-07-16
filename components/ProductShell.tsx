@@ -25,7 +25,8 @@ export type ProductPage =
   | "course-rating"
   | "shipping"
   | "squad"
-  | "usc-group";
+  | "usc-group"
+  | "trojan-quest";
 
 type ProductNavItem = {
   href: string;
@@ -147,6 +148,11 @@ const PRODUCT_NAV_GROUPS: ProductNavGroup[] = [
         href: "/usc-group",
         label: { zh: "新生群", en: "Freshman Groups" },
         description: { zh: "学校社群入口", en: "School communities" },
+      },
+      {
+        href: "/trojan-quest",
+        label: { zh: "打卡探索", en: "Trojan Quest" },
+        description: { zh: "USC校园探索任务卡", en: "Campus exploration check-ins" },
       },
       {
         href: "/join",

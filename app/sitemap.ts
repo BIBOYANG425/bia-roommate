@@ -46,7 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const articles = await getPublishedArticles();
     blogEntries = articles.map((a) => ({
       url: `${SITE.url}/blog/${encodeURIComponent(a.slug)}`,
-      lastModified: a.published_at ? new Date(a.published_at) : now,
+      lastModified: (a.published_at as string | null | undefined) ? new Date(a.published_at as string) : now,
       changeFrequency: "monthly",
       priority: 0.6,
     }));

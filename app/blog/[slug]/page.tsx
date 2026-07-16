@@ -1,4 +1,3 @@
-import { ArticleRenderer } from "@biboyang425/bia-shared/react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -42,12 +41,12 @@ export async function generateMetadata({
 
   return {
     title: `${article.title} · BIA Blog`,
-    description: article.excerpt ?? undefined,
+    description: (article.excerpt as string | null | undefined) ?? undefined,
     openGraph: {
       title: article.title,
-      description: article.excerpt ?? undefined,
-      images: article.cover_image_url
-        ? [{ url: article.cover_image_url, alt: article.title }]
+      description: (article.excerpt as string | null | undefined) ?? undefined,
+      images: (article.cover_image_url as string | null | undefined)
+        ? [{ url: article.cover_image_url as string, alt: article.title }]
         : undefined,
     },
   };
@@ -68,10 +67,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             "@context": "https://schema.org",
             "@type": "BlogPosting",
             headline: article.title,
-            ...(article.excerpt ? { description: article.excerpt } : {}),
-            ...(article.cover_image_url ? { image: article.cover_image_url } : {}),
-            datePublished: article.published_at,
-            inLanguage: article.language,
+            ...((article.excerpt as string | null | undefined) ? { description: article.excerpt as string } : {}),
+            ...((article.cover_image_url as string | null | undefined) ? { image: article.cover_image_url as string } : {}),
+            datePublished: article.published_at as string | null,
+            inLanguage: article.language as string,
             mainEntityOfPage: {
               "@type": "WebPage",
               "@id": `${SITE.url}/blog/${slug}`,
@@ -95,22 +94,22 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
         <header className="mb-12">
           <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#A0D7D1]">
-            {[formatDate(article.published_at), languageLabel(article.language)]
+            {[formatDate(article.published_at as string | null), languageLabel(article.language as string)]
               .filter(Boolean)
               .join(" · ")}
           </p>
           <h1 className="heading-serif text-5xl leading-tight text-[#171717] sm:text-6xl">
             {article.title}
           </h1>
-          {article.excerpt && (
+          {(article.excerpt as string | null | undefined) && (
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[#646464]">
-              {article.excerpt}
+              {article.excerpt as string}
             </p>
           )}
-          {article.cover_image_url && (
+          {(article.cover_image_url as string | null | undefined) && (
             <div className="relative mt-10 aspect-[16/9] w-full overflow-hidden rounded-2xl border border-black/5 bg-gray-100">
               <Image
-                src={article.cover_image_url}
+                src={article.cover_image_url as string}
                 alt=""
                 fill
                 priority
@@ -121,8 +120,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           )}
         </header>
 
-        <ArticleRenderer
-          html={article.html_clean}
+        <div
+          dangerouslySetInnerHTML={{ __html: article.html_clean as string }}
           className="prose prose-neutral max-w-none prose-headings:heading-serif prose-headings:text-[#171717] prose-a:text-[#0081C0]"
         />
       </article>

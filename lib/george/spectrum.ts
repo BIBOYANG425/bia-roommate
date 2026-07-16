@@ -8,8 +8,6 @@
 // Registration is idempotent here: an already-registered phone falls back to
 // a user lookup and returns the existing assignment.
 
-import { canonicalizePhone } from "@biboyang425/bia-shared/phone";
-
 const SPECTRUM_BASE = "https://spectrum.photon.codes";
 
 export type SignupOutcome =
@@ -17,17 +15,25 @@ export type SignupOutcome =
   | { ok: false; error: "invalid_phone" | "pool_unavailable" | "spectrum_error" };
 
 /**
- * Normalize phone input to canonical E.164. Delegates to the SINGLE shared
- * canonicalizer (`@biboyang425/bia-shared/phone`, parity-vectored against
- * george's normalizeHandle) so the registered phone is byte-identical to the
- * iMessage handle the agent stores — the two paths can no longer drift (the
- * drift was the +86→+853 identity fork). A bare North-American number defaults
- * to US; an explicit country code (typed "+", a full foreign number) is
- * trusted. Returns null when the input can't be canonicalized.
+ * Normalize phone input to canonical E.164.
+ * - Bare 10-digit inputs default to US (+1).
+ * - 11-digit inputs starting with "1" are treated as US with country code.
+ * - Inputs starting with "+" or "00" are treated as international (country
+ *   code trusted as-is).
+ * - Anything else that can't be resolved returns null.
  */
 export function normalizePhone(raw: string): string | null {
-  const result = canonicalizePhone(raw, { defaultCountry: "US" });
-  return result.ok ? result.e164 : null;
+  if (!raw) return null;
+  let s = raw.trim();
+  // 00-prefix → +
+  if (s.startsWith("00")) s = `+${s.slice(2)}`;
+  const hasPlus = s.startsWith("+");
+  const digits = s.replace(/\D/g, "");
+  if (!digits || digits.length < 7) return null;
+  if (hasPlus) return `+${digits}`;
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits[0] === "1") return `+${digits}`;
+  return null;
 }
 
 function authHeader(projectId: string, projectSecret: string): string {

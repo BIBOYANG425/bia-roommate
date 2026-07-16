@@ -21,8 +21,8 @@ export function AnalyticsProvider() {
   const pathname = usePathname();
 
   useEffect(() => {
-    setAnalyticsSink(createPostHogSink());
-    return () => setAnalyticsSink(null);
+    const sink = createPostHogSink();
+    if (sink) setAnalyticsSink(sink);
   }, []);
 
   useEffect(() => {

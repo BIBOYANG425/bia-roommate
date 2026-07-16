@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { ProductLanguage } from "@/components/ProductShell";
 import {
   type Apartment,
@@ -38,13 +39,14 @@ export default function ApartmentCard({
           style={{ background: apt.gradient }}
         >
           {apt.photoUrl && !imgError && (
-            <img
+            <Image
               key={apt.id}
               src={apt.photoUrl}
               alt={apt.name}
               onError={onImgError}
-              loading="lazy"
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              style={{ objectFit: "cover" }}
             />
           )}
           {/* Darken overlay when photo loaded */}

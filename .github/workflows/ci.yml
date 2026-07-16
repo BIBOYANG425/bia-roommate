@@ -14,12 +14,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           registry-url: https://npm.pkg.github.com
           scope: "@biboyang425"
 
-      - run: npm ci
+      - run: npm install
         env:
           # PAT with read:packages, configured as a repo secret. Without this
           # the @biboyang425/bia-shared install is unauthenticated and fails.
@@ -38,12 +38,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           registry-url: https://npm.pkg.github.com
           scope: "@biboyang425"
 
-      - run: npm ci
+      - run: npm install
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
       - run: npm test

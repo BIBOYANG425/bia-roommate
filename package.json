@@ -10,11 +10,13 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@biboyang425/bia-shared": "^3.0.0",
+    "@biboyang425/bia-shared": "file:./shared/bia-shared",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.100.0",
+    "@types/leaflet": "^1.9.21",
     "@vercel/analytics": "^1.4.1",
     "gsap": "^3.14.2",
+    "leaflet": "^1.9.4",
     "lenis": "^1.3.25",
     "next": "16.2.1",
     "posthog-js": "^1.381.0",
